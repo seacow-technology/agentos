@@ -1,10 +1,10 @@
-"""ProjectKB CLI - 项目知识库命令行工具
+"""ProjectKB CLI - Project Knowledge Base Command Line Tool
 
-提供命令:
-- agentos kb search <query>  - 检索文档
-- agentos kb refresh         - 刷新索引
-- agentos kb explain <chunk_id> - 解释结果
-- agentos kb stats           - 显示统计信息
+Provides commands:
+- agentos kb search <query>  - Search documents
+- agentos kb refresh         - Refresh index
+- agentos kb explain <chunk_id> - Explain results
+- agentos kb stats           - Show statistics
 """
 
 import json
@@ -21,26 +21,26 @@ console = Console()
 
 @click.group()
 def kb():
-    """ProjectKB - 项目知识库检索"""
+    """ProjectKB - Project Knowledge Base retrieval"""
     pass
 
 
 @kb.command()
 @click.argument("query")
-@click.option("--scope", help="路径前缀过滤 (如 docs/architecture/)")
-@click.option("--doc-type", help="文档类型过滤 (adr/runbook/spec/guide)")
-@click.option("--top-k", default=10, help="返回结果数")
-@click.option("--explain/--no-explain", default=True, help="显示解释")
-@click.option("--json", "output_json", is_flag=True, help="JSON 格式输出")
-@click.option("--rerank/--no-rerank", default=None, help="使用向量 rerank (覆盖配置)")
+@click.option("--scope", help="Path prefix filter (e.g. docs/architecture/)")
+@click.option("--doc-type", help="Document type filter (adr/runbook/spec/guide)")
+@click.option("--top-k", default=10, help="Number of results to return")
+@click.option("--explain/--no-explain", default=True, help="Show explanation")
+@click.option("--json", "output_json", is_flag=True, help="JSON format output")
+@click.option("--rerank/--no-rerank", default=None, help="Use vector rerank (override config)")
 def search(query, scope, doc_type, top_k, explain, output_json, rerank):
-    """检索文档
+    """Search documents
 
-    示例:
+    Examples:
         agentos kb search "JWT authentication"
         agentos kb search "API design" --scope docs/architecture/
         agentos kb search "deployment" --doc-type runbook
-        agentos kb search "authentication" --rerank  # 强制使用 rerank
+        agentos kb search "authentication" --rerank  # Force use rerank
     """
     try:
         kb_service = ProjectKBService()
@@ -104,15 +104,15 @@ def search(query, scope, doc_type, top_k, explain, output_json, rerank):
 
 
 @kb.command()
-@click.option("--changed-only/--full", default=True, help="增量/全量刷新")
-@click.option("--verbose", is_flag=True, help="显示详细信息")
+@click.option("--changed-only/--full", default=True, help="Incremental/full refresh")
+@click.option("--verbose", is_flag=True, help="Show detailed information")
 def refresh(changed_only, verbose):
-    """刷新索引 (扫描文档并更新)
+    """Refresh index (scan documents and update)
 
-    示例:
-        agentos kb refresh              # 增量刷新
-        agentos kb refresh --full       # 全量刷新
-        agentos kb refresh --verbose    # 显示详细信息
+    Examples:
+        agentos kb refresh              # Incremental refresh
+        agentos kb refresh --full       # Full refresh
+        agentos kb refresh --verbose    # Show detailed information
     """
     try:
         kb_service = ProjectKBService()
@@ -149,9 +149,9 @@ def refresh(changed_only, verbose):
 @kb.command()
 @click.argument("chunk_id")
 def explain(chunk_id):
-    """解释单个结果
+    """Explain a single result
 
-    示例:
+    Examples:
         agentos kb explain chunk_abc123
     """
     try:
@@ -178,9 +178,9 @@ def explain(chunk_id):
 
 @kb.command()
 def stats():
-    """显示统计信息
+    """Show statistics
 
-    示例:
+    Examples:
         agentos kb stats
     """
     try:
@@ -212,9 +212,9 @@ def stats():
 @kb.command()
 @click.argument("chunk_id")
 def inspect(chunk_id):
-    """检查 chunk 详细信息（inspect 命令）
+    """Inspect chunk details (inspect command)
 
-    示例:
+    Examples:
         agentos kb inspect chunk_abc123
     """
     try:
@@ -254,15 +254,15 @@ def inspect(chunk_id):
 @kb.command()
 @click.argument("queries_file")
 @click.option("--k-values", default="1,3,5,10", help="K values for recall@k (comma-separated)")
-@click.option("--rerank/--no-rerank", default=None, help="使用向量 rerank")
-@click.option("--json", "output_json", is_flag=True, help="JSON 格式输出")
+@click.option("--rerank/--no-rerank", default=None, help="Use vector rerank")
+@click.option("--json", "output_json", is_flag=True, help="JSON format output")
 def eval(queries_file, k_values, rerank, output_json):
-    """评估检索质量
+    """Evaluate retrieval quality
 
-    queries_file 格式 (JSONL):
+    queries_file format (JSONL):
     {"query": "JWT auth", "expected_chunk_ids": ["chunk_abc", "chunk_def"]}
 
-    示例:
+    Examples:
         agentos kb eval queries.jsonl
         agentos kb eval queries.jsonl --k-values 1,5,10
         agentos kb eval queries.jsonl --rerank
@@ -320,13 +320,13 @@ def eval(queries_file, k_values, rerank, output_json):
 
 
 @kb.command()
-@click.option("--confirm", is_flag=True, help="确认执行危险操作")
+@click.option("--confirm", is_flag=True, help="Confirm dangerous operation")
 def reindex(confirm):
-    """全量重建索引（危险操作）
+    """Full index rebuild (dangerous operation)
 
-    警告: 此操作将清空所有 chunks 和 embeddings，然后重新构建索引。
+    Warning: This operation will clear all chunks and embeddings, then rebuild the index.
 
-    示例:
+    Examples:
         agentos kb reindex --confirm
     """
     if not confirm:
@@ -365,9 +365,9 @@ def reindex(confirm):
 
 @kb.command()
 def stats():
-    """显示统计信息
+    """Show statistics
 
-    示例:
+    Examples:
         agentos kb stats
     """
     try:
@@ -413,20 +413,20 @@ def stats():
 
 
 @kb.command()
-@click.option("--rebuild-fts", is_flag=True, help="重建 FTS 索引")
-@click.option("--allow-drift", is_flag=True, help="允许 <5% 差异容忍（并发模式）")
-@click.option("--cleanup-orphans", is_flag=True, default=True, help="清理孤儿 chunks（默认启用）")
-@click.option("--explain/--no-explain", default=True, help="显示详细报告")
+@click.option("--rebuild-fts", is_flag=True, help="Rebuild FTS index")
+@click.option("--allow-drift", is_flag=True, help="Allow <5% drift tolerance (concurrent mode)")
+@click.option("--cleanup-orphans", is_flag=True, default=True, help="Cleanup orphan chunks (default enabled)")
+@click.option("--explain/--no-explain", default=True, help="Show detailed report")
 def repair(rebuild_fts, allow_drift, cleanup_orphans, explain):
-    """修复 ProjectKB（自愈命令）
-    
-    检查并修复:
-    - FTS 表和触发器
-    - 孤儿 chunks 清理
-    - 索引一致性
-    - Schema 版本签名
-    
-    示例:
+    """Repair ProjectKB (self-healing command)
+
+    Check and repair:
+    - FTS tables and triggers
+    - Orphan chunks cleanup
+    - Index consistency
+    - Schema version signature
+
+    Examples:
         agentos kb repair                     # 基础检查
         agentos kb repair --rebuild-fts       # 重建 FTS（强一致性）
         agentos kb repair --rebuild-fts --allow-drift  # 重建（容忍并发差异）
@@ -528,22 +528,22 @@ def repair(rebuild_fts, allow_drift, cleanup_orphans, explain):
         raise click.Abort()
 
 
-# P2: Embedding 管理子命令组
+# P2: Embedding management subcommand group
 @kb.group()
 def embed():
-    """Embedding 管理命令 (向量检索)"""
+    """Embedding management commands (vector retrieval)"""
     pass
 
 
 @embed.command()
-@click.option("--batch-size", default=32, help="批量大小")
-@click.option("--verbose", is_flag=True, help="显示详细进度")
+@click.option("--batch-size", default=32, help="Batch size")
+@click.option("--verbose", is_flag=True, help="Show detailed progress")
 def build(batch_size, verbose):
-    """为所有 chunks 生成 embeddings
+    """Generate embeddings for all chunks
 
-    需要先安装: pip install agentos[vector]
+    Install first: pip install agentos[vector]
 
-    示例:
+    Examples:
         agentos kb embed build
         agentos kb embed build --batch-size 64
     """
@@ -593,9 +593,9 @@ def build(batch_size, verbose):
 
 @embed.command()
 def refresh():
-    """增量刷新 embeddings (仅变更的 chunks)
+    """Incremental refresh embeddings (changed chunks only)
 
-    示例:
+    Examples:
         agentos kb embed refresh
     """
     try:
@@ -637,9 +637,9 @@ def refresh():
 
 @embed.command()
 def stats():
-    """显示 embedding 统计信息
+    """Show embedding statistics
 
-    示例:
+    Examples:
         agentos kb embed stats
     """
     try:

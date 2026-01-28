@@ -1,11 +1,11 @@
 """
-WebUI Control Commands - 管理 WebUI 后台服务
+WebUI Control Commands - Manage WebUI background service
 
-agentos webui start   - 启动 WebUI
-agentos webui stop    - 停止 WebUI
-agentos webui restart - 重启 WebUI
-agentos webui status  - 查看状态
-agentos webui config  - 配置管理
+agentos webui start   - Start WebUI
+agentos webui stop    - Stop WebUI
+agentos webui restart - Restart WebUI
+agentos webui status  - View status
+agentos webui config  - Configuration management
 """
 
 import click
@@ -19,9 +19,9 @@ from agentos.config import load_settings, save_settings
 @click.group(name="webui")
 def webui_group():
     """
-    WebUI 服务管理
+    WebUI service management
 
-    管理 AgentOS WebUI 后台服务的启动、停止和配置。
+    Manage the startup, shutdown and configuration of AgentOS WebUI background service.
     """
     pass
 
@@ -30,21 +30,21 @@ def webui_group():
 @click.option(
     "--host",
     default=None,
-    help="绑定主机 (默认使用配置)",
+    help="Bind host (default: use config)",
 )
 @click.option(
     "--port",
     default=None,
     type=int,
-    help="绑定端口 (默认使用配置)",
+    help="Bind port (default: use config)",
 )
 @click.option(
     "--foreground",
     is_flag=True,
-    help="前台运行 (不后台)",
+    help="Run in foreground (not background)",
 )
 def start_cmd(host: str, port: int, foreground: bool):
-    """启动 WebUI 服务"""
+    """Start WebUI service"""
     settings = load_settings()
 
     # 使用配置或命令行参数
@@ -74,7 +74,7 @@ def start_cmd(host: str, port: int, foreground: bool):
 
 @webui_group.command(name="stop")
 def stop_cmd():
-    """停止 WebUI 服务"""
+    """Stop WebUI service"""
     settings = load_settings()
     daemon = WebUIDaemon(host=settings.webui_host, port=settings.webui_port)
 
@@ -95,7 +95,7 @@ def stop_cmd():
 
 @webui_group.command(name="restart")
 def restart_cmd():
-    """重启 WebUI 服务"""
+    """Restart WebUI service"""
     settings = load_settings()
     daemon = WebUIDaemon(host=settings.webui_host, port=settings.webui_port)
 
@@ -110,7 +110,7 @@ def restart_cmd():
 
 @webui_group.command(name="status")
 def status_cmd():
-    """查看 WebUI 状态"""
+    """View WebUI status"""
     settings = load_settings()
     daemon = WebUIDaemon(host=settings.webui_host, port=settings.webui_port)
 
@@ -143,26 +143,26 @@ def status_cmd():
 @click.option(
     "--auto-start/--no-auto-start",
     default=None,
-    help="启用/禁用自动启动",
+    help="Enable/disable auto-start",
 )
 @click.option(
     "--host",
     default=None,
-    help="设置绑定主机",
+    help="Set bind host",
 )
 @click.option(
     "--port",
     default=None,
     type=int,
-    help="设置端口",
+    help="Set port",
 )
 @click.option(
     "--show",
     is_flag=True,
-    help="显示当前配置",
+    help="Show current configuration",
 )
 def config_cmd(auto_start: bool, host: str, port: int, show: bool):
-    """配置 WebUI 设置"""
+    """Configure WebUI settings"""
     settings = load_settings()
 
     if show:
