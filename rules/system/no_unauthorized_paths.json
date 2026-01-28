@@ -1,0 +1,6 @@
+{
+  "rule_id": "no_unauthorized_paths",
+  "severity": "error",
+  "description": "Allowed paths must be validated against project structure",
+  "check_type": "path_validation"
+}

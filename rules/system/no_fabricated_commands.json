@@ -1,0 +1,6 @@
+{
+  "rule_id": "no_fabricated_commands",
+  "severity": "error",
+  "description": "All commands in AgentSpec must exist in FactPack",
+  "check_type": "command_existence"
+}
