@@ -12,7 +12,7 @@ from rich.table import Table
 from agentos.core.memory import MemoryService
 from agentos.core.memory.decay import DecayEngine
 from agentos.core.verify.schema_validator import validate_memory_item
-from agentos.jobs.memory_gc import MemoryGCJob
+# MemoryGCJob imported lazily in gc command to avoid jobs/ dependency
 
 console = Console()
 
@@ -329,13 +329,20 @@ def decay_memories(dry_run: bool, decay_rate: float, min_confidence: float, clea
 def gc_memories(dry_run: bool, decay_rate: float, min_confidence: float, similarity: float):
     """
     Run full garbage collection (decay + cleanup + dedupe + promotion).
-    
+
     This comprehensive command:
     1. Decays confidence for all memories
     2. Cleans up expired/low-quality memories
     3. Deduplicates similar memories
     4. Promotes eligible memories to higher scopes
     """
+    try:
+        from agentos.jobs.memory_gc import MemoryGCJob
+    except ImportError:
+        console.print("[red]Error:[/red] Memory GC job module not available in this installation")
+        console.print("[dim]This is an optional feature requiring the full AgentOS installation[/dim]")
+        raise click.Abort()
+
     job = MemoryGCJob(
         decay_rate=decay_rate,
         min_confidence=min_confidence,

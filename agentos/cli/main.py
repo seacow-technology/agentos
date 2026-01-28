@@ -91,7 +91,7 @@ def cli(ctx, web):
 from agentos.cli.init import init_cmd
 from agentos.cli.doctor import doctor
 from agentos.cli.project import project_group
-# scan_cmd: lazy import (requires adapters)
+from agentos.cli.scan import scan_cmd
 from agentos.cli.generate import generate_group
 from agentos.cli.verify import verify_cmd
 from agentos.cli.orchestrate import orchestrate_cmd
@@ -116,21 +116,7 @@ from agentos.cli.auth import auth_group
 cli.add_command(init_cmd, name="init")
 cli.add_command(doctor, name="doctor")
 cli.add_command(project_group, name="project")
-
-# Lazy-load scan command (requires adapters)
-@click.command()
-@click.pass_context
-def scan_lazy(ctx, **kwargs):
-    """Scan project structure (requires adapters module)"""
-    try:
-        from agentos.cli.scan import scan_cmd
-        ctx.invoke(scan_cmd, **kwargs)
-    except ImportError as e:
-        click.echo(f"❌ 'scan' command unavailable: {e}")
-        click.echo("This command requires additional dependencies.")
-        ctx.exit(1)
-
-cli.add_command(scan_lazy, name="scan")
+cli.add_command(scan_cmd, name="scan")
 cli.add_command(generate_group, name="generate")
 cli.add_command(verify_cmd, name="verify")
 cli.add_command(orchestrate_cmd, name="orchestrate")

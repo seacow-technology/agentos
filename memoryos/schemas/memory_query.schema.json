@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://memoryos.dev/schemas/memory_query.schema.json",
+  "$version": "1.0.0",
+  "title": "MemoryQuery",
+  "description": "Query specification for memory retrieval",
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "description": "Full-text search query"
+    },
+    "filters": {
+      "type": "object",
+      "description": "Filter conditions",
+      "properties": {
+        "scope": {
+          "type": "string",
+          "enum": ["global", "project", "repo", "task", "agent"],
+          "description": "Memory scope filter"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["decision", "convention", "constraint", "known_issue", "playbook", "glossary"],
+          "description": "Memory type filter"
+        },
+        "tags": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Tags filter (ANY match)"
+        },
+        "confidence_min": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Minimum confidence threshold"
+        },
+        "project_id": {
+          "type": "string",
+          "description": "Project ID filter"
+        }
+      }
+    },
+    "top_k": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000,
+      "default": 20,
+      "description": "Maximum results to return"
+    },
+    "include_expired": {
+      "type": "boolean",
+      "default": false,
+      "description": "Include expired memories"
+    },
+    "sort_by": {
+      "type": "string",
+      "enum": ["confidence", "created_at", "updated_at", "relevance"],
+      "default": "confidence",
+      "description": "Sort order"
+    }
+  }
+}

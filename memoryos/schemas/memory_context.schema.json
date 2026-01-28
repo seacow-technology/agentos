@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://memoryos.dev/schemas/memory_context.schema.json",
+  "$version": "1.0.0",
+  "title": "MemoryContext",
+  "description": "Memory context package with hierarchical blocks",
+  "type": "object",
+  "required": ["schema_version", "context_blocks", "metadata"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "context_blocks": {
+      "type": "array",
+      "description": "Hierarchical context blocks by scope",
+      "items": {
+        "type": "object",
+        "required": ["type", "memories"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["global", "project", "repo", "task", "agent"],
+            "description": "Block scope"
+          },
+          "memories": {
+            "type": "array",
+            "description": "Memories in this block",
+            "items": {"type": "object"}
+          },
+          "weight": {
+            "type": "number",
+            "description": "Block importance weight"
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "total_memories": {
+          "type": "integer",
+          "description": "Total memories across all blocks"
+        },
+        "build_time_ms": {
+          "type": "number",
+          "description": "Context build time in milliseconds"
+        },
+        "memoryos_version": {
+          "type": "string",
+          "description": "MemoryOS version"
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}
