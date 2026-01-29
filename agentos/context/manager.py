@@ -100,7 +100,7 @@ class ContextManager:
             return
 
         try:
-            with open(self.context_file, "r") as f:
+            with open(self.context_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             self._contexts = {}
@@ -141,7 +141,7 @@ class ContextManager:
 
             # Write to temp file
             temp_file = self.context_file.with_suffix(".tmp")
-            with open(temp_file, "w") as f:
+            with open(temp_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
 
             # Atomic rename

@@ -70,6 +70,15 @@ async def fix_permissions() -> PermissionsFixResponse:
                 fixed_files=[],
             )
 
+        # Windows 兼容: 跳过权限检查
+        import platform
+        if platform.system() == "Windows":
+            return PermissionsFixResponse(
+                ok=True,
+                message="Permission checks skipped on Windows (uses ACL)",
+                fixed_files=[],
+            )
+
         # Check current permissions
         stat_info = secrets_file.stat()
         current_mode = stat_info.st_mode & 0o777

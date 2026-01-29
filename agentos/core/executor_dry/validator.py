@@ -213,7 +213,7 @@ class DryExecutorValidator:
         from pathlib import Path
 
         try:
-            with open(result_file_path) as f:
+            with open(result_file_path, encoding="utf-8") as f:
                 result_data = json.load(f)
 
             return self.validate(result_data)

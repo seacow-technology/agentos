@@ -64,7 +64,7 @@ class Orchestrator:
         tasks = []
         for task_file in self.queue_dir.glob("*.task.json"):
             try:
-                with open(task_file) as f:
+                with open(task_file, encoding="utf-8") as f:
                     task_data = json.load(f)
                 
                 task_data["source"] = "file"
@@ -188,7 +188,7 @@ class Orchestrator:
         report_dir.mkdir(parents=True, exist_ok=True)
         
         factpack_path = report_dir / "factpack.json"
-        with open(factpack_path, "w") as f:
+        with open(factpack_path, "w", encoding="utf-8") as f:
             json.dump(factpack, f, indent=2)
         
         cursor.execute(
@@ -210,7 +210,7 @@ class Orchestrator:
         artifacts_dir.mkdir(parents=True, exist_ok=True)
         
         spec_path = artifacts_dir / f"{agent_type}.json"
-        with open(spec_path, "w") as f:
+        with open(spec_path, "w", encoding="utf-8") as f:
             json.dump(agent_spec, f, indent=2)
         
         return agent_spec

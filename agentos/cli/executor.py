@@ -24,7 +24,7 @@ def plan_cmd(dry_result_path: str, output_path: str):
     """Create execution request from dry run result."""
     try:
         # Load dry execution result
-        with open(dry_result_path, "r") as f:
+        with open(dry_result_path, "r", encoding="utf-8") as f:
             dry_result = json.load(f)
         
         exec_req_id = f"exec_req_{dry_result.get('dry_execution_result_id', 'unknown')}"
@@ -44,7 +44,7 @@ def plan_cmd(dry_result_path: str, output_path: str):
         output_file = Path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
         
-        with open(output_file, "w") as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             json.dump(execution_request, f, indent=2)
         
         console.print(f"[green]✓ Execution request created: {output_file}[/green]")
@@ -88,7 +88,7 @@ def run_cmd(request_path: str, policy_path: str, repo: str, output_dir: str):
             raise click.Abort()
         
         # Load request
-        with open(request_path, "r") as f:
+        with open(request_path, "r", encoding="utf-8") as f:
             execution_request = json.load(f)
         
         console.print(f"[cyan]Execution request: {execution_request['execution_request_id']}[/cyan]")
@@ -158,7 +158,7 @@ def status_cmd(run_id: str, output_dir: str):
         # Load result
         result_file = run_dir / "execution_result.json"
         if result_file.exists():
-            with open(result_file, "r") as f:
+            with open(result_file, "r", encoding="utf-8") as f:
                 result = json.load(f)
             
             console.print(f"[cyan]Execution Status: {run_id}[/cyan]\n")

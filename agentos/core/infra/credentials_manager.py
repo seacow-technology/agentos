@@ -95,15 +95,17 @@ class CredentialsManager:
             return {}
         
         try:
-            with open(self.creds_file, "r") as f:
+            with open(self.creds_file, "r", encoding="utf-8") as f:
                 return json.load(f)
         except:
             return {}
     
     def _save_credentials(self, creds: Dict) -> None:
         """保存凭证（明文存储，最小可用版本）"""
-        with open(self.creds_file, "w") as f:
+        with open(self.creds_file, "w", encoding="utf-8") as f:
             json.dump(creds, f, indent=2)
-        
-        # 设置文件权限为 600（仅用户可读写）
-        os.chmod(self.creds_file, 0o600)
+
+        # 设置文件权限为 600（仅用户可读写） - Windows 兼容
+        import platform
+        if platform.system() != "Windows":
+            os.chmod(self.creds_file, 0o600)

@@ -44,7 +44,7 @@ class IntentSetLoader:
         if not intent_set_file.exists():
             raise FileNotFoundError(f"Intent set not found: {intent_set_path}")
         
-        with open(intent_set_file) as f:
+        with open(intent_set_file, encoding="utf-8") as f:
             intent_set = json.load(f)
         
         # Validate basic structure
@@ -96,7 +96,7 @@ class IntentSetLoader:
         
         for intent_path in possible_paths:
             if intent_path.exists():
-                with open(intent_path) as f:
+                with open(intent_path, encoding="utf-8") as f:
                     intent = json.load(f)
                 
                 # Validate it's an execution intent

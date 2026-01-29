@@ -94,9 +94,11 @@ class CommitPlanner:
         by_directory: Dict[str, List[Dict]] = {}
         for file_entry in files:
             path = file_entry["path"]
-            # Get directory (first path component)
-            directory = path.split("/")[0] if "/" in path else "root"
-            
+            # Get directory (first path component) - Windows 兼容
+            from pathlib import Path
+            parts = Path(path).parts
+            directory = parts[0] if parts else "root"
+
             if directory not in by_directory:
                 by_directory[directory] = []
             by_directory[directory].append(file_entry)

@@ -12,12 +12,13 @@ Sprint B Task #5 implementation
 import json
 import logging
 import os
-import signal
 import subprocess
 import time
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Dict, Optional
+
+from agentos.core.utils.process import terminate_process, kill_process, is_process_running
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,7 @@ class RuntimeStateManager:
             return
 
         try:
-            with open(self.state_file, "r") as f:
+            with open(self.state_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 self._state = {
                     k: ProcessRuntime(**v) for k, v in data.items()
@@ -70,7 +71,7 @@ class RuntimeStateManager:
     def _save(self):
         """Save state to disk"""
         try:
-            with open(self.state_file, "w") as f:
+            with open(self.state_file, "w", encoding="utf-8") as f:
                 data = {k: asdict(v) for k, v in self._state.items()}
                 json.dump(data, f, indent=2)
             logger.debug(f"Saved runtime state: {len(self._state)} processes")
@@ -98,11 +99,9 @@ class RuntimeStateManager:
         if not runtime:
             return False
 
-        try:
-            # Check if process exists (doesn't kill it)
-            os.kill(runtime.pid, 0)
+        if is_process_running(runtime.pid):
             return True
-        except OSError:
+        else:
             # Process doesn't exist, clean up stale state
             logger.warning(f"Stale PID {runtime.pid} for {provider_id}, cleaning up")
             self.remove(provider_id)
@@ -140,23 +139,12 @@ class OllamaRuntimeManager:
                 "message": f"Ollama is already running (PID: {runtime.pid})",
             }
 
-        # Check if ollama CLI exists
-        try:
-            result = subprocess.run(
-                ["which", "ollama"],
-                capture_output=True,
-                text=True,
-                timeout=2,
-            )
-            if result.returncode != 0:
-                return {
-                    "status": "error",
-                    "message": "Ollama CLI not found. Install from: https://ollama.ai/download",
-                }
-        except Exception as e:
+        # Check if ollama CLI exists (跨平台)
+        import shutil
+        if not shutil.which("ollama"):
             return {
                 "status": "error",
-                "message": f"Failed to check for Ollama CLI: {str(e)}",
+                "message": "Ollama CLI not found. Install from: https://ollama.ai/download",
             }
 
         # Start Ollama server
@@ -223,36 +211,29 @@ class OllamaRuntimeManager:
             if force:
                 # Force kill immediately
                 logger.info(f"Force killing Ollama (PID: {pid})")
-                os.kill(pid, signal.SIGKILL)
+                kill_process(pid)
                 self.state.remove(self.PROVIDER_ID)
                 return {
                     "status": "stopped",
                     "message": f"Ollama force stopped (PID: {pid})",
                 }
 
-            # Graceful shutdown: SIGTERM, wait 2s, fallback to SIGKILL
+            # Graceful shutdown: terminate with 2s timeout
             logger.info(f"Stopping Ollama gracefully (PID: {pid})")
-            os.kill(pid, signal.SIGTERM)
-
-            # Wait up to 2 seconds for graceful shutdown
-            for _ in range(20):  # 20 * 0.1s = 2s
-                time.sleep(0.1)
-                if not self.state.is_running(self.PROVIDER_ID):
-                    logger.info("Ollama stopped gracefully")
-                    return {
-                        "status": "stopped",
-                        "message": f"Ollama stopped gracefully (PID: {pid})",
-                    }
-
-            # Still running after 2s, force kill
-            logger.warning(f"Ollama didn't stop gracefully, force killing (PID: {pid})")
-            os.kill(pid, signal.SIGKILL)
-            self.state.remove(self.PROVIDER_ID)
-
-            return {
-                "status": "stopped",
-                "message": f"Ollama stopped (force kill after timeout, PID: {pid})",
-            }
+            if terminate_process(pid, timeout=2.0):
+                self.state.remove(self.PROVIDER_ID)
+                logger.info("Ollama stopped gracefully")
+                return {
+                    "status": "stopped",
+                    "message": f"Ollama stopped gracefully (PID: {pid})",
+                }
+            else:
+                # Process already terminated
+                self.state.remove(self.PROVIDER_ID)
+                return {
+                    "status": "stopped",
+                    "message": f"Ollama stopped (PID: {pid})",
+                }
 
         except Exception as e:
             logger.error(f"Failed to stop Ollama: {e}")

@@ -71,7 +71,7 @@ class ProjectKBConfig:
         if not config_path.exists():
             return cls()
 
-        with open(config_path, "r") as f:
+        with open(config_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         # 加载 vector_rerank 配置
@@ -126,7 +126,7 @@ class ProjectKBConfig:
             "alpha": self.vector_rerank.alpha,
         }
 
-        with open(config_path, "w") as f:
+        with open(config_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
     def to_dict(self) -> dict[str, Any]:

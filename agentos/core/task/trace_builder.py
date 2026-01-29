@@ -99,7 +99,7 @@ class TraceBuilder:
             for path in Path(pattern.parent.parent.parent).glob(pattern.name):
                 if path.exists():
                     try:
-                        with open(path) as f:
+                        with open(path, encoding="utf-8") as f:
                             data = json.load(f)
                             if data.get("id") == intent_id:
                                 return data
@@ -118,7 +118,7 @@ class TraceBuilder:
             for path in Path(pattern.parent.parent.parent).glob(str(pattern.relative_to(pattern.parent.parent.parent))):
                 if path.exists():
                     try:
-                        with open(path) as f:
+                        with open(path, encoding="utf-8") as f:
                             return json.load(f)
                     except Exception as e:
                         logger.error(f"Failed to load coordinator run from {path}: {e}")
@@ -133,7 +133,7 @@ class TraceBuilder:
             exec_req_file = exec_dir / "execution_request.json"
             if exec_req_file.exists():
                 try:
-                    with open(exec_req_file) as f:
+                    with open(exec_req_file, encoding="utf-8") as f:
                         return json.load(f)
                 except Exception as e:
                     logger.error(f"Failed to load execution request: {e}")
@@ -150,7 +150,7 @@ class TraceBuilder:
             for path in Path(pattern.parent.parent.parent).glob(str(pattern.relative_to(pattern.parent.parent.parent))):
                 if path.exists():
                     try:
-                        with open(path) as f:
+                        with open(path, encoding="utf-8") as f:
                             data = json.load(f)
                             if data.get("result_id") == dry_result_id:
                                 return data
@@ -171,7 +171,7 @@ class TraceBuilder:
         if tape_path.exists():
             try:
                 events = []
-                with open(tape_path) as f:
+                with open(tape_path, encoding="utf-8") as f:
                     for line in f:
                         if line.strip():
                             events.append(json.loads(line))

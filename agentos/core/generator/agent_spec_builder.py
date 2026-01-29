@@ -58,7 +58,7 @@ class AgentSpecBuilder:
     def _load_agent_spec_schema(self) -> dict[str, Any]:
         """Load AgentSpec JSON schema"""
         schema_path = Path(__file__).parent.parent.parent / "schemas" / "agent_spec.schema.json"
-        with open(schema_path) as f:
+        with open(schema_path, encoding="utf-8") as f:
             return json.load(f)
     
     def _verify_commands(self, agent_spec: dict[str, Any], factpack: dict[str, Any]):

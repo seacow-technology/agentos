@@ -151,7 +151,7 @@ class RunTape:
             "file_count": len(checksums)
         }
         
-        with open(snapshot_file, "w") as f:
+        with open(snapshot_file, "w", encoding="utf-8") as f:
             json.dump(snapshot, f, indent=2)
     
     def get_snapshot(self, step_id: str) -> Optional[Dict[str, Any]]:
@@ -169,7 +169,7 @@ class RunTape:
         if not snapshot_file.exists():
             return None
         
-        with open(snapshot_file, "r") as f:
+        with open(snapshot_file, "r", encoding="utf-8") as f:
             return json.load(f)
     
     def get_all_snapshots(self) -> List[Dict[str, Any]]:
@@ -177,7 +177,7 @@ class RunTape:
         snapshots = []
         
         for snapshot_file in sorted(self.snapshots_dir.glob("*.json")):
-            with open(snapshot_file, "r") as f:
+            with open(snapshot_file, "r", encoding="utf-8") as f:
                 snapshots.append(json.load(f))
         
         return snapshots
@@ -193,7 +193,7 @@ class RunTape:
             return []
         
         events = []
-        with open(self.run_tape_path, "r") as f:
+        with open(self.run_tape_path, "r", encoding="utf-8") as f:
             for line in f:
                 if line.strip():
                     events.append(json.loads(line))

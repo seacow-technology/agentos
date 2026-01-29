@@ -191,7 +191,7 @@ class RollbackManager:
         }
         
         output_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_file, "w") as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             json.dump(proof, f, indent=2)
     
     def rollback_to_latest(self) -> Dict[str, Any]:

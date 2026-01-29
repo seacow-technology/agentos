@@ -49,7 +49,7 @@ class ToolDispatcher:
         
         # 保存 task pack
         task_pack_file = run_dir / "task_pack.json"
-        with open(task_pack_file, "w") as f:
+        with open(task_pack_file, "w", encoding="utf-8") as f:
             json.dump(task_pack, f, indent=2)
         
         # 生成调度命令
@@ -57,7 +57,7 @@ class ToolDispatcher:
         
         # 保存命令
         command_file = run_dir / "dispatch_command.sh"
-        with open(command_file, "w") as f:
+        with open(command_file, "w", encoding="utf-8") as f:
             f.write("#!/bin/bash\n")
             f.write(f"# Generated at: {datetime.now(timezone.utc).isoformat()}\n")
             f.write(f"# Task Pack: {task_pack_id}\n")
@@ -114,7 +114,7 @@ class ToolDispatcher:
         
         # 保存结果
         result_file = run_dir / "dispatch_result.json"
-        with open(result_file, "w") as f:
+        with open(result_file, "w", encoding="utf-8") as f:
             json.dump(result, f, indent=2)
         
         return result

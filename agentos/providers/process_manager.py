@@ -17,7 +17,6 @@ import json
 import logging
 import os
 import psutil
-import signal
 import subprocess
 import time
 from collections import deque
@@ -25,6 +24,8 @@ from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Optional, Dict, Any, Deque
 import socket
+
+from agentos.core.utils.process import terminate_process, kill_process
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +91,7 @@ class ProcessManager:
                 "base_url": base_url,
                 "instance_key": instance_key,
             }
-            with open(pidfile, "w") as f:
+            with open(pidfile, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
             logger.debug(f"Wrote pidfile: {pidfile}")
         except Exception as e:
@@ -103,7 +104,7 @@ class ProcessManager:
             return None
 
         try:
-            with open(pidfile, "r") as f:
+            with open(pidfile, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
             logger.error(f"Failed to read pidfile {pidfile}: {e}")
@@ -134,7 +135,7 @@ class ProcessManager:
 
         for pidfile in self.run_dir.glob("*.pid"):
             try:
-                with open(pidfile, "r") as f:
+                with open(pidfile, "r", encoding="utf-8") as f:
                     data = json.load(f)
 
                 instance_key = data.get("instance_key")
@@ -349,7 +350,10 @@ class ProcessManager:
                 if pid and self._is_process_alive(pid):
                     # Kill recovered process
                     try:
-                        os.kill(pid, signal.SIGKILL if force else signal.SIGTERM)
+                        if force:
+                            kill_process(pid)
+                        else:
+                            terminate_process(pid, timeout=2.0)
                         self._remove_pidfile(instance_key)
                         return True, f"Process stopped (PID {pid})"
                     except Exception as e:
@@ -365,19 +369,22 @@ class ProcessManager:
 
         try:
             if force:
-                process.kill()  # SIGKILL
+                kill_process(proc_info.pid)
                 logger.info(f"Killed process {instance_key} (PID {proc_info.pid})")
             else:
-                process.terminate()  # SIGTERM
+                terminate_process(proc_info.pid, timeout=5.0)
                 logger.info(f"Terminated process {instance_key} (PID {proc_info.pid})")
 
-            # Wait for process to exit (with timeout)
+            # Wait for process to exit
             try:
-                process.wait(timeout=5)
+                process.wait(timeout=1)
             except subprocess.TimeoutExpired:
-                logger.warning(f"Process {instance_key} did not exit after SIGTERM, killing")
-                process.kill()
-                process.wait()
+                # Process should have been terminated by terminate_process/kill_process
+                logger.debug(f"Process {instance_key} cleanup: waiting for subprocess object")
+                try:
+                    process.wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    logger.warning(f"Process {instance_key} subprocess object still exists after termination")
 
             # Close pipes to signal readers to stop
             if process.stdout:

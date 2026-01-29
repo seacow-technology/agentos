@@ -117,7 +117,7 @@ class ProvidersConfigManager:
             return
 
         try:
-            with open(self.config_file, "r") as f:
+            with open(self.config_file, "r", encoding="utf-8") as f:
                 self._config = json.load(f)
             logger.info(f"Loaded providers config: {len(self._config.get('providers', {}))} providers")
         except Exception as e:
@@ -129,7 +129,7 @@ class ProvidersConfigManager:
         try:
             # Write to temp file
             temp_file = self.config_file.with_suffix(".tmp")
-            with open(temp_file, "w") as f:
+            with open(temp_file, "w", encoding="utf-8") as f:
                 json.dump(self._config, f, indent=2)
 
             # Atomic rename

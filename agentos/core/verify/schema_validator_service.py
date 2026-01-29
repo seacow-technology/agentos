@@ -111,7 +111,7 @@ class SchemaValidatorService:
             if not schema_path.is_absolute():
                 schema_path = self.schema_root / schema_path
 
-            with open(schema_path) as f:
+            with open(schema_path, encoding="utf-8") as f:
                 schema = json.load(f)
 
             return self._validate_against_schema(data, schema)
@@ -139,7 +139,7 @@ class SchemaValidatorService:
             (is_valid, errors): 验证结果和错误列表
         """
         try:
-            with open(file_path) as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
             return self.validate_by_name(data, schema_name)
         except FileNotFoundError:
@@ -165,7 +165,7 @@ class SchemaValidatorService:
             (is_valid, errors): 验证结果和错误列表
         """
         try:
-            with open(file_path) as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
             return self.validate_by_path(data, schema_path)
         except FileNotFoundError:

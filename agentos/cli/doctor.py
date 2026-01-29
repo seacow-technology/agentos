@@ -1,107 +1,116 @@
-"""Doctor command - System health check without heavy dependencies"""
+"""
+agentos doctor - Environment health checker and auto-fixer
+
+Usage:
+    agentos doctor              # Check only (read-only)
+    agentos doctor --fix        # Auto-fix issues
+    agentos doctor --fix --python 3.13  # Specify Python version (optional)
+
+Philosophy:
+- Default: Read-only check + clear next steps
+- --fix: One-click environment setup (zero decisions)
+- Respects "local + minimal admin token" principle
+- No admin token needed for project-level operations
+"""
 
 import sys
-import click
 from pathlib import Path
+
+import click
+from rich.console import Console
+
+from agentos.core.doctor import (
+    run_all_checks,
+    apply_all_fixes,
+    print_report,
+    print_fix_summary,
+    CheckStatus,
+)
+
+console = Console()
 
 
 @click.command()
-@click.option("--verbose", "-v", is_flag=True, help="Show detailed information")
-def doctor(verbose):
-    """Run system health check (no configuration required)
-
-    This command verifies basic AgentOS functionality without requiring
-    providers or adapters to be configured.
+@click.option(
+    "--fix",
+    is_flag=True,
+    default=False,
+    help="自动修复检测到的问题（默认只读检查）"
+)
+@click.option(
+    "--python",
+    default="3.13",
+    help="指定 Python 版本（默认: 3.13）"
+)
+def doctor(fix: bool, python: str):
     """
-    from agentos import __version__
+    环境健康检查和自动修复
 
-    click.echo("🔍 AgentOS System Check")
-    click.echo("=" * 50)
-    click.echo()
+    默认只读检查，显示修复建议。
+    使用 --fix 自动执行修复。
 
-    # Check 1: Python version
-    py_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-    click.echo(f"✓ Python: {py_version}")
+    示例：
 
-    # Check 2: AgentOS version
-    click.echo(f"✓ AgentOS: {__version__}")
-
-    # Check 3: Core modules
+        agentos doctor              # 检查环境
+        agentos doctor --fix        # 一键修复
+        agentos doctor --fix --python 3.13  # 指定 Python 版本
+    """
+    # Get project root (assume we're in agentos/cli, go up 2 levels)
     try:
-        from agentos.config import load_settings
-        click.echo("✓ Config module: OK")
-    except ImportError as e:
-        click.echo(f"✗ Config module: FAIL - {e}")
-        sys.exit(1)
+        # Try to find project root by looking for pyproject.toml
+        current = Path.cwd()
+        project_root = current
 
-    try:
-        from agentos.store import get_db
-        click.echo("✓ Store module: OK")
-    except ImportError as e:
-        click.echo(f"✗ Store module: FAIL - {e}")
-        sys.exit(1)
-
-    # Check 4: Database
-    try:
-        from agentos.store import get_db
-        conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' LIMIT 1")
-        result = cursor.fetchone()
-        conn.close()
-
-        if result:
-            click.echo("✓ Database: Initialized")
+        # Search up to 5 levels
+        for _ in range(5):
+            if (project_root / "pyproject.toml").exists():
+                break
+            if project_root.parent == project_root:
+                # Reached filesystem root
+                project_root = current
+                break
+            project_root = project_root.parent
         else:
-            click.echo("⚠ Database: Empty (run 'agentos init')")
-    except FileNotFoundError:
-        click.echo("⚠ Database: Not found (run 'agentos init')")
-    except Exception as e:
-        if verbose:
-            click.echo(f"⚠ Database: Error - {e}")
+            project_root = current
+    except Exception:
+        project_root = Path.cwd()
+
+    console.print(f"[dim]项目根目录: {project_root}[/dim]")
+
+    # Run checks
+    checks = run_all_checks(project_root)
+
+    # Print report
+    print_report(checks, show_fix_commands=(not fix))
+
+    # If not fixing, exit
+    if not fix:
+        # Exit with error code if any checks failed
+        failed = any(c.status == CheckStatus.FAIL for c in checks)
+        if failed:
+            sys.exit(1)
         else:
-            click.echo("⚠ Database: Error (use --verbose for details)")
+            sys.exit(0)
 
-    # Check 5: Configuration
-    try:
-        from agentos.config import load_settings
-        settings = load_settings()
-        click.echo(f"✓ Settings: Loaded (mode={settings.run_mode})")
-    except Exception as e:
-        if verbose:
-            click.echo(f"⚠ Settings: {e}")
-        else:
-            click.echo("⚠ Settings: Using defaults")
+    # Apply fixes
+    console.print("[bold cyan]开始自动修复...[/bold cyan]")
+    console.print()
 
-    # Check 6: WebUI module (check without loading heavy app)
-    webui_path = Path(__file__).parent.parent / "webui" / "app.py"
-    if webui_path.exists():
-        click.echo("✓ WebUI: Available (code present)")
-    else:
-        click.echo("⚠ WebUI: Module not found")
+    failed_checks = [c for c in checks if c.status == CheckStatus.FAIL]
 
-    # Check 7: CLI module (check without loading)
-    cli_path = Path(__file__).parent / "interactive.py"
-    if cli_path.exists():
-        click.echo("✓ Interactive CLI: Available (code present)")
-    else:
-        click.echo("⚠ Interactive CLI: Module not found")
+    if not failed_checks:
+        console.print("[bold green]✨ 所有检查通过，无需修复！[/bold green]")
+        sys.exit(0)
 
-    click.echo()
-    click.echo("=" * 50)
-    click.echo()
-    click.echo("✅ Core system: OK")
-    click.echo()
-    click.echo("💡 Note: Provider and adapter checks are skipped in basic mode.")
-    click.echo("   No network calls or heavy modules are loaded.")
-    click.echo()
-    click.echo("Next steps:")
-    click.echo("  • Initialize database: agentos init")
-    click.echo("  • Start WebUI: agentos --web")
-    click.echo("  • Interactive CLI: agentos")
-    click.echo()
+    results = apply_all_fixes(project_root, failed_checks)
 
-    if verbose:
-        click.echo("ℹ️  Verbose mode: Additional checks (providers, adapters) can be added")
-        click.echo("   in future versions with --full flag.")
-        click.echo()
+    # Print fix summary
+    print_fix_summary(results)
+
+    # Exit with error if any fixes failed
+    any_failed = any(not r.success for r in results)
+    sys.exit(1 if any_failed else 0)
+
+
+if __name__ == "__main__":
+    doctor()

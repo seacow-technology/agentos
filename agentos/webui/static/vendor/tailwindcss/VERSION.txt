@@ -1,0 +1,20 @@
+Tailwind CSS - Standalone CDN Version
+=====================================
+
+Source: https://cdn.tailwindcss.com
+Downloaded: 2026-01-29
+File: tailwind.min.js (407,279 bytes / 407KB)
+
+This is the official Tailwind CSS Play CDN standalone version.
+It includes the full Tailwind CSS framework with JIT (Just-In-Time) compilation
+that runs in the browser.
+
+Usage in HTML:
+<script src="/static/vendor/tailwindcss/tailwind.min.js"></script>
+
+Note: This is the latest stable version from the CDN. The specific version
+number is embedded in the minified code. For production use with version pinning,
+consider using the npm package with a build process instead.
+
+Original CDN: https://cdn.tailwindcss.com
+Package Info: https://github.com/tailwindlabs/tailwindcss

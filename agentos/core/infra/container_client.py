@@ -84,9 +84,11 @@ class ContainerClient:
         
         if auto_remove:
             cmd.append("--rm")
-        
-        cmd.extend([image, "tail", "-f", "/dev/null"])  # Keep running
-        
+
+        # Keep container running (跨平台兼容)
+        import os
+        cmd.extend([image, "tail", "-f", os.devnull])
+
         result = subprocess.run(
             cmd,
             capture_output=True,

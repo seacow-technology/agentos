@@ -53,7 +53,7 @@ class GateEnforcer:
         
         # 检查 review_pack 是否有效
         try:
-            with open(review_pack_path) as f:
+            with open(review_pack_path, encoding="utf-8") as f:
                 review_pack = json.load(f)
             
             # 验证必需字段

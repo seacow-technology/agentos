@@ -61,7 +61,11 @@ class CloudConfigManager:
         self._load()
 
     def _ensure_secure_permissions(self):
-        """Ensure secrets file has chmod 600"""
+        """Ensure secrets file has chmod 600 (Unix only)"""
+        import platform
+        if platform.system() == "Windows":
+            return  # Windows 使用 ACL 权限模型
+
         if self.secrets_file.exists():
             try:
                 os.chmod(self.secrets_file, 0o600)
@@ -76,7 +80,7 @@ class CloudConfigManager:
             return
 
         try:
-            with open(self.secrets_file, "r") as f:
+            with open(self.secrets_file, "r", encoding="utf-8") as f:
                 self._config = json.load(f)
             logger.debug(f"Loaded cloud config: {len(self._config)} providers")
         except Exception as e:
@@ -92,11 +96,13 @@ class CloudConfigManager:
         try:
             # Write to temp file
             temp_file = self.secrets_file.with_suffix(".tmp")
-            with open(temp_file, "w") as f:
+            with open(temp_file, "w", encoding="utf-8") as f:
                 json.dump(self._config, f, indent=2)
 
-            # Set permissions before rename
-            os.chmod(temp_file, 0o600)
+            # Set permissions before rename (Unix only)
+            import platform
+            if platform.system() != "Windows":
+                os.chmod(temp_file, 0o600)
 
             # Atomic rename
             temp_file.replace(self.secrets_file)

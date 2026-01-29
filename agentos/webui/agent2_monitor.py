@@ -4,9 +4,11 @@ Agent2 - WebUI Health Monitor and Auto-Recovery
 持续监控 AgentOS WebUI 健康状态并自动修复问题
 """
 
+import atexit
 import json
 import logging
 import os
+import platform
 import signal
 import sys
 import time
@@ -57,9 +59,16 @@ class WebUIMonitor:
         # 确保目录存在
         self.multi_agent_dir.mkdir(parents=True, exist_ok=True)
 
-        # 设置信号处理
+        # 设置信号处理 (跨平台兼容)
+        # SIGINT 在所有平台上都支持 (Ctrl+C)
         signal.signal(signal.SIGINT, self._signal_handler)
-        signal.signal(signal.SIGTERM, self._signal_handler)
+
+        # SIGTERM 在 Windows 上不完全支持, 仅在 Unix 系统上注册
+        if platform.system() != "Windows":
+            signal.signal(signal.SIGTERM, self._signal_handler)
+        else:
+            # Windows: 使用 atexit 作为备用的清理机制
+            atexit.register(self._cleanup)
 
         self.running = True
 
@@ -67,8 +76,14 @@ class WebUIMonitor:
         """处理退出信号"""
         logger.info(f"收到信号 {signum}，准备退出...")
         self.running = False
-        self._update_status("stopped", "unknown")
+        self._cleanup()
         sys.exit(0)
+
+    def _cleanup(self):
+        """清理资源和更新状态（跨平台兼容的退出处理）"""
+        if hasattr(self, 'status'):
+            logger.info("正在清理并更新状态...")
+            self._update_status("stopped", "unknown")
 
     def _update_status(self, status: str, health_status: str,
                       fix_record: Optional[Dict[str, Any]] = None):
@@ -84,7 +99,7 @@ class WebUIMonitor:
                 self.status["fixes"] = self.status["fixes"][-50:]
 
         try:
-            with open(self.status_file, 'w') as f:
+            with open(self.status_file, "w", encoding="utf-8") as f:
                 json.dump(self.status, f, indent=2)
         except Exception as e:
             logger.error(f"更新状态文件失败: {e}")
@@ -96,7 +111,7 @@ class WebUIMonitor:
             return False
 
         try:
-            with open(self.pid_file, 'r') as f:
+            with open(self.pid_file, "r", encoding="utf-8") as f:
                 pid = int(f.read().strip())
 
             # 检查进程是否存在
@@ -190,7 +205,7 @@ class WebUIMonitor:
         }
 
         try:
-            with open(self.restart_signal, 'w') as f:
+            with open(self.restart_signal, "w", encoding="utf-8") as f:
                 json.dump(signal_data, f, indent=2)
             logger.info(f"已创建重启信号: {reason}")
         except Exception as e:

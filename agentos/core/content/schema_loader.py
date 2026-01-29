@@ -52,7 +52,7 @@ class ContentSchemaLoader:
             if not schema_path.exists():
                 raise FileNotFoundError(f"Schema not found: {schema_ref}")
 
-        with open(schema_path) as f:
+        with open(schema_path, encoding="utf-8") as f:
             schema = json.load(f)
 
         self._schema_cache[schema_ref] = schema

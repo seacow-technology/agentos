@@ -39,7 +39,7 @@ class ViteReactAdapter(BaseAdapter):
         
         # Check package.json for vite dependency
         try:
-            with open(package_json) as f:
+            with open(package_json, encoding="utf-8") as f:
                 pkg_data = json.load(f)
                 deps = {**pkg_data.get("dependencies", {}), **pkg_data.get("devDependencies", {})}
                 return "vite" in deps
@@ -67,7 +67,7 @@ class ViteReactAdapter(BaseAdapter):
         # Parse package.json
         package_json = repo_root / "package.json"
         if package_json.exists():
-            with open(package_json) as f:
+            with open(package_json, encoding="utf-8") as f:
                 pkg_data = json.load(f)
             
             # Detected project

@@ -60,6 +60,22 @@ Core validation layers (Schema / Governance / Execution Gates) are frozen and do
 
 ---
 
+## **🔧 Environment Check & Setup**
+
+Before using AgentOS, verify your environment is ready:
+
+```bash
+# Quick environment check (no external dependencies required)
+python3 scripts/verify_doctor.py
+
+# One-command setup (installs uv, Python 3.13, dependencies, pytest)
+uv run agentos doctor --fix
+```
+
+> 💡 `agentos doctor` automatically configures your environment with zero decisions needed.
+
+---
+
 ## **🚀 Quick Start**
 
 ### **Option 1: Using uv (Recommended)**
@@ -202,10 +218,28 @@ agentos task show <task_id>
 
 ## **🛠️ Development & Testing**
 
+### **Environment Verification**
+
+```bash
+# Verify environment without external dependencies
+python3 scripts/verify_doctor.py
+
+# Auto-configure environment (uv, Python 3.13, all dependencies)
+uv run agentos doctor --fix
+```
+
 ### **Run Tests**
 
 ```bash
+# Quick test (recommended after environment setup)
+uv run pytest -q
+
+# Full test suite
 uv run pytest tests/
+
+# Specific test categories
+uv run pytest tests/unit/           # Unit tests
+uv run pytest tests/integration/    # Integration tests
 ```
 
 ### **Lint & Format**

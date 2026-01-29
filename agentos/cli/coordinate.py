@@ -136,13 +136,13 @@ def _load_intent(intent_ref: str) -> dict:
     # Try as file path
     path = Path(intent_ref)
     if path.exists():
-        with open(path, "r") as f:
+        with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
     
     # Try as intent ID in examples
     examples_path = Path("examples/intents") / f"{intent_ref}.json"
     if examples_path.exists():
-        with open(examples_path, "r") as f:
+        with open(examples_path, "r", encoding="utf-8") as f:
             return json.load(f)
     
     return None

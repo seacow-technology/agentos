@@ -60,7 +60,7 @@ class ReviewGate:
         
         # 保存审批请求
         approval_file = self.approval_dir / f"{approval_request['approval_request_id']}.json"
-        with open(approval_file, "w") as f:
+        with open(approval_file, "w", encoding="utf-8") as f:
             json.dump(approval_request, f, indent=2)
         
         return approval_request
@@ -81,7 +81,7 @@ class ReviewGate:
         if not approval_file.exists():
             return None
         
-        with open(approval_file, "r") as f:
+        with open(approval_file, "r", encoding="utf-8") as f:
             approval_request = json.load(f)
         
         if approval_request["status"] == "approved":
@@ -112,7 +112,7 @@ class ReviewGate:
         if not approval_file.exists():
             return False
         
-        with open(approval_file, "r") as f:
+        with open(approval_file, "r", encoding="utf-8") as f:
             approval_request = json.load(f)
         
         approval_request["status"] = "approved"
@@ -121,7 +121,7 @@ class ReviewGate:
         if notes:
             approval_request["notes"] = notes
         
-        with open(approval_file, "w") as f:
+        with open(approval_file, "w", encoding="utf-8") as f:
             json.dump(approval_request, f, indent=2)
         
         return True
@@ -149,7 +149,7 @@ class ReviewGate:
         if not approval_file.exists():
             return False
         
-        with open(approval_file, "r") as f:
+        with open(approval_file, "r", encoding="utf-8") as f:
             approval_request = json.load(f)
         
         approval_request["status"] = "rejected"
@@ -157,7 +157,7 @@ class ReviewGate:
         approval_request["rejected_by"] = rejected_by
         approval_request["rejection_reason"] = reason
         
-        with open(approval_file, "w") as f:
+        with open(approval_file, "w", encoding="utf-8") as f:
             json.dump(approval_request, f, indent=2)
         
         return True
@@ -167,7 +167,7 @@ class ReviewGate:
         pending = []
         
         for approval_file in self.approval_dir.glob("approval_*.json"):
-            with open(approval_file, "r") as f:
+            with open(approval_file, "r", encoding="utf-8") as f:
                 approval_request = json.load(f)
             
             if approval_request["status"] == "pending":

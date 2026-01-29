@@ -18,7 +18,6 @@ Not in scope:
 """
 
 import os
-import signal
 import subprocess
 import time
 import logging
@@ -27,6 +26,8 @@ from typing import Optional, Dict, Any
 from dataclasses import dataclass
 
 import httpx
+
+from agentos.core.utils.process import terminate_process, kill_process, is_process_running
 
 logger = logging.getLogger(__name__)
 
@@ -87,10 +88,9 @@ class OllamaController:
             pid = int(self.pid_file.read_text().strip())
 
             # Verify PID is still valid
-            try:
-                os.kill(pid, 0)  # Signal 0 doesn't kill, just checks existence
+            if is_process_running(pid):
                 return pid
-            except OSError:
+            else:
                 # PID no longer exists, clean up stale file
                 self.pid_file.unlink(missing_ok=True)
                 return None
@@ -146,7 +146,7 @@ class OllamaController:
         # Step 2: Spawn subprocess
         try:
             # Open log file for stdout/stderr
-            log_handle = open(self.log_file, "a", buffering=1)
+            log_handle = open(self.log_file, "a", buffering=1, encoding="utf-8")
 
             process = subprocess.Popen(
                 ["ollama", "serve"],
@@ -281,16 +281,12 @@ class OllamaController:
                 },
             )
 
-        # Step 3: Send SIGTERM
+        # Step 3: Terminate process
         try:
-            logger.info(f"Sending SIGTERM to PID {pid}")
-            os.kill(pid, signal.SIGTERM)
+            logger.info(f"Terminating Ollama process (PID {pid})")
 
-            # Wait 1s for graceful shutdown
-            time.sleep(1.0)
-
-            # Check if stopped
-            if not self.is_running():
+            # Try graceful termination with 5s timeout (Ollama may need time to cleanup)
+            if terminate_process(pid, timeout=5.0):
                 logger.info("Ollama stopped gracefully")
                 self._clear_pid()
 
@@ -304,16 +300,9 @@ class OllamaController:
                     pid=None,
                     message="Ollama stopped successfully",
                 )
-
-            # Still running, try SIGKILL
-            logger.warning(f"SIGTERM failed, sending SIGKILL to PID {pid}")
-            os.kill(pid, signal.SIGKILL)
-
-            time.sleep(0.5)
-
-            # Final check
-            if not self.is_running():
-                logger.info("Ollama stopped forcefully (SIGKILL)")
+            else:
+                # Process was not running or already terminated
+                logger.info("Ollama process already stopped")
                 self._clear_pid()
 
                 # Emit event
@@ -324,22 +313,7 @@ class OllamaController:
                     action="stop",
                     state="DISCONNECTED",
                     pid=None,
-                    message="Ollama stopped (SIGKILL)",
-                )
-            else:
-                # Still running after SIGKILL (should not happen)
-                logger.error(f"Failed to stop Ollama PID {pid} even with SIGKILL")
-
-                return ControlResult(
-                    ok=False,
-                    action="stop",
-                    state="ERROR",
-                    message="Failed to stop Ollama",
-                    error={
-                        "code": "stop_failed",
-                        "message": f"Failed to stop Ollama PID {pid}",
-                        "hint": "Try stopping manually with: kill -9 {pid}",
-                    },
+                    message="Ollama stopped",
                 )
 
         except ProcessLookupError:

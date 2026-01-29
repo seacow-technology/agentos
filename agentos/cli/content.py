@@ -32,7 +32,7 @@ def register_content(content_type: str, file_path: str):
     """Register new content (metadata only, does not execute)."""
     try:
         # Load content from file
-        with open(file_path) as f:
+        with open(file_path, encoding="utf-8") as f:
             content = json.load(f)
 
         # Ensure type matches

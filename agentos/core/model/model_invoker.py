@@ -9,10 +9,14 @@ Model Invoker - 统一的模型调用接口
 """
 
 import subprocess
-from typing import Dict, Any
+import shlex
+import logging
+from typing import Dict, Any, List
 
 from agentos.core.model import ModelRegistry, InvocationConfig, ModelCredentialsError
 from agentos.config.cli_settings import load_settings
+
+logger = logging.getLogger(__name__)
 
 
 class ModelInvoker:
@@ -64,53 +68,68 @@ class ModelInvoker:
             raise ValueError(f"Unknown invocation method: {config.method}")
     
     def invoke_cli(
-        self, 
-        model_id: str, 
-        brand: str, 
-        prompt: str, 
+        self,
+        model_id: str,
+        brand: str,
+        prompt: str,
         config: InvocationConfig,
         **kwargs
     ) -> Dict[str, Any]:
-        """CLI 方式调用
-        
+        """CLI 方式调用 - 使用安全的列表形式
+
         Args:
             model_id: 模型 ID
             brand: 品牌名称
             prompt: 提示词
             config: 调用配置
             **kwargs: 额外参数
-            
+
         Returns:
             调用结果
+
+        Security:
+            使用列表形式避免命令注入攻击。不使用 shell=True。
         """
-        if not config.cli_command:
+        # 优先使用安全的 cli_command_list
+        if config.cli_command_list:
+            cmd = self._build_safe_command_list(
+                config.cli_command_list,
+                model_id=model_id,
+                prompt=prompt,
+                **kwargs
+            )
+        elif config.cli_command:
+            # 向后兼容旧的 cli_command，但使用 shlex.quote 保护
+            logger.warning(
+                f"Using deprecated cli_command for {brand}. "
+                "Please migrate to cli_command_list for better security."
+            )
+            cmd = self._build_legacy_command(
+                config.cli_command,
+                model_id=model_id,
+                prompt=prompt,
+                **kwargs
+            )
+        else:
             raise ValueError(f"CLI command not configured for {model_id}@{brand}")
-        
-        # 构建命令（替换模板变量）
-        command = config.cli_command.format(
-            model_id=model_id,
-            prompt=prompt,
-            **kwargs
-        )
-        
+
         try:
-            # 执行命令
+            # 执行命令 - 不使用 shell=True
             result = subprocess.run(
-                command,
-                shell=True,
+                cmd,
                 capture_output=True,
                 text=True,
                 timeout=kwargs.get("timeout", 60)
             )
-            
+
             if result.returncode != 0:
                 raise RuntimeError(f"CLI command failed: {result.stderr}")
-            
+
             return {
                 "response": result.stdout,
                 "method": "cli",
                 "metadata": {
-                    "command": command,
+                    "command": " ".join(cmd) if isinstance(cmd, list) else cmd,
                     "returncode": result.returncode,
                     "stderr": result.stderr
                 }
@@ -119,6 +138,62 @@ class ModelInvoker:
             raise RuntimeError(f"CLI command timed out after {kwargs.get('timeout', 60)}s")
         except Exception as e:
             raise RuntimeError(f"CLI invocation failed: {e}")
+
+    def _build_safe_command_list(
+        self,
+        template: List[str],
+        **kwargs
+    ) -> List[str]:
+        """安全地构建命令列表
+
+        Args:
+            template: 命令模板列表，如 ["codex", "{prompt}"]
+            **kwargs: 模板变量
+
+        Returns:
+            安全的命令列表
+        """
+        cmd = []
+        for part in template:
+            # 替换模板变量，但不执行 shell 展开
+            replaced = part
+            for key, value in kwargs.items():
+                placeholder = f"{{{key}}}"
+                if placeholder in replaced:
+                    # 将值转换为字符串，但不需要 shlex.quote (列表形式已经安全)
+                    replaced = replaced.replace(placeholder, str(value))
+            cmd.append(replaced)
+        return cmd
+
+    def _build_legacy_command(
+        self,
+        template: str,
+        **kwargs
+    ) -> List[str]:
+        """为旧的 cli_command 构建安全命令 (向后兼容)
+
+        Args:
+            template: 命令模板字符串，如 "codex {prompt}"
+            **kwargs: 模板变量
+
+        Returns:
+            安全的命令列表
+
+        Note:
+            使用 shlex.split 解析，并对用户输入进行转义
+        """
+        # 首先转义所有用户输入
+        safe_kwargs = {k: shlex.quote(str(v)) for k, v in kwargs.items()}
+
+        # 格式化命令字符串
+        command_str = template.format(**safe_kwargs)
+
+        # 使用 shlex.split 安全地解析为列表
+        try:
+            cmd = shlex.split(command_str)
+            return cmd
+        except ValueError as e:
+            raise ValueError(f"Invalid command template: {template}") from e
     
     def invoke_api(
         self, 

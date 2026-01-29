@@ -437,7 +437,7 @@ Follow these guidelines:
         task_pack_file = output_dir / f"{task_pack['tool_task_pack_id']}.json"
         task_pack_file.parent.mkdir(parents=True, exist_ok=True)
         
-        with open(task_pack_file, "w") as f:
+        with open(task_pack_file, "w", encoding="utf-8") as f:
             json.dump(task_pack, f, indent=2)
         
         # 生成调度命令

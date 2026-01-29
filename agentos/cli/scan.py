@@ -72,7 +72,7 @@ def scan_cmd(project_id: str):
             report_dir.mkdir(parents=True, exist_ok=True)
             
             factpack_path = report_dir / "factpack.json"
-            with open(factpack_path, "w") as f:
+            with open(factpack_path, "w", encoding="utf-8") as f:
                 json.dump(factpack, f, indent=2)
             
             # Record artifact

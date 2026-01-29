@@ -212,8 +212,9 @@ class ReviewPackGenerator:
         return f"To rollback, run: git revert {first_commit}^..HEAD"
 
     def _infer_module(self, file_path: str) -> str:
-        """Infer module from file path."""
-        parts = file_path.split("/")
+        """Infer module from file path (Windows 兼容)."""
+        from pathlib import Path
+        parts = Path(file_path).parts
         if len(parts) > 1:
             return parts[0]
         return "root"
@@ -237,7 +238,7 @@ class ReviewPackGenerator:
         run_id = review_pack["run_id"]
         json_path = output_dir / f"review_pack_run_{run_id}.json"
 
-        with open(json_path, "w") as f:
+        with open(json_path, "w", encoding="utf-8") as f:
             json.dump(review_pack, f, indent=2)
 
         console.print(f"[green]✓ Review pack JSON saved:[/green] {json_path}")
@@ -273,7 +274,7 @@ class ReviewPackGenerator:
             run_id = review_pack["run_id"]
             md_path = output_dir / f"review_pack_run_{run_id}.md"
 
-            with open(md_path, "w") as f:
+            with open(md_path, "w", encoding="utf-8") as f:
                 f.write(rendered)
 
             console.print(f"[green]✓ Review pack Markdown saved:[/green] {md_path}")

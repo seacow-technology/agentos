@@ -6,12 +6,13 @@ WebUI Daemon Manager - 后台服务管理
 
 import os
 import sys
-import signal
 import subprocess
 import time
 import logging
 from pathlib import Path
 from typing import Optional, Tuple
+
+from agentos.core.utils.process import terminate_process, kill_process, is_process_running
 
 logger = logging.getLogger(__name__)
 
@@ -51,10 +52,9 @@ class WebUIDaemon:
             pid = int(self.pid_file.read_text().strip())
 
             # 检查进程是否存在
-            try:
-                os.kill(pid, 0)  # 发送信号 0 检查进程
+            if is_process_running(pid):
                 return True, pid
-            except OSError:
+            else:
                 # 进程不存在，清理 PID 文件
                 self.pid_file.unlink(missing_ok=True)
                 return False, None
@@ -111,7 +111,7 @@ class WebUIDaemon:
         ]
 
         # 打开日志文件
-        log_fd = open(self.log_file, "a")
+        log_fd = open(self.log_file, "a", encoding="utf-8")
 
         # 启动进程
         process = subprocess.Popen(
@@ -162,21 +162,8 @@ class WebUIDaemon:
         try:
             logger.info(f"Stopping WebUI at PID {pid}")
 
-            # 发送 SIGTERM 信号
-            os.kill(pid, signal.SIGTERM)
-
-            # 等待进程结束 (最多 5 秒)
-            for _ in range(50):
-                time.sleep(0.1)
-                try:
-                    os.kill(pid, 0)
-                except OSError:
-                    # 进程已结束
-                    break
-            else:
-                # 超时，强制杀死
-                logger.warning(f"WebUI did not stop gracefully, force killing")
-                os.kill(pid, signal.SIGKILL)
+            # 终止进程 (最多等待 5 秒)
+            terminate_process(pid, timeout=5.0)
 
             # 清理 PID 文件
             self.pid_file.unlink(missing_ok=True)

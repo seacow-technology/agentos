@@ -82,7 +82,7 @@ class MarkdownLinter:
             (is_valid, errors): Tuple of validation result and error messages
         """
         try:
-            with open(markdown_path) as f:
+            with open(markdown_path, encoding="utf-8") as f:
                 content = f.read()
             return self.lint(content, factpack)
         except Exception as e:

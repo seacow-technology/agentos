@@ -36,7 +36,8 @@ class ModelCredentialsError(Exception):
 class InvocationConfig:
     """调用配置"""
     method: str  # "cli" or "api"
-    cli_command: Optional[str] = None  # CLI 命令模板，如 "codex {prompt}"
+    cli_command: Optional[str] = None  # CLI 命令模板，如 "codex {prompt}" (已废弃，不安全)
+    cli_command_list: Optional[List[str]] = None  # CLI 命令列表模板(推荐), 如 ["codex", "{prompt}"]
     api_endpoint: Optional[str] = None  # API 端点，如 "http://localhost:11434"
     requires_auth: bool = True  # 是否需要鉴权
     auth_env_vars: List[str] = field(default_factory=list)  # 需要的环境变量
@@ -78,7 +79,7 @@ class ModelRegistry:
         ),
         "llamacpp": InvocationConfig(
             method="cli",
-            cli_command="llama-cpp-cli --model {model_id} --prompt {prompt}",
+            cli_command_list=["llama-cpp-cli", "--model", "{model_id}", "--prompt", "{prompt}"],
             requires_auth=False,
         ),
         "OpenAI": InvocationConfig(
@@ -95,13 +96,13 @@ class ModelRegistry:
         ),
         "Codex": InvocationConfig(
             method="cli",
-            cli_command="codex {prompt}",
+            cli_command_list=["codex", "{prompt}"],
             requires_auth=True,
             auth_env_vars=["CODEX_API_KEY"],  # 可能需要的授权
         ),
         "Claude-Code-CLI": InvocationConfig(
             method="cli",
-            cli_command="claude-code-cli {prompt}",
+            cli_command_list=["claude-code-cli", "{prompt}"],
             requires_auth=True,
             auth_env_vars=["ANTHROPIC_API_KEY"],
         ),

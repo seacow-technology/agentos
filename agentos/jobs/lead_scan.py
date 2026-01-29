@@ -13,16 +13,19 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import fcntl
 import json
 import logging
 import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
 from rich.console import Console
 from rich.table import Table
+
+# 导入跨平台文件锁工具
+from agentos.core.utils.filelock import acquire_lock, release_lock, LockAcquisitionError
 
 # 导入 Lead Agent 组件
 from agentos.core.lead.adapters.storage import LeadStorage
@@ -46,8 +49,8 @@ logger = logging.getLogger(__name__)
 
 console = Console()
 
-# 锁文件路径
-LOCK_FILE_PATH = Path("/tmp/agentos_lead_scan.lock")
+# 锁文件路径 (跨平台临时目录)
+LOCK_FILE_PATH = Path(tempfile.gettempdir()) / "agentos_lead_scan.lock"
 
 
 class LeadScanJob:
@@ -599,7 +602,7 @@ class LockManager:
 
     def acquire(self) -> bool:
         """
-        获取并发锁（文件锁）
+        获取并发锁（文件锁 - 跨平台兼容）
 
         Returns:
             True: 获取成功
@@ -611,10 +614,10 @@ class LockManager:
             LOCK_FILE_PATH.touch(exist_ok=True)
 
             # 打开锁文件
-            self.lock_file = open(LOCK_FILE_PATH, 'w')
+            self.lock_file = open(LOCK_FILE_PATH, 'w', encoding='utf-8')
 
-            # 尝试获取非阻塞排他锁
-            fcntl.flock(self.lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            # 尝试获取非阻塞排他锁 (跨平台)
+            acquire_lock(self.lock_file, non_blocking=True)
 
             # 写入 PID（可选，用于调试）
             import os
@@ -624,7 +627,7 @@ class LockManager:
             logger.info(f"Acquired lock: {LOCK_FILE_PATH}")
             return True
 
-        except IOError:
+        except LockAcquisitionError:
             # 锁被其他进程持有
             logger.warning(f"Failed to acquire lock: {LOCK_FILE_PATH} (another instance is running)")
             if self.lock_file:
@@ -639,10 +642,10 @@ class LockManager:
             return False
 
     def release(self):
-        """释放并发锁"""
+        """释放并发锁 (跨平台兼容)"""
         if self.lock_file:
             try:
-                fcntl.flock(self.lock_file.fileno(), fcntl.LOCK_UN)
+                release_lock(self.lock_file)
                 self.lock_file.close()
                 logger.info(f"Released lock: {LOCK_FILE_PATH}")
             except Exception as e:

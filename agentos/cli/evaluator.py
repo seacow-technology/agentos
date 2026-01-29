@@ -26,7 +26,7 @@ def run(input_set, output):
         
         if output:
             output_path = Path(output)
-            with open(output_path, 'w') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(result.to_dict(), f, indent=2)
             click.echo(f"✅ Evaluation result saved to {output}")
         else:
@@ -47,9 +47,9 @@ def diff(intent_a, intent_b):
         
         normalizer = IntentNormalizer()
         
-        with open(intent_a) as f:
+        with open(intent_a, encoding="utf-8") as f:
             intent_a_data = json.load(f)
-        with open(intent_b) as f:
+        with open(intent_b, encoding="utf-8") as f:
             intent_b_data = json.load(f)
         
         canonical_a = normalizer.normalize(intent_a_data)
@@ -86,7 +86,7 @@ def explain(result_file):
     try:
         from agentos.core.evaluator import EvaluationExplainer
         
-        with open(result_file) as f:
+        with open(result_file, encoding="utf-8") as f:
             data = json.load(f)
         
         explainer = EvaluationExplainer()
@@ -117,7 +117,7 @@ def merge(strategy, inputs, output):
         
         intents = {}
         for intent_file in intent_files:
-            with open(intent_file) as f:
+            with open(intent_file, encoding="utf-8") as f:
                 intent_data = json.load(f)
                 intent_id = intent_data.get("id", intent_file.stem)
                 intents[intent_id] = intent_data
@@ -136,7 +136,7 @@ def merge(strategy, inputs, output):
         
         if output and plan.result_intent:
             output_path = Path(output)
-            with open(output_path, 'w') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(plan.result_intent, f, indent=2)
             click.echo(f"\n✅ Merged intent saved to {output}")
     

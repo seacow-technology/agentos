@@ -213,7 +213,7 @@ def build_context(project_id: str, agent_type: str, task_id: Optional[str], conf
     if output:
         output_path = Path(output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_path, "w") as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             json.dump(memory_pack, f, indent=2)
         console.print(f"[green]✓ MemoryPack saved to:[/green] {output}")
     else:

@@ -62,7 +62,7 @@ class CommandHistoryService:
         
         if migration_path.exists():
             conn = self._get_connection()
-            with open(migration_path, "r") as f:
+            with open(migration_path, "r", encoding="utf-8") as f:
                 migration_sql = f.read()
             conn.executescript(migration_sql)
             conn.commit()

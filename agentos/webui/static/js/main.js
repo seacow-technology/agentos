@@ -1,5 +1,58 @@
 // AgentOS WebUI Main JavaScript
 
+// ============================================================================
+// WebSocket Log Ring Buffer - Capture [WS] logs for diagnostics
+// ============================================================================
+(function initWsLogCapture(){
+  const max = 200;
+  window.__wsLogs = window.__wsLogs || [];
+
+  function push(level, args){
+    try {
+      const msg = Array.from(args).map(a =>
+        (typeof a === 'object' ? JSON.stringify(a) : String(a))
+      ).join(' ');
+
+      // Only capture [WS] and [Lifecycle] logs
+      if (!msg.includes('[WS]') && !msg.includes('[Lifecycle]')) return;
+
+      window.__wsLogs.push({
+        ts: new Date().toISOString(),
+        level,
+        msg
+      });
+
+      // Keep max 200 entries
+      if (window.__wsLogs.length > max) {
+        window.__wsLogs.splice(0, window.__wsLogs.length - max);
+      }
+    } catch {}
+  }
+
+  // Intercept console methods
+  const origLog = console.log;
+  const origWarn = console.warn;
+  const origErr = console.error;
+
+  console.log = function(...args){
+    push('info', args);
+    return origLog.apply(console, args);
+  };
+
+  console.warn = function(...args){
+    push('warn', args);
+    return origWarn.apply(console, args);
+  };
+
+  console.error = function(...args){
+    push('error', args);
+    return origErr.apply(console, args);
+  };
+
+  // Provide function to get logs
+  window.wsGetLogs = (n=20) => (window.__wsLogs || []).slice(-n);
+})();
+
 // Global state
 const state = {
     currentView: 'chat',
@@ -25,6 +78,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Start health check
     startHealthCheck();
+
+    // Setup WebSocket lifecycle hooks (Safari bfcache, visibility, focus)
+    setupWebSocketLifecycle();
 
     // Load initial view (restore last view or default to chat)
     const lastView = localStorage.getItem('agentos_current_view') || 'chat';
@@ -2360,42 +2416,272 @@ function highlightCodeBlocks(element) {
     }
 }
 
-// Setup WebSocket
-function setupWebSocket() {
-    if (state.websocket) {
-        state.websocket.close();
+// ============================================================================
+// WebSocket Manager - Singleton with reconnection, heartbeat, lifecycle
+// ============================================================================
+const WS = {
+  ws: null,
+  url: null,
+  reconnectTimer: null,
+  heartbeatTimer: null,
+  pongTimer: null,
+  reconnectDelay: 1000,
+  maxReconnectDelay: 30000,
+  heartbeatInterval: 30000,
+  pongTimeout: 60000,
+  manualClose: false,
+  connecting: false,
+  lastActivity: Date.now(),
+
+  connect(sessionId = state.currentSession) {
+    console.log('[WS] connect() called, sessionId:', sessionId);
+
+    if (this.connecting) {
+      console.log('[WS] Already connecting, skipping...');
+      return;
     }
 
-    // Show connecting status
+    this.manualClose = false;
+    this.connecting = true;
+
+    // Close existing connection
+    if (this.ws) {
+      console.log('[WS] Closing existing connection...');
+      this.ws.onclose = null; // Prevent reconnect
+      this.ws.close();
+      this.ws = null;
+    }
+
+    // Clear timers
+    this._clearTimers();
+
+    // Build URL
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    this.url = `${protocol}//${window.location.host}/ws/chat/${sessionId}`;
+
+    console.log('[WS] Connecting to:', this.url);
     updateChatWSStatus('connecting', 'Connecting...');
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/chat/${state.currentSession}`;
+    try {
+      this.ws = new WebSocket(this.url);
 
-    state.websocket = new WebSocket(wsUrl);
-
-    state.websocket.onopen = () => {
-        console.log('WebSocket connected');
-        // Update UI status to connected
+      this.ws.onopen = () => {
+        console.log('[WS] Connected successfully');
+        this.connecting = false;
+        this.reconnectDelay = 1000; // Reset backoff
         updateChatWSStatus('connected', 'Connected');
-    };
+        this._startHeartbeat();
+        this.lastActivity = Date.now();
+      };
 
-    state.websocket.onmessage = (event) => {
-        const message = JSON.parse(event.data);
-        handleWebSocketMessage(message);
-    };
+      this.ws.onmessage = (event) => {
+        this.lastActivity = Date.now();
 
-    state.websocket.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        // Update UI status to error
+        try {
+          const data = JSON.parse(event.data);
+
+          // Handle pong (JSON format from backend: {"type": "pong", "ts": "..."})
+          if (data.type === 'pong') {
+            console.log('[WS] Received pong');
+            this._clearPongTimer();
+            return;
+          }
+
+          // Pass to handleIncomingChatMessage
+          handleIncomingChatMessage(data);
+
+        } catch (err) {
+          console.error('[WS] Message parse error:', err);
+        }
+      };
+
+      this.ws.onerror = (error) => {
+        console.error('[WS] Error:', error);
+        this.connecting = false;
         updateChatWSStatus('disconnected', 'Connection Error');
-    };
+      };
 
-    state.websocket.onclose = () => {
-        console.log('WebSocket closed');
-        // Update UI status to disconnected
+      this.ws.onclose = (event) => {
+        console.log('[WS] Closed, code:', event.code, 'reason:', event.reason, 'manualClose:', this.manualClose);
+        this.connecting = false;
+        this.ws = null;
+        this._clearTimers();
         updateChatWSStatus('disconnected', 'Disconnected');
-    };
+
+        // Auto-reconnect unless manually closed
+        if (!this.manualClose) {
+          console.log('[WS] Scheduling reconnect in', this.reconnectDelay, 'ms');
+          this.reconnectTimer = setTimeout(() => {
+            console.log('[WS] Reconnecting...');
+            this.connect(sessionId);
+          }, this.reconnectDelay);
+
+          // Exponential backoff
+          this.reconnectDelay = Math.min(this.reconnectDelay * 2, this.maxReconnectDelay);
+        }
+      };
+
+      // Update state reference
+      state.websocket = this.ws;
+
+    } catch (err) {
+      console.error('[WS] Connect error:', err);
+      this.connecting = false;
+      updateChatWSStatus('disconnected', 'Failed to connect');
+    }
+  },
+
+  close() {
+    console.log('[WS] Manual close');
+    this.manualClose = true;
+    this._clearTimers();
+
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+
+    state.websocket = null;
+  },
+
+  send(data) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      console.error('[WS] Not connected, readyState:', this.ws?.readyState);
+
+      // Trigger reconnect
+      console.log('[WS] Attempting reconnect...');
+      this.connect();
+
+      Dialog.alert('WebSocket disconnected. Reconnecting...', { title: 'Connection Lost' });
+      return false;
+    }
+
+    try {
+      const payload = typeof data === 'string' ? data : JSON.stringify(data);
+      this.ws.send(payload);
+      this.lastActivity = Date.now();
+      return true;
+    } catch (err) {
+      console.error('[WS] Send error:', err);
+      return false;
+    }
+  },
+
+  _startHeartbeat() {
+    this._clearHeartbeatTimer();
+
+    this.heartbeatTimer = setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        const idle = Date.now() - this.lastActivity;
+
+        if (idle > this.heartbeatInterval) {
+          console.log('[WS] Sending ping (idle:', idle, 'ms)');
+
+          try {
+            this.ws.send('ping');
+
+            // Set pong timeout
+            this.pongTimer = setTimeout(() => {
+              console.warn('[WS] Pong timeout, closing connection');
+              this.ws.close();
+            }, this.pongTimeout);
+
+          } catch (err) {
+            console.error('[WS] Ping error:', err);
+          }
+        }
+      }
+    }, this.heartbeatInterval);
+  },
+
+  _clearHeartbeatTimer() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+  },
+
+  _clearPongTimer() {
+    if (this.pongTimer) {
+      clearTimeout(this.pongTimer);
+      this.pongTimer = null;
+    }
+  },
+
+  _clearTimers() {
+    this._clearHeartbeatTimer();
+    this._clearPongTimer();
+
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+  }
+};
+
+// Adapter for existing handleWebSocketMessage
+function handleIncomingChatMessage(data) {
+  handleWebSocketMessage(data);
+}
+
+// Lifecycle hooks for Safari bfcache and visibility
+function setupWebSocketLifecycle() {
+  console.log('[Lifecycle] Setting up WebSocket lifecycle hooks');
+
+  // Safari bfcache: restore connection on pageshow.persisted
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+      console.log('[Lifecycle] Page restored from bfcache, reconnecting WebSocket');
+      WS.connect();
+    }
+  });
+
+  // Visibility API: reconnect when page becomes visible
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      console.log('[Lifecycle] Page visible, checking WebSocket');
+
+      if (!WS.ws || WS.ws.readyState !== WebSocket.OPEN) {
+        console.log('[Lifecycle] WebSocket not open, reconnecting');
+        WS.connect();
+      }
+    }
+  });
+
+  // Focus event: reconnect on window focus
+  window.addEventListener('focus', () => {
+    console.log('[Lifecycle] Window focused, checking WebSocket');
+
+    if (!WS.ws || WS.ws.readyState !== WebSocket.OPEN) {
+      console.log('[Lifecycle] WebSocket not open, reconnecting');
+      WS.connect();
+    }
+  });
+}
+
+// Debug helpers
+window.wsDebug = () => {
+  console.log('[WS Debug]', {
+    connected: WS.ws?.readyState === WebSocket.OPEN,
+    readyState: WS.ws?.readyState,
+    url: WS.url,
+    reconnectDelay: WS.reconnectDelay,
+    manualClose: WS.manualClose,
+    connecting: WS.connecting,
+    lastActivity: new Date(WS.lastActivity).toISOString(),
+    idleTime: Date.now() - WS.lastActivity
+  });
+};
+
+window.wsReconnect = () => {
+  console.log('[WS] Manual reconnect triggered');
+  WS.connect();
+};
+
+// Setup WebSocket
+function setupWebSocket() {
+    console.log('[WS] setupWebSocket() called, delegating to WS.connect()');
+    WS.connect(state.currentSession);
 }
 
 // Handle WebSocket message
@@ -2472,13 +2758,6 @@ function sendMessage() {
 
     if (!content) return;
 
-    // Check WebSocket connection status
-    if (!state.websocket || state.websocket.readyState !== WebSocket.OPEN) {
-        console.error('WebSocket is not connected. Ready state:', state.websocket?.readyState);
-        Dialog.alert('WebSocket connection not established. Please wait or refresh the page.', { title: 'Connection Error' });
-        return;
-    }
-
     // Get current provider and model selection
     const providerEl = document.getElementById('model-provider');
     const modelEl = document.getElementById('model-name');
@@ -2506,12 +2785,17 @@ function sendMessage() {
     messagesDiv.appendChild(userMsg);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-    // Send via WebSocket
-    state.websocket.send(JSON.stringify({
+    // Send via WS Manager (with auto-reconnect)
+    const sent = WS.send({
         type: 'user_message',
         content: content,
         metadata: metadata,
-    }));
+    });
+
+    if (!sent) {
+        console.error('[WS] Failed to send message, connection lost');
+        // WS.send() already handles reconnection attempt
+    }
 
     // Clear input
     input.value = '';

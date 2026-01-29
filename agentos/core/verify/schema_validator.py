@@ -11,7 +11,7 @@ from jsonschema import Draft7Validator
 def _load_schema(schema_name: str) -> dict:
     """Load a JSON schema by name"""
     schema_path = Path(__file__).parent.parent.parent / "schemas" / f"{schema_name}.schema.json"
-    with open(schema_path) as f:
+    with open(schema_path, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -198,7 +198,7 @@ def validate_file(file_path: str) -> tuple:
         (is_valid, errors, detected_type): Validation result, errors, and detected schema type
     """
     try:
-        with open(file_path) as f:
+        with open(file_path, encoding="utf-8") as f:
             data = json.load(f)
     except json.JSONDecodeError as e:
         return False, [f"Invalid JSON: {str(e)}"], None

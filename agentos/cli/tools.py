@@ -31,7 +31,7 @@ def pack_cmd(exec_req_path: str, tool: str, output_path: str):
     
     try:
         # Load execution request
-        with open(exec_req_path, "r") as f:
+        with open(exec_req_path, "r", encoding="utf-8") as f:
             exec_request = json.load(f)
         
         # Get repo state using GitClient
@@ -63,7 +63,7 @@ def pack_cmd(exec_req_path: str, tool: str, output_path: str):
         output_file = Path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
         
-        with open(output_file, "w") as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             json.dump(task_pack, f, indent=2)
         
         console.print(f"[green]✓ Tool task pack created: {output_file}[/green]")
@@ -86,7 +86,7 @@ def dispatch_cmd(pack_path: str):
     
     try:
         # Load task pack
-        with open(pack_path, "r") as f:
+        with open(pack_path, "r", encoding="utf-8") as f:
             task_pack = json.load(f)
         
         tool_type = task_pack["tool_type"]
@@ -134,7 +134,7 @@ def collect_cmd(task_pack_id: str, input_dir: str, output_path: str):
         output_file = Path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
         
-        with open(output_file, "w") as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             json.dump(result_pack, f, indent=2)
         
         console.print(f"[green]✓ Tool result pack created: {output_file}[/green]")
@@ -157,7 +157,7 @@ def verify_cmd(result_path: str):
     
     try:
         # Load result pack
-        with open(result_path, "r") as f:
+        with open(result_path, "r", encoding="utf-8") as f:
             result_pack = json.load(f)
         
         tool_type = result_pack["tool_type"]

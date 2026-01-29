@@ -98,7 +98,7 @@ class SettingsManager:
             return CLISettings()  # Return defaults
         
         try:
-            with open(self.settings_path, "r") as f:
+            with open(self.settings_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
             return CLISettings.from_dict(data)
         except Exception as e:
@@ -109,7 +109,7 @@ class SettingsManager:
         """Save settings to file"""
         try:
             self.settings_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.settings_path, "w") as f:
+            with open(self.settings_path, "w", encoding="utf-8") as f:
                 json.dump(settings.to_dict(), f, indent=2)
         except Exception as e:
             print(f"Error: Failed to save settings: {e}")

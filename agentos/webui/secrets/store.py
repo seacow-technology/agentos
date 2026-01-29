@@ -110,7 +110,7 @@ class SecretStore:
         try:
             self._verify_permissions()
 
-            with open(self.secrets_file, 'r') as f:
+            with open(self.secrets_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
             # Log access (without keys)
@@ -135,7 +135,7 @@ class SecretStore:
             # Write to tmp file first
             tmp_file = self.secrets_file.with_suffix('.tmp')
 
-            with open(tmp_file, 'w') as f:
+            with open(tmp_file, 'w', encoding='utf-8') as f:
                 json.dump(secrets, f, indent=2)
 
             # Set permissions before rename

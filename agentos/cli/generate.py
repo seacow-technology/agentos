@@ -43,7 +43,7 @@ def generate_agent(agent_type: str, project: str):
         factpack_path = factpack_files[0]
         console.print(f"📋 Loading FactPack: {factpack_path}")
         
-        with open(factpack_path) as f:
+        with open(factpack_path, encoding="utf-8") as f:
             factpack = json.load(f)
         
         # Create run record
@@ -67,7 +67,7 @@ def generate_agent(agent_type: str, project: str):
             artifacts_dir.mkdir(parents=True, exist_ok=True)
             
             spec_path = artifacts_dir / f"{agent_type}.json"
-            with open(spec_path, "w") as f:
+            with open(spec_path, "w", encoding="utf-8") as f:
                 json.dump(agent_spec, f, indent=2)
             
             # Record artifact

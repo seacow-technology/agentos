@@ -205,7 +205,7 @@ def write_tool_event(
     }
     
     mode = "a" if append else "w"
-    with open(tape_file, mode) as f:
+    with open(tape_file, mode, encoding="utf-8") as f:
         f.write(json.dumps(event) + "\n")
     
     return tape_file

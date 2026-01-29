@@ -157,7 +157,7 @@ class SandboxPolicyLoader:
         if not self.schema_path.exists():
             raise FileNotFoundError(f"Schema not found: {self.schema_path}")
         
-        with open(self.schema_path, "r") as f:
+        with open(self.schema_path, "r", encoding="utf-8") as f:
             return json.load(f)
     
     def load(self, policy_path: Path) -> SandboxPolicy:
@@ -177,7 +177,7 @@ class SandboxPolicyLoader:
         if not policy_path.exists():
             raise FileNotFoundError(f"Policy file not found: {policy_path}")
         
-        with open(policy_path, "r") as f:
+        with open(policy_path, "r", encoding="utf-8") as f:
             policy_data = json.load(f)
         
         # 验证 schema

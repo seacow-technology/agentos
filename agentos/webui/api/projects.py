@@ -185,12 +185,19 @@ async def get_project(project_id: str) -> ProjectDetail:
             for repo in repos
         ]
 
+        # Windows 兼容: 使用 Path 获取根目录
+        from pathlib import Path
+        workspace_root = "."
+        if repos:
+            parts = Path(repos[0].workspace_relpath).parts
+            workspace_root = parts[0] if parts else "."
+
         return ProjectDetail(
             project_id=project_id,
             name=project_id.replace("-", " ").title(),
             description=None,
             repo_count=len(repos),
-            workspace_root=repos[0].workspace_relpath.split("/")[0] if repos else ".",
+            workspace_root=workspace_root,
             repos=repo_summaries,
             created_at=repos[0].created_at.isoformat() if repos and repos[0].created_at else datetime.now().isoformat(),
         )

@@ -21,7 +21,7 @@ class RuleEngine:
         
         for rule_file in rules_dir.glob("*.json"):
             try:
-                with open(rule_file) as f:
+                with open(rule_file, encoding="utf-8") as f:
                     rule = json.load(f)
                     rules.append(rule)
             except Exception:

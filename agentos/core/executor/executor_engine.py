@@ -375,7 +375,7 @@ class ExecutorEngine:
             
             # 保存结果
             result_file = run_dir / "execution_result.json"
-            with open(result_file, "w") as f:
+            with open(result_file, "w", encoding="utf-8") as f:
                 json.dump(execution_result, f, indent=2)
             
             return execution_result
@@ -932,7 +932,7 @@ class ExecutorEngine:
             
             proof_file = run_dir / "audit" / "sandbox_proof.json"
             proof_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(proof_file, "w") as f:
+            with open(proof_file, "w", encoding="utf-8") as f:
                 json.dump(sandbox_proof, f, indent=2)
             
             return len(patch_files), len(patch_files)
@@ -1032,7 +1032,7 @@ class ExecutorEngine:
             summary["error"] = error
         
         summary_file = reports_dir / "execution_summary.json"
-        with open(summary_file, "w") as f:
+        with open(summary_file, "w", encoding="utf-8") as f:
             json.dump(summary, f, indent=2)
     
     def _generate_checksums(
@@ -1064,5 +1064,5 @@ class ExecutorEngine:
             checksums["files"]["execution_request.json"] = hashlib.sha256(content).hexdigest()
         
         checksums_file = audit_dir / "checksums.json"
-        with open(checksums_file, "w") as f:
+        with open(checksums_file, "w", encoding="utf-8") as f:
             json.dump(checksums, f, indent=2)

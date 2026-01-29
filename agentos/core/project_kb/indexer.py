@@ -83,7 +83,7 @@ class ProjectKBIndexer:
         migration_path = Path(__file__).parent.parent.parent / "store" / "migrations" / "v12_project_kb.sql"
         
         if migration_path.exists():
-            with open(migration_path, "r") as f:
+            with open(migration_path, "r", encoding="utf-8") as f:
                 migration_sql = f.read()
             
             # Gate #2: 迁移是幂等的（IF NOT EXISTS）

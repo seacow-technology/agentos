@@ -39,7 +39,7 @@ class ExecutionLock:
         # 检查是否已有锁
         if lock_file.exists():
             try:
-                with open(lock_file, "r") as f:
+                with open(lock_file, "r", encoding="utf-8") as f:
                     existing_lock = json.load(f)
                 
                 # 检查是否过期
@@ -62,7 +62,7 @@ class ExecutionLock:
             "ttl_seconds": ttl_seconds
         }
         
-        with open(lock_file, "w") as f:
+        with open(lock_file, "w", encoding="utf-8") as f:
             json.dump(lock_data, f, indent=2)
         
         self.current_lock = lock_data
@@ -88,7 +88,7 @@ class ExecutionLock:
             datetime.now(timezone.utc) + timedelta(seconds=additional_seconds)
         ).isoformat()
         
-        with open(self.lock_file, "w") as f:
+        with open(self.lock_file, "w", encoding="utf-8") as f:
             json.dump(self.current_lock, f, indent=2)
         
         return True
@@ -101,7 +101,7 @@ class ExecutionLock:
             return False
         
         try:
-            with open(lock_file, "r") as f:
+            with open(lock_file, "r", encoding="utf-8") as f:
                 lock_data = json.load(f)
             
             expires_at = datetime.fromisoformat(lock_data["expires_at"])
@@ -118,7 +118,7 @@ class ExecutionLock:
             return None
         
         try:
-            with open(lock_file, "r") as f:
+            with open(lock_file, "r", encoding="utf-8") as f:
                 return json.load(f)
         except (json.JSONDecodeError, KeyError):
             return None
