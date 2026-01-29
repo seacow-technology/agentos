@@ -280,8 +280,8 @@ class SelfCheckRunner:
             # Use ONLY cached status (no probes)
             # This reads from registry cache without triggering network calls
             status_list = []
-            for provider_id in self.registry.list():
-                provider = self.registry.get(provider_id)
+            for provider in self.registry.list_all():
+                provider_id = provider.id
                 if provider and hasattr(provider, '_status_cache') and provider._status_cache:
                     status_list.append(provider._status_cache)
                 else:

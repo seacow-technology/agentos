@@ -72,11 +72,21 @@ class SecretStore:
 
     def _verify_permissions(self):
         """
-        Verify file has 0600 permissions
+        Verify file has 0600 permissions (Unix-like systems only)
+
+        Windows uses ACL permissions which are incompatible with Unix chmod.
+        Permission checks are skipped on Windows to avoid log noise.
 
         Raises:
-            PermissionError: If permissions are too open
+            PermissionError: If permissions are too open (Unix only)
         """
+        # Windows 使用 ACL 权限模型,不兼容 Unix chmod 0o600
+        # 跳过权限检查避免日志污染
+        import platform
+        if platform.system() == "Windows":
+            logger.debug("Skipping permission check on Windows (uses ACL)")
+            return
+
         if not self.secrets_file.exists():
             return
 
