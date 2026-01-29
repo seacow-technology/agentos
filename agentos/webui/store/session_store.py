@@ -226,6 +226,12 @@ class SQLiteSessionStore(SessionStore):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
+            # 统一数据库配置 (与主库保持一致)
+            cursor.execute("PRAGMA foreign_keys = ON")
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA synchronous=NORMAL")
+            cursor.execute("PRAGMA busy_timeout=5000")
+
             # Sessions table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS webui_sessions (
@@ -376,8 +382,7 @@ class SQLiteSessionStore(SessionStore):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
-            # Enable foreign keys for CASCADE
-            cursor.execute("PRAGMA foreign_keys = ON")
+            # PRAGMA 已在 _ensure_schema 中统一配置,无需重复设置
 
             cursor.execute(
                 "DELETE FROM webui_sessions WHERE session_id = ?",

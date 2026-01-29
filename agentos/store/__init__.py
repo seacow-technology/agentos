@@ -43,6 +43,15 @@ def get_db():
     # Enable foreign keys for CASCADE support
     conn.execute("PRAGMA foreign_keys = ON")
 
+    # Windows 并发优化: 启用 WAL 模式提高并发性能
+    conn.execute("PRAGMA journal_mode=WAL")
+
+    # 调整同步模式,平衡性能与安全性
+    conn.execute("PRAGMA synchronous=NORMAL")
+
+    # 增加锁超时时间到 5 秒 (默认 0 秒会立即失败)
+    conn.execute("PRAGMA busy_timeout=5000")
+
     return conn
 
 
