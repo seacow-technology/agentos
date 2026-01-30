@@ -138,7 +138,6 @@ class TaskRunner:
             return
 
         # Start timeout tracking
-        timeout_config = task.get_timeout_config()
         timeout_state = task.get_timeout_state()
         timeout_state = timeout_manager.start_timeout_tracking(timeout_state)
         task.update_timeout_state(timeout_state)
