@@ -3,6 +3,11 @@
  *
  * PR-V4: Frontend Visualization
  * Theme: Industrial factory floor with moving parts
+ * Task #53: Aligned with History view flat white layout standards
+ *   - Transparent background with 20px padding
+ *   - Border-radius: 6px (consistent with other views)
+ *   - Canvas padding: 24px
+ *   - Table-section margin-top: 20px
  */
 
 /* ============================================
@@ -13,20 +18,99 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    padding: 24px;
+    background: transparent;
+    padding: 20px;
     overflow: hidden;
 }
 
+/* Task #38: 标题字体大小 - 比副标题大一点点 */
+.pipeline-view .view-header h1 {
+    font-size: 18px;  /* Task #50: 统一标准 h1 大小，比副标题的 14px 大，比例 1.29x */
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 4px 0;
+}
+
+.pipeline-view .view-header p {
+    margin: 0;
+    font-size: 0.875rem;  /* 14px - text-sm */
+    color: #6b7280;
+}
+
+/* Filter section - uses global styles from components.css */
+/* Only override what's specific to pipeline view */
+.pipeline-view .filter-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pipeline-view .filter-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #495057;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pipeline-view .filter-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: #212529;
+    padding: 4px 12px;
+    background: #f1f5f9;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Courier New', monospace;
+}
+
+/* Connection status in header */
+.pipeline-view .connection-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: #f8f9fa;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #495057;
+}
+
+.connection-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #6c757d;
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.connection-status.connected .connection-status-dot {
+    background: #10b981;
+}
+
+.connection-status.disconnected .connection-status-dot {
+    background: #ef4444;
+}
+
+@keyframes pulse-dot {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Legacy styles (deprecated but kept for compatibility) */
 .pipeline-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
-    padding: 16px 24px;
+    margin-bottom: 20px;
+    padding: 16px;
     background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
 }
 
 .pipeline-title {
@@ -42,13 +126,19 @@
     align-items: center;
 }
 
+/* Pipeline canvas - now using table-section wrapper */
+/* Task #53: Align with History flat white layout - margin-top should be 20px */
+.pipeline-view .table-section {
+    margin-top: 20px;
+}
+
 .pipeline-canvas {
     flex: 1;
     position: relative;
     background: white;
-    border-radius: 16px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-    padding: 32px;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    padding: 24px;
     overflow-x: auto;
     overflow-y: auto;
 }
@@ -125,8 +215,8 @@
 }
 
 .stage.active .stage-indicator {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    border-color: #1d4ed8;
+    background: #3b82f6;
+    border-color: #2563eb;
     color: white;
     animation: pulse-glow 2s ease-in-out infinite;
 }
@@ -137,14 +227,12 @@
 }
 
 .stage.active .stage-connector {
-    background: linear-gradient(90deg, #3b82f6 0%, #e2e8f0 100%);
-    animation: flow-right 2s linear infinite;
-    background-size: 200% 100%;
+    background: #3b82f6;
 }
 
 .stage.completed .stage-indicator {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    border-color: #047857;
+    background: #10b981;
+    border-color: #059669;
     color: white;
     animation: stamp 0.5s ease-out;
 }
@@ -158,8 +246,8 @@
 }
 
 .stage.failed .stage-indicator {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    border-color: #b91c1c;
+    background: #ef4444;
+    border-color: #dc2626;
     color: white;
 }
 
@@ -169,14 +257,14 @@
 
 /* Checkmark Icon for Completed */
 .stage.completed .stage-indicator::after {
-    content: '✓';
+    content: 'check';
     font-size: 32px;
     position: absolute;
 }
 
 /* X Icon for Failed */
 .stage.failed .stage-indicator::after {
-    content: '✗';
+    content: 'close';
     font-size: 28px;
     position: absolute;
 }
@@ -188,9 +276,9 @@
 .main-track {
     margin-bottom: 32px;
     padding: 16px;
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    border: 2px solid #bae6fd;
-    border-radius: 12px;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
     position: relative;
 }
 
@@ -200,11 +288,10 @@
     gap: 12px;
     padding: 12px 20px;
     background: white;
-    border: 2px solid #3b82f6;
-    border-radius: 8px;
+    border: 1px solid #3b82f6;
+    border-radius: 6px;
     font-weight: 600;
     color: #1e40af;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
 }
 
 .runner-indicator::before {
@@ -249,8 +336,8 @@
 
 .work-item-card {
     background: white;
-    border: 3px solid #e2e8f0;
-    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
     padding: 16px;
     transition: all 0.3s ease;
     position: relative;
@@ -278,13 +365,10 @@
 
 .work-item-card.running {
     border-color: #3b82f6;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
 .work-item-card.running::before {
-    background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 50%, #3b82f6 100%);
-    animation: flow-right 2s linear infinite;
-    background-size: 200% 100%;
+    background: #3b82f6;
 }
 
 .work-item-card.done {
@@ -362,11 +446,9 @@
 
 .work-item-progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+    background: #3b82f6;
     border-radius: 3px;
     transition: width 0.5s ease;
-    animation: shimmer 2s linear infinite;
-    background-size: 200% 100%;
 }
 
 /* ============================================
@@ -377,15 +459,15 @@
     margin: 32px auto;
     width: fit-content;
     padding: 20px 32px;
-    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-    border: 3px solid #10b981;
-    border-radius: 16px;
+    background: #f0fdf4;
+    border: 1px solid #10b981;
+    border-radius: 8px;
     text-align: center;
     position: relative;
 }
 
 .merge-node::before {
-    content: '⬇';
+    content: 'arrow_downward';
     position: absolute;
     top: -40px;
     left: 50%;
@@ -399,7 +481,7 @@
     width: 48px;
     height: 48px;
     margin: 0 auto 12px;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    background: #10b981;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -455,10 +537,10 @@
     background: #fee2e2;
     color: #991b1b;
     padding: 8px 16px;
-    border-radius: 8px;
+    border-radius: 6px;
     font-size: 12px;
     font-weight: 600;
-    border: 2px solid #ef4444;
+    border: 1px solid #ef4444;
     white-space: nowrap;
     pointer-events: auto;
 }
@@ -478,10 +560,10 @@
 
 @keyframes pulse-glow {
     0%, 100% {
-        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+        opacity: 1;
     }
     50% {
-        box-shadow: 0 0 0 12px rgba(59, 130, 246, 0);
+        opacity: 0.8;
     }
 }
 
@@ -543,8 +625,8 @@
     gap: 8px;
     padding: 8px 16px;
     background: white;
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
 }
@@ -581,9 +663,8 @@
     width: 320px;
     max-height: 300px;
     background: white;
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
     overflow: hidden;
 }
 
@@ -633,67 +714,10 @@
 }
 
 /* ============================================
-   Dark Mode Support
+   Dark Mode Support - Disabled
    ============================================ */
 
-@media (prefers-color-scheme: dark) {
-    .pipeline-view {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    }
-
-    .pipeline-header,
-    .pipeline-canvas {
-        background: #1e293b;
-        border-color: #334155;
-    }
-
-    .pipeline-title {
-        color: #f1f5f9;
-    }
-
-    .stage-indicator {
-        background: #334155;
-        border-color: #475569;
-        color: #cbd5e1;
-    }
-
-    .stage-label {
-        color: #94a3b8;
-    }
-
-    .stage-connector {
-        background: #334155;
-    }
-
-    .work-item-card {
-        background: #334155;
-        border-color: #475569;
-    }
-
-    .work-item-id {
-        color: #f1f5f9;
-    }
-
-    .work-item-body {
-        color: #cbd5e1;
-    }
-
-    .connection-status,
-    .event-feed {
-        background: #1e293b;
-        border-color: #334155;
-    }
-
-    .event-feed-header {
-        background: #0f172a;
-        border-color: #334155;
-        color: #f1f5f9;
-    }
-
-    .event-feed-item {
-        border-color: #334155;
-    }
-}
+/* Dark mode has been disabled to maintain consistent light theme across all views */
 
 /* ============================================
    Responsive Design
@@ -730,7 +754,7 @@
 
 @media (max-width: 768px) {
     .pipeline-view {
-        padding: 16px;
+        padding: 20px;
     }
 
     .pipeline-header {

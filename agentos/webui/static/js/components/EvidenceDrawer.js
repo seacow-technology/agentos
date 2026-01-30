@@ -70,7 +70,7 @@ class EvidenceDrawer {
 
                 <div class="drawer-footer">
                     <button class="btn-text" id="evidence-toggle-advanced">
-                        <span class="material-icons md-18">visibility</span>
+                        <span class="material-icons md-18">preview</span>
                         显示高级信息
                     </button>
                 </div>
@@ -145,7 +145,7 @@ class EvidenceDrawer {
         // Reset advanced info state
         this.drawerEl.classList.remove('advanced-visible');
         this.toggleAdvancedBtn.innerHTML = `
-            <span class="material-icons md-18">visibility</span>
+            <span class="material-icons md-18">preview</span>
             显示高级信息
         `;
     }
@@ -301,14 +301,14 @@ class EvidenceDrawer {
                     </div>
                     <div class="evidence-header-right">
                         <span class="evidence-description">${item.description}</span>
-                        <span class="material-icons md-18 toggle-icon">expand_more</span>
+                        <span class="material-icons md-18">arrow_drop_down</span>
                     </div>
                 </div>
                 <div class="evidence-details" id="evidence-${index}" style="display: none;">
                     ${details}
                     ${item.verification_error ? `
                         <div class="verification-error">
-                            <span class="material-icons md-16">error_outline</span>
+                            <span class="material-icons md-16">warning</span>
                             <span>${item.verification_error}</span>
                         </div>
                     ` : ''}
@@ -358,7 +358,7 @@ class EvidenceDrawer {
             </div>
             <div class="detail-row">
                 <span class="detail-label">存在:</span>
-                <span class="detail-value">${details.exists ? '✓ 是' : '✗ 否'}</span>
+                <span class="detail-value">${details.exists ? 'check 是' : 'close 否'}</span>
             </div>
         `;
     }
@@ -481,7 +481,7 @@ class EvidenceDrawer {
     renderError(error) {
         this.bodyEl.innerHTML = `
             <div class="evidence-error">
-                <span class="material-icons md-48">error_outline</span>
+                <span class="material-icons md-48">warning</span>
                 <h3>加载失败</h3>
                 <p>${error.message || '未知错误'}</p>
                 <button class="btn-primary" onclick="location.reload()">刷新页面</button>
@@ -496,8 +496,8 @@ class EvidenceDrawer {
         const isVisible = this.drawerEl.classList.toggle('advanced-visible');
 
         this.toggleAdvancedBtn.innerHTML = isVisible
-            ? `<span class="material-icons md-18">visibility_off</span> 隐藏高级信息`
-            : `<span class="material-icons md-18">visibility</span> 显示高级信息`;
+            ? `<span class="material-icons md-18">block</span> 隐藏高级信息`
+            : `<span class="material-icons md-18">preview</span> 显示高级信息`;
     }
 
     /**
@@ -513,7 +513,7 @@ class EvidenceDrawer {
                 await this.copyToClipboard(text);
 
                 // Visual feedback
-                const icon = btn.querySelector('.material-icons');
+                const icon = btn.querySelector(".material-icons");
                 icon.textContent = 'check';
                 setTimeout(() => {
                     icon.textContent = 'content_copy';
@@ -569,11 +569,11 @@ class EvidenceDrawer {
      */
     getEvidenceTypeLabel(type) {
         const labels = {
-            'artifact': '📦 文件证据',
-            'command': '⚙️ 命令执行',
-            'db_row': '💾 数据库记录',
-            'file_sha256': '🔐 文件哈希',
-            'timestamp': '🕐 时间戳'
+            'artifact': 'inventory_2 文件证据',
+            'command': 'settings 命令执行',
+            'db_row': 'save 数据库记录',
+            'file_sha256': 'lock 文件哈希',
+            'timestamp': 'schedule 时间戳'
         };
         return labels[type] || type;
     }

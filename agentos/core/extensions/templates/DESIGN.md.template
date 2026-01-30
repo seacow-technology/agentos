@@ -1,0 +1,75 @@
+# $extension_name - Architecture
+
+## Declarative-Only Extension
+
+This extension follows AgentOS ADR-EXT-001: **Declarative Extensions Only**.
+
+### What This Means
+
+- **No executable code**: This extension does not contain any Python, JavaScript, or shell scripts in the root directory.
+- **Declarative configuration**: All functionality is defined through YAML configuration files.
+- **Core-controlled execution**: All commands are executed by AgentOS Core in a sandboxed environment.
+
+### File Structure
+
+```
+$extension_id/
+├── manifest.json           # Extension metadata (DECLARATIVE)
+├── commands/
+│   └── commands.yaml      # Command declarations (DECLARATIVE)
+├── install/
+│   └── plan.yaml          # Installation steps (DECLARATIVE)
+├── docs/
+│   ├── USAGE.md           # User documentation
+│   └── DESIGN.md          # This file
+├── icon.svg               # Extension icon
+└── .gitignore
+```
+
+### No handlers.py Required
+
+Unlike traditional plugin systems, AgentOS extensions do NOT require a `handlers.py` or similar executable code file. All command execution is handled by:
+
+1. **CapabilityRunner**: Executes commands declared in `commands.yaml`
+2. **ExtensionInstallEngine**: Runs installation steps from `install/plan.yaml`
+3. **Core Sandboxing**: Enforces security boundaries and permissions
+
+### Security Benefits
+
+- **No arbitrary code execution**: Extension cannot execute malicious code
+- **Auditable**: All actions are logged and traceable
+- **Permission-controlled**: Every operation requires explicit permission declaration
+- **Sandboxed**: Execution is isolated to specific directories and environments
+
+### How Commands Work
+
+When a user invokes a command (e.g., `$example_command`):
+
+1. AgentOS Core reads `commands/commands.yaml`
+2. Core validates the command exists and permissions are granted
+3. Core executes the declared actions using built-in runners
+4. Results are returned to the user
+
+No custom code from the extension is ever executed directly.
+
+### Customization
+
+To customize this extension:
+
+1. **Add commands**: Edit `commands/commands.yaml` to add new slash commands
+2. **Modify installation**: Edit `install/plan.yaml` to change installation steps
+3. **Update metadata**: Edit `manifest.json` to change extension info
+4. **Add documentation**: Update `docs/USAGE.md` with usage instructions
+
+**DO NOT** add executable files (.py, .js, .sh, .exe) to the extension root - they will be rejected by the validator.
+
+### References
+
+- ADR-EXT-001: Declarative Extensions Only
+- Extension Validator: `agentos.core.extensions.validator`
+- Capability Runner: `agentos.core.capabilities.runner`
+- Security Model: See ADR-EXT-001-ENFORCEMENT.md
+
+## Version
+
+Generated with AgentOS Extension Wizard v1.0

@@ -1,0 +1,157 @@
+# Example Installation Plan for Postman Extension
+# This demonstrates all supported step types and best practices
+
+id: tools.postman
+version: 0.1.0
+
+# Installation steps
+steps:
+  # Step 1: Detect platform (always first)
+  - id: detect_platform
+    type: detect.platform
+
+  # Step 2: Verify Node.js is available (prerequisite)
+  - id: check_node
+    type: verify.command_exists
+    command: node
+
+  # Step 3: Install on Linux
+  - id: download_linux
+    type: download.http
+    when: platform.os == "linux"
+    url: https://dl.pstmn.io/download/latest/linux64
+    sha256: "abc123def456..."  # Replace with actual SHA256
+    target: downloads/postman-linux.tar.gz
+    timeout: 600
+
+  - id: extract_linux
+    type: extract.zip
+    when: platform.os == "linux"
+    source: downloads/postman-linux.tar.gz
+    target: bin/
+
+  - id: install_linux
+    type: exec.shell
+    when: platform.os == "linux"
+    requires_permissions: ["exec", "filesystem.write"]
+    command: |
+      echo "Installing Postman CLI for Linux..."
+      mkdir -p ~/.agentos/bin
+      cp bin/postman ~/.agentos/bin/postman
+      chmod +x ~/.agentos/bin/postman
+      echo "Installation complete"
+
+  # Step 4: Install on macOS
+  - id: check_brew
+    type: verify.command_exists
+    when: platform.os == "darwin"
+    command: brew
+
+  - id: install_macos
+    type: exec.shell
+    when: platform.os == "darwin"
+    requires_permissions: ["exec", "network"]
+    command: |
+      echo "Installing Postman CLI for macOS..."
+      brew tap postmanlabs/tap
+      brew install postman
+      echo "Installation complete"
+    timeout: 900
+
+  # Step 5: Install on Windows
+  - id: check_choco
+    type: verify.command_exists
+    when: platform.os == "win32"
+    command: choco
+
+  - id: install_windows
+    type: exec.powershell
+    when: platform.os == "win32"
+    requires_permissions: ["exec", "network"]
+    command: |
+      Write-Host "Installing Postman CLI for Windows..."
+      choco install postman -y
+      Write-Host "Installation complete"
+    timeout: 900
+
+  # Step 6: Verify installation (cross-platform)
+  - id: verify_postman
+    type: verify.command_exists
+    command: postman
+
+  # Step 7: Test Postman CLI
+  - id: test_postman
+    type: exec.shell
+    command: |
+      echo "Testing Postman CLI..."
+      postman --version
+      echo "Postman CLI is working"
+
+  # Step 8: Save installation config
+  - id: save_path
+    type: write.config
+    config_key: postman_path
+    config_value: ~/.agentos/bin/postman
+
+  - id: save_version
+    type: write.config
+    config_key: installed_version
+    config_value: "0.1.0"
+
+  - id: save_install_date
+    type: write.config
+    config_key: installed_at
+    config_value: "2026-01-30"
+
+  # Step 9: Create workspace directory
+  - id: create_workspace
+    type: exec.shell
+    command: |
+      mkdir -p workspace/collections
+      mkdir -p workspace/environments
+      echo "Workspace created"
+
+  # Step 10: Download sample collection (optional)
+  - id: download_sample
+    type: download.http
+    url: https://example.com/sample-collection.json
+    target: workspace/collections/sample.json
+    timeout: 60
+
+# Uninstallation steps
+uninstall:
+  steps:
+    # Step 1: Remove Postman CLI
+    - id: remove_postman
+      type: exec.shell
+      command: |
+        echo "Removing Postman CLI..."
+        rm -f ~/.agentos/bin/postman
+        echo "Postman CLI removed"
+
+    # Step 2: Clean up workspace
+    - id: cleanup_workspace
+      type: exec.shell
+      command: |
+        echo "Cleaning up workspace..."
+        rm -rf workspace/
+        echo "Workspace cleaned"
+
+    # Step 3: Remove config
+    - id: remove_config
+      type: exec.shell
+      command: |
+        echo "Removing configuration..."
+        rm -f config.json
+        echo "Configuration removed"
+
+    # Step 4: Verify uninstallation
+    - id: verify_removed
+      type: exec.shell
+      command: |
+        if command -v postman &> /dev/null; then
+          echo "Warning: Postman CLI still found in PATH"
+          exit 1
+        else
+          echo "Postman CLI successfully removed"
+        fi

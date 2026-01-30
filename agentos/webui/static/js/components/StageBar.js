@@ -10,10 +10,10 @@ class StageBar {
      * Stage definitions matching v0.4 task phases
      */
     static STAGES = [
-        { id: 'planning', label: 'Planning', icon: '📋' },
-        { id: 'executing', label: 'Executing', icon: '⚙️' },
-        { id: 'verifying', label: 'Verifying', icon: '✓' },
-        { id: 'done', label: 'Done', icon: '✓' }
+        { id: 'planning', label: 'Planning', icon: 'assignment' },
+        { id: 'executing', label: 'Executing', icon: 'settings' },
+        { id: 'verifying', label: 'Verifying', icon: 'check' },
+        { id: 'done', label: 'Done', icon: 'check' }
     ];
 
     /**

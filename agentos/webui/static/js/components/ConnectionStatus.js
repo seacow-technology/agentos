@@ -5,11 +5,11 @@
  * and reconnection countdown.
  *
  * States:
- * - 🟢 Connected (realtime)
- * - 🟡 Connecting...
- * - 🟠 Reconnecting (attempt N/M, retry in Xs)
- * - 🔴 Disconnected
- * - ❌ Error
+ * - circle Connected (realtime)
+ * - circle Connecting...
+ * - circle Reconnecting (attempt N/M, retry in Xs)
+ * - circle Disconnected
+ * - cancel Error
  *
  * Usage:
  * ```javascript
@@ -186,13 +186,13 @@ export class ConnectionStatus {
      */
     _getIndicatorIcon() {
         const icons = {
-            connected: '🟢',
-            connecting: '🟡',
-            reconnecting: '🟠',
-            disconnected: '🔴',
-            error: '❌'
+            connected: 'circle',
+            connecting: 'circle',
+            reconnecting: 'circle',
+            disconnected: 'circle',
+            error: 'cancel'
         };
-        return icons[this.state] || '⚪';
+        return icons[this.state] || 'circle';
     }
 
     /**

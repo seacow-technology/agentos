@@ -44,19 +44,22 @@ class ProvidersView {
         return `
             <div class="providers-view">
                 <div class="view-header">
-                    <h1>Local Model Providers</h1>
+                    <div>
+                        <h1>Local Model Providers</h1>
+                        <p class="text-sm text-gray-600 mt-1">Configure and monitor local LLM providers</p>
+                    </div>
                     <div class="header-actions">
                         <label class="auto-refresh-toggle">
                             <input type="checkbox" id="auto-refresh-toggle" checked>
                             <span>Auto-refresh (5s)</span>
                         </label>
-                        <button id="stop-all-instances" class="btn btn-warning" style="display:none">
+                        <button id="stop-all-instances" class="btn-warning" style="display:none">
                             <span class="material-icons md-18">stop_circle</span> Stop All
                         </button>
-                        <button id="restart-all-instances" class="btn btn-secondary" style="display:none">
+                        <button id="restart-all-instances" class="btn-secondary" style="display:none">
                             <span class="material-icons md-18">restart_alt</span> Restart All
                         </button>
-                        <button id="refresh-all" class="btn btn-primary">
+                        <button id="refresh-all" class="btn-primary">
                             <span class="icon"><span class="material-icons md-18">refresh</span></span> Refresh All
                         </button>
                     </div>
@@ -75,7 +78,7 @@ class ProvidersView {
                     <div class="provider-section" data-provider="ollama">
                         <div class="section-header">
                             <h2>Ollama</h2>
-                            <button class="btn btn-sm" data-action="add-instance" data-provider="ollama">
+                            <button class="btn-sm" data-action="add-instance" data-provider="ollama">
                                 + Add Instance
                             </button>
                         </div>
@@ -87,16 +90,16 @@ class ProvidersView {
                                        data-provider="ollama"
                                        placeholder="Not configured"
                                        readonly>
-                                <button class="btn-detect btn btn-sm" data-provider="ollama">
+                                <button class="btn-detect btn-sm" data-provider="ollama">
                                     <span class="material-icons md-18">search</span> Detect
                                 </button>
-                                <button class="btn-browse btn btn-sm" data-provider="ollama">
+                                <button class="btn-browse btn-sm" data-provider="ollama">
                                     <span class="material-icons md-18">folder_open</span> Browse
                                 </button>
-                                <button class="btn-validate btn btn-sm" data-provider="ollama" style="display:none">
+                                <button class="btn-validate btn-sm" data-provider="ollama" style="display:none">
                                     <span class="material-icons md-18">check_circle</span> Validate
                                 </button>
-                                <button class="btn-save btn btn-sm" data-provider="ollama" style="display:none">
+                                <button class="btn-save btn-sm" data-provider="ollama" style="display:none">
                                     <span class="material-icons md-18">save</span> Save
                                 </button>
                             </div>
@@ -123,17 +126,17 @@ class ProvidersView {
 
                         <!-- Task #19: P1.6 - Diagnostics Panel -->
                         <div class="diagnostics-section" data-provider="ollama">
-                            <button class="btn-diagnostics btn btn-sm" data-provider="ollama">
+                            <button class="btn-diagnostics btn-sm" data-provider="ollama">
                                 <span class="material-icons md-18">assessment</span> Show Diagnostics
                             </button>
                             <div class="diagnostics-panel" data-provider="ollama" style="display:none;">
                                 <div class="diagnostics-header">
                                     <strong>Diagnostics</strong>
                                     <div class="diagnostics-actions">
-                                        <button class="btn btn-xs" data-action="health-check" data-provider="ollama" title="Run Health Check">
+                                        <button class="btn-xs" data-action="health-check" data-provider="ollama" title="Run Health Check">
                                             <span class="material-icons md-18">health_and_safety</span>
                                         </button>
-                                        <button class="btn btn-xs" data-action="copy-diagnostics" data-provider="ollama" title="Copy Diagnostics">
+                                        <button class="btn-xs" data-action="copy-diagnostics" data-provider="ollama" title="Copy Diagnostics">
                                             <span class="material-icons md-18">content_copy</span>
                                         </button>
                                     </div>
@@ -153,11 +156,11 @@ class ProvidersView {
                         <div class="section-header">
                             <h2>LM Studio</h2>
                             <div class="section-actions">
-                                <button class="btn btn-sm" data-action="open-lmstudio">
-                                    📱 Open App
+                                <button class="btn-sm" data-action="open-lmstudio">
+                                    phone_android Open App
                                 </button>
-                                <button class="btn btn-sm" data-action="verify-lmstudio">
-                                    <span class="material-icons" style="font-size: 14px; vertical-align: middle;">check</span> Verify
+                                <button class="btn-sm" data-action="verify-lmstudio">
+                                    <span class="material-icons md-18">check</span> Verify
                                 </button>
                             </div>
                         </div>
@@ -169,16 +172,16 @@ class ProvidersView {
                                        data-provider="lmstudio"
                                        placeholder="Not configured"
                                        readonly>
-                                <button class="btn-detect btn btn-sm" data-provider="lmstudio">
+                                <button class="btn-detect btn-sm" data-provider="lmstudio">
                                     <span class="material-icons md-18">search</span> Detect
                                 </button>
-                                <button class="btn-browse btn btn-sm" data-provider="lmstudio">
+                                <button class="btn-browse btn-sm" data-provider="lmstudio">
                                     <span class="material-icons md-18">folder_open</span> Browse
                                 </button>
-                                <button class="btn-validate btn btn-sm" data-provider="lmstudio" style="display:none">
+                                <button class="btn-validate btn-sm" data-provider="lmstudio" style="display:none">
                                     <span class="material-icons md-18">check_circle</span> Validate
                                 </button>
-                                <button class="btn-save btn btn-sm" data-provider="lmstudio" style="display:none">
+                                <button class="btn-save btn-sm" data-provider="lmstudio" style="display:none">
                                     <span class="material-icons md-18">save</span> Save
                                 </button>
                             </div>
@@ -205,17 +208,17 @@ class ProvidersView {
 
                         <!-- Task #19: P1.6 - Diagnostics Panel -->
                         <div class="diagnostics-section" data-provider="lmstudio">
-                            <button class="btn-diagnostics btn btn-sm" data-provider="lmstudio">
+                            <button class="btn-diagnostics btn-sm" data-provider="lmstudio">
                                 <span class="material-icons md-18">assessment</span> Show Diagnostics
                             </button>
                             <div class="diagnostics-panel" data-provider="lmstudio" style="display:none;">
                                 <div class="diagnostics-header">
                                     <strong>Diagnostics</strong>
                                     <div class="diagnostics-actions">
-                                        <button class="btn btn-xs" data-action="health-check" data-provider="lmstudio" title="Run Health Check">
+                                        <button class="btn-xs" data-action="health-check" data-provider="lmstudio" title="Run Health Check">
                                             <span class="material-icons md-18">health_and_safety</span>
                                         </button>
-                                        <button class="btn btn-xs" data-action="copy-diagnostics" data-provider="lmstudio" title="Copy Diagnostics">
+                                        <button class="btn-xs" data-action="copy-diagnostics" data-provider="lmstudio" title="Copy Diagnostics">
                                             <span class="material-icons md-18">content_copy</span>
                                         </button>
                                     </div>
@@ -234,7 +237,7 @@ class ProvidersView {
                     <div class="provider-section" data-provider="llamacpp">
                         <div class="section-header">
                             <h2>llama.cpp</h2>
-                            <button class="btn btn-sm" data-action="add-instance" data-provider="llamacpp">
+                            <button class="btn-sm" data-action="add-instance" data-provider="llamacpp">
                                 + Add Instance
                             </button>
                         </div>
@@ -246,16 +249,16 @@ class ProvidersView {
                                        data-provider="llamacpp"
                                        placeholder="Not configured"
                                        readonly>
-                                <button class="btn-detect btn btn-sm" data-provider="llamacpp">
+                                <button class="btn-detect btn-sm" data-provider="llamacpp">
                                     <span class="material-icons md-18">search</span> Detect
                                 </button>
-                                <button class="btn-browse btn btn-sm" data-provider="llamacpp">
+                                <button class="btn-browse btn-sm" data-provider="llamacpp">
                                     <span class="material-icons md-18">folder_open</span> Browse
                                 </button>
-                                <button class="btn-validate btn btn-sm" data-provider="llamacpp" style="display:none">
+                                <button class="btn-validate btn-sm" data-provider="llamacpp" style="display:none">
                                     <span class="material-icons md-18">check_circle</span> Validate
                                 </button>
-                                <button class="btn-save btn btn-sm" data-provider="llamacpp" style="display:none">
+                                <button class="btn-save btn-sm" data-provider="llamacpp" style="display:none">
                                     <span class="material-icons md-18">save</span> Save
                                 </button>
                             </div>
@@ -282,17 +285,17 @@ class ProvidersView {
 
                         <!-- Task #19: P1.6 - Diagnostics Panel -->
                         <div class="diagnostics-section" data-provider="llamacpp">
-                            <button class="btn-diagnostics btn btn-sm" data-provider="llamacpp">
+                            <button class="btn-diagnostics btn-sm" data-provider="llamacpp">
                                 <span class="material-icons md-18">assessment</span> Show Diagnostics
                             </button>
                             <div class="diagnostics-panel" data-provider="llamacpp" style="display:none;">
                                 <div class="diagnostics-header">
                                     <strong>Diagnostics</strong>
                                     <div class="diagnostics-actions">
-                                        <button class="btn btn-xs" data-action="health-check" data-provider="llamacpp" title="Run Health Check">
+                                        <button class="btn-xs" data-action="health-check" data-provider="llamacpp" title="Run Health Check">
                                             <span class="material-icons md-18">health_and_safety</span>
                                         </button>
-                                        <button class="btn btn-xs" data-action="copy-diagnostics" data-provider="llamacpp" title="Copy Diagnostics">
+                                        <button class="btn-xs" data-action="copy-diagnostics" data-provider="llamacpp" title="Copy Diagnostics">
                                             <span class="material-icons md-18">content_copy</span>
                                         </button>
                                     </div>
@@ -317,7 +320,7 @@ class ProvidersView {
                                     <span class="status-icon"><span class="material-icons md-18">hourglass_empty</span></span>
                                     <span class="status-text">Checking...</span>
                                 </div>
-                                <button class="btn btn-install" data-provider="ollama" style="display:none">
+                                <button class="btn-install" data-provider="ollama" style="display:none">
                                     Install (brew)
                                 </button>
                             </div>
@@ -328,7 +331,7 @@ class ProvidersView {
                                     <span class="status-icon"><span class="material-icons md-18">hourglass_empty</span></span>
                                     <span class="status-text">Checking...</span>
                                 </div>
-                                <button class="btn btn-install" data-provider="llamacpp" style="display:none">
+                                <button class="btn-install" data-provider="llamacpp" style="display:none">
                                     Install (brew)
                                 </button>
                             </div>
@@ -622,13 +625,13 @@ class ProvidersView {
             const pidInfo = inst.pid ? ` (PID ${inst.pid})` : '';
             const healthDetails = [];
             if (inst.pid_exists !== null && inst.pid_exists !== undefined) {
-                healthDetails.push(inst.pid_exists ? 'PID ✓' : 'PID ✗');
+                healthDetails.push(inst.pid_exists ? 'PID check' : 'PID close');
             }
             if (inst.port_listening !== null && inst.port_listening !== undefined) {
-                healthDetails.push(inst.port_listening ? 'Port ✓' : 'Port ✗');
+                healthDetails.push(inst.port_listening ? 'Port check' : 'Port close');
             }
             if (inst.api_responding !== null && inst.api_responding !== undefined) {
-                healthDetails.push(inst.api_responding ? 'API ✓' : 'API ✗');
+                healthDetails.push(inst.api_responding ? 'API check' : 'API close');
             }
             const healthInfo = healthDetails.length > 0 ? ` [${healthDetails.join(', ')}]` : '';
             processStatus = `<span class="process-running">Running${pidInfo}${healthInfo}</span>`;
@@ -644,35 +647,35 @@ class ProvidersView {
 
         // Actions based on state
         let actions = `
-            <button class="btn btn-xs" data-instance-action="refresh"
+            <button class="btn-xs" data-instance-action="refresh"
                     data-instance-key="${inst.instance_key}"><span class="material-icons md-18">refresh</span></button>
-            <button class="btn btn-xs" data-instance-action="edit"
+            <button class="btn-xs" data-instance-action="edit"
                     data-provider-id="${inst.provider_id}" data-instance-id="${inst.instance_id}"><span class="material-icons md-18">edit</span></button>
-            <button class="btn btn-xs" data-instance-action="edit-routing"
+            <button class="btn-xs" data-instance-action="edit-routing"
                     data-provider-id="${inst.provider_id}" data-instance-id="${inst.instance_id}"
-                    title="Edit routing metadata"><span class="material-icons md-18">track_changes</span></button>
+                    title="Edit routing metadata"><span class="material-icons md-18">refresh</span></button>
         `;
 
         // Start/Stop buttons (only for instances with launch config)
         if (inst.has_launch_config) {
             if (inst.process_running) {
                 actions += `
-                    <button class="btn btn-xs" data-instance-action="stop"
+                    <button class="btn-xs" data-instance-action="stop"
                             data-provider-id="${inst.provider_id}" data-instance-id="${inst.instance_id}"
-                            title="Stop instance"><span class="material-icons md-18" style="color: #dc3545;">stop</span></button>
+                            title="Stop instance"><span class="material-icons md-18">stop</span></button>
                 `;
             } else {
                 actions += `
-                    <button class="btn btn-xs" data-instance-action="start"
+                    <button class="btn-xs" data-instance-action="start"
                             data-provider-id="${inst.provider_id}" data-instance-id="${inst.instance_id}"
-                            title="Start instance"><span class="material-icons md-18" style="color: #28a745;">play_arrow</span></button>
+                            title="Start instance"><span class="material-icons md-18">play_arrow</span></button>
                 `;
             }
         }
 
         // Output log button for all instances
         actions += `
-            <button class="btn btn-xs" data-instance-action="output"
+            <button class="btn-xs" data-instance-action="output"
                     data-provider-id="${inst.provider_id}" data-instance-id="${inst.instance_id}"
                     title="View logs"><span class="material-icons md-18">description</span></button>
         `;
@@ -683,7 +686,7 @@ class ProvidersView {
             errorInfo = `
                 <div class="instance-error">
                     <span><span class="material-icons md-18">warning</span> ${inst.last_error}</span>
-                    <button class="btn btn-xs btn-warning" data-instance-action="change-port"
+                    <button class="btn-warning btn-xs" data-instance-action="change-port"
                             data-provider-id="${inst.provider_id}" data-instance-id="${inst.instance_id}">
                         Change Port
                     </button>
@@ -796,9 +799,9 @@ class ProvidersView {
                         </div>
                         ${provider === 'llamacpp' ? this.renderLaunchConfig(instance) : ''}
                         <div class="form-actions">
-                            <button type="submit" class="btn btn-primary">Save</button>
-                            <button type="button" class="btn btn-info" id="modal-test-btn" style="margin-right: auto;">Test Connection</button>
-                            <button type="button" class="btn btn-secondary" id="modal-cancel-btn">Cancel</button>
+                            <button type="submit" class="btn-primary">Save</button>
+                            <button type="button" class="btn-info" id="modal-test-btn" style="margin-right: auto;">Test Connection</button>
+                            <button type="button" class="btn-secondary" id="modal-cancel-btn">Cancel</button>
                         </div>
                     </form>
                 </div>
@@ -847,7 +850,7 @@ class ProvidersView {
                                    style="flex: 1;"
                                    value="${args.model || ''}"
                                    placeholder="/path/to/model.gguf (required to start)">
-                            <button type="button" class="btn btn-sm" id="browse-models-btn"
+                            <button type="button" class="btn-sm" id="browse-models-btn"
                                     onclick="window.providersView.showModelBrowser('llamacpp')">
                                 <span class="material-icons md-18">folder_open</span> Browse
                             </button>
@@ -1019,7 +1022,7 @@ class ProvidersView {
                             <option value="1000">Last 1000 lines</option>
                         </select>
                         <input type="text" id="output-search" placeholder="Search...">
-                        <button id="output-copy" class="btn btn-sm"><span class="material-icons md-18">content_copy</span> Copy</button>
+                        <button id="output-copy" class="btn-sm"><span class="material-icons md-18">content_copy</span> Copy</button>
                     </div>
                     <div class="output-tabs">
                         <button class="tab-btn active" data-stream="stdout">stdout</button>
@@ -1394,7 +1397,7 @@ class ProvidersView {
 
             await this.apiClient.post(`/api/providers/${provider}/install`);
 
-            btn.innerHTML = 'Installed <span class="material-icons" style="font-size: 16px; vertical-align: middle;">check</span>';
+            btn.innerHTML = 'Installed <span class="material-icons md-18">check</span>';
             Toast.success(`${provider} installed successfully`);
             await this.checkCLI();
         } catch (error) {
@@ -1504,8 +1507,8 @@ class ProvidersView {
                             <small class="form-hint">Primary use case for this instance</small>
                         </div>
                         <div class="form-actions">
-                            <button type="submit" class="btn btn-primary">Save Routing Metadata</button>
-                            <button type="button" class="btn btn-secondary" id="modal-cancel-routing-btn">Cancel</button>
+                            <button type="submit" class="btn-primary">Save Routing Metadata</button>
+                            <button type="button" class="btn-secondary" id="modal-cancel-routing-btn">Cancel</button>
                         </div>
                     </form>
                 </div>
@@ -1626,7 +1629,7 @@ class ProvidersView {
                 const supported = response.supported_actions.includes(action);
                 const icon = actionIcons[action] || 'help';
                 const label = actionLabels[action] || action;
-                const statusIcon = supported ? '✅' : '❌';
+                const statusIcon = supported ? 'check_circle' : 'cancel';
 
                 return `
                     <span class="action-badge ${supported ? 'supported' : 'unsupported'}"
@@ -1642,7 +1645,7 @@ class ProvidersView {
                 <div class="actions-matrix">
                     ${actionsHTML}
                 </div>
-                ${response.manual_lifecycle ? '<p class="manual-lifecycle-note">⚠️ This provider requires manual app management</p>' : ''}
+                ${response.manual_lifecycle ? '<p class="manual-lifecycle-note">warning This provider requires manual app management</p>' : ''}
             `;
 
         } catch (error) {
@@ -1710,7 +1713,7 @@ class ProvidersView {
                 input.value = response.resolved_path;
                 input.readOnly = true;
 
-                statusEl.textContent = '✅ Installed';
+                statusEl.textContent = 'check_circle Installed';
                 statusEl.className = 'install-status installed';
 
                 if (versionEl && response.version) {
@@ -1733,7 +1736,7 @@ class ProvidersView {
                 input.readOnly = false;
                 input.placeholder = 'Not found - enter path manually';
 
-                statusEl.textContent = '⚠️ Not found';
+                statusEl.textContent = 'warning Not found';
                 statusEl.className = 'install-status not-found';
 
                 if (versionEl) versionEl.textContent = '';
@@ -1751,7 +1754,7 @@ class ProvidersView {
         } catch (error) {
             console.error(`Failed to detect executable for ${providerId}:`, error);
 
-            statusEl.textContent = '❌ Error';
+            statusEl.textContent = 'cancel Error';
             statusEl.className = 'install-status error';
 
             if (validationEl) {
@@ -1823,7 +1826,7 @@ class ProvidersView {
             }
 
             // Show validating state
-            validationEl.textContent = '⏳ Validating...';
+            validationEl.textContent = 'hourglass_empty Validating...';
             validationEl.className = 'validation-message validating';
 
             // Call validate API
@@ -1834,7 +1837,7 @@ class ProvidersView {
 
             if (response.is_valid) {
                 // Valid
-                validationEl.textContent = '✓ Valid executable';
+                validationEl.textContent = 'check Valid executable';
                 validationEl.className = 'validation-message valid';
 
                 // Update version info if available
@@ -1847,7 +1850,7 @@ class ProvidersView {
                 return { is_valid: true, version: response.version };
             } else {
                 // Invalid
-                validationEl.textContent = `✗ ${response.error || 'Invalid executable'}`;
+                validationEl.textContent = `close ${response.error || 'Invalid executable'}`;
                 validationEl.className = 'validation-message invalid';
 
                 Toast.error(`Validation failed: ${response.error || 'Invalid executable'}`);
@@ -1855,7 +1858,7 @@ class ProvidersView {
             }
         } catch (error) {
             console.error(`Failed to validate executable path for ${providerId}:`, error);
-            validationEl.textContent = `✗ Validation failed: ${error.message}`;
+            validationEl.textContent = `close Validation failed: ${error.message}`;
             validationEl.className = 'validation-message invalid';
 
             Toast.error(`Validation failed: ${error.message}`);
@@ -1912,7 +1915,7 @@ class ProvidersView {
 
                     const statusEl = document.querySelector(`.install-status[data-provider="${providerId}"]`);
                     if (statusEl) {
-                        statusEl.textContent = response.auto_detect ? '✅ Installed' : '🔧 Custom path';
+                        statusEl.textContent = response.auto_detect ? 'check_circle Installed' : 'build Custom path';
                         statusEl.className = 'install-status ' + (response.auto_detect ? 'installed' : 'custom');
                     }
 
@@ -2006,7 +2009,7 @@ class ProvidersView {
     async refreshStatus() {
         try {
             // 触发后端刷新（清除缓存）
-            await this.apiClient.post('/providers/refresh');
+            await this.apiClient.post('/api/providers/refresh');
 
             // 1秒后重新获取状态（让后端有时间重新探测）
             setTimeout(async () => {
@@ -2057,13 +2060,13 @@ class ProvidersView {
                     value="${config.global_dir || ''}"
                     placeholder="/path/to/models"
                 />
-                <button class="btn btn-sm" onclick="window.providersView.detectModelsDir('global')">
+                <button class="btn-sm" onclick="window.providersView.detectModelsDir('global')">
                     <span class="material-icons md-18">search</span> Detect
                 </button>
-                <button class="btn btn-sm" onclick="window.providersView.browseModelsDir('global')">
+                <button class="btn-sm" onclick="window.providersView.browseModelsDir('global')">
                     <span class="material-icons md-18">folder_open</span> Browse
                 </button>
-                <button class="btn btn-sm btn-primary" onclick="window.providersView.saveModelsDir('global')">
+                <button class="btn-primary btn-sm" onclick="window.providersView.saveModelsDir('global')">
                     <span class="material-icons md-18">save</span> Save
                 </button>
             </div>
@@ -2087,11 +2090,11 @@ class ProvidersView {
                     placeholder="/path/to/ollama/models"
                     style="${config.providers.ollama ? '' : 'display:none;'}"
                 />
-                <button class="btn btn-sm" onclick="window.providersView.browseModelsDir('ollama')"
+                <button class="btn-sm" onclick="window.providersView.browseModelsDir('ollama')"
                         style="${config.providers.ollama ? '' : 'display:none;'}" id="ollama-browse-btn">
                     <span class="material-icons md-18">folder_open</span>
                 </button>
-                <button class="btn btn-sm btn-primary" onclick="window.providersView.saveModelsDir('ollama')"
+                <button class="btn-primary btn-sm" onclick="window.providersView.saveModelsDir('ollama')"
                         style="${config.providers.ollama ? '' : 'display:none;'}" id="ollama-save-btn">
                     <span class="material-icons md-18">save</span>
                 </button>
@@ -2116,11 +2119,11 @@ class ProvidersView {
                     placeholder="/path/to/llamacpp/models"
                     style="${config.providers.llamacpp ? '' : 'display:none;'}"
                 />
-                <button class="btn btn-sm" onclick="window.providersView.browseModelsDir('llamacpp')"
+                <button class="btn-sm" onclick="window.providersView.browseModelsDir('llamacpp')"
                         style="${config.providers.llamacpp ? '' : 'display:none;'}" id="llamacpp-browse-btn">
                     <span class="material-icons md-18">folder_open</span>
                 </button>
-                <button class="btn btn-sm btn-primary" onclick="window.providersView.saveModelsDir('llamacpp')"
+                <button class="btn-primary btn-sm" onclick="window.providersView.saveModelsDir('llamacpp')"
                         style="${config.providers.llamacpp ? '' : 'display:none;'}" id="llamacpp-save-btn">
                     <span class="material-icons md-18">save</span>
                 </button>
@@ -2144,11 +2147,11 @@ class ProvidersView {
                     placeholder="/path/to/lmstudio/models"
                     style="${config.providers.lmstudio ? '' : 'display:none;'}"
                 />
-                <button class="btn btn-sm" onclick="window.providersView.browseModelsDir('lmstudio')"
+                <button class="btn-sm" onclick="window.providersView.browseModelsDir('lmstudio')"
                         style="${config.providers.lmstudio ? '' : 'display:none;'}" id="lmstudio-browse-btn">
                     <span class="material-icons md-18">folder_open</span>
                 </button>
-                <button class="btn btn-sm btn-primary" onclick="window.providersView.saveModelsDir('lmstudio')"
+                <button class="btn-primary btn-sm" onclick="window.providersView.saveModelsDir('lmstudio')"
                         style="${config.providers.lmstudio ? '' : 'display:none;'}" id="lmstudio-save-btn">
                     <span class="material-icons md-18">save</span>
                 </button>
@@ -2160,7 +2163,7 @@ class ProvidersView {
             <!-- Security Information -->
             <div class="security-hint" style="margin-top: 16px; padding: 12px; background: #f8f9fa; border-left: 3px solid #007bff; border-radius: 4px;">
                 <div style="display: flex; align-items: flex-start; gap: 8px;">
-                    <span class="material-icons" style="color: #007bff; font-size: 20px;">lock</span>
+                    <span class="material-icons md-18">lock</span>
                     <div style="flex: 1;">
                         <div style="font-weight: 600; margin-bottom: 4px;">Security Notice</div>
                         <div style="font-size: 13px; color: #6c757d; line-height: 1.5;">
@@ -2314,7 +2317,7 @@ class ProvidersView {
         if (!files || files.length === 0) {
             container.innerHTML = `
                 <div class="model-files-empty">
-                    <span class="material-icons md-36" style="color: #adb5bd;">folder_open</span>
+                    <span class="material-icons md-36">folder_open</span>
                     <p>No model files found in this directory</p>
                     <p class="hint-text">Directory: ${directory}</p>
                 </div>
@@ -2444,9 +2447,9 @@ class ProvidersView {
             'DIRECTORY_NOT_READABLE': '目录不可读',
             'NOT_EXECUTABLE': '文件不可执行',
             'FILE_NOT_FOUND': '文件未找到',
-            'PROCESS_NOT_RUNNING': '进程未运行',
+            'PROCESS_NOT_RUNNING': '进程Not Running',
             'PROCESS_ALREADY_RUNNING': '进程已在运行',
-            'PORT_NOT_AVAILABLE': '端口不可用',
+            'PORT_NOT_AVAILABLE': '端口不Available',
             'INVALID_MODEL_FILE': '模型文件无效',
             'CONFIG_ERROR': '配置错误',
             'INVALID_CONFIG': '配置无效',
@@ -2535,7 +2538,7 @@ class ProvidersView {
             html += `<br><br>请检查是否有其他 ${providerId} 实例正在运行，或更改端口配置。`;
         } else if (code === 'MODEL_FILE_NOT_FOUND') {
             html += `<br><br><a href="#" class="error-action-link" onclick="window.providersView.showModelBrowser('${providerId}'); return false;">
-                浏览可用模型 →
+                浏览Available模型 →
             </a>`;
         } else if (code === 'PERMISSION_DENIED' && details.platform === 'windows') {
             html += '<br><br>请尝试以管理员权限运行 AgentOS。';
@@ -2617,7 +2620,7 @@ class ProvidersView {
                         ${htmlContent}
                     </div>
                     <div class="error-modal-footer">
-                        <button class="btn btn-secondary" onclick="this.closest('.error-modal-overlay').remove()">关闭</button>
+                        <button class="btn-secondary" onclick="this.closest('.error-modal-overlay').remove()">关闭</button>
                     </div>
                 </div>
             `;
@@ -2784,7 +2787,7 @@ class ProvidersView {
         const button = document.querySelector(`[data-action="health-check"][data-provider="${providerId}"]`);
         if (button) {
             button.disabled = true;
-            button.innerHTML = '<span class="material-icons md-18 spin">refresh</span>';
+            button.innerHTML = '<span class="material-icons md-18">refresh</span>';
         }
 
         try {

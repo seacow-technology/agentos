@@ -74,15 +74,15 @@ class Migrator:
 
     def get_available_migrations(self) -> List[Tuple[int, Path]]:
         """
-        获取所有可用的迁移文件
+        获取所有Available的迁移文件
 
         Returns:
             (版本号, 文件路径) 元组列表，按版本号排序
         """
         migrations = []
 
-        # 匹配 schema_vXX.sql 格式
-        pattern = re.compile(r'schema_v(\d+)\.sql')
+        # 匹配 schema_vXX.sql 或 schema_vXX_suffix.sql 格式
+        pattern = re.compile(r'schema_v(\d+)(?:_[a-z_]+)?\.sql')
 
         for sql_file in self.migrations_dir.glob('schema_v*.sql'):
             match = pattern.match(sql_file.name)

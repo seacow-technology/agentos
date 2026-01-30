@@ -15,10 +15,10 @@ class ToolHealth:
     Tool 健康检查结果
     
     六态模型（Step 4 扩展 + LM Studio/llama.cpp）：
-    - connected: 工具可用，认证成功
+    - connected: 工具Available，认证成功
     - not_configured: 工具 CLI 不存在 / API token 缺失
     - invalid_token: 工具存在但认证失败
-    - unreachable: 工具可用但 API 超时/不可达
+    - unreachable: 工具Available但 API 超时/不可达
     - model_missing: 本地模型不存在（仅 local adapter）
     - schema_mismatch: 本地模型返回格式不匹配（仅 local adapter）
     
@@ -32,7 +32,7 @@ class ToolHealth:
     error_category: Optional[Literal["config", "auth", "network", "model", "schema", "runtime"]] = None
     
     def is_healthy(self) -> bool:
-        """是否健康（可用于外包）"""
+        """是否健康（Available于外包）"""
         return self.status == "connected"
     
     def categorize_error(self) -> str:

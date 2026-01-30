@@ -1,0 +1,393 @@
+/*
+ * Extension Template Wizard Styles
+ * Task #13: Extension Template Wizard and Download
+ * Task #15: Unified Style Consistency
+ */
+
+/* ========================================
+   CSS Variables System
+   ======================================== */
+:root {
+    /* Spacing */
+    --wizard-space-xs: 4px;
+    --wizard-space-sm: 8px;
+    --wizard-space-md: 16px;
+    --wizard-space-lg: 24px;
+    --wizard-space-xl: 32px;
+
+    /* Component Heights */
+    --wizard-input-height: 40px;
+    --wizard-btn-height: 40px;
+    --wizard-textarea-min-height: 80px;
+
+    /* Font Sizes */
+    --wizard-font-xs: 12px;
+    --wizard-font-sm: 14px;
+    --wizard-font-md: 16px;
+    --wizard-font-lg: 20px;
+
+    /* Colors */
+    --wizard-primary: #4F46E5;
+    --wizard-primary-hover: #4338ca;
+    --wizard-primary-light: rgba(79, 70, 229, 0.1);
+    --wizard-secondary: #667eea;
+    --wizard-danger: #ef4444;
+    --wizard-danger-light: rgba(239, 68, 68, 0.1);
+    --wizard-success: #10b981;
+    --wizard-info: #3b82f6;
+    --wizard-info-bg: #eff6ff;
+
+    /* Text Colors */
+    --wizard-text-primary: #111827;
+    --wizard-text-secondary: #374151;
+    --wizard-text-muted: #6b7280;
+    --wizard-text-light: #9ca3af;
+
+    /* Border Colors */
+    --wizard-border-light: #e5e7eb;
+    --wizard-border-medium: #d1d5db;
+    --wizard-border-dark: #9ca3af;
+
+    /* Background Colors */
+    --wizard-bg-white: #ffffff;
+    --wizard-bg-light: #f9fafb;
+    --wizard-bg-gray: #f3f4f6;
+
+    /* Border Radius - Task #16: Unified 4px Standard */
+    --wizard-radius-sm: 4px;
+    --wizard-radius-md: 4px;  /* Changed from 6px to 4px for button consistency */
+    --wizard-radius-lg: 8px;
+    --wizard-radius-full: 50%;  /* Circular icon buttons only */
+
+    /* Shadows */
+    --wizard-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+    --wizard-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --wizard-shadow-lg: 0 4px 12px rgba(102, 126, 234, 0.4);
+    --wizard-shadow-focus: 0 0 0 3px rgba(79, 70, 229, 0.1);
+
+    /* Transitions */
+    --wizard-transition: all 0.2s ease;
+}
+
+/* ========================================
+   Wizard Button
+   ======================================== */
+.btn-wizard {
+    height: var(--wizard-btn-height);
+    padding: 0 var(--wizard-space-lg);
+    border-radius: var(--wizard-radius-md);
+    font-weight: 500;
+    font-size: var(--wizard-font-sm);
+    cursor: pointer;
+    transition: var(--wizard-transition);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--wizard-space-sm);
+    border: none;
+}
+
+.btn-wizard:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--wizard-shadow-lg);
+}
+
+/* ========================================
+   Wizard Modal
+   ======================================== */
+.modal-lg {
+    max-width: 800px;
+}
+
+/* ========================================
+   Wizard Progress Bar
+   ======================================== */
+.wizard-progress {
+    padding: var(--wizard-space-md) var(--wizard-space-lg);
+    border-bottom: 1px solid var(--wizard-border-light);
+}
+
+/* ========================================
+   Wizard Steps Container
+   ======================================== */
+.wizard-step {
+    padding: var(--wizard-space-md) 0;
+    animation: slideIn 0.3s ease;
+}
+
+.wizard-step h3 {
+    margin-bottom: var(--wizard-space-lg);
+    color: var(--wizard-text-primary);
+    font-size: var(--wizard-font-lg);
+    font-weight: 600;
+}
+
+.wizard-step > p {
+    color: var(--wizard-text-muted);
+    margin-bottom: var(--wizard-space-lg);
+    font-size: var(--wizard-font-sm);
+}
+
+/* ========================================
+   Form Groups - Unified Styling
+   ======================================== */
+.wizard-step .form-group,
+.capability-item .form-group {
+    width: 100%;
+}
+
+.wizard-step .form-group {
+    margin-bottom: var(--wizard-space-lg);
+}
+
+.capability-item .form-group {
+    margin-bottom: var(--wizard-space-md);
+}
+
+.wizard-step .form-group label,
+.capability-item .form-group label {
+    display: block;
+    font-size: var(--wizard-font-sm);
+    font-weight: 600;
+    color: var(--wizard-text-secondary);
+    margin-bottom: var(--wizard-space-sm);
+}
+
+/* All Input Elements - Unified Size and Style */
+.wizard-step .form-group input[type="text"],
+.wizard-step .form-group input[type="email"],
+.wizard-step .form-group input[type="url"],
+.wizard-step .form-group input[type="password"],
+.wizard-step .form-group select,
+.wizard-step input.capability-name,
+.wizard-step input.capability-description,
+.wizard-step select.capability-type {
+    width: 100%;
+    height: var(--wizard-input-height);
+    padding: 0 var(--wizard-space-xs) 0 var(--wizard-space-xs);
+    border: 1px solid var(--wizard-border-medium);
+    border-radius: var(--wizard-radius-md);
+    font-size: var(--wizard-font-sm);
+    color: var(--wizard-text-primary);
+    background: var(--wizard-bg-white);
+    transition: var(--wizard-transition);
+    box-sizing: border-box;
+}
+
+/* Textarea - Unified Style */
+.wizard-step .form-group textarea {
+    width: 100%;
+    min-height: var(--wizard-textarea-min-height);
+    padding: 10px var(--wizard-space-xs);
+    border: 1px solid var(--wizard-border-medium);
+    border-radius: var(--wizard-radius-md);
+    font-size: var(--wizard-font-sm);
+    color: var(--wizard-text-primary);
+    background: var(--wizard-bg-white);
+    transition: var(--wizard-transition);
+    resize: vertical;
+    box-sizing: border-box;
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+/* Focus States - Unified */
+.wizard-step .form-group input:focus,
+.wizard-step .form-group select:focus,
+.wizard-step .form-group textarea:focus,
+.wizard-step input.capability-name:focus,
+.wizard-step input.capability-description:focus,
+.wizard-step select.capability-type:focus {
+    outline: none;
+    border-color: var(--wizard-primary);
+    box-shadow: var(--wizard-shadow-focus);
+}
+
+/* Hover States - Unified */
+.wizard-step .form-group input:hover,
+.wizard-step .form-group select:hover,
+.wizard-step .form-group textarea:hover,
+.wizard-step input.capability-name:hover,
+.wizard-step input.capability-description:hover,
+.wizard-step select.capability-type:hover {
+    border-color: var(--wizard-border-dark);
+}
+
+/* Field Hints */
+.wizard-step .form-group .field-hint,
+.wizard-step .form-group p {
+    font-size: var(--wizard-font-xs);
+    color: var(--wizard-text-muted);
+    margin-top: var(--wizard-space-sm);
+    line-height: 1.4;
+}
+
+/* ========================================
+   Capability Items
+   ======================================== */
+.capability-item {
+    background: var(--wizard-bg-light);
+    border: 1px solid var(--wizard-border-light);
+    border-radius: var(--wizard-radius-md);
+    padding: var(--wizard-space-md);
+    margin-bottom: var(--wizard-space-md);
+    transition: var(--wizard-transition);
+}
+
+.capability-item:hover {
+    border-color: var(--wizard-border-medium);
+    box-shadow: var(--wizard-shadow-sm);
+}
+
+.capability-item h4 {
+    margin: 0;
+    color: var(--wizard-text-primary);
+    font-size: var(--wizard-font-md);
+    font-weight: 600;
+}
+
+.capability-item .form-group:last-child {
+    margin-bottom: 0;
+}
+
+/* Delete Capability Button */
+.btn-delete-capability {
+    background: none;
+    border: none;
+    color: var(--wizard-danger);
+    cursor: pointer;
+    padding: var(--wizard-space-xs);
+    border-radius: var(--wizard-radius-sm);
+    transition: var(--wizard-transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--wizard-space-lg);
+    width: var(--wizard-space-lg);
+}
+
+.btn-delete-capability:hover {
+    background-color: var(--wizard-danger-light);
+}
+
+/* ========================================
+   Permission Checkboxes
+   ======================================== */
+.wizard-step label[onmouseover],
+#permissionsList label {
+    display: flex;
+    align-items: start;
+    padding: var(--wizard-space-md);
+    border: 1px solid var(--wizard-border-light);
+    border-radius: var(--wizard-radius-md);
+    cursor: pointer;
+    transition: var(--wizard-transition);
+    margin-bottom: var(--wizard-space-xs);
+}
+
+.wizard-step input[type="checkbox"] {
+    margin-top: var(--wizard-space-xs);
+    margin-right: var(--wizard-space-xs);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* ========================================
+   Review Section
+   ======================================== */
+.wizard-step .review-section {
+    background: var(--wizard-bg-light);
+    border: 1px solid var(--wizard-border-light);
+    border-radius: var(--wizard-radius-md);
+    padding: var(--wizard-space-lg);
+    margin-bottom: var(--wizard-space-lg);
+}
+
+.wizard-step .review-section h4 {
+    margin: 0 0 var(--wizard-space-md) 0;
+    color: var(--wizard-text-primary);
+    font-size: var(--wizard-font-md);
+    font-weight: 600;
+}
+
+/* ========================================
+   Info Box
+   ======================================== */
+.wizard-step .info-box {
+    background: var(--wizard-info-bg);
+    border: 1px solid var(--wizard-info);
+    border-radius: var(--wizard-radius-md);
+    padding: var(--wizard-space-md);
+    margin-top: var(--wizard-space-lg);
+    display: flex;
+    align-items: start;
+}
+
+.wizard-step .info-box .material-icons {
+    color: var(--wizard-info);
+    margin-right: var(--wizard-space-sm);
+    flex-shrink: 0;
+}
+
+/* ========================================
+   Button - Add Capability
+   ======================================== */
+#btnAddCapability {
+    width: 100%;
+    height: var(--wizard-btn-height);
+    margin-top: var(--wizard-space-md);
+    padding: 0 var(--wizard-space-lg);
+    border-radius: var(--wizard-radius-md);
+    font-size: var(--wizard-font-sm);
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--wizard-space-sm);
+    transition: var(--wizard-transition);
+}
+
+/* ========================================
+   Animations
+   ======================================== */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+@media (max-width: 768px) {
+    .modal-lg {
+        max-width: 95%;
+    }
+
+    .wizard-progress {
+        padding: var(--wizard-space-xs) var(--wizard-space-md);
+    }
+
+    .wizard-step {
+        padding: var(--wizard-space-sm) 0;
+    }
+
+    .wizard-step .form-group {
+        margin-bottom: var(--wizard-space-sm);
+    }
+
+    .capability-item {
+        padding: var(--wizard-space-sm);
+    }
+
+    .wizard-step label[onmouseover],
+    #permissionsList label {
+        padding: var(--wizard-space-sm);
+    }
+}

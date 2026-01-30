@@ -21,7 +21,10 @@ class GovernanceFindingsView {
         this.container.innerHTML = `
             <div class="governance-findings-view">
                 <div class="view-header">
-                    <h2>Governance Findings</h2>
+                    <div>
+                        <h1>Governance Findings</h1>
+                        <p class="text-sm text-gray-600 mt-1">Security and compliance findings</p>
+                    </div>
                     <div class="header-actions">
                         <button class="btn-refresh" id="findings-refresh">
                             <span class="icon"><span class="material-icons md-18">refresh</span></span> Refresh

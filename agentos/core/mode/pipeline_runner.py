@@ -289,10 +289,12 @@ class ModePipelineRunner:
                 approval_dir=stage_dir / "approvals"
             )
             
+            # Task #1: Pass caller_source to enforce chat → execution hard gate
             result = executor.execute(
                 execution_request=execution_request,
                 sandbox_policy={},  # deprecated parameter
-                policy_path=policy_path
+                policy_path=policy_path,
+                caller_source="task_runner"  # Pipeline runner is always called by task runner
             )
             
             finished_at = datetime.now(timezone.utc).isoformat()

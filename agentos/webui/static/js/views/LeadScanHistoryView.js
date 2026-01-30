@@ -24,7 +24,10 @@ class LeadScanHistoryView {
         this.container.innerHTML = `
             <div class="lead-scan-history-view">
                 <div class="view-header">
-                    <h2>Lead Agent - Risk Mining</h2>
+                    <div>
+                        <h1>Lead Agent - Risk Mining</h1>
+                        <p class="text-sm text-gray-600 mt-1">Risk mining scan history and results</p>
+                    </div>
                     <div class="header-actions">
                         <button id="lead-run-dry" class="btn-secondary" ${this.isScanning ? 'disabled' : ''}>
                             <span class="icon"><span class="material-icons md-18">search</span></span> Dry Run (Preview)

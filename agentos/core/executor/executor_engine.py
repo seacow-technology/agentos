@@ -29,6 +29,10 @@ from agentos.core.mode.mode_event_listener import emit_mode_violation
 # Task-Driven: Import TaskManager
 from agentos.core.task import TaskManager
 
+# Task #3: Planning Guard - v0.6 Soul
+from agentos.core.task.planning_guard import get_planning_guard
+from agentos.core.task.errors import PlanningSideEffectForbiddenError
+
 
 class DiffRejected(Exception):
     """
@@ -75,24 +79,55 @@ class ExecutorEngine:
         self.review_gate = ReviewGate(approval_dir or (output_dir / "approvals"))
         self.audit_logger: Optional[AuditLogger] = None
         self.task_manager = TaskManager()  # Task-Driven
+        self.planning_guard = get_planning_guard()  # Task #3: Planning Guard
     
     def execute(
         self,
         execution_request: Dict[str, Any],
         sandbox_policy: Dict[str, Any],
-        policy_path: Optional[Path] = None
+        policy_path: Optional[Path] = None,
+        caller_source: str = "unknown"
     ) -> Dict[str, Any]:
         """
         执行请求
-        
+
+        Task #1: Chat → Execution Hard Gate
+        Added caller_source parameter to enforce source verification.
+        Only "task_runner" is allowed to execute. "chat" will be rejected.
+
         Args:
             execution_request: 执行请求
             sandbox_policy: sandbox策略 (deprecated, use policy_path)
             policy_path: 策略文件路径（新参数）
-        
+            caller_source: Source of the call - MUST be "task_runner" for execution
+                          Options: "task_runner", "chat", "unknown"
+
         Returns:
             执行结果
+
+        Raises:
+            ChatExecutionForbiddenError: If caller_source is "chat"
         """
+        # Task #1: Hard gate - reject chat execution attempts
+        # Import here to avoid circular import
+        if caller_source == "chat":
+            from agentos.core.task.errors import ChatExecutionForbiddenError
+            raise ChatExecutionForbiddenError(
+                caller_context="ExecutorEngine.execute",
+                attempted_operation="execute_task",
+                task_id=execution_request.get("task_id"),
+                metadata={
+                    "execution_request_id": execution_request.get("execution_request_id"),
+                    "enforcement": "hard_gate_task_1"
+                }
+            )
+
+        # Task #1: Enforce that only task_runner can execute
+        if caller_source != "task_runner":
+            logger.warning(
+                f"Execution called with non-task_runner source: {caller_source}. "
+                f"This should only be called by task runner."
+            )
         exec_req_id = execution_request["execution_request_id"]
         run_dir = self.output_dir / exec_req_id
         run_dir.mkdir(parents=True, exist_ok=True)
@@ -126,6 +161,62 @@ class ExecutorEngine:
                     "orphan_ref": exec_req_id
                 }
             )
+
+        # ═══════════════════════════════════════════════════════════════
+        # Task #4: EXECUTION FROZEN PLAN VALIDATION (v0.6 Core)
+        # ═══════════════════════════════════════════════════════════════
+        # Executor only trusts frozen specs. Execution MUST be blocked if
+        # spec_frozen = 0. This is a hard gate enforcing v0.6 architecture.
+        #
+        # Validation:
+        #   - Load task from database
+        #   - Check task.spec_frozen == 1
+        #   - If spec_frozen = 0 → raise SpecNotFrozenError
+        #   - Audit rejection reason
+        # ═══════════════════════════════════════════════════════════════
+        task = self.task_manager.get_task(task_id)
+        if not task:
+            # Task not found - create error result
+            error_msg = f"Task {task_id} not found in database"
+            run_tape.audit_logger.log_error(error_msg)
+            return self._create_error_result(
+                exec_req_id,
+                "failed",
+                error_msg,
+                run_tape,
+                run_dir
+            )
+
+        # Task #4: Check spec_frozen flag
+        if not task.is_spec_frozen():
+            from agentos.core.task.errors import SpecNotFrozenError
+
+            # Audit rejection
+            run_tape.audit_logger.log_event("execution_blocked_spec_not_frozen", details={
+                "task_id": task_id,
+                "spec_frozen": task.spec_frozen,
+                "reason": "Execution requires frozen specification (spec_frozen = 1)",
+                "enforcement": "task_4_frozen_plan_validation",
+                "v06_constraint": True
+            })
+
+            # Raise error with clear message
+            raise SpecNotFrozenError(
+                task_id=task_id,
+                reason="Execution requires frozen specification. Please freeze spec before executing.",
+                metadata={
+                    "execution_request_id": exec_req_id,
+                    "spec_frozen": task.spec_frozen,
+                    "enforcement": "task_4_frozen_plan_validation"
+                }
+            )
+
+        # Log successful validation
+        run_tape.audit_logger.log_event("spec_frozen_validation_passed", details={
+            "task_id": task_id,
+            "spec_frozen": task.spec_frozen,
+            "validation": "passed"
+        })
         
         # 保持向后兼容：同时使用 AuditLogger
         self.audit_logger = run_tape.audit_logger
@@ -186,6 +277,9 @@ class ExecutorEngine:
             ref_id=exec_req_id,
             phase="execution"
         )
+
+        # Task #3: Store task_id for planning guard checks
+        self._current_task_id = task_id
         
         # P0-RT1: Policy 在执行前被加载并强制
         policy = None
@@ -386,9 +480,9 @@ class ExecutorEngine:
         except PolicyDeniedError as e:
             # P0-RT1: Policy 拒绝必须明确记录
             run_tape.audit_logger.log_error(f"Policy denied: {e.reason}")
-            
+
             completed_at = datetime.now(timezone.utc).isoformat()
-            
+
             # P0-RT2: 生成 execution_summary.json（即使失败）
             self._generate_execution_summary(
                 run_dir,
@@ -400,13 +494,13 @@ class ExecutorEngine:
                 completed_at,
                 error=str(e)
             )
-            
+
             # P0-RT2: 生成 checksums.json（即使失败）
             self._generate_checksums(audit_dir, run_tape)
-            
+
             # Task-Driven: Update task status
             self.task_manager.update_task_status(task_id, "failed")
-            
+
             return {
                 "execution_result_id": f"exec_result_{exec_req_id}",
                 "schema_version": "0.11.1",
@@ -422,6 +516,51 @@ class ExecutorEngine:
                 "started_at": started_at,
                 "completed_at": completed_at
             }
+
+        except Exception as e:
+            # Task #4: Check if this is SpecNotFrozenError
+            from agentos.core.task.errors import SpecNotFrozenError
+            if isinstance(e, SpecNotFrozenError):
+                run_tape.audit_logger.log_error(f"Spec not frozen: {e.reason}")
+
+                completed_at = datetime.now(timezone.utc).isoformat()
+
+                # Generate execution_summary.json
+                self._generate_execution_summary(
+                    run_dir,
+                    exec_req_id,
+                    "blocked",
+                    0,
+                    0,
+                    started_at,
+                    completed_at,
+                    error=str(e)
+                )
+
+                # Generate checksums.json
+                self._generate_checksums(audit_dir, run_tape)
+
+                # Task-Driven: Update task status to blocked
+                self.task_manager.update_task_status(task_id, "blocked")
+
+                return {
+                    "execution_result_id": f"exec_result_{exec_req_id}",
+                    "schema_version": "0.11.1",
+                    "execution_request_id": exec_req_id,
+                    "task_id": task_id,
+                    "status": "blocked",
+                    "error": str(e),
+                    "spec_not_frozen": {
+                        "reason": e.reason,
+                        "task_id": e.task_id,
+                        "enforcement": "task_4_frozen_plan_validation"
+                    },
+                    "started_at": started_at,
+                    "completed_at": completed_at
+                }
+
+            # Generic exception handler (original code)
+            run_tape.audit_logger.log_error(str(e))
             
         except Exception as e:
             run_tape.audit_logger.log_error(str(e))
@@ -473,25 +612,80 @@ class ExecutorEngine:
         self,
         op: Dict[str, Any],
         worktree_path: Path,
-        op_id: Optional[str] = None
+        op_id: Optional[str] = None,
+        skip_planning_guard: bool = False
     ) -> Dict[str, Any]:
         """
         执行单个操作
-        
+
+        Task #3: Planning Guard integrated here
+        Task #10: Added skip_planning_guard parameter with audit logging
+
+        All operations must pass planning guard check before execution.
+
         Args:
             op: 操作定义
             worktree_path: worktree 路径
             op_id: 操作 ID（可选）
-        
+            skip_planning_guard: Skip planning guard check (default False)
+                                 WARNING: Bypassing guard will be audited
+
         Returns:
             操作结果
         """
         if op_id is None:
             op_id = op.get("op_id", "unknown")
-        
+
         action = op.get("action")
         params = op.get("params", {})
-        
+
+        # Task #10: Audit if planning guard is being skipped
+        if skip_planning_guard:
+            task_id = getattr(self, '_current_task_id', None)
+            self.audit_logger.log_event("planning_guard_skipped", details={
+                "task_id": task_id,
+                "op_id": op_id,
+                "action": action,
+                "caller": "executor_engine._execute_operation",
+                "reason": "skip_planning_guard=True",
+                "warning": "Planning guard bypass detected - this operation is NOT protected",
+                "level": "WARN"
+            })
+
+        # Task #3: Planning Guard - Check if operation is allowed in current phase
+        # Task #10: Skip check if explicitly requested (but already audited above)
+        if not skip_planning_guard:
+            # Get task if available (from execution_request)
+            task_id = getattr(self, '_current_task_id', None)
+            task = None
+            if task_id:
+                task = self.task_manager.get_task(task_id)
+
+            # Determine operation type and name for planning guard
+            operation_type, operation_name = self._classify_operation(action)
+
+            # Check with planning guard
+            try:
+                self.planning_guard.assert_operation_allowed(
+                    operation_type=operation_type,
+                    operation_name=operation_name,
+                    task=task,
+                    mode_id=getattr(self, '_current_mode_id', None),
+                    metadata={"action": action, "op_id": op_id}
+                )
+            except PlanningSideEffectForbiddenError as e:
+                # Log the violation and return error result
+                self.audit_logger.log_error(
+                    f"Planning guard blocked operation: {e.message}"
+                )
+                return {
+                    "operation_id": op_id,
+                    "action": action,
+                    "status": "forbidden",
+                    "error": str(e),
+                    "error_type": "PlanningSideEffectForbiddenError"
+                }
+
         self.audit_logger.log_operation_start(op_id, action, params)
         
         try:
@@ -1084,3 +1278,32 @@ class ExecutorEngine:
         checksums_file = audit_dir / "checksums.json"
         with open(checksums_file, "w", encoding="utf-8") as f:
             json.dump(checksums, f, indent=2)
+
+    def _classify_operation(self, action: str) -> tuple[str, str]:
+        """
+        Classify operation into (operation_type, operation_name) for planning guard
+
+        Task #3: Planning Guard operation classification
+
+        Args:
+            action: Operation action (write_file, git_commit, etc.)
+
+        Returns:
+            Tuple of (operation_type, operation_name)
+        """
+        # Map executor actions to planning guard operation types
+        if action in ["write_file", "update_file"]:
+            return ("file_write", "file.write")
+        elif action == "mkdir":
+            return ("file_write", "Path.mkdir")
+        elif action in ["git_commit"]:
+            return ("git", "git.commit")
+        elif action == "git_add":
+            return ("git", "git.add")
+        elif action == "git_push":
+            return ("git", "git.push")
+        elif action in ["run_command", "exec", "shell"]:
+            return ("shell", "subprocess.run")
+        else:
+            # Unknown action, classify as generic
+            return ("unknown", action)

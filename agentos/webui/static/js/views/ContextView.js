@@ -10,6 +10,7 @@ class ContextView {
         this.container = container;
         this.sessionId = null;
         this.contextStatus = null;
+        this.currentTab = 'status';  // NEW: Track current tab
 
         this.init();
     }
@@ -18,7 +19,10 @@ class ContextView {
         this.container.innerHTML = `
             <div class="context-view">
                 <div class="view-header">
-                    <h2>Session Context Management</h2>
+                    <div>
+                        <h1>Session Context Management</h1>
+                        <p class="text-sm text-gray-600 mt-1">View and manage session context and state</p>
+                    </div>
                     <div class="header-actions">
                         <button class="btn-refresh" id="context-refresh" disabled>
                             <span class="icon"><span class="material-icons md-18">refresh</span></span> Refresh
@@ -42,7 +46,7 @@ class ContextView {
                         </div>
                         <div class="flex gap-2 mt-3">
                             <button class="btn-primary" id="context-load-btn">
-                                <span class="material-icons md-18">bar_chart</span> Load Context Status
+                                <span class="material-icons md-18">analytics</span> Load Context Status
                             </button>
                             <button class="btn-secondary" id="context-recent-btn">
                                 <span class="material-icons md-18">history</span> Recent Sessions
@@ -53,38 +57,27 @@ class ContextView {
 
                 <!-- Context Status -->
                 <div id="context-status-section" class="hidden">
+                    <!-- NEW: Tab Navigation -->
                     <div class="detail-section">
-                        <h3 class="detail-section-title">Context Status</h3>
-                        <div class="config-card">
-                            <div id="context-status-content"></div>
+                        <div class="flex gap-2 border-b border-gray-200">
+                            <button class="context-tab active" data-tab="status">
+                                <span class="material-icons md-18">info</span> Status
+                            </button>
+                            <button class="context-tab" data-tab="budget">
+                                <span class="material-icons md-18">account_balance_wallet</span> Budget
+                            </button>
+                            <button class="context-tab" data-tab="operations">
+                                <span class="material-icons md-18">settings</span> Operations
+                            </button>
+                            <button class="context-tab" data-tab="raw">
+                                <span class="material-icons md-18">code</span> Raw Data
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Context Operations -->
-                    <div class="detail-section">
-                        <h3 class="detail-section-title">Operations</h3>
-                        <div class="config-card">
-                            <div class="flex gap-3 flex-wrap">
-                                <button class="btn-primary" id="context-refresh-op">
-                                    <span class="material-icons md-18">refresh</span> Refresh Context
-                                </button>
-                                <button class="btn-secondary" id="context-attach-op">
-                                    <span class="material-icons md-18">attach_file</span> Attach Context
-                                </button>
-                                <button class="btn-danger" id="context-detach-op">
-                                    <span class="material-icons md-18">content_cut</span> Detach Context
-                                </button>
-                            </div>
-                            <div id="context-op-status" class="mt-4"></div>
-                        </div>
-                    </div>
-
-                    <!-- Context Details (JSON) -->
-                    <div class="detail-section">
-                        <h3 class="detail-section-title">Full Context Data</h3>
-                        <div class="config-card">
-                            <div class="json-viewer-container-context"></div>
-                        </div>
+                    <!-- Tab Contents -->
+                    <div id="context-tab-content">
+                        <!-- Will be populated by renderTab() -->
                     </div>
                 </div>
             </div>
@@ -98,9 +91,6 @@ class ContextView {
         const loadBtn = document.getElementById('context-load-btn');
         const recentBtn = document.getElementById('context-recent-btn');
         const refreshBtn = document.getElementById('context-refresh');
-        const refreshOpBtn = document.getElementById('context-refresh-op');
-        const attachOpBtn = document.getElementById('context-attach-op');
-        const detachOpBtn = document.getElementById('context-detach-op');
 
         if (loadBtn) {
             loadBtn.addEventListener('click', () => this.loadContextStatus());
@@ -114,17 +104,27 @@ class ContextView {
             refreshBtn.addEventListener('click', () => this.loadContextStatus());
         }
 
-        if (refreshOpBtn) {
-            refreshOpBtn.addEventListener('click', () => this.refreshContext());
-        }
+        // NEW: Tab navigation
+        this.container.addEventListener('click', (e) => {
+            const tab = e.target.closest('.context-tab');
+            if (tab) {
+                const tabName = tab.dataset.tab;
+                this.switchTab(tabName);
+            }
 
-        if (attachOpBtn) {
-            attachOpBtn.addEventListener('click', () => this.attachContext());
-        }
+            // Operation buttons (event delegation)
+            const refreshOpBtn = e.target.closest('#context-refresh-op');
+            const attachOpBtn = e.target.closest('#context-attach-op');
+            const detachOpBtn = e.target.closest('#context-detach-op');
 
-        if (detachOpBtn) {
-            detachOpBtn.addEventListener('click', () => this.detachContext());
-        }
+            if (refreshOpBtn) {
+                this.refreshContext();
+            } else if (attachOpBtn) {
+                this.attachContext();
+            } else if (detachOpBtn) {
+                this.detachContext();
+            }
+        });
     }
 
     tryLoadFromCurrentSession() {
@@ -237,9 +237,44 @@ class ContextView {
         }
     }
 
-    renderContextStatus() {
-        const contentDiv = document.getElementById('context-status-content');
-        if (!contentDiv || !this.contextStatus) return;
+    switchTab(tabName) {
+        this.currentTab = tabName;
+
+        // Update tab active state
+        this.container.querySelectorAll('.context-tab').forEach(tab => {
+            if (tab.dataset.tab === tabName) {
+                tab.classList.add('active');
+            } else {
+                tab.classList.remove('active');
+            }
+        });
+
+        // Render tab content
+        this.renderTab(tabName);
+    }
+
+    renderTab(tabName) {
+        const contentDiv = document.getElementById('context-tab-content');
+        if (!contentDiv) return;
+
+        switch (tabName) {
+            case 'status':
+                this.renderStatusTab(contentDiv);
+                break;
+            case 'budget':
+                this.renderBudgetTab(contentDiv);
+                break;
+            case 'operations':
+                this.renderOperationsTab(contentDiv);
+                break;
+            case 'raw':
+                this.renderRawTab(contentDiv);
+                break;
+        }
+    }
+
+    renderStatusTab(container) {
+        if (!this.contextStatus) return;
 
         const status = this.contextStatus;
 
@@ -252,51 +287,184 @@ class ContextView {
             'ERROR': 'badge-error'
         };
 
-        contentDiv.innerHTML = `
-            <div class="detail-grid">
-                <div class="detail-item">
-                    <span class="detail-label">Session ID</span>
-                    <span class="detail-value font-mono text-xs">${this.escapeHtml(status.session_id || this.sessionId)}</span>
+        // Create Explain button for this session context
+        const explainBtn = new ExplainButton('file', `session:${this.sessionId}`, `Session ${this.sessionId}`);
+
+        container.innerHTML = `
+            <div class="detail-section">
+                <div class="section-header-with-explain">
+                    <h3 class="detail-section-title">Context Status</h3>
+                    ${explainBtn.render()}
                 </div>
-                <div class="detail-item">
-                    <span class="detail-label">State</span>
-                    <span class="detail-value">
-                        <span class="badge ${stateBadge[status.state] || 'badge-info'}">${status.state || 'UNKNOWN'}</span>
-                    </span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Updated At</span>
-                    <span class="detail-value text-sm">
-                        ${status.updated_at ? new Date(status.updated_at).toLocaleString() : 'N/A'}
-                    </span>
-                </div>
-                ${status.tokens ? `
-                    <div class="detail-item">
-                        <span class="detail-label">Tokens</span>
-                        <span class="detail-value text-sm">
-                            ${status.tokens.prompt_tokens || 0} prompt / ${status.tokens.completion_tokens || 0} completion
-                            (window: ${status.tokens.context_window || 'N/A'})
-                        </span>
+                <div class="config-card">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Session ID</span>
+                            <span class="detail-value font-mono text-xs">${this.escapeHtml(status.session_id || this.sessionId)}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">State</span>
+                            <span class="detail-value">
+                                <span class="badge ${stateBadge[status.state] || 'badge-info'}">${status.state || 'UNKNOWN'}</span>
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Updated At</span>
+                            <span class="detail-value text-sm">
+                                ${status.updated_at ? new Date(status.updated_at).toLocaleString() : 'N/A'}
+                            </span>
+                        </div>
+                        ${status.tokens ? `
+                            <div class="detail-item">
+                                <span class="detail-label">Tokens</span>
+                                <span class="detail-value text-sm">
+                                    ${status.tokens.prompt_tokens || 0} prompt / ${status.tokens.completion_tokens || 0} completion
+                                    (window: ${status.tokens.context_window || 'N/A'})
+                                </span>
+                            </div>
+                        ` : ''}
+                        ${status.rag || status.memory ? `
+                            <div class="detail-item">
+                                <span class="detail-label">Components</span>
+                                <span class="detail-value">
+                                    ${status.rag ? '<span class="badge badge-info mr-1">RAG</span>' : ''}
+                                    ${status.memory ? '<span class="badge badge-info">Memory</span>' : ''}
+                                </span>
+                            </div>
+                        ` : ''}
                     </div>
-                ` : ''}
-                ${status.rag || status.memory ? `
-                    <div class="detail-item">
-                        <span class="detail-label">Components</span>
-                        <span class="detail-value">
-                            ${status.rag ? '<span class="badge badge-info mr-1">RAG</span>' : ''}
-                            ${status.memory ? '<span class="badge badge-info">Memory</span>' : ''}
-                        </span>
+                </div>
+            </div>
+        `;
+    }
+
+    renderBudgetTab(container) {
+        if (!this.contextStatus) return;
+
+        const usage = this.contextStatus.usage || {};
+        const budget = this.contextStatus.budget || {};
+
+        // Mock data if not available (for now)
+        const systemTokens = budget.system_tokens || 1000;
+        const windowTokens = budget.window_tokens || 4000;
+        const ragTokens = budget.rag_tokens || 2000;
+        const memoryTokens = budget.memory_tokens || 1000;
+
+        const usedSystem = usage.tokens_system || 0;
+        const usedWindow = usage.tokens_window || 0;
+        const usedRag = usage.tokens_rag || 0;
+        const usedMemory = usage.tokens_memory || 0;
+
+        const configSource = budget.auto_derived ? 'Auto-derived' : 'Configured';
+
+        container.innerHTML = `
+            <div class="detail-section">
+                <div class="budget-tab-content">
+                    <h3>Configuration Source: ${configSource}</h3>
+
+                    <table class="budget-allocation-table">
+                        <thead>
+                            <tr>
+                                <th>Component</th>
+                                <th>Budget</th>
+                                <th>Used</th>
+                                <th>% Used</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${this.renderBudgetRow('System', systemTokens, usedSystem)}
+                            ${this.renderBudgetRow('Window', windowTokens, usedWindow)}
+                            ${this.renderBudgetRow('RAG', ragTokens, usedRag)}
+                            ${this.renderBudgetRow('Memory', memoryTokens, usedMemory)}
+                        </tbody>
+                    </table>
+
+                    <div class="trimming-history">
+                        <h4>Trimming History (last 5 operations)</h4>
+                        <ul>
+                            ${this.renderTrimmingLog(usage.trimming_log)}
+                        </ul>
                     </div>
-                ` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    renderBudgetRow(component, budget, used) {
+        const percent = budget > 0 ? ((used / budget) * 100).toFixed(1) : 0;
+        return `
+            <tr>
+                <td>${component}</td>
+                <td>${budget.toLocaleString()}</td>
+                <td>${used.toLocaleString()}</td>
+                <td>${percent}%</td>
+            </tr>
+        `;
+    }
+
+    renderTrimmingLog(log) {
+        if (!log || log.length === 0) {
+            return '<li>No trimming operations yet</li>';
+        }
+
+        return log.slice(-5).map(entry => `
+            <li>
+                ${new Date(entry.timestamp).toLocaleString()} -
+                Trimmed ${entry.items_removed} ${entry.component} items
+                (${(entry.tokens_saved / 1000).toFixed(1)}k tokens)
+            </li>
+        `).join('');
+    }
+
+    renderOperationsTab(container) {
+        container.innerHTML = `
+            <div class="detail-section">
+                <h3 class="detail-section-title">Operations</h3>
+                <div class="config-card">
+                    <div class="flex gap-3 flex-wrap">
+                        <button class="btn-primary" id="context-refresh-op">
+                            <span class="material-icons md-18">refresh</span> Refresh Context
+                        </button>
+                        <button class="btn-secondary" id="context-attach-op">
+                            <span class="material-icons md-18">attach_file</span> Attach Context
+                        </button>
+                        <button class="btn-danger" id="context-detach-op">
+                            <span class="material-icons md-18">content_cut</span> Detach Context
+                        </button>
+                    </div>
+                    <div id="context-op-status" class="mt-4"></div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderRawTab(container) {
+        container.innerHTML = `
+            <div class="detail-section">
+                <h3 class="detail-section-title">Full Context Data</h3>
+                <div class="config-card">
+                    <div class="json-viewer-container-context"></div>
+                </div>
             </div>
         `;
 
-        // Render full JSON
-        const jsonContainer = this.container.querySelector('.json-viewer-container-context');
-        if (jsonContainer) {
-            new JsonViewer(jsonContainer, status);
+        // Render JSON viewer
+        const jsonContainer = container.querySelector('.json-viewer-container-context');
+        if (jsonContainer && this.contextStatus) {
+            new JsonViewer(jsonContainer, this.contextStatus);
         }
     }
+
+    renderContextStatus() {
+        // NEW: Render the current tab instead of fixed content
+        this.renderTab(this.currentTab);
+
+        // Attach ExplainButton handlers
+        if (typeof ExplainButton !== 'undefined') {
+            ExplainButton.attachHandlers();
+        }
+    }
+
 
     async refreshContext() {
         if (!this.sessionId) {
@@ -326,7 +494,7 @@ class ContextView {
             }
 
             if (statusDiv) {
-                statusDiv.innerHTML = `<p class="text-sm text-green-600"><span class="material-icons" style="font-size: 16px; vertical-align: middle;">check</span> Context refreshed. New state: ${response.data?.state || 'N/A'}</p>`;
+                statusDiv.innerHTML = `<p class="text-sm text-green-600"><span class="material-icons md-18">check</span> Context refreshed. New state: ${response.data?.state || 'N/A'}</p>`;
             }
 
             // Reload status
@@ -336,7 +504,7 @@ class ContextView {
             console.error('Failed to refresh context:', error);
 
             if (statusDiv) {
-                statusDiv.innerHTML = `<p class="text-sm text-red-600"><span class="material-icons" style="font-size: 16px; vertical-align: middle;">cancel</span> Error: ${error.message}</p>`;
+                statusDiv.innerHTML = `<p class="text-sm text-red-600"><span class="material-icons md-18">cancel</span> Error: ${error.message}</p>`;
             }
 
             if (window.showToast) {
@@ -376,7 +544,7 @@ class ContextView {
             }
 
             if (statusDiv) {
-                statusDiv.innerHTML = '<p class="text-sm text-green-600"><span class="material-icons" style="font-size: 16px; vertical-align: middle;">check</span> Context attached (Memory + RAG enabled)</p>';
+                statusDiv.innerHTML = '<p class="text-sm text-green-600"><span class="material-icons md-18">check</span> Context attached (Memory + RAG enabled)</p>';
             }
 
             // Reload status
@@ -386,7 +554,7 @@ class ContextView {
             console.error('Failed to attach context:', error);
 
             if (statusDiv) {
-                statusDiv.innerHTML = `<p class="text-sm text-red-600"><span class="material-icons" style="font-size: 16px; vertical-align: middle;">cancel</span> Error: ${error.message}</p>`;
+                statusDiv.innerHTML = `<p class="text-sm text-red-600"><span class="material-icons md-18">cancel</span> Error: ${error.message}</p>`;
             }
 
             if (window.showToast) {
@@ -430,7 +598,7 @@ class ContextView {
             }
 
             if (statusDiv) {
-                statusDiv.innerHTML = '<p class="text-sm text-green-600"><span class="material-icons" style="font-size: 16px; vertical-align: middle;">check</span> Context detached</p>';
+                statusDiv.innerHTML = '<p class="text-sm text-green-600"><span class="material-icons md-18">check</span> Context detached</p>';
             }
 
             // Reload status
@@ -440,7 +608,7 @@ class ContextView {
             console.error('Failed to detach context:', error);
 
             if (statusDiv) {
-                statusDiv.innerHTML = `<p class="text-sm text-red-600"><span class="material-icons" style="font-size: 16px; vertical-align: middle;">cancel</span> Error: ${error.message}</p>`;
+                statusDiv.innerHTML = `<p class="text-sm text-red-600"><span class="material-icons md-18">cancel</span> Error: ${error.message}</p>`;
             }
 
             if (window.showToast) {

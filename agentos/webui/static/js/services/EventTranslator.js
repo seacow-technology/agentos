@@ -11,18 +11,18 @@
  * Usage:
  * ```javascript
  * const friendlyEvent = EventTranslator.translate(rawEvent);
- * // { icon: '🚀', text: '启动任务执行器', level: 'info', ... }
+ * // { icon: 'rocket_launch', text: '启动任务执行器', level: 'info', ... }
  * ```
  */
 
 // 阶段图标映射
 const PHASE_ICONS = {
-    'planning': '📋',
-    'executing': '⚙️',
-    'verifying': '🔍',
-    'done': '✅',
-    'failed': '❌',
-    'blocked': '🚧'
+    'planning': 'assignment',
+    'executing': 'settings',
+    'verifying': 'search',
+    'done': 'check_circle',
+    'failed': 'cancel',
+    'blocked': 'construction'
 };
 
 // 阶段中文名称映射
@@ -39,7 +39,7 @@ const PHASE_NAMES = {
 const EVENT_TEMPLATES = {
     // ========== Runner 生命周期 ==========
     'runner_spawn': {
-        icon: '🚀',
+        icon: 'rocket_launch',
         text: (payload) => {
             const pid = payload?.runner_pid || 'unknown';
             const version = payload?.runner_version || 'v1';
@@ -49,7 +49,7 @@ const EVENT_TEMPLATES = {
     },
 
     'runner_exit': {
-        icon: '🏁',
+        icon: 'flag',
         text: (payload) => {
             const exitCode = payload?.exit_code ?? 0;
             const reason = payload?.reason || payload?.explanation || '正常退出';
@@ -62,7 +62,7 @@ const EVENT_TEMPLATES = {
 
     // ========== 阶段转换 ==========
     'phase_enter': {
-        icon: (payload) => PHASE_ICONS[payload?.phase] || '📍',
+        icon: (payload) => PHASE_ICONS[payload?.phase] || 'place',
         text: (payload) => {
             const phase = payload?.phase || 'unknown';
             const phaseName = PHASE_NAMES[phase] || phase;
@@ -74,9 +74,9 @@ const EVENT_TEMPLATES = {
     'phase_exit': {
         icon: (payload) => {
             const phase = payload?.phase;
-            if (phase === 'done') return '✅';
-            if (phase === 'failed') return '❌';
-            return '➡️';
+            if (phase === 'done') return 'check_circle';
+            if (phase === 'failed') return 'cancel';
+            return 'arrow_forward';
         },
         text: (payload) => {
             const phase = payload?.phase || 'unknown';
@@ -93,7 +93,7 @@ const EVENT_TEMPLATES = {
 
     // ========== Work Items（子任务派发） ==========
     'WORK_ITEMS_EXTRACTED': {
-        icon: '📦',
+        icon: 'inventory_2',
         text: (payload) => {
             const count = payload?.count || payload?.total_items || 0;
             return `提取到 ${count} 个子任务待执行`;
@@ -102,7 +102,7 @@ const EVENT_TEMPLATES = {
     },
 
     'work_item_dispatched': {
-        icon: '📤',
+        icon: 'outbox',
         text: (payload) => {
             const itemId = payload?.work_item_id || payload?.span_id || 'unknown';
             const workType = payload?.work_type || '子任务';
@@ -112,7 +112,7 @@ const EVENT_TEMPLATES = {
     },
 
     'work_item_start': {
-        icon: '▶️',
+        icon: 'play_arrow',
         text: (payload) => {
             const itemId = payload?.work_item_id || 'unknown';
             const workType = payload?.work_type || '任务';
@@ -122,7 +122,7 @@ const EVENT_TEMPLATES = {
     },
 
     'WORK_ITEM_STARTED': {
-        icon: '▶️',
+        icon: 'play_arrow',
         text: (payload) => {
             const itemId = payload?.work_item_id || payload?.span_id || 'unknown';
             return `子任务 #${itemId} 已启动`;
@@ -131,7 +131,7 @@ const EVENT_TEMPLATES = {
     },
 
     'work_item_done': {
-        icon: '✅',
+        icon: 'check_circle',
         text: (payload) => {
             const itemId = payload?.work_item_id || 'unknown';
             const workType = payload?.work_type || '任务';
@@ -141,7 +141,7 @@ const EVENT_TEMPLATES = {
     },
 
     'work_item_complete': {
-        icon: '✅',
+        icon: 'check_circle',
         text: (payload) => {
             const itemId = payload?.work_item_id || 'unknown';
             return `子任务 #${itemId} 执行成功`;
@@ -150,7 +150,7 @@ const EVENT_TEMPLATES = {
     },
 
     'WORK_ITEM_COMPLETED': {
-        icon: '✅',
+        icon: 'check_circle',
         text: (payload) => {
             const itemId = payload?.work_item_id || payload?.span_id || 'unknown';
             return `子任务 #${itemId} 已完成`;
@@ -159,7 +159,7 @@ const EVENT_TEMPLATES = {
     },
 
     'work_item_failed': {
-        icon: '❌',
+        icon: 'cancel',
         text: (payload) => {
             const itemId = payload?.work_item_id || 'unknown';
             const reason = payload?.reason || payload?.error || '执行失败';
@@ -169,7 +169,7 @@ const EVENT_TEMPLATES = {
     },
 
     'WORK_ITEM_FAILED': {
-        icon: '❌',
+        icon: 'cancel',
         text: (payload) => {
             const itemId = payload?.work_item_id || payload?.span_id || 'unknown';
             const error = payload?.error || '未知错误';
@@ -180,7 +180,7 @@ const EVENT_TEMPLATES = {
 
     // ========== Checkpoints（进度点） ==========
     'checkpoint_begin': {
-        icon: '💾',
+        icon: 'save',
         text: (payload) => {
             const checkpointType = payload?.checkpoint_type || 'checkpoint';
             return `开始创建进度点（${checkpointType}）`;
@@ -189,7 +189,7 @@ const EVENT_TEMPLATES = {
     },
 
     'checkpoint_commit': {
-        icon: '💾',
+        icon: 'save',
         text: (payload) => {
             const checkpointId = payload?.checkpoint_id || 'unknown';
             const evidenceCount = payload?.evidence_refs
@@ -203,7 +203,7 @@ const EVENT_TEMPLATES = {
     },
 
     'checkpoint_verified': {
-        icon: '✅',
+        icon: 'check_circle',
         text: (payload) => {
             const checkpointId = payload?.checkpoint_id || 'unknown';
             return `进度点 ${checkpointId} 验证通过`;
@@ -212,7 +212,7 @@ const EVENT_TEMPLATES = {
     },
 
     'checkpoint_invalid': {
-        icon: '⚠️',
+        icon: 'warning',
         text: (payload) => {
             const checkpointId = payload?.checkpoint_id || 'unknown';
             const reason = payload?.reason || '数据不一致';
@@ -223,7 +223,7 @@ const EVENT_TEMPLATES = {
 
     // ========== Evidence（证据收集） ==========
     'evidence_collected': {
-        icon: '📎',
+        icon: 'attach_file',
         text: (payload) => {
             const evidenceType = payload?.evidence_type || 'evidence';
             const evidenceId = payload?.evidence_id || 'unknown';
@@ -234,7 +234,7 @@ const EVENT_TEMPLATES = {
 
     // ========== Gates（检查点） ==========
     'gate_start': {
-        icon: '🚦',
+        icon: 'traffic',
         text: (payload) => {
             const gateType = payload?.gate_type || 'gate';
             return `开始运行检查点：${gateType}`;
@@ -243,7 +243,7 @@ const EVENT_TEMPLATES = {
     },
 
     'gate_result': {
-        icon: (payload) => payload?.passed ? '✅' : '❌',
+        icon: (payload) => payload?.passed ? 'check_circle' : 'cancel',
         text: (payload) => {
             const gateType = payload?.gate_type || 'gate';
             const passed = payload?.passed;
@@ -262,7 +262,7 @@ const EVENT_TEMPLATES = {
     },
 
     'GATE_VERIFICATION_RESULT': {
-        icon: (payload) => payload?.passed || payload?.success ? '✅' : '❌',
+        icon: (payload) => payload?.passed || payload?.success ? 'check_circle' : 'cancel',
         text: (payload) => {
             const gateType = payload?.gate_type || payload?.type || 'gate';
             const passed = payload?.passed || payload?.success;
@@ -279,7 +279,7 @@ const EVENT_TEMPLATES = {
 
     // ========== Recovery（恢复） ==========
     'recovery_detected': {
-        icon: '🔄',
+        icon: 'refresh',
         text: (payload) => {
             const taskId = payload?.task_id || 'unknown';
             const reason = payload?.reason || '检测到中断';
@@ -289,7 +289,7 @@ const EVENT_TEMPLATES = {
     },
 
     'recovery_resumed_from_checkpoint': {
-        icon: '🔄',
+        icon: 'refresh',
         text: (payload) => {
             const checkpointId = payload?.checkpoint_id || 'unknown';
             const phase = payload?.phase || 'unknown';
@@ -299,7 +299,7 @@ const EVENT_TEMPLATES = {
     },
 
     'recovery_requeued': {
-        icon: '🔄',
+        icon: 'refresh',
         text: (payload) => {
             const taskId = payload?.task_id || 'unknown';
             return `任务 ${taskId} 已重新加入队列`;
@@ -325,7 +325,7 @@ export class EventTranslator {
         if (!template) {
             // 未知事件类型，返回默认格式
             return {
-                icon: '📋',
+                icon: 'assignment',
                 text: `事件: ${event.event_type}`,
                 level: 'info',
                 timestamp: event.created_at,

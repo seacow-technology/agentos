@@ -21,7 +21,10 @@ class KnowledgePlaygroundView {
         this.container.innerHTML = `
             <div class="knowledge-playground-view">
                 <div class="view-header">
-                    <h2>Query Playground</h2>
+                    <div>
+                        <h1>Query Playground</h1>
+                        <p class="text-sm text-gray-600 mt-1">Test and explore knowledge base queries</p>
+                    </div>
                     <div class="header-actions">
                         <button class="btn-refresh" id="kb-refresh">
                             <span class="icon"><span class="material-icons md-18">refresh</span></span> Refresh
@@ -63,7 +66,7 @@ class KnowledgePlaygroundView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Result Details</h3>
-                            <button class="btn-close" id="kb-drawer-close">✕</button>
+                            <button class="btn-close" id="kb-drawer-close">close</button>
                         </div>
                         <div class="drawer-body" id="kb-drawer-body">
                             <!-- Result details will be rendered here -->

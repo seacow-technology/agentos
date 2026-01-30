@@ -550,17 +550,29 @@
 }
 
 .event-detail-modal .btn-close {
-    background: transparent;
+    background: none;
     border: none;
     font-size: 24px;
-    color: var(--text-secondary, #666);
+    color: #6b7280;
     cursor: pointer;
     padding: 0;
-    line-height: 1;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
 }
 
 .event-detail-modal .btn-close:hover {
-    color: var(--text-primary, #212121);
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+.event-detail-modal .btn-close:active {
+    background: #e5e7eb;
 }
 
 .event-detail-modal .modal-body {

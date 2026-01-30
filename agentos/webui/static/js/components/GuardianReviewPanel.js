@@ -136,7 +136,7 @@ class GuardianReviewPanel {
                             </div>
                         ` : ''}
                         <button class="btn-expand-evidence" data-evidence-id="${evidenceId}">
-                            View Evidence <span class="material-icons" style="font-size: 16px;">expand_more</span>
+                            View Evidence <span class="material-icons md-18">arrow_drop_down</span>
                         </button>
                         <div class="evidence-detail" id="${evidenceId}" style="display: none;">
                             <pre>${this.escapeHtml(JSON.stringify(review.evidence, null, 2))}</pre>
@@ -168,7 +168,7 @@ class GuardianReviewPanel {
     renderEmptyState() {
         this.container.innerHTML = `
             <div class="empty-state">
-                <div class="empty-icon">🛡️</div>
+                <div class="empty-icon">shield</div>
                 <h3>No Guardian Reviews Yet</h3>
                 <p>This task hasn't been reviewed by any Guardian yet.</p>
                 <p class="empty-hint">

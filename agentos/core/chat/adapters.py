@@ -9,27 +9,31 @@ logger = logging.getLogger(__name__)
 
 class ChatModelAdapter:
     """Base class for chat model adapters"""
-    
+
     def generate(
         self,
         messages: List[Dict[str, str]],
         temperature: float = 0.7,
         max_tokens: int = 2000,
         stream: bool = False
-    ) -> str:
+    ) -> tuple[str, Dict[str, Any]]:
         """Generate response from messages
-        
+
         Args:
             messages: List of messages in OpenAI format
             temperature: Sampling temperature
             max_tokens: Maximum tokens to generate
             stream: Whether to stream the response
-        
+
         Returns:
-            Generated text
+            Tuple of (generated_text, metadata)
+            Metadata includes:
+            - truncated: Whether response was truncated due to token limit
+            - finish_reason: Raw finish reason from provider
+            - tokens_used: Number of completion tokens used (if available)
         """
         raise NotImplementedError
-    
+
     def generate_stream(
         self,
         messages: List[Dict[str, str]],
@@ -37,24 +41,83 @@ class ChatModelAdapter:
         max_tokens: int = 2000
     ) -> Iterator[str]:
         """Generate response with streaming
-        
+
         Args:
             messages: List of messages in OpenAI format
             temperature: Sampling temperature
             max_tokens: Maximum tokens to generate
-        
+
         Yields:
             Text chunks
         """
         raise NotImplementedError
-    
+
     def health_check(self) -> tuple[bool, str]:
         """Check if adapter is available
-        
+
         Returns:
             (is_available, status_message)
         """
         raise NotImplementedError
+
+    def get_adaptive_max_tokens(
+        self,
+        messages: List[Dict[str, str]],
+        budget_max_tokens: int = 2000,
+        model_context_window: int = 128000
+    ) -> int:
+        """Calculate adaptive max_tokens based on input usage
+
+        Adjusts generation length based on how much of the context window
+        is already used by input messages, preventing context overflow.
+
+        Algorithm:
+        1. Estimate tokens used by messages
+        2. Calculate available space: context_window - used_tokens
+        3. Apply 10% safety margin
+        4. Return min(budget_max_tokens, available_space)
+
+        Args:
+            messages: List of messages in OpenAI format
+            budget_max_tokens: Budgeted generation limit
+            model_context_window: Model's total context window
+
+        Returns:
+            Adaptive max_tokens value
+
+        Example:
+            >>> adapter = ChatModelAdapter()
+            >>> messages = [{"role": "user", "content": "hello" * 1000}]
+            >>> # If messages use 5000 tokens in a 8k window:
+            >>> max_tokens = adapter.get_adaptive_max_tokens(messages, 2000, 8000)
+            >>> # Returns min(2000, (8000 - 5000) * 0.9) = min(2000, 2700) = 2000
+        """
+        # Estimate tokens used by messages
+        used_tokens = self._estimate_messages_tokens(messages)
+
+        # Calculate available space with 10% safety margin
+        available = model_context_window - used_tokens
+        available_with_margin = int(available * 0.9)
+
+        # Return minimum of budget and available
+        adaptive_max = min(budget_max_tokens, available_with_margin)
+
+        # Ensure at least 100 tokens for generation
+        return max(adaptive_max, 100)
+
+    def _estimate_messages_tokens(self, messages: List[Dict[str, str]]) -> int:
+        """Estimate token count for messages
+
+        Uses simple heuristic: 1.3 tokens per character (conservative estimate)
+
+        Args:
+            messages: List of messages in OpenAI format
+
+        Returns:
+            Estimated token count
+        """
+        total_chars = sum(len(msg.get("content", "")) for msg in messages)
+        return int(total_chars * 1.3)
 
 
 class OllamaChatAdapter(ChatModelAdapter):
@@ -76,14 +139,14 @@ class OllamaChatAdapter(ChatModelAdapter):
         temperature: float = 0.7,
         max_tokens: int = 2000,
         stream: bool = False
-    ) -> str:
+    ) -> tuple[str, Dict[str, Any]]:
         """Generate response using Ollama"""
         try:
             import requests
         except ImportError:
             logger.error("requests library not installed")
-            return "⚠️ Error: requests library required for Ollama"
-        
+            return "⚠️ Error: requests library required for Ollama", {}
+
         try:
             url = f"{self.host}/api/chat"
             payload = {
@@ -95,16 +158,29 @@ class OllamaChatAdapter(ChatModelAdapter):
                     "num_predict": max_tokens
                 }
             }
-            
+
             response = requests.post(url, json=payload, timeout=60)
             response.raise_for_status()
-            
+
             result = response.json()
-            return result.get("message", {}).get("content", "")
-        
+            content = result.get("message", {}).get("content", "")
+
+            # Check for truncation
+            # Ollama uses "done_reason" field: "stop" or "length"
+            done_reason = result.get("done_reason")
+            truncated = done_reason == "length"
+
+            metadata = {
+                "truncated": truncated,
+                "finish_reason": done_reason,
+                "tokens_used": result.get("eval_count")  # Ollama returns token count here
+            }
+
+            return content, metadata
+
         except Exception as e:
             logger.error(f"Ollama generation failed: {e}")
-            return f"⚠️ Ollama error: {str(e)}"
+            return f"⚠️ Ollama error: {str(e)}", {}
     
     def generate_stream(
         self,
@@ -203,18 +279,18 @@ class OpenAIChatAdapter(ChatModelAdapter):
         temperature: float = 0.7,
         max_tokens: int = 2000,
         stream: bool = False
-    ) -> str:
+    ) -> tuple[str, Dict[str, Any]]:
         """Generate response using OpenAI"""
         try:
             import openai
         except ImportError:
             logger.error("openai library not installed")
-            return "⚠️ Error: openai library required"
+            return "⚠️ Error: openai library required", {}
 
         # Only check API key for actual OpenAI (not for local services with custom base_url)
         if not self.api_key and not self.base_url:
-            return "⚠️ Error: OPENAI_API_KEY not configured"
-        
+            return "⚠️ Error: OPENAI_API_KEY not configured", {}
+
         try:
             client_kwargs = {"api_key": self.api_key}
             if self.base_url:
@@ -232,11 +308,24 @@ class OpenAIChatAdapter(ChatModelAdapter):
                 stream=False
             )
 
-            return response.choices[0].message.content
+            content = response.choices[0].message.content
+
+            # Check for truncation
+            # OpenAI uses "finish_reason": "stop", "length", "content_filter", etc.
+            finish_reason = response.choices[0].finish_reason
+            truncated = finish_reason in ['length', 'max_tokens']
+
+            metadata = {
+                "truncated": truncated,
+                "finish_reason": finish_reason,
+                "tokens_used": response.usage.completion_tokens if hasattr(response, 'usage') else None
+            }
+
+            return content, metadata
 
         except Exception as e:
             logger.error(f"OpenAI generation failed: {e}", exc_info=True)
-            return f"⚠️ OpenAI error: {str(e)}"
+            return f"⚠️ OpenAI error: {str(e)}", {}
     
     def generate_stream(
         self,

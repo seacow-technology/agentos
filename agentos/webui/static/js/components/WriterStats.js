@@ -158,7 +158,7 @@ class WriterStats {
             <div class="writer-stats-card">
                 <div class="writer-stats-header">
                     <div class="writer-stats-title">
-                        <span class="material-icons writer-stats-icon">storage</span>
+                        <span class="material-icons md-18">save</span>
                         <span>SQLiteWriter Stats</span>
                     </div>
                     ${statusBadge}
@@ -185,7 +185,7 @@ class WriterStats {
                     </details>
 
                     <div class="writer-stats-footer">
-                        <span class="material-icons">schedule</span>
+                        <span class="material-icons md-18">schedule</span>
                         Last updated: ${this.lastUpdateTime ? this.lastUpdateTime.toLocaleTimeString() : 'Never'}
                     </div>
                 </div>
@@ -201,7 +201,7 @@ class WriterStats {
             <div class="writer-stats-card">
                 <div class="writer-stats-header">
                     <div class="writer-stats-title">
-                        <span class="material-icons writer-stats-icon">storage</span>
+                        <span class="material-icons md-18">save</span>
                         <span>SQLiteWriter Stats</span>
                     </div>
                 </div>
@@ -224,14 +224,14 @@ class WriterStats {
             <div class="writer-stats-card writer-stats-error">
                 <div class="writer-stats-header">
                     <div class="writer-stats-title">
-                        <span class="material-icons writer-stats-icon">storage</span>
+                        <span class="material-icons md-18">save</span>
                         <span>SQLiteWriter Stats</span>
                     </div>
                     <span class="writer-stats-badge writer-stats-badge-error">Error</span>
                 </div>
                 <div class="writer-stats-body">
                     <div class="writer-stats-error-content">
-                        <span class="material-icons writer-stats-error-icon">warning</span>
+                        <span class="material-icons md-18">warning</span>
                         <div>
                             <div class="writer-stats-error-title">Failed to load writer stats</div>
                             <div class="writer-stats-error-message">${stats.error || 'Unknown error'}</div>

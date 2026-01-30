@@ -1,0 +1,314 @@
+/**
+ * Budget Indicator CSS - Token Budget Monitoring UI
+ * Task 5: Runtime Visualization
+ */
+
+/* Context Tab Navigation */
+.context-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.context-tab:hover {
+    color: #111827;
+    background: #f9fafb;
+}
+
+.context-tab.active {
+    color: #3b82f6;
+    border-bottom-color: #3b82f6;
+}
+
+.context-tab .material-icons {
+    font-size: 18px;
+}
+
+/* Chat Header with Budget Indicator */
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--header-bg, #ffffff);
+    border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+.chat-model-label {
+    font-size: 14px;
+    color: var(--text-secondary, #6b7280);
+    font-weight: 500;
+}
+
+.chat-model-label #current-model {
+    color: var(--text-primary, #111827);
+    font-weight: 600;
+}
+
+/* Budget Indicator */
+.budget-indicator {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 6px 12px;
+    border-radius: 8px;
+}
+
+.budget-indicator:hover {
+    background: var(--bg-hover, #f3f4f6);
+}
+
+.budget-usage {
+    font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+    font-size: 13px;
+    color: var(--text-primary, #111827);
+    font-weight: 500;
+}
+
+.budget-status {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+.budget-status small {
+    display: block;
+    font-weight: 400;
+    font-size: 11px;
+    margin-top: 2px;
+}
+
+/* Status Badge Colors */
+.badge-safe {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.badge-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge-critical {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Budget Detail Modal */
+.budget-detail-modal {
+    max-width: 600px;
+    padding: 24px;
+}
+
+.budget-detail-modal h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary, #111827);
+    margin-bottom: 20px;
+}
+
+.budget-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.budget-bar-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.budget-bar-item label {
+    font-size: 13px;
+    color: var(--text-secondary, #6b7280);
+    font-weight: 500;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 24px;
+    background: var(--bg-secondary, #f3f4f6);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #2563eb);
+    transition: width 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.progress-fill.warning {
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.progress-fill.critical {
+    background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.budget-tip {
+    margin-top: 20px;
+    padding: 12px;
+    background: var(--bg-info, #dbeafe);
+    border-left: 3px solid var(--accent-color, #3b82f6);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--text-secondary, #1e40af);
+}
+
+/* Context View Budget Tab */
+.budget-tab-content {
+    padding: 20px;
+}
+
+.budget-tab-content h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary, #111827);
+    margin-bottom: 16px;
+}
+
+.budget-allocation-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 13px;
+}
+
+.budget-allocation-table thead {
+    background: var(--bg-secondary, #f9fafb);
+}
+
+.budget-allocation-table th,
+.budget-allocation-table td {
+    padding: 12px 16px;
+    text-align: right;
+    border: 1px solid var(--border-color, #e5e7eb);
+}
+
+.budget-allocation-table th:first-child,
+.budget-allocation-table td:first-child {
+    text-align: left;
+    font-weight: 500;
+}
+
+.budget-allocation-table th {
+    font-weight: 600;
+    color: var(--text-secondary, #6b7280);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+
+.budget-allocation-table td {
+    color: var(--text-primary, #111827);
+}
+
+.budget-allocation-table tbody tr:hover {
+    background: var(--bg-hover, #f9fafb);
+}
+
+/* Trimming History */
+.trimming-history {
+    margin-top: 32px;
+}
+
+.trimming-history h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary, #111827);
+    margin-bottom: 12px;
+}
+
+.trimming-history ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.trimming-history li {
+    padding: 10px 12px;
+    border-left: 3px solid var(--accent-color, #3b82f6);
+    margin-bottom: 8px;
+    background: var(--bg-secondary, #f9fafb);
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--text-secondary, #6b7280);
+}
+
+.trimming-history li:last-child {
+    margin-bottom: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .chat-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .budget-indicator {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .budget-detail-modal {
+        max-width: 100%;
+        padding: 16px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .chat-header {
+        --header-bg: #1f2937;
+        --border-color: #374151;
+    }
+
+    .badge-safe {
+        background: #065f46;
+        color: #d1fae5;
+    }
+
+    .badge-warning {
+        background: #92400e;
+        color: #fef3c7;
+    }
+
+    .badge-critical {
+        background: #991b1b;
+        color: #fee2e2;
+    }
+
+    .budget-allocation-table thead {
+        background: #374151;
+    }
+
+    .trimming-history li {
+        background: #374151;
+    }
+}

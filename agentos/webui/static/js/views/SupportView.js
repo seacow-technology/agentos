@@ -16,10 +16,13 @@ class SupportView {
         this.container.innerHTML = `
             <div class="support-view">
                 <div class="view-header">
-                    <h2>Support & Diagnostics</h2>
+                    <div>
+                        <h1>Support & Diagnostics</h1>
+                        <p class="text-sm text-gray-600 mt-1">Generate diagnostics and support bundles</p>
+                    </div>
                     <div class="header-actions">
                         <button class="btn-primary" id="support-generate">
-                            <span class="icon"><span class="material-icons md-18">inventory_2</span></span> Generate Diagnostics
+                            <span class="icon"><span class="material-icons md-18">archive</span></span> Generate Diagnostics
                         </button>
                     </div>
                 </div>
@@ -38,7 +41,7 @@ class SupportView {
                                 <span class="material-icons md-18">save</span> Download as JSON
                             </button>
                             <button class="btn-secondary" id="support-view-inline">
-                                <span class="material-icons md-18">visibility</span> View Inline
+                                <span class="material-icons md-18">preview</span> View Inline
                             </button>
                             <button class="btn-secondary" id="support-copy">
                                 <span class="material-icons md-18">content_copy</span> Copy to Clipboard
@@ -87,7 +90,7 @@ class SupportView {
                         <ul class="space-y-2 text-sm">
                             <li><span class="material-icons md-18">menu_book</span> <a href="https://github.com/seacow-technology/agentos/wiki" target="_blank" class="text-blue-600 hover:underline">AgentOS Documentation</a></li>
                             <li><span class="material-icons md-18">bug_report</span> <a href="https://github.com/seacow-technology/agentos/issues" target="_blank" class="text-blue-600 hover:underline">Report an Issue</a></li>
-                            <li><span class="material-icons md-18">chat</span> <a href="https://discord.gg/5D4E6SjU" target="_blank" class="text-blue-600 hover:underline">Community Discussions</a></li>
+                            <li><span class="material-icons md-18">add_comment</span> <a href="https://discord.gg/5D4E6SjU" target="_blank" class="text-blue-600 hover:underline">Community Discussions</a></li>
                             <li><span class="material-icons md-18">email</span> Support Email: <a href="mailto:support@skylinkitsolution.com" class="text-blue-600 hover:underline">support@skylinkitsolution.com</a></li>
                         </ul>
                     </div>
@@ -193,7 +196,7 @@ class SupportView {
 
                 statusDiv.innerHTML = `
                     <div class="text-sm space-y-1">
-                        <p class="text-green-600 font-semibold"><span class="material-icons" style="font-size: 16px; vertical-align: middle;">check</span> Diagnostic bundle ready</p>
+                        <p class="text-green-600 font-semibold"><span class="material-icons md-18">check</span> Diagnostic bundle ready</p>
                         <p class="text-gray-600">
                             Version: ${version} |
                             Generated: ${timestamp} |
@@ -208,7 +211,7 @@ class SupportView {
             console.error('Failed to generate diagnostics:', error);
 
             if (statusDiv) {
-                statusDiv.innerHTML = `<p class="text-sm text-red-600"><span class="material-icons" style="font-size: 16px; vertical-align: middle;">cancel</span> Error: ${error.message}</p>`;
+                statusDiv.innerHTML = `<p class="text-sm text-red-600"><span class="material-icons md-18">cancel</span> Error: ${error.message}</p>`;
             }
 
             if (window.showToast && !silent) {

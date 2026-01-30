@@ -163,9 +163,13 @@ class RetryStrategyManager:
         elif retry_config.backoff_type == RetryBackoffType.FIXED:
             delay_seconds = retry_config.base_delay_seconds
         elif retry_config.backoff_type == RetryBackoffType.LINEAR:
-            delay_seconds = retry_config.base_delay_seconds * (retry_state.retry_count + 1)
+            delay_seconds = retry_config.base_delay_seconds * retry_state.retry_count
         else:  # EXPONENTIAL
-            delay_seconds = retry_config.base_delay_seconds * (2 ** retry_state.retry_count)
+            # For exponential backoff, use 2^(retry_count-1) so first retry has base_delay
+            # retry_count=1 -> 2^0 = 1 -> base_delay
+            # retry_count=2 -> 2^1 = 2 -> base_delay * 2
+            # retry_count=3 -> 2^2 = 4 -> base_delay * 4
+            delay_seconds = retry_config.base_delay_seconds * (2 ** (retry_state.retry_count - 1)) if retry_state.retry_count > 0 else 0
 
         # Cap at max delay
         delay_seconds = min(delay_seconds, retry_config.max_delay_seconds)

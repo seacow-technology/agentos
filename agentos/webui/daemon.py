@@ -209,7 +209,7 @@ class WebUIDaemon:
 
 def auto_start_webui(host: str = "127.0.0.1", port: int = 8080) -> bool:
     """
-    自动启动 WebUI (如果未运行)
+    自动启动 WebUI (如果Not Running)
 
     Args:
         host: 绑定主机

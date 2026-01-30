@@ -47,13 +47,13 @@ class ToolExecutor:
     @staticmethod
     def check_tool_available(tool_name: str) -> bool:
         """
-        检查工具是否可用
+        检查工具是否Available
         
         Args:
             tool_name: 工具名称（如 "claude", "codex"）
         
         Returns:
-            是否可用
+            是否Available
         """
         try:
             result = subprocess.run(

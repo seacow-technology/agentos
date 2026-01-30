@@ -68,21 +68,30 @@ class PipelineView {
     render() {
         this.container.innerHTML = `
             <div class="pipeline-view">
-                <div class="pipeline-header">
-                    <h1 class="pipeline-title">Task Pipeline: ${this.taskId.substring(0, 8)}</h1>
-                    <div class="pipeline-controls">
+                <div class="view-header">
+                    <div>
+                        <h1>Pipeline Visualization</h1>
+                        <p class="text-sm text-gray-600 mt-1">Real-time task execution pipeline visualization</p>
+                    </div>
+                    <div class="header-actions">
                         <div class="connection-status" id="pipeline-connection-status">
                             <div class="connection-status-dot"></div>
                             <span>Connecting...</span>
                         </div>
-                        <button class="btn-secondary" id="pipeline-refresh">
-                            <span class="material-icons md-18">refresh</span>
-                            Refresh
+                        <button class="btn-refresh" id="pipeline-refresh" title="Refresh">
+                            <span class="icon"><span class="material-icons md-18">refresh</span></span> Refresh
                         </button>
                     </div>
                 </div>
 
-                <div class="pipeline-canvas">
+                <div class="filter-section">
+                    <div class="filter-info">
+                        <span class="filter-label">Task ID:</span>
+                        <span class="filter-value">${this.taskId}</span>
+                    </div>
+                </div>
+
+                <div class="table-section pipeline-canvas">
                     <!-- Stage Bar -->
                     <div id="pipeline-stage-bar"></div>
 
@@ -430,7 +439,7 @@ class PipelineView {
     handleCheckpointInvalid(event) {
         const checkpointId = event.payload?.checkpoint_id;
         console.log('[PipelineView] Checkpoint invalid:', checkpointId);
-        this.updateRunnerStatus(`⚠ Checkpoint invalid: ${checkpointId}`);
+        this.updateRunnerStatus(`warning Checkpoint invalid: ${checkpointId}`);
     }
 
     /**
@@ -443,7 +452,7 @@ class PipelineView {
             <span class="event-time">${this.formatTime(event.created_at)}</span>
             <span class="event-text">${event.payload?.explanation || 'Checkpoint committed'}</span>
             <button class="btn-view-evidence" data-checkpoint-id="${checkpointId}" title="查看证据">
-                <span class="material-icons md-16">verified</span>
+                <span class="material-icons md-16">check_circle</span>
                 查看证据
             </button>
         `;
@@ -482,7 +491,7 @@ class PipelineView {
 
         this.stageBar.activateStage('done');
         this.stageBar.completeStage('done');
-        this.updateRunnerStatus('Task completed successfully! 🎉');
+        this.updateRunnerStatus('Task completed successfully! celebration');
     }
 
     /**

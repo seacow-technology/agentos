@@ -7,7 +7,7 @@
 - 清理已删除文档
 
 Gate 要求:
-- #1: FTS5 可用性检测
+- #1: FTS5 Available性检测
 - #2: 迁移幂等（IF NOT EXISTS）
 - #9: 重建一致性
 """
@@ -21,7 +21,7 @@ from agentos.core.project_kb.types import Chunk, Source
 
 
 class FTS5NotAvailableError(RuntimeError):
-    """FTS5 不可用异常"""
+    """FTS5 不Available异常"""
     pass
 
 
@@ -45,13 +45,13 @@ class ProjectKBIndexer:
         return conn
 
     def check_fts5_available(self) -> bool:
-        """检查 FTS5 是否可用 (Gate #1)
+        """检查 FTS5 是否Available (Gate #1)
         
         Returns:
-            True 如果 FTS5 可用
+            True 如果 FTS5 Available
             
         Raises:
-            FTS5NotAvailableError: 如果 FTS5 不可用
+            FTS5NotAvailableError: 如果 FTS5 不Available
         """
         conn = self._get_connection()
         try:
@@ -74,7 +74,7 @@ class ProjectKBIndexer:
         
         Gate #2: 迁移幂等 - 使用 IF NOT EXISTS
         """
-        # Gate #1: 首先检查 FTS5 可用性
+        # Gate #1: 首先检查 FTS5 Available性
         self.check_fts5_available()
         
         conn = self._get_connection()

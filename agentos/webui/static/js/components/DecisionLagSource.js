@@ -172,11 +172,11 @@ class DecisionLagSource {
      */
     getCoverageDescription(coverage) {
         if (coverage > 90) {
-            return '<span class="coverage-desc-excellent"><span class="material-icons" style="font-size: 16px; vertical-align: middle; color: #10B981;">check_circle</span> Excellent: Most records use v21 fast path</span>';
+            return '<span class="coverage-desc-excellent"><span class="material-icons md-18">check_circle</span> Excellent: Most records use v21 fast path</span>';
         } else if (coverage > 50) {
-            return '<span class="coverage-desc-good"><span class="material-icons" style="font-size: 16px; vertical-align: middle; color: #F59E0B;">warning</span> Good: Partial optimization active</span>';
+            return '<span class="coverage-desc-good"><span class="material-icons md-18">warning</span> Good: Partial optimization active</span>';
         } else {
-            return '<span class="coverage-desc-poor"><span class="material-icons" style="font-size: 16px; vertical-align: middle; color: #EF4444;">cancel</span> Poor: Consider running backfill migration</span>';
+            return '<span class="coverage-desc-poor"><span class="material-icons md-18">cancel</span> Poor: Consider running backfill migration</span>';
         }
     }
 

@@ -8,7 +8,7 @@
 .wizard-container {
     max-width: 800px;
     margin: 0 auto;
-    padding: 24px;
+    padding: 24px 0;
     background: white;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -149,7 +149,7 @@
     width: 100%;
     padding: 10px 12px;
     border: 1px solid #d1d5db;
-    border-radius: 6px;
+    border-radius: 4px;  /* Task #16: Unified input radius */
     font-size: 14px;
     color: #1f2937;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -187,7 +187,7 @@ select.form-control {
 .criteria-list {
     margin-bottom: 12px;
     border: 1px solid #e5e7eb;
-    border-radius: 6px;
+    border-radius: 4px;  /* Task #16: Unified radius */
     padding: 12px;
     background: #f9fafb;
 }
@@ -483,7 +483,7 @@ select.form-control {
 
 @media (max-width: 768px) {
     .wizard-container {
-        padding: 16px;
+        padding: 16px 0;
     }
 
     .wizard-steps {
@@ -604,47 +604,72 @@ select.form-control {
 
 /* ==================== Project Detail Tabs ==================== */
 
+/* 使用统一的 nav-pills 样式 (见 components.css) */
+/* 保留旧的类名兼容性 */
 .tabs-container {
-    margin-bottom: 20px;
+    margin-bottom: 0;
 }
 
 .tabs {
+    /* 已迁移到 .nav-pills，这里保留向后兼容 */
     display: flex;
-    border-bottom: 2px solid #e5e7eb;
-    gap: 4px;
+    gap: 8px;
+    padding: 16px 24px;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    overflow-x: auto;
 }
 
 .tab-btn {
-    padding: 12px 20px;
-    background: transparent;
+    /* 已迁移到 .nav-link，这里保留向后兼容 */
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #f3f4f6;
     border: none;
-    border-bottom: 3px solid transparent;
+    border-radius: 20px;
     color: #6b7280;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    position: relative;
-    bottom: -2px;
+    white-space: nowrap;
 }
 
 .tab-btn:hover {
+    background: #e5e7eb;
     color: #374151;
-    background: #f9fafb;
 }
 
 .tab-btn.active {
-    color: #3b82f6;
-    border-bottom-color: #3b82f6;
+    background: #3b82f6;
+    color: #ffffff;
+}
+
+.tab-btn.active:hover {
+    background: #2563eb;
+    color: #ffffff;
 }
 
 .tab-content {
     display: none;
-    animation: fadeIn 0.3s ease;
+    animation: tabFadeIn 0.3s ease;
 }
 
 .tab-content.active {
     display: block;
+}
+
+@keyframes tabFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ==================== Modal Overlay ==================== */

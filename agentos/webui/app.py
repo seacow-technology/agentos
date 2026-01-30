@@ -40,7 +40,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, JSONResponse
 
 # Import API routers
-from agentos.webui.api import health, sessions, tasks, events, skills, memory, config, logs, providers, selfcheck, context, runtime, providers_control, support, secrets, sessions_runtime, providers_lifecycle, providers_instances, providers_models, knowledge, history, share, preview, snippets, governance, guardians, lead, projects, task_dependencies, governance_dashboard, guardian, content, answers, auth, execution, dryrun, intent, auth_profiles, task_templates, task_events, evidence, mode_monitoring
+from agentos.webui.api import health, sessions, tasks, events, skills, memory, config, logs, providers, selfcheck, context, runtime, providers_control, support, secrets, sessions_runtime, providers_lifecycle, providers_instances, providers_models, knowledge, history, share, preview, snippets, governance, guardians, lead, projects, task_dependencies, governance_dashboard, guardian, content, answers, auth, execution, dryrun, intent, auth_profiles, task_templates, task_events, evidence, mode_monitoring, extensions, extensions_execute, extension_templates, models, budget, brain
 # v0.31 API routers
 from agentos.webui.api import projects_v31, repos_v31, tasks_v31_extension
 # WebSocket and SSE routers
@@ -104,20 +104,20 @@ if SENTRY_AVAILABLE and SENTRY_ENABLED and SENTRY_DSN:
             ),
         )
         logger.info(
-            f"✓ Sentry monitoring enabled: {SENTRY_RELEASE} "
+            f"check Sentry monitoring enabled: {SENTRY_RELEASE} "
             f"(env: {SENTRY_ENVIRONMENT}, traces: {SENTRY_TRACES_SAMPLE_RATE*100}%, "
             f"profiles: {SENTRY_PROFILES_SAMPLE_RATE*100}%, sessions: enabled)"
         )
     except Exception as e:
-        logger.warning(f"⚠ Failed to initialize Sentry: {e} – running in local dev mode")
+        logger.warning(f"warning Failed to initialize Sentry: {e} – running in local dev mode")
         SENTRY_AVAILABLE = False
 elif not SENTRY_AVAILABLE:
     logger.warning(
-        "⚠ Sentry disabled (dependency missing: sentry-sdk) – running in local dev mode\n"
+        "warning Sentry disabled (dependency missing: sentry-sdk) – running in local dev mode\n"
         "  Install with: pip install sentry-sdk"
     )
 else:
-    logger.info("⚠ Sentry monitoring disabled (SENTRY_ENABLED=false or DSN not configured)")
+    logger.info("warning Sentry monitoring disabled (SENTRY_ENABLED=false or DSN not configured)")
 
 # Get the webui directory path
 WEBUI_DIR = Path(__file__).parent
@@ -262,6 +262,28 @@ app.include_router(tasks_v31_extension.router, tags=["tasks_v31"])
 
 # Mode Monitoring API (Task #15: Phase 3.4)
 app.include_router(mode_monitoring.router, prefix="/api/mode", tags=["mode"])
+
+# Extensions Execution API (PR-E1: Runner Infrastructure)
+# IMPORTANT: Register before extensions.router to avoid route conflicts
+# /api/extensions/execute must be matched before /api/extensions/{extension_id}
+app.include_router(extensions_execute.router, tags=["extensions_execute"])
+
+# Extension Templates API (Task #13: Extension Template Wizard)
+# IMPORTANT: Register before extensions.router to avoid route conflicts
+# /api/extensions/templates/* must be matched before /api/extensions/{extension_id}
+app.include_router(extension_templates.router, tags=["extension_templates"])
+
+# Extensions Management API (PR-C: WebUI Extensions Management)
+app.include_router(extensions.router, tags=["extensions"])
+
+# Models Management API (Model Download and Management)
+app.include_router(models.router, tags=["models"])
+
+# Budget Configuration API (Token Budget Configuration)
+app.include_router(budget.router, prefix="/api/budget", tags=["budget"])
+
+# Register BrainOS routes
+app.include_router(brain.router, prefix="/api/brain", tags=["brain"])
 
 # Register WebSocket routes
 app.include_router(chat.router, prefix="/ws", tags=["websocket"])

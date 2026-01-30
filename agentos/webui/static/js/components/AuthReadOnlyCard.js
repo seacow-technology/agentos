@@ -36,9 +36,9 @@ class AuthReadOnlyCard {
             <div class="auth-profiles-view">
                 <!-- CLI-Only Banner -->
                 <div class="cli-only-banner">
-                    <span class="material-icons">info</span>
+                    <span class="material-icons md-18">info</span>
                     <div class="cli-only-banner-content">
-                        <h4>📌 Authentication Configuration (Read-Only)</h4>
+                        <h4>push_pin Authentication Configuration (Read-Only)</h4>
                         <p>
                             To add or remove auth profiles, use the CLI. WebUI provides read-only access for security reasons.
                         </p>
@@ -187,7 +187,7 @@ class AuthReadOnlyCard {
         if (profiles.length === 0) {
             profilesContainer.innerHTML = `
                 <div class="empty-state-auth">
-                    <span class="material-icons">lock</span>
+                    <span class="material-icons md-18">lock</span>
                     <h3>No authentication profiles configured</h3>
                     <p>Use the CLI to add your first auth profile.</p>
                     <div class="cli-code-snippet">$ agentos auth add --type ssh --key ~/.ssh/id_rsa</div>
@@ -231,7 +231,7 @@ class AuthReadOnlyCard {
                 </div>
 
                 <div class="auth-profile-host">
-                    <span class="material-icons">cloud</span>
+                    <span class="material-icons md-18">cloud</span>
                     ${this.escapeHtml(profile.host || 'Global')}
                 </div>
 
@@ -267,7 +267,7 @@ class AuthReadOnlyCard {
 
                 <!-- CLI Hint -->
                 <p class="text-xs text-gray-500 mt-2">
-                    💡 To modify: <code class="text-xs bg-gray-100 px-1 rounded">agentos auth update ${profile.id}</code>
+                    lightbulb To modify: <code class="text-xs bg-gray-100 px-1 rounded">agentos auth update ${profile.id}</code>
                 </p>
             </div>
         `;
@@ -392,8 +392,8 @@ class AuthReadOnlyCard {
 
             if (window.showToast) {
                 const message = result.valid
-                    ? '<span class="material-icons" style="font-size: 14px; vertical-align: middle;">check</span> Authentication valid'
-                    : '<span class="material-icons" style="font-size: 14px; vertical-align: middle;">cancel</span> Authentication failed';
+                    ? '<span class="material-icons md-18">check</span> Authentication valid'
+                    : '<span class="material-icons md-18">cancel</span> Authentication failed';
                 window.showToast(message, result.valid ? 'success' : 'error');
             }
 
@@ -409,11 +409,11 @@ class AuthReadOnlyCard {
     getStatusIcon(status) {
         switch (status) {
             case 'valid':
-                return '<span class="material-icons" style="font-size: 14px;">check</span>';
+                return '<span class="material-icons md-18">check</span>';
             case 'invalid':
-                return '<span class="material-icons" style="font-size: 14px;">cancel</span>';
+                return '<span class="material-icons md-18">cancel</span>';
             case 'untested':
-                return '<span class="material-icons" style="font-size: 14px;">radio_button_unchecked</span>';
+                return '<span class="material-icons md-18">radio_button_unchecked</span>';
             default:
                 return '?';
         }

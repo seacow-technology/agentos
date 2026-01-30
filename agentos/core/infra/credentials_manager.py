@@ -1,5 +1,5 @@
 """
-Credentials Manager - 凭证管理（最小可用版本）
+Credentials Manager - 凭证管理（最小Available版本）
 
 Step 4 扩展：
 - 存储工具 adapter 的凭证
@@ -19,7 +19,7 @@ import base64
 
 
 class CredentialsManager:
-    """凭证管理器（最小可用版本）"""
+    """凭证管理器（最小Available版本）"""
     
     def __init__(self):
         """初始化凭证管理器"""
@@ -90,7 +90,7 @@ class CredentialsManager:
         return masked
     
     def _load_credentials(self) -> Dict:
-        """加载凭证（明文存储，最小可用版本）"""
+        """加载凭证（明文存储，最小Available版本）"""
         if not self.creds_file.exists():
             return {}
         
@@ -101,7 +101,7 @@ class CredentialsManager:
             return {}
     
     def _save_credentials(self, creds: Dict) -> None:
-        """保存凭证（明文存储，最小可用版本）"""
+        """保存凭证（明文存储，最小Available版本）"""
         with open(self.creds_file, "w", encoding="utf-8") as f:
             json.dump(creds, f, indent=2)
 

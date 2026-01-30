@@ -33,11 +33,24 @@ class Task:
     requirements_json: Optional[str] = None  # JSON serialized TaskRequirements
     selected_instance_id: Optional[str] = None  # Selected provider instance ID
     router_version: Optional[str] = None  # Router version used
+
+    # v0.4 Project-Aware fields (v0.31 migration)
+    repo_id: Optional[str] = None  # FK to repos table
+    workdir: Optional[str] = None  # Working directory path
+    spec_frozen: int = 0  # Spec frozen flag (0=unfrozen, 1=frozen) - Task #4
     
     def is_orphan(self) -> bool:
         """Check if this is an orphan task"""
         return self.status == "orphan" or self.metadata.get("orphan", False)
-    
+
+    def is_spec_frozen(self) -> bool:
+        """Check if task specification is frozen
+
+        Task #4: Execution frozen plan validation
+        Returns True if spec_frozen = 1, False otherwise
+        """
+        return self.spec_frozen == 1
+
     def get_run_mode(self) -> str:
         """Get run mode from metadata"""
         return self.metadata.get("run_mode", "assisted")
@@ -117,6 +130,7 @@ class Task:
             "created_by": self.created_by,
             "metadata": self.metadata,
             "exit_reason": self.exit_reason,
+            "spec_frozen": self.spec_frozen,  # Task #4: Include frozen status
         }
         # Add router fields if present
         if self.route_plan_json:
@@ -127,6 +141,11 @@ class Task:
             result["selected_instance_id"] = self.selected_instance_id
         if self.router_version:
             result["router_version"] = self.router_version
+        # Add v0.4 fields if present
+        if self.repo_id:
+            result["repo_id"] = self.repo_id
+        if self.workdir:
+            result["workdir"] = self.workdir
         return result
 
 

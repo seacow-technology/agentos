@@ -386,9 +386,8 @@
 .pet-task-modal-close {
     background: none;
     border: none;
-    font-size: 28px;
-    line-height: 1;
-    color: var(--pet-text-secondary);
+    font-size: 24px;
+    color: #6b7280;
     cursor: pointer;
     padding: 0;
     width: 32px;
@@ -396,13 +395,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
-    transition: all 0.2s;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
 }
 
 .pet-task-modal-close:hover {
-    background: #F3F4F6;
-    color: var(--pet-text);
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+.pet-task-modal-close:active {
+    background: #e5e7eb;
 }
 
 .pet-task-modal-body {

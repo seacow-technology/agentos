@@ -2,7 +2,7 @@
 Claude CLI Adapter - Claude命令行工具适配器
 
 Step 3 Runtime 实现：
-- health_check(): 检查 Claude CLI 可用性
+- health_check(): 检查 Claude CLI Available性
 - run(): 执行外包并产出 diff
 - supports(): 声明 cloud 模式能力
 """
@@ -31,7 +31,7 @@ class ClaudeCliAdapter(BaseToolAdapter):
     
     def health_check(self) -> ToolHealth:
         """
-        健康检查：检查 Claude CLI 是否可用
+        健康检查：检查 Claude CLI 是否Available
         
         检查顺序：
         1. CLI 是否存在（which claude）
@@ -233,7 +233,7 @@ class ClaudeCliAdapter(BaseToolAdapter):
         """
         Mock 模式：生成示例 diff（用于测试）
         
-        当 Claude CLI 不可用或超时时，自动生成一个符合任务要求的 diff。
+        当 Claude CLI 不Available或超时时，自动生成一个符合任务要求的 diff。
         """
         # 根据任务指令生成简单的 diff
         # 这里假设任务是 "Add a footer to index.html"

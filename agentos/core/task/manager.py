@@ -260,6 +260,22 @@ class TaskManager:
             except (KeyError, IndexError):
                 exit_reason = None
 
+            # Task #4: Safe access for v0.4 fields (spec_frozen, repo_id, workdir)
+            try:
+                spec_frozen = row["spec_frozen"]
+            except (KeyError, IndexError):
+                spec_frozen = 0  # Default to unfrozen
+
+            try:
+                repo_id = row["repo_id"]
+            except (KeyError, IndexError):
+                repo_id = None
+
+            try:
+                workdir = row["workdir"]
+            except (KeyError, IndexError):
+                workdir = None
+
             return Task(
                 task_id=row["task_id"],
                 title=row["title"],
@@ -275,6 +291,9 @@ class TaskManager:
                 requirements_json=requirements_json,
                 selected_instance_id=selected_instance_id,
                 router_version=router_version,
+                spec_frozen=spec_frozen,  # Task #4
+                repo_id=repo_id,  # v0.4
+                workdir=workdir,  # v0.4
             )
         finally:
             conn.close()
@@ -342,19 +361,50 @@ class TaskManager:
                 except (KeyError, IndexError):
                     router_version = None
 
+                # Task #4: Safe access for v0.4 fields
+                try:
+                    project_id = row["project_id"]
+                except (KeyError, IndexError):
+                    project_id = None
+
+                try:
+                    exit_reason = row["exit_reason"]
+                except (KeyError, IndexError):
+                    exit_reason = None
+
+                try:
+                    spec_frozen = row["spec_frozen"]
+                except (KeyError, IndexError):
+                    spec_frozen = 0
+
+                try:
+                    repo_id = row["repo_id"]
+                except (KeyError, IndexError):
+                    repo_id = None
+
+                try:
+                    workdir = row["workdir"]
+                except (KeyError, IndexError):
+                    workdir = None
+
                 tasks.append(Task(
                     task_id=row["task_id"],
                     title=row["title"],
                     status=row["status"],
                     session_id=row["session_id"],
+                    project_id=project_id,
                     created_at=row["created_at"],
                     updated_at=row["updated_at"],
                     created_by=row["created_by"],
                     metadata=metadata,
+                    exit_reason=exit_reason,
                     route_plan_json=route_plan_json,
                     requirements_json=requirements_json,
                     selected_instance_id=selected_instance_id,
                     router_version=router_version,
+                    spec_frozen=spec_frozen,  # Task #4
+                    repo_id=repo_id,  # v0.4
+                    workdir=workdir,  # v0.4
                 ))
 
             return tasks
@@ -442,7 +492,7 @@ class TaskManager:
             status: Optional new status (if provided, will be updated together with exit_reason)
         """
         # Validate exit_reason
-        valid_reasons = ['done', 'max_iterations', 'blocked', 'fatal_error', 'user_cancelled', 'unknown']
+        valid_reasons = ['done', 'max_iterations', 'blocked', 'fatal_error', 'user_cancelled', 'timeout', 'unknown']
         if exit_reason not in valid_reasons:
             logger.warning(f"Invalid exit_reason '{exit_reason}', setting to 'unknown'")
             exit_reason = 'unknown'

@@ -125,7 +125,7 @@ def check_python_313() -> CheckResult:
             return CheckResult(
                 name="python-3.13",
                 status=CheckStatus.PASS,
-                summary=f"Python 3.13 可用: {version}",
+                summary=f"Python 3.13 Available: {version}",
                 details=[f"路径: {python_path}"]
             )
     except FileNotFoundError:
@@ -147,7 +147,7 @@ def check_python_313() -> CheckResult:
             return CheckResult(
                 name="python-3.13",
                 status=CheckStatus.PASS,
-                summary=f"Python 3.13+ 可用: {version}",
+                summary=f"Python 3.13+ Available: {version}",
                 details=[f"路径: {sys.executable}"]
             )
     except Exception:
@@ -208,7 +208,7 @@ def check_venv(project_root: Path) -> CheckResult:
         return CheckResult(
             name="venv",
             status=CheckStatus.PASS,
-            summary=f".venv 存在且可用: {version}",
+            summary=f".venv 存在且Available: {version}",
             details=[f"路径: {venv_path}"]
         )
     except Exception as e:
@@ -300,7 +300,7 @@ def check_pytest() -> CheckResult:
             return CheckResult(
                 name="pytest",
                 status=CheckStatus.PASS,
-                summary=f"pytest 可用: {version}"
+                summary=f"pytest Available: {version}"
             )
     except Exception:
         pass
@@ -308,7 +308,7 @@ def check_pytest() -> CheckResult:
     return CheckResult(
         name="pytest",
         status=CheckStatus.FAIL,
-        summary="pytest 不可用",
+        summary="pytest 不Available",
         details=[
             "pytest 在 dev 依赖中",
             "运行 uv sync --all-extras 安装"

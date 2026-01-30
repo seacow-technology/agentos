@@ -270,6 +270,10 @@ class SelfCheckRunner:
             include_network: If True, actively probe all providers (including cloud, may cost API calls).
                             If False, use cached status only (no network calls).
         """
+        # Import ProviderState at function level (used throughout this method)
+        from agentos.providers.base import ProviderStatus, ProviderState
+        from agentos.common.reasons import ReasonCode, get_hint
+
         items = []
 
         # Get provider status based on include_network flag
@@ -286,8 +290,6 @@ class SelfCheckRunner:
                     status_list.append(provider._status_cache)
                 else:
                     # Provider has no cached status yet - mark as unknown
-                    from agentos.providers.base import ProviderStatus, ProviderState
-                    from agentos.common.reasons import ReasonCode, get_hint
 
                     reason = ReasonCode.STALE_REFRESH
                     status = ProviderStatus(

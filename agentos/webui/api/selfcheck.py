@@ -16,6 +16,7 @@ from pydantic import BaseModel
 
 from agentos.selfcheck import SelfCheckRunner
 from agentos.webui.middleware import sanitize_response
+from agentos.core.chat.health_checker import ChatHealthChecker
 
 router = APIRouter()
 
@@ -51,6 +52,16 @@ class SelfCheckResponse(BaseModel):
     summary: str
     ts: str
     items: List[CheckItemResponse]
+
+
+class ChatHealthResponse(BaseModel):
+    """Lightweight chat health response"""
+    is_healthy: bool
+    provider_available: bool
+    provider_name: Optional[str] = None
+    storage_ok: bool = True
+    issues: List[str] = []
+    hints: List[str] = []
 
 
 @router.post("")
@@ -116,3 +127,31 @@ async def run_selfcheck(request: SelfCheckRequest) -> SelfCheckResponse:
 
     # Apply sanitization as safety net
     return sanitize_response(response.model_dump())
+
+
+@router.get("/chat-health")
+async def check_chat_health() -> ChatHealthResponse:
+    """
+    Lightweight health check for Chat functionality
+
+    This is NOT a comprehensive system diagnostic.
+    It only checks the minimum requirements for Chat to work:
+    - At least ONE usable LLM provider (uses cache only, no network calls)
+    - Storage is accessible
+
+    For full system diagnostics, use POST /api/selfcheck instead.
+
+    Returns:
+        ChatHealthResponse with lightweight health status
+    """
+    checker = ChatHealthChecker()
+    status = await checker.check()
+
+    return ChatHealthResponse(
+        is_healthy=status.is_healthy,
+        provider_available=status.provider_available,
+        provider_name=status.provider_name,
+        storage_ok=status.storage_ok,
+        issues=status.issues,
+        hints=status.hints
+    )

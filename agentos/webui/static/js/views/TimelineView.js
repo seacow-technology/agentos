@@ -59,7 +59,10 @@ class TimelineView {
         this.container.innerHTML = `
             <div class="timeline-view">
                 <div class="view-header">
-                    <h2>任务时间线</h2>
+                    <div>
+                        <h1>任务时间线</h1>
+                        <p class="text-sm text-gray-600 mt-1">任务执行时间线和追踪</p>
+                    </div>
                     <div class="header-info">
                         <span class="task-id">任务 ID: <code>${this.taskId}</code></span>
                         <div class="stream-status" id="timeline-stream-status">
@@ -73,7 +76,7 @@ class TimelineView {
                 <div class="status-cards">
                     <div class="card current-activity">
                         <div class="card-header">
-                            <span class="card-icon">🎯</span>
+                            <span class="card-icon">track_changes</span>
                             <h3>当前正在做</h3>
                         </div>
                         <div class="card-body">
@@ -83,7 +86,7 @@ class TimelineView {
 
                     <div class="card next-step">
                         <div class="card-header">
-                            <span class="card-icon">➡️</span>
+                            <span class="card-icon">arrow_forward</span>
                             <h3>下一步</h3>
                         </div>
                         <div class="card-body">
@@ -93,9 +96,9 @@ class TimelineView {
 
                     <div class="card issue-explanation" id="issue-card" style="display:none;">
                         <div class="card-header">
-                            <span class="card-icon">⚠️</span>
+                            <span class="card-icon">warning</span>
                             <h3>问题说明</h3>
-                            <button class="btn-dismiss" id="dismiss-issue">✕</button>
+                            <button class="btn-dismiss" id="dismiss-issue">close</button>
                         </div>
                         <div class="card-body">
                             <p id="issue-explanation" class="issue-text"></p>
@@ -324,7 +327,7 @@ class TimelineView {
                     <span class="event-text">${this.escapeHtml(friendlyEvent.text)}</span>
                     ${isCheckpointEvent && checkpointId ? `
                         <button class="btn-view-evidence-inline" data-checkpoint-id="${checkpointId}" title="查看证据">
-                            <span class="material-icons md-16">verified</span>
+                            <span class="material-icons md-16">check_circle</span>
                         </button>
                     ` : ''}
                 </div>
@@ -490,7 +493,7 @@ class TimelineView {
             <div class="modal-content">
                 <div class="modal-header">
                     <h3>事件详情</h3>
-                    <button class="btn-close">✕</button>
+                    <button class="btn-close">close</button>
                 </div>
                 <div class="modal-body">
                     <div class="detail-row">

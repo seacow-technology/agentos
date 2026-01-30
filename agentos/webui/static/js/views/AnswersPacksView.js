@@ -46,9 +46,9 @@ class AnswersPacksView {
             <div class="answers-view">
                 <div class="view-header">
                     <div>
-                        <h2>Answer Packs</h2>
+                        <h1>Answer Packs</h1>
                         <p class="text-sm text-gray-600 mt-1">
-                            Q&A management linked to intent/workbench
+                            Manage Q&A answer packs
                         </p>
                     </div>
                     <div class="header-actions">
@@ -183,7 +183,7 @@ class AnswersPacksView {
         if (packs.length === 0) {
             listContainer.innerHTML = `
                 <div class="empty-state-answers">
-                    <span class="material-icons">help_outline</span>
+                    <span class="material-icons md-18">help_outline</span>
                     <h3>No answer packs found</h3>
                     <p>Create your first answer pack to get started.</p>
                     <button class="btn-primary" id="empty-create-btn">
@@ -225,7 +225,7 @@ class AnswersPacksView {
 
                 <div class="answer-pack-stats">
                     <div class="stat">
-                        <span class="material-icons">quiz</span>
+                        <span class="material-icons md-18">help</span>
                         <span>${pack.question_count || pack.answers?.length || 0} questions</span>
                     </div>
                 </div>
@@ -351,7 +351,7 @@ class AnswersPacksView {
                     <!-- Q&A List -->
                     <div class="answer-pack-section">
                         <h3 class="answer-pack-section-title">
-                            <span class="material-icons md-20">quiz</span> Questions & Answers
+                            <span class="material-icons md-20">help</span> Questions & Answers
                         </h3>
                         <div class="qa-list">
                             ${pack.answers.map((qa, idx) => `
@@ -383,7 +383,7 @@ class AnswersPacksView {
                                                 ${item.type} • ${item.status}
                                             </div>
                                         </div>
-                                        <span class="material-icons text-gray-400">arrow_forward</span>
+                                        <span class="material-icons md-18">arrow_forward</span>
                                     </div>
                                 `).join('')}
                             </div>
@@ -457,8 +457,8 @@ class AnswersPacksView {
 
             if (window.showToast) {
                 const message = this.validationResult.valid
-                    ? '<span class="material-icons" style="font-size: 14px; vertical-align: middle;">check</span> Validation passed'
-                    : '<span class="material-icons" style="font-size: 14px; vertical-align: middle;">cancel</span> Validation failed';
+                    ? '<span class="material-icons md-18">check</span> Validation passed'
+                    : '<span class="material-icons md-18">cancel</span> Validation failed';
                 window.showToast(message, this.validationResult.valid ? 'success' : 'error');
             }
 
@@ -484,7 +484,7 @@ class AnswersPacksView {
         container.innerHTML = `
             <div class="answer-pack-section">
                 <h3 class="answer-pack-section-title">
-                    <span class="material-icons md-20">verified</span> Validation Results
+                    <span class="material-icons md-20">check_circle</span> Validation Results
                 </h3>
                 <div class="validation-results ${result.valid ? 'valid' : 'invalid'}">
                     <div class="validation-status ${result.valid ? 'valid' : 'invalid'}">
@@ -536,7 +536,7 @@ class AnswersPacksView {
                 </h3>
 
                 <div class="apply-proposal-notice">
-                    <span class="material-icons">info</span>
+                    <span class="material-icons md-18">info</span>
                     <p>
                         <strong>Important:</strong> This will create an apply proposal for review.
                         Changes will NOT be applied directly. The proposal must be approved before execution.
@@ -625,7 +625,7 @@ class AnswersPacksView {
                 resultDiv.innerHTML = `
                     <div class="proposal-preview">
                         <div class="flex items-center gap-2 mb-3">
-                            <span class="material-icons text-green-600">check_circle</span>
+                            <span class="material-icons md-18">check_circle</span>
                             <h4 class="proposal-preview-title">Proposal Generated Successfully</h4>
                         </div>
                         <div class="detail-grid">
@@ -649,14 +649,14 @@ class AnswersPacksView {
                             <ul class="proposal-changes-list mt-2">
                                 ${proposal.preview.fields_to_fill?.map(field => `
                                     <li>
-                                        <span class="material-icons md-16 text-blue-600">edit</span>
+                                        <span class="material-icons md-16">edit</span>
                                         <span>${field.field}: <em>${field.value?.substring(0, 50)}${field.value?.length > 50 ? '...' : ''}</em></span>
                                     </li>
                                 `).join('') || '<li>No preview available</li>'}
                             </ul>
                         </div>
                         <p class="text-xs text-gray-600 mt-3">
-                            📌 This proposal is now pending approval. It will not be applied until reviewed and approved.
+                            push_pin This proposal is now pending approval. It will not be applied until reviewed and approved.
                         </p>
                     </div>
                 `;
@@ -756,7 +756,7 @@ class AnswersPacksView {
                             </p>
                             <input type="file" id="json-import-input" accept=".json" style="display: none;" />
                             <button class="btn-secondary" id="json-import-btn">
-                                <span class="material-icons md-18">upload_file</span> Import JSON
+                                <span class="material-icons md-18">send</span> Import JSON
                             </button>
                         </div>
 

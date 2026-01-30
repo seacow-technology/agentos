@@ -29,13 +29,16 @@ class TasksView {
         this.container.innerHTML = `
             <div class="tasks-view">
                 <div class="view-header">
-                    <h2>Task Management</h2>
+                    <div>
+                        <h1>Task Management</h1>
+                        <p class="text-sm text-gray-600 mt-1">Manage and monitor task lifecycle and execution</p>
+                    </div>
                     <div class="header-actions">
                         <button class="btn-refresh" id="tasks-refresh">
                             <span class="icon"><span class="material-icons md-18">refresh</span></span> Refresh
                         </button>
                         <button class="btn-secondary" id="tasks-batch-create">
-                            <span class="icon"><span class="material-icons md-18">playlist_add</span></span> Batch Create
+                            <span class="icon"><span class="material-icons md-18">add</span></span> Batch Create
                         </button>
                         <button class="btn-primary" id="tasks-create">
                             <span class="icon"><span class="material-icons md-18">add</span></span> Create Task
@@ -52,7 +55,7 @@ class TasksView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Task Details</h3>
-                            <button class="btn-close" id="tasks-drawer-close">✕</button>
+                            <button class="btn-close" id="tasks-drawer-close">close</button>
                         </div>
                         <div class="drawer-body" id="tasks-drawer-body">
                             <!-- Task details will be rendered here -->
@@ -394,8 +397,19 @@ class TasksView {
     renderTaskDetail(task) {
         const drawerBody = this.container.querySelector('#tasks-drawer-body');
 
+        // Create Explain button for this task
+        const explainBtn = new ExplainButton('task', task.task_id, task.title || task.task_id);
+
         drawerBody.innerHTML = `
             <div class="task-detail">
+                <!-- Task Header with Explain Button -->
+                <div class="task-detail-header">
+                    <div class="task-title-section">
+                        <h3>${this.escapeHtml(task.title || task.task_id)}</h3>
+                        ${explainBtn.render()}
+                    </div>
+                </div>
+
                 <!-- Tab Navigation -->
                 <div class="task-detail-tabs">
                     <button class="tab-btn active" data-tab="overview">Overview</button>
@@ -486,12 +500,12 @@ class TasksView {
                                                 v${task.spec_version}
                                                 ${task.spec_frozen_at ? `
                                                     <span class="spec-status-badge frozen">
-                                                        <span class="material-icons" style="font-size: 14px;">lock</span>
+                                                        <span class="material-icons md-18">lock</span>
                                                         Frozen
                                                     </span>
                                                 ` : `
                                                     <span class="spec-status-badge draft">
-                                                        <span class="material-icons" style="font-size: 14px;">edit</span>
+                                                        <span class="material-icons md-18">edit</span>
                                                         Draft
                                                     </span>
                                                 `}
@@ -572,16 +586,16 @@ class TasksView {
                             <h4>Execution & Governance</h4>
                             <div class="execution-links">
                                 <button class="btn-link" id="task-view-plan">
-                                    <span class="material-icons md-18">list_alt</span> View Execution Plan
+                                    <span class="material-icons md-18">content_copy</span> View Execution Plan
                                 </button>
                                 <button class="btn-link" id="task-view-intent">
                                     <span class="material-icons md-18">edit</span> View Intent Workbench
                                 </button>
                                 <button class="btn-link" id="task-view-content">
-                                    <span class="material-icons md-18">inventory_2</span> View Content Assets
+                                    <span class="material-icons md-18">archive</span> View Content Assets
                                 </button>
                                 <button class="btn-link" id="task-view-answers">
-                                    <span class="material-icons md-18">question_answer</span> View Answer Packs
+                                    <span class="material-icons md-18">add_comment</span> View Answer Packs
                                 </button>
                             </div>
                         </div>
@@ -671,6 +685,11 @@ class TasksView {
 
         // Setup action buttons
         this.setupTaskDetailActions(task);
+
+        // Attach ExplainButton handlers
+        if (typeof ExplainButton !== 'undefined') {
+            ExplainButton.attachHandlers();
+        }
     }
 
     renderRouteTimeline(task) {
@@ -763,7 +782,7 @@ class TasksView {
                                 <span class="fallback-instance">
                                     ${idx + 1}. ${inst}
                                 </span>
-                            `).join(' <span class="material-icons" style="font-size: 14px; vertical-align: middle;">arrow_forward</span> ')}
+                            `).join(' <span class="material-icons md-18">arrow_forward</span> ')}
                         </div>
                     </div>
                 ` : ''}
@@ -784,7 +803,7 @@ class TasksView {
 
     renderRouteEvent(event) {
         const eventIcons = {
-            'TASK_ROUTED': '<span class="material-icons md-18">track_changes</span>',
+            'TASK_ROUTED': '<span class="material-icons md-18">refresh</span>',
             'TASK_ROUTE_VERIFIED': '<span class="material-icons md-18">done</span>',
             'TASK_REROUTED': '<span class="material-icons md-18">refresh</span>',
             'TASK_ROUTE_OVERRIDDEN': '<span class="material-icons md-18">edit</span>'
@@ -797,7 +816,7 @@ class TasksView {
             'TASK_ROUTE_OVERRIDDEN': 'Manual Override'
         };
 
-        const icon = eventIcons[event.event_type] || '📌';
+        const icon = eventIcons[event.event_type] || 'push_pin';
         const label = eventLabels[event.event_type] || event.event_type;
 
         // Extract routing info from event data
@@ -940,7 +959,7 @@ class TasksView {
         if (traceItems.length === 0) {
             traceContent.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-icon"><span class="material-icons md-36">timeline</span></div>
+                    <div class="empty-icon"><span class="material-icons md-36">analytics</span></div>
                     <div class="empty-text">No decision trace available</div>
                 </div>
             `;
@@ -1676,7 +1695,7 @@ class TasksView {
     renderProjectBadge(projectId, task) {
         if (!projectId) {
             return `<span class="project-badge project-badge-no-project">
-                <span class="material-icons md-14">folder_off</span>
+                <span class="material-icons md-14">folder_open</span>
                 <span>No Project</span>
             </span>`;
         }
@@ -1766,7 +1785,7 @@ class TasksView {
         if (repos.length === 0) {
             reposContent.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-icon"><span class="material-icons md-36">source</span></div>
+                    <div class="empty-icon"><span class="material-icons md-36">code</span></div>
                     <div class="empty-text">No repositories associated with this task</div>
                 </div>
             `;
@@ -2060,8 +2079,8 @@ class TasksView {
                     ${this.renderBatchCreateForm()}
                 </div>
                 <div class="dialog-footer">
-                    <button class="dialog-btn btn-secondary" id="batch-create-cancel">Cancel</button>
-                    <button class="dialog-btn btn-primary" id="batch-create-submit">Create Tasks</button>
+                    <button class="btn-secondary" id="batch-create-cancel">Cancel</button>
+                    <button class="btn-primary" id="batch-create-submit">Create Tasks</button>
                 </div>
             </div>
         `;
@@ -2495,7 +2514,7 @@ class TasksView {
                                 </table>
 
                                 <button class="btn-secondary" id="download-failed-csv">
-                                    <span class="material-icons md-18">download</span>
+                                    <span class="material-icons md-18">arrow_downward</span>
                                     Download Failed Tasks (CSV)
                                 </button>
                             </div>
@@ -2503,7 +2522,7 @@ class TasksView {
                     </div>
                 </div>
                 <div class="dialog-footer">
-                    <button class="dialog-btn btn-primary" id="results-close">Close</button>
+                    <button class="btn-primary" id="results-close">Close</button>
                 </div>
             </div>
         `;

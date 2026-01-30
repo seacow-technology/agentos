@@ -1,0 +1,539 @@
+/**
+ * Unified Modal System
+ *
+ * 统一的弹窗样式系统，确保所有模态框保持一致的外观和交互
+ *
+ * 使用方式：
+ * <div class="modal active">
+ *   <div class="modal-overlay"></div>
+ *   <div class="modal-content">
+ *     <div class="modal-header">
+ *       <h2>标题</h2>
+ *       <button class="modal-close">&times;</button>
+ *     </div>
+ *     <div class="modal-body">
+ *       内容
+ *     </div>
+ *     <div class="modal-footer">
+ *       <button class="btn-secondary">取消</button>
+ *       <button class="btn-primary">确认</button>
+ *     </div>
+ *   </div>
+ * </div>
+ */
+
+/* ============================================
+ * Modal Container
+ * ============================================ */
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.modal.active {
+    display: flex;
+}
+
+/* Modal Overlay - 背景遮罩 */
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+/* ============================================
+ * Modal Content Container
+ * ============================================ */
+
+.modal-content {
+    position: relative;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    z-index: 10000;
+    animation: modalFadeIn 0.2s ease-out;
+}
+
+/* Size variants */
+.modal-content.modal-sm {
+    max-width: 400px;
+}
+
+.modal-content.modal-md {
+    max-width: 600px;
+}
+
+.modal-content.modal-lg {
+    max-width: 800px;
+}
+
+.modal-content.modal-xl {
+    max-width: 1000px;
+}
+
+/* Animation */
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* ============================================
+ * Modal Header
+ * ============================================ */
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+}
+
+.modal-header h2,
+.modal-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Modal Close Button */
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;  /* Task #16: Unified button radius */
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.modal-close:hover {
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+.modal-close:active {
+    background: #e5e7eb;
+}
+
+/* ============================================
+ * Modal Body
+ * ============================================ */
+
+.modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+    color: #374151;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* 如果没有footer，增加body的下边距 */
+.modal-content:not(:has(.modal-footer)) .modal-body,
+.modal-content:not(:has(.modal-actions)) .modal-body {
+    padding-bottom: 24px;
+}
+
+/* ============================================
+ * Modal Footer / Actions
+ * ============================================ */
+
+.modal-footer,
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    flex-shrink: 0;
+}
+
+/* Footer with left and right sections */
+.modal-footer.with-left {
+    justify-content: space-between;
+}
+
+.modal-footer-left {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.modal-footer-right {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* ============================================
+ * Form Elements in Modal
+ * ============================================ */
+
+.modal-body .form-group {
+    margin-bottom: 20px;
+}
+
+.modal-body .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.modal-body .form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.modal-body .form-group input[type="text"],
+.modal-body .form-group input[type="email"],
+.modal-body .form-group input[type="password"],
+.modal-body .form-group input[type="url"],
+.modal-body .form-group input[type="number"],
+.modal-body .form-group input[type="file"],
+.modal-body .form-group textarea,
+.modal-body .form-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;  /* Task #16: Unified input radius */
+    font-size: 14px;
+    color: #1f2937;
+    background: white;
+    transition: all 0.15s ease;
+    outline: none;
+}
+
+.modal-body .form-group input:focus,
+.modal-body .form-group textarea:focus,
+.modal-body .form-group select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.modal-body .form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.modal-body .form-group .field-hint {
+    font-size: 13px;
+    color: #6b7280;
+    margin-top: 6px;
+    line-height: 1.4;
+}
+
+/* ============================================
+ * Modal Buttons
+ * ============================================ */
+
+/* Base button styles */
+.modal button,
+.modal-footer button,
+.modal-actions button {
+    padding: 10px 20px;
+    border-radius: 4px;  /* Task #16: Unified button radius */
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+    outline: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+    min-width: 100px;
+}
+
+.modal button:focus,
+.modal-footer button:focus,
+.modal-actions button:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+}
+
+/* Primary Button - 主要操作 */
+.modal .btn-primary,
+.modal-footer .btn-primary,
+.modal-actions .btn-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.modal .btn-primary:hover,
+.modal-footer .btn-primary:hover,
+.modal-actions .btn-primary:hover {
+    background: #2563eb;
+}
+
+.modal .btn-primary:active,
+.modal-footer .btn-primary:active,
+.modal-actions .btn-primary:active {
+    background: #1d4ed8;
+}
+
+.modal .btn-primary:focus,
+.modal-footer .btn-primary:focus,
+.modal-actions .btn-primary:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+.modal .btn-primary:disabled,
+.modal-footer .btn-primary:disabled,
+.modal-actions .btn-primary:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Secondary Button - 次要操作 */
+.modal .btn-secondary,
+.modal-footer .btn-secondary,
+.modal-actions .btn-secondary {
+    background: white;
+    color: #374151;
+    border-color: #d1d5db;
+}
+
+.modal .btn-secondary:hover,
+.modal-footer .btn-secondary:hover,
+.modal-actions .btn-secondary:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+}
+
+.modal .btn-secondary:active,
+.modal-footer .btn-secondary:active,
+.modal-actions .btn-secondary:active {
+    background: #f3f4f6;
+}
+
+.modal .btn-secondary:focus,
+.modal-footer .btn-secondary:focus,
+.modal-actions .btn-secondary:focus {
+    box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.1);
+}
+
+/* Danger Button - 危险操作 */
+.modal .btn-danger,
+.modal-footer .btn-danger,
+.modal-actions .btn-danger {
+    background: #ef4444;
+    color: white;
+}
+
+.modal .btn-danger:hover,
+.modal-footer .btn-danger:hover,
+.modal-actions .btn-danger:hover {
+    background: #dc2626;
+}
+
+.modal .btn-danger:active,
+.modal-footer .btn-danger:active,
+.modal-actions .btn-danger:active {
+    background: #b91c1c;
+}
+
+.modal .btn-danger:focus,
+.modal-footer .btn-danger:focus,
+.modal-actions .btn-danger:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+}
+
+/* Success Button - 成功操作 */
+.modal .btn-success,
+.modal-footer .btn-success,
+.modal-actions .btn-success {
+    background: #10b981;
+    color: white;
+}
+
+.modal .btn-success:hover,
+.modal-footer .btn-success:hover,
+.modal-actions .btn-success:hover {
+    background: #059669;
+}
+
+.modal .btn-success:active,
+.modal-footer .btn-success:active,
+.modal-actions .btn-success:active {
+    background: #047857;
+}
+
+/* Ghost Button - 幽灵按钮 */
+.modal .btn-ghost,
+.modal-footer .btn-ghost,
+.modal-actions .btn-ghost {
+    background: transparent;
+    color: #6b7280;
+    border: none;
+}
+
+.modal .btn-ghost:hover,
+.modal-footer .btn-ghost:hover,
+.modal-actions .btn-ghost:hover {
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+/* ============================================
+ * Modal Variants
+ * ============================================ */
+
+/* Info Modal */
+.modal.modal-info .modal-header {
+    border-bottom-color: #3b82f6;
+}
+
+.modal.modal-info .modal-header h2,
+.modal.modal-info .modal-header h3 {
+    color: #1e40af;
+}
+
+/* Success Modal */
+.modal.modal-success .modal-header {
+    border-bottom-color: #10b981;
+}
+
+.modal.modal-success .modal-header h2,
+.modal.modal-success .modal-header h3 {
+    color: #047857;
+}
+
+/* Warning Modal */
+.modal.modal-warning .modal-header {
+    border-bottom-color: #f59e0b;
+}
+
+.modal.modal-warning .modal-header h2,
+.modal.modal-warning .modal-header h3 {
+    color: #d97706;
+}
+
+/* Error Modal */
+.modal.modal-error .modal-header {
+    border-bottom-color: #ef4444;
+}
+
+.modal.modal-error .modal-header h2,
+.modal.modal-error .modal-header h3 {
+    color: #b91c1c;
+}
+
+/* ============================================
+ * Special Modal Content
+ * ============================================ */
+
+/* Output/Code Modal */
+.modal-content.output-modal {
+    max-width: 900px;
+}
+
+.modal-content.output-modal .modal-body {
+    padding: 0;
+}
+
+.modal-content.output-modal pre,
+.modal-content.output-modal .output-display {
+    margin: 0;
+    padding: 16px;
+    background: #1f2937;
+    color: #f9fafb;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-x: auto;
+    border-radius: 0;
+}
+
+/* ============================================
+ * Responsive Design
+ * ============================================ */
+
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        max-height: 95vh;
+    }
+
+    .modal-content.modal-sm,
+    .modal-content.modal-md,
+    .modal-content.modal-lg,
+    .modal-content.modal-xl {
+        max-width: 95%;
+    }
+
+    .modal-header {
+        padding: 16px 20px;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .modal-footer,
+    .modal-actions {
+        padding: 12px 20px;
+        flex-wrap: wrap;
+    }
+
+    .modal-footer button,
+    .modal-actions button {
+        flex: 1;
+        min-width: 120px;
+    }
+}
+
+/* ============================================
+ * Accessibility
+ * ============================================ */
+
+/* Focus visible for keyboard navigation */
+.modal button:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    .modal-content {
+        animation: none;
+    }
+}

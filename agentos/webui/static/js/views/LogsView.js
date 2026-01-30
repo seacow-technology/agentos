@@ -23,7 +23,10 @@ class LogsView {
         this.container.innerHTML = `
             <div class="logs-view">
                 <div class="view-header">
-                    <h2>System Logs</h2>
+                    <div>
+                        <h1>System Logs</h1>
+                        <p class="text-sm text-gray-600 mt-1">Real-time system logs and diagnostics</p>
+                    </div>
                     <div class="header-actions">
                         <div class="tail-toggle">
                             <label class="switch">
@@ -39,7 +42,7 @@ class LogsView {
                             <span class="icon"><span class="material-icons md-18">delete</span></span> Clear
                         </button>
                         <button class="btn-secondary" id="logs-download">
-                            <span class="icon"><span class="material-icons md-18">download</span></span> Download
+                            <span class="icon"><span class="material-icons md-18">arrow_downward</span></span> Download
                         </button>
                     </div>
                 </div>
@@ -58,7 +61,7 @@ class LogsView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Log Details</h3>
-                            <button class="btn-close" id="logs-drawer-close">✕</button>
+                            <button class="btn-close" id="logs-drawer-close">close</button>
                         </div>
                         <div class="drawer-body" id="logs-drawer-body">
                             <!-- Log details will be rendered here -->

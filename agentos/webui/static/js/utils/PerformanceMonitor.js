@@ -110,10 +110,10 @@ export class PerformanceMonitor {
 
         this.widget.innerHTML = `
             <div class="perf-header" style="margin-bottom: 4px; border-bottom: 1px solid #0f0; padding-bottom: 4px; display: flex; justify-content: space-between;">
-                <span>⚡ Performance</span>
+                <span>bolt Performance</span>
                 <div>
                     <button class="perf-btn perf-collapse" style="background: none; border: none; color: #0f0; cursor: pointer; padding: 0 4px;">−</button>
-                    <button class="perf-btn perf-close" style="background: none; border: none; color: #0f0; cursor: pointer; padding: 0 4px;">✕</button>
+                    <button class="perf-btn perf-close" style="background: none; border: none; color: #0f0; cursor: pointer; padding: 0 4px;">close</button>
                 </div>
             </div>
             <div class="perf-content">

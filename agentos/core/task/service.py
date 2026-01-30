@@ -897,3 +897,208 @@ class TaskService:
         except Exception as e:
             logger.error(f"Failed to get guardian reviews for task {task_id}: {e}")
             return []
+
+    # =========================================================================
+    # SPEC FREEZE OPERATIONS (Task #10: Friction Mechanisms)
+    # =========================================================================
+
+    def freeze_spec(self, task_id: str, reason: str = "", actor: str = "system") -> bool:
+        """
+        Freeze task spec to prevent modifications
+
+        Task #10: Centralized entry point for spec_frozen flag modification.
+        This method enforces audit trail for spec freezing operations.
+
+        Args:
+            task_id: Task ID to freeze
+            reason: Reason for freezing (recommended for audit trail)
+            actor: Who is freezing the spec
+
+        Returns:
+            True if successful, False otherwise
+
+        Raises:
+            TaskNotFoundError: If task doesn't exist
+            TaskStateError: If task is not in APPROVED or later state
+
+        Example:
+            >>> service = TaskService()
+            >>> service.freeze_spec("task_123", reason="Planning completed", actor="planner")
+            True
+        """
+        # Load task
+        task = self.get_task(task_id)
+        if not task:
+            raise TaskNotFoundError(task_id)
+
+        # Validate task state: only APPROVED+ tasks can be frozen
+        # (DRAFT tasks should not be frozen - still in planning)
+        if task.status == TaskState.DRAFT.value:
+            raise TaskStateError(
+                f"Cannot freeze spec for task in DRAFT state. Task must be APPROVED first."
+            )
+
+        # Check if already frozen
+        if task.is_spec_frozen():
+            logger.info(f"Task {task_id} spec is already frozen")
+            # Still record audit event for duplicate attempts
+            self.add_audit(
+                task_id=task_id,
+                event_type="SPEC_FREEZE_DUPLICATE",
+                level="info",
+                payload={
+                    "actor": actor,
+                    "reason": reason or "Spec already frozen",
+                    "spec_frozen_before": task.spec_frozen,
+                    "spec_frozen_after": task.spec_frozen,
+                }
+            )
+            return True
+
+        # Update spec_frozen flag
+        now = datetime.now(timezone.utc).isoformat()
+
+        def _freeze_spec_in_db(conn):
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE tasks SET spec_frozen = 1, updated_at = ? WHERE task_id = ?",
+                (now, task_id)
+            )
+            conn.commit()
+
+        # Submit write operation
+        writer = get_writer()
+        try:
+            writer.submit(_freeze_spec_in_db, timeout=10.0)
+        except Exception as e:
+            logger.error(f"Failed to freeze spec for task {task_id}: {e}", exc_info=True)
+            return False
+
+        # Record audit event
+        self.add_audit(
+            task_id=task_id,
+            event_type="SPEC_FROZEN",
+            level="info",
+            payload={
+                "actor": actor,
+                "reason": reason or "Spec frozen for execution",
+                "frozen_at": now,
+                "task_status": task.status,
+            }
+        )
+
+        logger.info(
+            f"Froze spec for task {task_id}",
+            extra={
+                "task_id": task_id,
+                "actor": actor,
+                "reason": reason,
+                "task_status": task.status
+            }
+        )
+
+        return True
+
+    def unfreeze_spec(self, task_id: str, reason: str, actor: str = "system") -> bool:
+        """
+        Unfreeze task spec to allow modifications (USE WITH CAUTION)
+
+        Task #10: Centralized entry point for spec_frozen flag modification.
+        This method enforces audit trail for spec unfreezing operations.
+
+        WARNING: Unfreezing a spec should be rare. It breaks the v0.6 contract
+        that execution only works with frozen specs. Use only for emergency
+        corrections or re-planning.
+
+        Args:
+            task_id: Task ID to unfreeze
+            reason: Reason for unfreezing (REQUIRED for audit trail)
+            actor: Who is unfreezing the spec
+
+        Returns:
+            True if successful, False otherwise
+
+        Raises:
+            TaskNotFoundError: If task doesn't exist
+            ValueError: If reason is empty (required for audit)
+
+        Example:
+            >>> service = TaskService()
+            >>> service.unfreeze_spec(
+            ...     "task_123",
+            ...     reason="Requirements changed, need to re-plan",
+            ...     actor="user"
+            ... )
+            True
+        """
+        # Validate reason is provided
+        if not reason or not reason.strip():
+            raise ValueError("Reason is required for unfreezing spec (audit trail)")
+
+        # Load task
+        task = self.get_task(task_id)
+        if not task:
+            raise TaskNotFoundError(task_id)
+
+        # Check if already unfrozen
+        if not task.is_spec_frozen():
+            logger.info(f"Task {task_id} spec is already unfrozen")
+            # Still record audit event for duplicate attempts
+            self.add_audit(
+                task_id=task_id,
+                event_type="SPEC_UNFREEZE_DUPLICATE",
+                level="warn",
+                payload={
+                    "actor": actor,
+                    "reason": reason,
+                    "spec_frozen_before": task.spec_frozen,
+                    "spec_frozen_after": task.spec_frozen,
+                    "warning": "Attempted to unfreeze already unfrozen spec"
+                }
+            )
+            return True
+
+        # Update spec_frozen flag
+        now = datetime.now(timezone.utc).isoformat()
+
+        def _unfreeze_spec_in_db(conn):
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE tasks SET spec_frozen = 0, updated_at = ? WHERE task_id = ?",
+                (now, task_id)
+            )
+            conn.commit()
+
+        # Submit write operation
+        writer = get_writer()
+        try:
+            writer.submit(_unfreeze_spec_in_db, timeout=10.0)
+        except Exception as e:
+            logger.error(f"Failed to unfreeze spec for task {task_id}: {e}", exc_info=True)
+            return False
+
+        # Record audit event (WARN level - this is unusual)
+        self.add_audit(
+            task_id=task_id,
+            event_type="SPEC_UNFROZEN",
+            level="warn",
+            payload={
+                "actor": actor,
+                "reason": reason,
+                "unfrozen_at": now,
+                "task_status": task.status,
+                "warning": "Spec unfrozen - execution will be blocked until re-frozen",
+            }
+        )
+
+        logger.warning(
+            f"Unfroze spec for task {task_id} - this breaks v0.6 execution contract",
+            extra={
+                "task_id": task_id,
+                "actor": actor,
+                "reason": reason,
+                "task_status": task.status
+            }
+        )
+
+        return True

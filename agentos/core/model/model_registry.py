@@ -2,7 +2,7 @@
 Model Registry - 全局模型注册表
 
 负责：
-- 管理所有可用模型（本地 + 云端）
+- 管理所有Available模型（本地 + 云端）
 - 查询模型列表（动态 API 查询）
 - 检测调用方式（CLI vs API）
 - 检查授权信息
@@ -495,7 +495,7 @@ class ModelRegistry:
             return ToolHealth(status="unreachable", details=str(e))
     
     def _check_cli_available(self, command: str) -> bool:
-        """检查 CLI 命令是否可用"""
+        """检查 CLI 命令是否Available"""
         try:
             result = subprocess.run(
                 ["which", command],

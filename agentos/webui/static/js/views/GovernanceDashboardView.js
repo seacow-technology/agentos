@@ -30,26 +30,39 @@ class GovernanceDashboardView {
 
         container.innerHTML = `
             <div class="governance-dashboard">
-                <div class="dashboard-header">
-                    <h1>Governance Dashboard</h1>
-                    <div class="dashboard-controls">
-                        <select id="timeframe-selector" class="form-control">
-                            <option value="7d" selected>Last 7 Days</option>
-                            <option value="30d">Last 30 Days</option>
-                            <option value="90d">Last 90 Days</option>
-                        </select>
-                        <button id="refresh-btn" class="btn btn-secondary">
-                            <span class="material-icons" style="font-size: 18px; vertical-align: middle;">refresh</span> Refresh
-                        </button>
-                        <label class="auto-refresh-toggle">
+                <div class="view-header">
+                    <div>
+                        <h1>Governance Dashboard</h1>
+                        <p class="text-sm text-gray-600 mt-1">C-level governance health metrics and risks</p>
+                    </div>
+                    <div class="header-actions">
+                        <label class="auto-refresh-toggle" style="display: flex; align-items: center; gap: 6px; margin-right: 12px; font-size: 13px;">
                             <input type="checkbox" id="auto-refresh-checkbox">
                             Auto Refresh (5min)
                         </label>
+                        <button id="refresh-btn" class="btn-refresh" title="Refresh">
+                            <span class="icon"><span class="material-icons md-18">refresh</span></span> Refresh
+                        </button>
                     </div>
                 </div>
 
-                <div id="dashboard-content">
-                    <div class="loading">Loading governance data...</div>
+                <div class="filter-section">
+                    <div class="filter-bar">
+                        <div class="filter-item">
+                            <label class="filter-label">Timeframe</label>
+                            <select id="timeframe-selector" class="filter-select">
+                                <option value="7d" selected>Last 7 Days</option>
+                                <option value="30d">Last 30 Days</option>
+                                <option value="90d">Last 90 Days</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-section">
+                    <div id="dashboard-content">
+                        <div class="loading">Loading governance data...</div>
+                    </div>
                 </div>
             </div>
         `;
@@ -288,7 +301,7 @@ class GovernanceDashboardView {
         if (topRisks.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-icon"><span class="material-icons" style="font-size: 48px; color: #10B981;">check_circle</span></div>
+                    <div class="empty-icon"><span class="material-icons md-18">check_circle</span></div>
                     <p>No critical risks detected</p>
                 </div>
             `;
@@ -305,7 +318,7 @@ class GovernanceDashboardView {
                 <div class="risk-title">${risk.title}</div>
                 <div class="risk-meta">
                     <span class="affected-count">
-                        <span class="material-icons" style="font-size: 16px; vertical-align: middle; color: #F59E0B;">warning</span> ${risk.affected_tasks} task${risk.affected_tasks > 1 ? 's' : ''} affected
+                        <span class="material-icons md-18">warning</span> ${risk.affected_tasks} task${risk.affected_tasks > 1 ? 's' : ''} affected
                     </span>
                 </div>
             </div>
@@ -377,10 +390,10 @@ class GovernanceDashboardView {
     renderError(container, error) {
         container.innerHTML = `
             <div class="error-state">
-                <div class="error-icon"><span class="material-icons" style="font-size: 64px; color: #dc3545;">warning</span></div>
+                <div class="error-icon"><span class="material-icons md-18">warning</span></div>
                 <h3>Failed to Load Dashboard</h3>
                 <p>${error.message}</p>
-                <button id="retry-btn" class="btn btn-primary">Retry</button>
+                <button id="retry-btn" class="btn-primary">Retry</button>
             </div>
         `;
 

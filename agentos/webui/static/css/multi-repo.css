@@ -11,7 +11,12 @@
     padding: 20px;
 }
 
-/* Projects Toolbar */
+/* Projects filter section styling (aligned with TasksView) */
+.projects-view .filter-section {
+    padding: 16px 24px;
+}
+
+/* Projects Toolbar (Legacy - deprecated) */
 .projects-toolbar {
     display: flex;
     justify-content: space-between;
@@ -1221,33 +1226,61 @@
 
 .tabs {
     display: flex;
-    border-bottom: 2px solid var(--border-color);
-    margin-bottom: 0;
-    background: var(--bg-secondary);
+    gap: 8px;
+    padding: 16px 24px;
+    background: white;
+    border-bottom: 1px solid var(--border-color);
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.tabs::-webkit-scrollbar {
+    height: 4px;
+}
+
+.tabs::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tabs::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+}
+
+.tabs::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 .tab-btn {
-    padding: 12px 24px;
-    background: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #f3f4f6;
     border: none;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
+    border-radius: 20px;
+    color: var(--text-secondary);
     font-size: 14px;
     font-weight: 500;
-    color: var(--text-secondary);
-    margin-bottom: -2px;
+    cursor: pointer;
     transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .tab-btn:hover {
+    background: #e5e7eb;
     color: var(--text-primary);
-    background: var(--bg-hover);
 }
 
 .tab-btn.active {
-    color: var(--primary-color);
-    border-bottom-color: var(--primary-color);
-    font-weight: 600;
+    background: var(--primary-color);
+    color: #ffffff;
+}
+
+.tab-btn.active:hover {
+    background: #2563eb;
+    color: #ffffff;
 }
 
 .tab-content {
@@ -1374,45 +1407,9 @@
    =========================== */
 
 /* Tab Navigation */
+/* 使用统一的 tabs 样式（见上方定义）*/
 .tabs-container {
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.tabs {
-    display: flex;
-    gap: 0;
-}
-
-.tabs .tab-btn {
-    padding: 12px 24px;
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-muted);
-    transition: all 0.2s ease;
-}
-
-.tabs .tab-btn:hover {
-    color: var(--text-primary);
-    background: var(--bg-hover);
-}
-
-.tabs .tab-btn.active {
-    color: var(--primary-color);
-    border-bottom-color: var(--primary-color);
-    font-weight: 600;
-}
-
-.tab-content {
-    display: none;
-}
-
-.tab-content.active {
-    display: block;
+    margin-bottom: 0;
 }
 
 /* Task Graph Container */

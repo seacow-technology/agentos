@@ -11,7 +11,7 @@ Key Features:
 2. Captures user_id, action, target, timestamp, result
 3. Extracts task_id and repo_id from request path
 4. Records to task_audits table
-5. Best-effort: Audit failures never block business requests ⚠️
+5. Best-effort: Audit failures never block business requests warning
 """
 
 import json

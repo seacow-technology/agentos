@@ -112,7 +112,7 @@ CREATE INDEX IF NOT EXISTS idx_answer_pack_links_pack_entity
 
 -- Answer Packs 设计原则：
 -- 1. items_json 格式：[{"question": "...", "answer": "..."}]
--- 2. 状态管理：draft（开发中）-> active（生产可用）-> archived（归档）
+-- 2. 状态管理：draft（开发中）-> active（生产Available）-> archived（归档）
 -- 3. 关联追踪：通过 answer_pack_links 表追踪哪些任务/意图使用了答案包
 
 -- 状态转换规则：

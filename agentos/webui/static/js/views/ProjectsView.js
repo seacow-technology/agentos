@@ -10,6 +10,8 @@ class ProjectsView {
         this.projects = [];
         this.selectedProject = null;
         this.selectedRepo = null;
+        this.filterBar = null;
+        this.searchQuery = '';
 
         this.init();
     }
@@ -17,30 +19,29 @@ class ProjectsView {
     init() {
         this.container.innerHTML = `
             <div class="projects-view">
-                <div class="projects-toolbar">
-                    <div class="toolbar-left">
+                <div class="view-header">
+                    <div>
                         <h1>Projects</h1>
-                        <input type="text"
-                               class="search-input"
-                               id="projects-search"
-                               placeholder="Search projects..."
-                               autocomplete="off">
+                        <p class="text-sm text-gray-600 mt-1">Manage multi-repository project configurations</p>
                     </div>
-                    <div class="toolbar-right">
-                        <button class="btn-primary" id="projects-create" title="Create New Project">
-                            <span class="material-icons md-18">add</span> New Project
-                        </button>
+                    <div class="header-actions">
                         <button class="btn-refresh" id="projects-refresh" title="Refresh">
-                            <span class="material-icons md-18">refresh</span>
+                            <span class="icon"><span class="material-icons md-18">refresh</span></span> Refresh
+                        </button>
+                        <button class="btn-primary" id="projects-create" title="Create New Project">
+                            <span class="icon"><span class="material-icons md-18">add</span></span> New Project
                         </button>
                     </div>
                 </div>
 
-                <div class="projects-content">
+                <div id="projects-filter-bar" class="filter-section"></div>
+
+                <div class="table-section">
                     <!-- Projects List -->
                     <div id="projects-list" class="projects-section">
                         <div class="loading-spinner">Loading projects...</div>
                     </div>
+                </div>
 
                     <!-- Project Detail Drawer -->
                     <div id="project-detail-drawer" class="drawer hidden">
@@ -48,7 +49,7 @@ class ProjectsView {
                         <div class="drawer-content">
                             <div class="drawer-header">
                                 <h3>Project Details</h3>
-                                <button class="btn-close" id="project-drawer-close">✕</button>
+                                <button class="btn-close" id="project-drawer-close">close</button>
                             </div>
                             <div class="drawer-body" id="project-drawer-body">
                                 <!-- Project details will be rendered here -->
@@ -62,7 +63,7 @@ class ProjectsView {
                         <div class="drawer-content">
                             <div class="drawer-header">
                                 <h3>Repository Details</h3>
-                                <button class="btn-close" id="repo-drawer-close">✕</button>
+                                <button class="btn-close" id="repo-drawer-close">close</button>
                             </div>
                             <div class="drawer-body" id="repo-drawer-body">
                                 <!-- Repo details will be rendered here -->
@@ -252,20 +253,53 @@ class ProjectsView {
             </div>
         `;
 
+        this.setupFilterBar();
         this.setupEventListeners();
         this.loadProjects();
+    }
+
+    setupFilterBar() {
+        const filterContainer = this.container.querySelector('#projects-filter-bar');
+
+        this.filterBar = new FilterBar(filterContainer, {
+            filters: [
+                {
+                    type: 'text',
+                    key: 'search',
+                    label: 'Search',
+                    placeholder: 'Search projects by name...'
+                }
+            ],
+            onChange: (filters) => this.handleFilterChange(filters),
+            debounceMs: 300
+        });
+    }
+
+    handleFilterChange(filters) {
+        this.searchQuery = filters.search || '';
+        this.filterProjects();
+    }
+
+    filterProjects() {
+        const query = this.searchQuery.toLowerCase();
+        const projectCards = this.container.querySelectorAll('.project-card');
+
+        projectCards.forEach(card => {
+            const projectName = card.dataset.projectName?.toLowerCase() || '';
+            const projectDesc = card.dataset.projectDesc?.toLowerCase() || '';
+
+            if (projectName.includes(query) || projectDesc.includes(query)) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        });
     }
 
     setupEventListeners() {
         // Refresh button
         this.container.querySelector('#projects-refresh').addEventListener('click', () => {
             this.loadProjects(true);
-        });
-
-        // Search input
-        const searchInput = this.container.querySelector('#projects-search');
-        searchInput.addEventListener('input', (e) => {
-            this.filterProjects(e.target.value);
         });
 
         // Project drawer close
@@ -442,7 +476,7 @@ class ProjectsView {
         return `
             <div class="empty-state">
                 <div class="empty-icon">
-                    <span class="material-icons">folder_open</span>
+                    <span class="material-icons md-18">folder_open</span>
                 </div>
                 <h2>Create your first project</h2>
                 <p class="empty-description">
@@ -459,7 +493,10 @@ class ProjectsView {
         const createdAt = project.created_at || project.updated_at;
 
         return `
-            <div class="project-card" data-project-id="${project.project_id}">
+            <div class="project-card"
+                 data-project-id="${project.project_id}"
+                 data-project-name="${this.escapeHtml(project.name || '')}"
+                 data-project-desc="${this.escapeHtml(project.description || '')}">
                 <div class="card-header">
                     <h3>${this.escapeHtml(project.name)}</h3>
                     <div class="card-actions">
@@ -507,7 +544,7 @@ class ProjectsView {
                         <span class="material-icons md-16">list</span>
                     </a>
                     <a href="#/events?project=${project.project_id}" class="card-link" title="View Events">
-                        <span class="material-icons md-16">timeline</span>
+                        <span class="material-icons md-16">analytics</span>
                     </a>
                 </div>
             </div>
@@ -661,10 +698,10 @@ class ProjectsView {
                                             <td><strong>${repo.name}</strong></td>
                                             <td><code class="code-inline">${repo.workspace_relpath}</code></td>
                                             <td><span class="role-badge role-${repo.role}">${repo.role}</span></td>
-                                            <td>${repo.is_writable ? '<span class="badge-success"><span class="material-icons" style="font-size: 14px; vertical-align: middle;">check</span></span>' : '<span class="badge-muted">Read-only</span>'}</td>
+                                            <td>${repo.is_writable ? '<span class="badge-success"><span class="material-icons md-18">check</span></span>' : '<span class="badge-muted">Read-only</span>'}</td>
                                             <td style="display: flex; gap: 8px; align-items: center;">
                                                 <button class="btn-link btn-view-repo" data-repo-id="${repo.repo_id}" data-project-id="${project.project_id}" title="View">
-                                                    <span class="material-icons md-16">visibility</span>
+                                                    <span class="material-icons md-16">preview</span>
                                                 </button>
                                                 <button class="btn-icon btn-edit-repo" data-repo-id="${repo.repo_id}" data-project-id="${project.project_id}" title="Edit">
                                                     <span class="material-icons md-16">edit</span>
@@ -1455,7 +1492,7 @@ class ProjectsView {
         menu.className = 'dropdown-menu';
         menu.innerHTML = `
             <a href="#" class="dropdown-item" data-action="export">
-                <span class="material-icons md-16">download</span> Export Snapshot
+                <span class="material-icons md-16">arrow_downward</span> Export Snapshot
             </a>
             <a href="#" class="dropdown-item" data-action="history">
                 <span class="material-icons md-16">history</span> Snapshot History
@@ -1865,7 +1902,7 @@ class ProjectsView {
                                                     <button class="btn-primary btn-sm btn-download-snapshot"
                                                             data-project-id="${projectId}"
                                                             data-snapshot-id="${snap.snapshot_id}">
-                                                        <span class="material-icons md-16">download</span> Download
+                                                        <span class="material-icons md-16">arrow_downward</span> Download
                                                     </button>
                                                 </td>
                                             </tr>
@@ -1875,7 +1912,7 @@ class ProjectsView {
                             ` : `
                                 <div class="empty-state" style="padding: 40px 20px;">
                                     <div class="empty-icon">
-                                        <span class="material-icons md-48" style="font-size: 48px; color: #9ca3af;">history</span>
+                                        <span class="material-icons md-48">history</span>
                                     </div>
                                     <p class="text-muted">No snapshots yet</p>
                                 </div>

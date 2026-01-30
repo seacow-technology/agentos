@@ -337,7 +337,7 @@ async def handle_task_command(session_id: str, content: str, metadata: Dict[str,
         if success:
             # Send success message
             response_content = (
-                f"✅ Task created and launched!\n\n"
+                f"check_circle Task created and launched!\n\n"
                 f"**Task ID:** {task.task_id}\n"
                 f"**Title:** {task.title}\n"
                 f"**Status:** Queued for execution\n\n"
@@ -367,7 +367,7 @@ async def handle_task_command(session_id: str, content: str, metadata: Dict[str,
         else:
             # Launch failed
             error_content = (
-                f"⚠️ Task created but failed to launch automatically.\n\n"
+                f"warning Task created but failed to launch automatically.\n\n"
                 f"**Task ID:** {task.task_id}\n"
                 f"**Title:** {task.title}\n\n"
                 f"Please approve and queue the task manually."
@@ -412,14 +412,14 @@ async def handle_user_message(session_id: str, content: str, metadata: Dict[str,
     store = get_session_store()
 
     # Phase 3: Extract runtime config from metadata
-    logger.info(f"📩 Received metadata from WebUI: {metadata}")
+    logger.info(f"mail Received metadata from WebUI: {metadata}")
     runtime_config, config_error = extract_runtime_config(metadata)
 
     if config_error:
         logger.error(f"Invalid runtime config: {config_error}")
         await manager.send_message(session_id, {
             "type": "message.error",
-            "content": f"⚠️ Configuration error: {config_error}",
+            "content": f"warning Configuration error: {config_error}",
             "metadata": {
                 "error_type": "invalid_config",
                 "error_detail": config_error,
@@ -478,7 +478,7 @@ async def handle_user_message(session_id: str, content: str, metadata: Dict[str,
                 logger.info(f"Updating Core session with runtime config: {config_dict}")
                 try:
                     chat_service.update_session_metadata(session_id, config_dict)
-                    logger.info(f"✓ Updated session metadata: {config_dict}")
+                    logger.info(f"check Updated session metadata: {config_dict}")
                 except Exception as e:
                     logger.error(f"Failed to update session metadata: {e}")
 
@@ -524,6 +524,32 @@ async def handle_user_message(session_id: str, content: str, metadata: Dict[str,
         # Iterate over chunks and stream to client in real-time
         # Note: ChatEngine._stream_response() is a synchronous generator
         # We use asyncio.Queue to bridge sync generator and async WebSocket
+
+        # Bug fix: Check if stream_generator is actually a generator
+        # In some error cases, send_message might return a dict instead
+        if isinstance(stream_generator, dict):
+            # Handle dict response (error case)
+            await manager.send_message(session_id, {
+                "type": "message.start",
+                "message_id": message_id,
+                "role": "assistant",
+                "metadata": {},
+            })
+
+            content_text = stream_generator.get("content", str(stream_generator))
+            await manager.send_message(session_id, {
+                "type": "message.delta",
+                "content": content_text,
+                "metadata": {},
+            })
+
+            await manager.send_message(session_id, {
+                "type": "message.end",
+                "message_id": message_id,
+                "content": content_text,
+                "metadata": stream_generator.get("metadata", {}),
+            })
+            return
 
         chunk_queue = asyncio.Queue()
 
@@ -586,22 +612,81 @@ async def handle_user_message(session_id: str, content: str, metadata: Dict[str,
         # Send message.end event
         full_response = "".join(response_buffer)
 
+        end_metadata = {
+            "total_chunks": len(response_buffer),
+            "total_chars": len(full_response)
+        }
+
         await manager.send_message(session_id, {
             "type": "message.end",
             "message_id": message_id,
             "content": full_response,
-            "metadata": {
-                "total_chunks": len(response_buffer),
-                "total_chars": len(full_response)
-            },
+            "metadata": end_metadata,
         })
 
         logger.info(f"Streamed response: {len(response_buffer)} chunks, {len(full_response)} chars")
 
+        # Check for truncation and send completion info (P1-8)
+        # This is for streaming responses - we'll get truncation info from saved message
+        try:
+            from agentos.core.chat.service import ChatService
+            chat_service = ChatService()
+
+            # Get the last assistant message to check for truncation metadata
+            messages = chat_service.get_messages(session_id, limit=1)
+            if messages and messages[0].role == "assistant":
+                msg_metadata = messages[0].metadata or {}
+                if msg_metadata.get("truncated"):
+                    logger.info(f"Response was truncated due to token limit")
+                    await manager.send_message(session_id, {
+                        "type": "completion_info",
+                        "info": {
+                            "truncated": True,
+                            "finish_reason": msg_metadata.get("finish_reason"),
+                            "tokens_used": msg_metadata.get("tokens_used")
+                        }
+                    })
+        except Exception as e:
+            logger.warning(f"Failed to check truncation status: {e}")
+
+        # NEW: Send budget update after message is complete
+        try:
+            # Build a dry-run context to get budget info
+            from agentos.core.chat.context_builder import ContextBuilder
+            builder = ContextBuilder()
+
+            # Build context without sending (for budget calculation)
+            context_pack = builder.build(
+                session_id=session_id,
+                user_input="",  # Empty input for budget check
+                reason="audit"
+            )
+
+            # Send budget update to frontend
+            await manager.send_message(session_id, {
+                "type": "budget_update",
+                "data": {
+                    "total_tokens": context_pack.usage.total_tokens_est,
+                    "budget_tokens": context_pack.usage.budget_tokens,
+                    "usage_ratio": context_pack.usage.usage_ratio,
+                    "watermark": context_pack.usage.watermark.value,
+                    "breakdown": {
+                        "system": context_pack.usage.tokens_system,
+                        "window": context_pack.usage.tokens_window,
+                        "rag": context_pack.usage.tokens_rag,
+                        "memory": context_pack.usage.tokens_memory,
+                    }
+                }
+            })
+
+            logger.info(f"Sent budget update: {context_pack.usage.usage_ratio:.2%} used")
+        except Exception as e:
+            logger.warning(f"Failed to send budget update: {e}")
+
     except Exception as e:
         logger.error(f"ChatEngine streaming error: {e}", exc_info=True)
 
-        error_message = f"⚠️ Chat engine error: {str(e)}"
+        error_message = f"warning Chat engine error: {str(e)}"
         response_buffer = [error_message]
 
         await manager.send_message(session_id, {
@@ -616,7 +701,7 @@ async def handle_user_message(session_id: str, content: str, metadata: Dict[str,
         full_response = "".join(response_buffer)
 
         # Only store if we have content (not just error)
-        if full_response and not full_response.startswith("⚠️"):
+        if full_response and not full_response.startswith("warning"):
             assistant_msg = store.add_message(
                 session_id=session_id,
                 role="assistant",

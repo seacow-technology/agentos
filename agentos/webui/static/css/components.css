@@ -24,11 +24,176 @@
     -moz-osx-font-smoothing: grayscale;
 }
 
+.material-icons.md-14 { font-size: 14px; }
 .material-icons.md-16 { font-size: 16px; }
 .material-icons.md-18 { font-size: 18px; }
 .material-icons.md-20 { font-size: 20px; }
 .material-icons.md-24 { font-size: 24px; }
 .material-icons.md-36 { font-size: 36px; }
+.material-icons.md-48 { font-size: 48px; }
+.material-icons.md-64 { font-size: 64px; }
+
+/* Material Icons - 彩色状态指示器 */
+.material-icons.status-success {
+    color: #10B981;
+    font-size: 12px;
+}
+.material-icons.status-error {
+    color: #EF4444;
+    font-size: 12px;
+}
+.material-icons.status-warning {
+    color: #F59E0B;
+    font-size: 12px;
+}
+.material-icons.status-reconnecting {
+    color: #F97316;
+    font-size: 12px;
+}
+.material-icons.status-running {
+    color: #3B82F6;
+    font-size: 12px;
+}
+.material-icons.status-unknown {
+    color: #9CA3AF;
+    font-size: 12px;
+}
+.material-icons.status-connected {
+    color: #10B981;
+    font-size: 12px;
+}
+.material-icons.status-connecting {
+    color: #F59E0B;
+    font-size: 12px;
+}
+.material-icons.status-disconnected {
+    color: #EF4444;
+    font-size: 12px;
+}
+
+/* ==================== Nav Pills (Unified Tab Component) ==================== */
+
+.nav-pills {
+    display: flex;
+    gap: 8px;
+    padding: 16px 24px;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    overflow-x: auto;
+    /* 隐藏滚动条但保持可滚动 */
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.nav-pills::-webkit-scrollbar {
+    height: 4px;
+}
+
+.nav-pills::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.nav-pills::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+}
+
+.nav-pills::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.nav-pills .nav-item {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-pills .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 20px;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    text-decoration: none;
+    user-select: none;
+}
+
+.nav-pills .nav-link:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.nav-pills .nav-link.active {
+    background: #3b82f6;
+    color: #ffffff;
+}
+
+.nav-pills .nav-link.active:hover {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.nav-pills .nav-link:disabled,
+.nav-pills .nav-link.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Icon support (optional) */
+.nav-pills .nav-link .material-icons {
+    font-size: 18px;
+}
+
+/* Tab content container */
+.tab-content-wrapper {
+    padding: 24px;
+}
+
+.tab-pane {
+    display: none;
+    animation: tabFadeIn 0.3s ease;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+@keyframes tabFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 响应式：移动端优化 */
+@media (max-width: 768px) {
+    .nav-pills {
+        padding: 12px 16px;
+        gap: 6px;
+    }
+
+    .nav-pills .nav-link {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+
+    .tab-content-wrapper {
+        padding: 16px;
+    }
+}
 
 /* ==================== JsonViewer ==================== */
 
@@ -56,7 +221,7 @@
     padding: 4px 12px;
     background: white;
     border: 1px solid #ced4da;
-    border-radius: 3px;
+    border-radius: 4px;  /* Task #16: Unified button radius */
     cursor: pointer;
     font-size: 12px;
     transition: all 0.2s;
@@ -224,7 +389,7 @@
     padding: 6px 12px;
     background: white;
     border: 1px solid #ced4da;
-    border-radius: 3px;
+    border-radius: 4px;  /* Task #16: Unified button radius */
     cursor: pointer;
     font-size: 13px;
     transition: all 0.2s;
@@ -273,7 +438,7 @@
 .filter-select {
     padding: 8px 12px;
     border: 1px solid #ced4da;
-    border-radius: 3px;
+    border-radius: 4px;  /* Task #16: Unified input radius */
     font-size: 14px;
     line-height: 1.5;
     background: white;
@@ -294,13 +459,16 @@
     background: #007bff;
     color: white;
     border: 1px solid #007bff;
-    border-radius: 3px;
+    border-radius: 4px;  /* Task #16: Unified button radius */
     cursor: pointer;
     font-size: 14px;
     line-height: 1.5;
     height: 38px;
     box-sizing: border-box;
     transition: background 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .filter-button:hover {
@@ -325,7 +493,7 @@
     padding: 8px 12px;
     background: white;
     border: 1px solid #ced4da;
-    border-radius: 3px;
+    border-radius: 4px;  /* Task #16: Unified button radius */
     cursor: pointer;
     font-size: 14px;
     line-height: 1.5;
@@ -355,7 +523,7 @@
     background: #28a745;
     color: white;
     border: 1px solid #28a745;
-    border-radius: 3px;
+    border-radius: 4px;  /* Task #16: Unified button radius */
     cursor: pointer;
     font-size: 14px;
     line-height: 1.5;
@@ -635,6 +803,34 @@
     padding: 20px;
 }
 
+/* Task #10: Task Management 页面标题大小调整 - 比副标题大一点点 */
+.tasks-view .view-header h1 {
+    font-size: 18px;  /* Task #36: 标准 h1 大小，比副标题的 14px 大，比例 1.29x */
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 4px 0;
+}
+
+.tasks-view .view-header p {
+    margin: 0;
+    font-size: 0.875rem;  /* 14px - text-sm */
+    color: #6b7280;
+}
+
+/* Task #14: Skills Management 页面标题大小调整 - 比副标题大一点点 */
+.skills-view .view-header h1 {
+    font-size: 18px;  /* Task #50: 统一标准 h1 大小，比副标题的 14px 大，比例 1.29x */
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 4px 0;
+}
+
+.skills-view .view-header p {
+    margin: 0;
+    font-size: 0.875rem;  /* 14px - text-sm */
+    color: #6b7280;
+}
+
 /* Events View (PR-2) */
 .events-view {
     padding: 20px;
@@ -656,7 +852,14 @@
 }
 
 .view-header h2 {
-    font-size: 24px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #212529;
+    margin: 0;
+}
+
+.view-header h1 {
+    font-size: 18px;  /* Task #9: h1 should be slightly larger than subtitle (14px), ratio 1.29x */
     font-weight: 600;
     color: #212529;
     margin: 0;
@@ -692,12 +895,14 @@
 .btn-refresh, .btn-primary, .btn-secondary, .btn-success, .btn-danger {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     padding: 8px 16px;
     font-size: 14px;
     font-weight: 500;
     line-height: 1.5;
     height: 38px;
+    min-width: 100px;
     box-sizing: border-box;
     border-radius: 6px;
     border: none;
@@ -843,10 +1048,10 @@ input:checked + .slider:before {
 .table-section {
     flex: 1;
     overflow: auto;
-    padding: 24px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
     margin-top: 20px;
 }
 
@@ -915,17 +1120,26 @@ input:checked + .slider:before {
     width: 32px;
     height: 32px;
     border: none;
-    background: transparent;
+    background: none;
     font-size: 24px;
-    color: #6c757d;
+    color: #6b7280;
     cursor: pointer;
-    border-radius: 4px;
-    transition: all 0.2s;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
 }
 
 .btn-close:hover {
-    background: #f8f9fa;
-    color: #212529;
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+.btn-close:active {
+    background: #e5e7eb;
 }
 
 .drawer-body {
@@ -1170,9 +1384,9 @@ textarea.form-control {
     gap: 4px;
     padding: 4px 10px;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 500;
     border-radius: 12px;
-    text-transform: uppercase;
+    border: 1px solid transparent;
 }
 
 .status-pending {
@@ -1395,6 +1609,8 @@ textarea.form-control {
 /* ==================== View Container Styles (Unified Padding/Margin) ==================== */
 
 /* Providers View Styles (Sprint B+ WebUI Integration) */
+/* Task #29: Local Model Providers 页面使用统一的 view-header 样式 */
+/* h1: 18px (全局 .view-header h1), 副标题: 14px (text-sm), 比例 1.29x */
 .providers-view {
     padding: 20px;
 }
@@ -1402,6 +1618,20 @@ textarea.form-control {
 /* Sessions View (PR-3) */
 .sessions-view {
     padding: 20px;
+}
+
+/* Task #35: Session Management 标题字体大小调整 */
+.sessions-view .view-header h1 {
+    font-size: 18px;  /* Task #50: 统一标准 h1 大小，比副标题的 14px 大，比例 1.29x */
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 4px 0;
+}
+
+.sessions-view .view-header p {
+    margin: 0;
+    font-size: 0.875rem;  /* 14px - text-sm */
+    color: #6b7280;
 }
 
 /* Skills View (PR-4) */
@@ -1414,6 +1644,20 @@ textarea.form-control {
     padding: 20px;
 }
 
+/* Task #15: Memory Management 页面标题大小调整 - 比副标题大一点点 */
+.memory-view .view-header h1 {
+    font-size: 18px;  /* Task #50: 统一标准 h1 大小，比副标题的 14px 大，比例 1.29x */
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 4px 0;
+}
+
+.memory-view .view-header p {
+    margin: 0;
+    font-size: 0.875rem;  /* 14px - text-sm */
+    color: #6b7280;
+}
+
 /* Config View (PR-4) */
 .config-view {
     padding: 20px;
@@ -1424,6 +1668,19 @@ textarea.form-control {
     padding: 20px;
 }
 
+.context-view .view-header h1 {
+    font-size: 18px;  /* Task #50: 统一标准 h1 大小，比副标题的 14px 大，比例 1.29x */
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 4px 0;
+}
+
+.context-view .view-header p {
+    font-size: 0.875rem;  /* 14px - 副标题字体 */
+    color: #6b7280;
+    margin: 0;
+}
+
 /* Runtime View (PR-5) */
 .runtime-view {
     padding: 20px;
@@ -1432,6 +1689,20 @@ textarea.form-control {
 /* Support View (PR-5) */
 .support-view {
     padding: 20px;
+}
+
+/* Task #33: Support & Diagnostics 页面标题大小调整 - 比副标题大一点点 */
+.support-view .view-header h1 {
+    font-size: 18px;  /* Task #50: 统一标准 h1 大小，比副标题的 14px 大，比例 1.29x */
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 4px 0;
+}
+
+.support-view .view-header p {
+    margin: 0;
+    font-size: 0.875rem;  /* 14px - 副标题 */
+    color: #6b7280;
 }
 
 /* History View (Command History) */
@@ -1589,11 +1860,17 @@ textarea.form-control {
     padding: 6px 12px;
     font-size: 13px;
     height: auto;
+    min-width: 80px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
+/* NOTE: Duplicate definitions below are legacy - primary styles are defined at line ~823 */
 .btn-primary {
     background: #007bff;
     color: white;
+    min-width: 100px;
 }
 
 .btn-primary:hover {
@@ -1603,11 +1880,13 @@ textarea.form-control {
 .btn-secondary {
     background: #6c757d;
     color: white;
+    min-width: 100px;
 }
 
 .btn-success {
     background: #28a745;
     color: white;
+    min-width: 100px;
 }
 
 .btn-success:hover {
@@ -1682,6 +1961,10 @@ textarea.form-control {
     color: #666;
 }
 
+/* ===== DEPRECATED: Modal styles moved to modal-unified.css ===== */
+/* The following styles are kept for backward compatibility only */
+/* Use modal-unified.css for all new modal implementations */
+
 .modal {
     display: none;
     position: fixed;
@@ -1695,7 +1978,8 @@ textarea.form-control {
     z-index: 1000;
 }
 
-.modal-content {
+/* Legacy modal-content styles - use modal-unified.css instead */
+/* .modal-content {
     background: white;
     border-radius: 8px;
     max-width: 600px;
@@ -1730,7 +2014,7 @@ textarea.form-control {
 
 .modal-body {
     padding: 20px;
-}
+} */
 
 .form-group {
     margin-bottom: 15px;
@@ -1783,21 +2067,82 @@ textarea.form-control {
 
 .output-tabs {
     display: flex;
-    gap: 5px;
-    margin-bottom: 10px;
+    gap: 8px;
+    padding: 12px 16px;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
 }
 
-.tab-btn {
+.output-tabs .tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     padding: 8px 16px;
+    background: #f3f4f6;
     border: none;
-    background: #f5f5f5;
+    border-radius: 20px;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
-    border-radius: 4px 4px 0 0;
+    transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
-.tab-btn.active {
-    background: #007bff;
-    color: white;
+.output-tabs .tab-btn:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.output-tabs .tab-btn.active {
+    background: #3b82f6;
+    color: #ffffff;
+}
+
+.output-tabs .tab-btn.active:hover {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+/* form-tabs 使用相同的样式 */
+.form-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 16px;
+}
+
+.form-tabs .tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 20px;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.form-tabs .tab-btn:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.form-tabs .tab-btn.active {
+    background: #3b82f6;
+    color: #ffffff;
+}
+
+.form-tabs .tab-btn.active:hover {
+    background: #2563eb;
+    color: #ffffff;
 }
 
 .output-content {
@@ -1971,7 +2316,7 @@ textarea.form-control {
 }
 
 .reasons-list li::before {
-    content: "✓ ";
+    content: "check ";
     color: #10b981;
     font-weight: bold;
     margin-right: 8px;
@@ -2342,7 +2687,7 @@ textarea.form-control {
 }
 
 .config-section-title {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 600;
     color: #212529;
     margin-bottom: 12px;
@@ -2468,8 +2813,11 @@ textarea.form-control {
     color: #212529;
 }
 
-/* Modal enhancements for Config View */
-.modal {
+/* ===== DEPRECATED: Modal styles moved to modal-unified.css ===== */
+/* All modal styles are now centralized in modal-unified.css */
+/* This section is commented out to prevent conflicts */
+
+/* .modal {
     display: none;
     position: fixed;
     top: 0;
@@ -2546,7 +2894,7 @@ textarea.form-control {
     padding: 24px;
     overflow-y: auto;
     flex: 1;
-}
+} */
 
 /* ==================== Knowledge Module Styles ==================== */
 
@@ -2555,9 +2903,43 @@ textarea.form-control {
     padding: 20px;
 }
 
+/* Task #18: Query Playground - 标题样式 */
+.knowledge-playground-view .view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.knowledge-playground-view .view-header h1 {
+    font-size: 18px;  /* Task #50: 统一标准 h1 大小，比副标题的 14px 大，比例 1.29x */
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 4px 0;
+}
+
+.knowledge-playground-view .view-header p {
+    margin: 0;
+    font-size: 0.875rem;  /* 14px - text-sm */
+    color: #6b7280;
+}
+
 /* Knowledge Sources View (Phase 2) */
 .knowledge-sources-view {
     padding: 20px;
+}
+
+.knowledge-sources-view .view-header h1 {
+    font-size: 18px;  /* Task #50: 统一标准 h1 大小，比副标题的 14px 大，比例 1.29x */
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 4px 0;
+}
+
+.knowledge-sources-view .view-header p {
+    margin: 0;
+    font-size: 0.875rem;  /* 14px - text-sm */
+    color: #6b7280;
 }
 
 .search-section {
@@ -3158,9 +3540,9 @@ textarea.form-control {
     gap: 4px;
     padding: 4px 10px;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 500;
     border-radius: 12px;
-    text-transform: uppercase;
+    border: 1px solid transparent;
 }
 
 .status-info {
@@ -4225,20 +4607,27 @@ textarea.form-control {
 .history-close-btn {
     width: 32px;
     height: 32px;
+    padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     border: none;
     border-radius: 6px;
-    background: transparent;
+    background: none;
+    font-size: 24px;
     color: #6b7280;
     cursor: pointer;
     transition: all 0.15s ease;
+    flex-shrink: 0;
 }
 
 .history-close-btn:hover {
     background: #f3f4f6;
     color: #1f2937;
+}
+
+.history-close-btn:active {
+    background: #e5e7eb;
 }
 
 .history-actions {
@@ -4759,32 +5148,60 @@ button.disabled {
 .task-detail-tabs {
     display: flex;
     gap: 8px;
-    border-bottom: 2px solid #e5e7eb;
-    margin-bottom: 20px;
-    padding: 0 16px;
+    padding: 16px 24px;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.task-detail-tabs::-webkit-scrollbar {
+    height: 4px;
+}
+
+.task-detail-tabs::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.task-detail-tabs::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+}
+
+.task-detail-tabs::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 .task-detail-tabs .tab-btn {
-    padding: 12px 20px;
-    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #f3f4f6;
     border: none;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
+    border-radius: 20px;
+    color: #6b7280;
     font-size: 14px;
     font-weight: 500;
-    color: #6b7280;
-    transition: all 0.2s;
-    margin-bottom: -2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .task-detail-tabs .tab-btn:hover {
-    color: #111827;
-    border-bottom-color: #d1d5db;
+    background: #e5e7eb;
+    color: #374151;
 }
 
 .task-detail-tabs .tab-btn.active {
-    color: #3b82f6;
-    border-bottom-color: #3b82f6;
+    background: #3b82f6;
+    color: #ffffff;
+}
+
+.task-detail-tabs .tab-btn.active:hover {
+    background: #2563eb;
+    color: #ffffff;
 }
 
 /* Tab Content */
@@ -5446,8 +5863,6 @@ button.disabled {
 
 /* Table Section Styling */
 .table-section {
-    background: white;
-    border: 1px solid #dee2e6;
     border-radius: 6px;
     overflow: hidden;
 }
@@ -6524,8 +6939,8 @@ button.disabled {
 .error-modal-close {
     background: none;
     border: none;
-    font-size: 1.5rem;
-    color: #6c757d;
+    font-size: 24px;
+    color: #6b7280;
     cursor: pointer;
     padding: 0;
     width: 32px;
@@ -6533,13 +6948,18 @@ button.disabled {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
-    transition: background 0.2s, color 0.2s;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
 }
 
 .error-modal-close:hover {
-    background: #f8f9fa;
-    color: #212529;
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+.error-modal-close:active {
+    background: #e5e7eb;
 }
 
 .error-modal-body {
@@ -7277,4 +7697,21 @@ button:active:not(:disabled),
     background: #f8d7da;
     border-radius: 4px;
     border: 1px solid #f5c6cb;
+}
+
+/* Utility classes (Tailwind-like) */
+/* Text size utilities */
+.text-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+
+/* Text color utilities */
+.text-gray-600 {
+    color: #6c757d;
+}
+
+/* Margin utilities */
+.mt-1 {
+    margin-top: 0.25rem;
 }

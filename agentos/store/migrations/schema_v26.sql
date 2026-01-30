@@ -173,7 +173,7 @@ END;
 
 -- 使用统计:
 -- - use_count: 初始值为 0，每次从模板创建任务时递增
--- - 可用于显示最常用的模板
+-- - Available于显示最常用的模板
 
 -- Update schema version
 INSERT OR REPLACE INTO schema_version (version) VALUES ('0.26.0');

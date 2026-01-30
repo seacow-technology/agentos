@@ -31,7 +31,7 @@ class MergeNode {
         div.style.display = 'none'; // Hidden by default
 
         div.innerHTML = `
-            <div class="merge-icon">⚡</div>
+            <div class="merge-icon">bolt</div>
             <div class="merge-label">Work Items Merged</div>
             <div class="merge-stats">${this.completedItems}/${this.totalItems}</div>
         `;

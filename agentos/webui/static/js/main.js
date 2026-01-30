@@ -279,6 +279,19 @@ function loadView(viewName) {
         case 'mode-monitor':
             renderModeMonitorView(container);
             break;
+        case 'extensions':
+            renderExtensionsView(container);
+            break;
+        case 'models':
+            renderModelsView(container);
+            break;
+        case 'brain-dashboard':
+        case 'brain':
+            renderBrainDashboardView(container);
+            break;
+        case 'brain-query':
+            renderBrainQueryConsoleView(container);
+            break;
         default:
             container.innerHTML = '<div class="p-6 text-gray-500">View not implemented</div>';
     }
@@ -492,6 +505,9 @@ function renderChatView(container) {
 // Initialize chat view - load sessions first, then select one
 async function initializeChatView() {
     try {
+        // Run lightweight chat health check first
+        await initChatHealthCheck();
+
         // Load all sessions
         const response = await fetch('/api/sessions');
         const sessions = await response.json();
@@ -1656,7 +1672,7 @@ function openTaskDraftDialog(draft) {
                             }">${escapeHtml(draft.risk_level)}</span>
                         </div>
 
-                        ${draft.requires_admin_token ? '<div class="text-sm text-amber-600"><span class="material-icons" style="font-size: 16px; vertical-align: middle;">warning</span> Requires admin token to execute</div>' : ''}
+                        ${draft.requires_admin_token ? '<div class="text-sm text-amber-600"><span class="material-icons md-18">warning</span> Requires admin token to execute</div>' : ''}
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Draft JSON</label>
@@ -2723,7 +2739,8 @@ function handleWebSocketMessage(message) {
 
     if (message.type === 'message.start') {
         // Create new assistant message element (empty, will be filled by deltas)
-        const assistantMsg = createMessageElement('assistant', '');
+        // Pass metadata for extension detection (Task #11)
+        const assistantMsg = createMessageElement('assistant', '', message.metadata || {});
         assistantMsg.dataset.messageId = message.message_id;
         messagesDiv.appendChild(assistantMsg);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -2762,11 +2779,23 @@ function handleWebSocketMessage(message) {
 
     } else if (message.type === 'message.error') {
         // Show error message
-        const errorMsg = createMessageElement('assistant', message.content);
+        const errorMsg = createMessageElement('assistant', message.content, message.metadata || {});
         errorMsg.classList.add('error');
         messagesDiv.appendChild(errorMsg);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
         console.error('Message error:', message.content);
+
+    } else if (message.type === 'completion_info') {
+        // P1-8: Handle completion truncation info
+        console.log('Completion info:', message.info);
+        if (message.info && message.info.truncated) {
+            displayCompletionHint(messagesDiv);
+        }
+
+    } else if (message.type === 'budget_update') {
+        // NEW: Handle budget update
+        console.log('Budget update:', message.data);
+        updateBudgetIndicator(message.data);
 
     } else if (message.type === 'event') {
         // Handle events
@@ -2796,11 +2825,49 @@ function handleWebSocketMessage(message) {
 }
 
 // Send message
-function sendMessage() {
+async function sendMessage() {
     const input = document.getElementById('chat-input');
     const content = input.value.trim();
 
     if (!content) return;
+
+    // Quick health check before sending (lightweight, non-blocking)
+    // This provides early feedback if chat is not available
+    const health = await checkChatHealth();
+    if (!health.is_healthy) {
+        console.warn('Chat health check failed before sending message:', health);
+
+        // Show toast notification
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #dc3545;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 9999;
+            font-size: 14px;
+            max-width: 400px;
+        `;
+        toast.innerHTML = `
+            <strong>Cannot send message</strong><br>
+            ${health.issues.join(', ')}
+        `;
+        document.body.appendChild(toast);
+
+        // Auto-remove toast after 3 seconds
+        setTimeout(() => toast.remove(), 3000);
+
+        // Show warning banner if not already visible
+        if (!document.getElementById('chat-health-warning')) {
+            showChatHealthWarning(health.issues || [], health.hints || []);
+        }
+
+        return; // Prevent sending
+    }
 
     // Get current provider and model selection
     const providerEl = document.getElementById('model-provider');
@@ -2846,17 +2913,147 @@ function sendMessage() {
 }
 
 // Create message element
-function createMessageElement(role, content) {
+function createMessageElement(role, content, metadata = {}) {
     const div = document.createElement('div');
-    div.className = `message ${role}`;
 
-    div.innerHTML = `
-        <div class="role">${role}</div>
-        <div class="content">${escapeHtml(content)}</div>
-        <div class="timestamp">${new Date().toLocaleTimeString()}</div>
-    `;
+    // Check if this is an extension output (Task #11)
+    const isExtension = metadata && metadata.is_extension_output === true;
+
+    if (isExtension) {
+        div.className = 'message extension';
+
+        const extensionName = metadata.extension_name || metadata.extension_id || 'Extension';
+        const action = metadata.action || metadata.action_id || 'default';
+        const extensionId = metadata.extension_id || '';
+        const status = metadata.status || 'unknown';
+        const command = metadata.command || metadata.extension_command || '';
+
+        div.innerHTML = `
+            <div class="extension-header">
+                <div class="extension-icon">extension</div>
+                <div class="extension-info">
+                    <div class="extension-name">${escapeHtml(extensionName)}</div>
+                    <div class="extension-action">Action: ${escapeHtml(action)}</div>
+                </div>
+            </div>
+            <div class="content">${escapeHtml(content)}</div>
+            <div class="extension-meta">
+                <div class="extension-meta-toggle" onclick="toggleExtensionMeta(this)">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                    <span>Extension Details</span>
+                </div>
+                <div class="extension-meta-content" style="display: none;">
+                    <div class="extension-meta-row">
+                        <span class="extension-meta-label">Extension ID:</span>
+                        <span class="extension-meta-value">${escapeHtml(extensionId)}</span>
+                    </div>
+                    <div class="extension-meta-row">
+                        <span class="extension-meta-label">Action:</span>
+                        <span class="extension-meta-value">${escapeHtml(action)}</span>
+                    </div>
+                    ${command ? `
+                    <div class="extension-meta-row">
+                        <span class="extension-meta-label">Command:</span>
+                        <span class="extension-meta-value">${escapeHtml(command)}</span>
+                    </div>
+                    ` : ''}
+                    <div class="extension-meta-row">
+                        <span class="extension-meta-label">Status:</span>
+                        <span class="extension-meta-value">${escapeHtml(status)}</span>
+                    </div>
+                    <div class="extension-meta-row">
+                        <span class="extension-meta-label">Executed:</span>
+                        <span class="extension-meta-value">${new Date().toLocaleString()}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        div.className = `message ${role}`;
+
+        div.innerHTML = `
+            <div class="role">${role}</div>
+            <div class="content">${escapeHtml(content)}</div>
+            <div class="timestamp">${new Date().toLocaleTimeString()}</div>
+        `;
+    }
 
     return div;
+}
+
+// Toggle extension metadata visibility (Task #11)
+function toggleExtensionMeta(toggleElement) {
+    const content = toggleElement.nextElementSibling;
+    const isExpanded = content.style.display !== 'none';
+
+    if (isExpanded) {
+        content.style.display = 'none';
+        toggleElement.classList.remove('expanded');
+    } else {
+        content.style.display = 'block';
+        toggleElement.classList.add('expanded');
+    }
+}
+
+// Display completion truncation hint (P1-8)
+function displayCompletionHint(messagesDiv) {
+    // Check if hint already exists for the last message
+    const lastMessage = messagesDiv.lastElementChild;
+    if (!lastMessage || !lastMessage.classList.contains('assistant')) {
+        return;
+    }
+
+    // Don't add duplicate hints
+    const existingHint = lastMessage.nextElementSibling;
+    if (existingHint && existingHint.classList.contains('completion-hint')) {
+        return;
+    }
+
+    // Create hint element
+    const hintEl = document.createElement('div');
+    hintEl.className = 'completion-hint';
+    hintEl.innerHTML = `
+        <span class="hint-icon">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </span>
+        <span class="hint-message">Response truncated due to completion token limit</span>
+        <span class="hint-action" onclick="openSettingsForTokenLimit()">Token limits are configurable in Settings.</span>
+    `;
+
+    // Insert after the last message
+    lastMessage.after(hintEl);
+}
+
+// Open settings to adjust token limit (P1-8)
+function openSettingsForTokenLimit() {
+    // Navigate to settings view (if available)
+    // For now, just show a toast with instructions
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #3b82f6;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        z-index: 9999;
+        font-size: 14px;
+        max-width: 400px;
+    `;
+    toast.innerHTML = `
+        <strong>Token Limit Configuration</strong><br>
+        Token limits can be adjusted in your provider settings or model configuration.
+    `;
+    document.body.appendChild(toast);
+
+    // Auto-remove toast after 3 seconds
+    setTimeout(() => toast.remove(), 3000);
 }
 
 // Create session if it doesn't exist
@@ -2921,7 +3118,8 @@ async function loadMessages() {
         }
 
         messages.forEach(msg => {
-            const msgEl = createMessageElement(msg.role, msg.content);
+            // Pass metadata to createMessageElement for extension detection (Task #11)
+            const msgEl = createMessageElement(msg.role, msg.content, msg.metadata || {});
 
             // Set message ID for source tracking
             if (msg.id) {
@@ -2931,7 +3129,9 @@ async function loadMessages() {
             messagesDiv.appendChild(msgEl);
 
             // Apply code block parsing and syntax highlighting to assistant messages
-            if (msg.role === 'assistant' && window.CodeBlockUtils) {
+            // Skip if it's an extension message (already formatted)
+            const isExtension = msg.metadata && msg.metadata.is_extension_output === true;
+            if (msg.role === 'assistant' && !isExtension && window.CodeBlockUtils) {
                 const contentDiv = msgEl.querySelector('.content');
                 if (contentDiv) {
                     contentDiv.innerHTML = window.CodeBlockUtils.renderAssistantMessage(msg.content);
@@ -4003,7 +4203,7 @@ async function refreshLocalDetect() {
                         </div>
                         ${inst.last_error ? `
                             <div class="mt-1 p-1.5 bg-red-50 rounded text-xs text-red-700">
-                                <span class="material-icons" style="font-size: 14px; vertical-align: middle;">warning</span> ${escapeHtml(inst.last_error)}
+                                <span class="material-icons md-18">warning</span> ${escapeHtml(inst.last_error)}
                             </div>
                         ` : ''}
                         <div class="mt-2 flex gap-2">
@@ -4131,7 +4331,7 @@ async function runSelfCheck() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 session_id: state.currentSession,
-                include_network: false,  // Don't actively test cloud by default
+                include_network: true,  // Actively probe all providers for accurate status
                 include_context: true,
             }),
         });
@@ -4160,11 +4360,11 @@ function openSelfCheckDrawer(result) {
     // Determine summary badge color
     let summaryBadge = '';
     if (result.summary === 'OK') {
-        summaryBadge = '<span class="badge success"><span class="material-icons" style="font-size: 14px; vertical-align: middle;">check</span> ALL PASS</span>';
+        summaryBadge = '<span class="badge success"><span class="material-icons md-18">check</span> ALL PASS</span>';
     } else if (result.summary === 'WARN') {
-        summaryBadge = '<span class="badge warning"><span class="material-icons" style="font-size: 14px; vertical-align: middle;">warning</span> WARNINGS</span>';
+        summaryBadge = '<span class="badge warning"><span class="material-icons md-18">warning</span> WARNINGS</span>';
     } else {
-        summaryBadge = '<span class="badge error"><span class="material-icons" style="font-size: 14px; vertical-align: middle;">cancel</span> FAILURES</span>';
+        summaryBadge = '<span class="badge error"><span class="material-icons md-18">cancel</span> FAILURES</span>';
     }
 
     const drawerHTML = `
@@ -4262,15 +4462,15 @@ function renderSelfCheckItems(items) {
         let pulseClass = '';  // Phase C3: Add pulse animation for FAIL
 
         if (item.status === 'PASS') {
-            icon = '<span class="material-icons" style="font-size: 16px;">check</span>';
+            icon = '<span class="material-icons md-18">check</span>';
             statusColor = 'text-green-700';
             bgColor = 'bg-green-50';
         } else if (item.status === 'WARN') {
-            icon = '<span class="material-icons" style="font-size: 16px;">warning</span>';
+            icon = '<span class="material-icons md-18">warning</span>';
             statusColor = 'text-yellow-700';
             bgColor = 'bg-yellow-50';
         } else {
-            icon = '<span class="material-icons" style="font-size: 16px;">cancel</span>';
+            icon = '<span class="material-icons md-18">cancel</span>';
             statusColor = 'text-red-700';
             bgColor = 'bg-red-50';
             pulseClass = 'animate-pulse';  // Phase C3: Red pulse for FAIL
@@ -4315,7 +4515,7 @@ function renderSelfCheckItems(items) {
                             </span>
                         </div>
                         <p class="text-xs text-gray-600 mt-1">${escapeHtml(item.detail)}</p>
-                        ${item.hint ? `<p class="text-xs text-blue-600 mt-1">💡 ${escapeHtml(item.hint)}</p>` : ''}
+                        ${item.hint ? `<p class="text-xs text-blue-600 mt-1">lightbulb ${escapeHtml(item.hint)}</p>` : ''}
                         ${actionsHTML}
                     </div>
                 </div>
@@ -4926,6 +5126,134 @@ async function updateHealth() {
     }
 }
 
+// ============================================================================
+// Chat Health Check - Lightweight health check for chat functionality
+// ============================================================================
+
+/**
+ * Lightweight Chat Health Check
+ * Uses the new /api/selfcheck/chat-health endpoint
+ * Only checks minimum requirements for Chat, not full system diagnostics
+ */
+async function checkChatHealth() {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
+
+        const response = await fetch('/api/selfcheck/chat-health', {
+            method: 'GET',
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            return {
+                is_healthy: false,
+                issues: ['Health check API failed'],
+                hints: ['Check system status']
+            };
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (err) {
+        console.error('Chat health check failed:', err);
+        return {
+            is_healthy: false,
+            issues: ['Health check failed'],
+            hints: ['Check network connection']
+        };
+    }
+}
+
+/**
+ * Display Chat Health Warning Banner
+ * Shows a friendly warning at the top of the chat messages area
+ */
+function showChatHealthWarning(issues, hints) {
+    const messagesDiv = document.getElementById('messages');
+    if (!messagesDiv) return;
+
+    // Remove any existing warning banner
+    const existingWarning = document.getElementById('chat-health-warning');
+    if (existingWarning) {
+        existingWarning.remove();
+    }
+
+    const warningBanner = document.createElement('div');
+    warningBanner.id = 'chat-health-warning';
+    warningBanner.className = 'chat-health-warning';
+    warningBanner.innerHTML = `
+        <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 12px; margin: 0 0 16px 0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <svg style="width: 20px; height: 20px; color: #ff9800;" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                <strong style="color: #856404; font-size: 14px;">Chat Not Available</strong>
+            </div>
+            <div style="margin: 8px 0; font-size: 13px; color: #856404;">
+                ${issues.map(issue => `• ${issue}`).join('<br>')}
+            </div>
+            ${hints.length > 0 ? `
+                <div style="margin: 8px 0 12px 0; font-size: 13px; color: #856404; background: rgba(255, 193, 7, 0.1); padding: 8px; border-radius: 4px;">
+                    <strong>lightbulb Suggestions:</strong><br>
+                    ${hints.map(hint => `• ${hint}`).join('<br>')}
+                </div>
+            ` : ''}
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+                <button
+                    onclick="navigateToView('providers')"
+                    style="padding: 6px 12px; font-size: 13px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;"
+                    onmouseover="this.style.background='#0056b3'"
+                    onmouseout="this.style.background='#007bff'"
+                >
+                    Configure Providers
+                </button>
+                <button
+                    onclick="runSelfCheck()"
+                    style="padding: 6px 12px; font-size: 13px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;"
+                    onmouseover="this.style.background='#5a6268'"
+                    onmouseout="this.style.background='#6c757d'"
+                >
+                    Run Full Diagnostics
+                </button>
+                <button
+                    onclick="document.getElementById('chat-health-warning').remove()"
+                    style="padding: 6px 12px; font-size: 13px; background: transparent; color: #856404; border: 1px solid #ffc107; border-radius: 4px; cursor: pointer; font-weight: 500;"
+                    onmouseover="this.style.background='rgba(255, 193, 7, 0.1)'"
+                    onmouseout="this.style.background='transparent'"
+                >
+                    Dismiss
+                </button>
+            </div>
+        </div>
+    `;
+
+    // Insert at the top of messages area
+    messagesDiv.insertBefore(warningBanner, messagesDiv.firstChild);
+}
+
+/**
+ * Initialize Chat Health Check
+ * Called when Chat view is loaded to check system readiness
+ */
+async function initChatHealthCheck() {
+    const health = await checkChatHealth();
+
+    if (!health.is_healthy) {
+        console.warn('Chat health check failed:', health);
+        showChatHealthWarning(health.issues || [], health.hints || []);
+    } else {
+        console.log('Chat health check passed');
+        // Remove any existing warning banner if health is restored
+        const existingWarning = document.getElementById('chat-health-warning');
+        if (existingWarning) {
+            existingWarning.remove();
+        }
+    }
+}
+
 // Utility function
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -4977,7 +5305,7 @@ async function saveAndTestCloudProvider(providerId) {
                 // Clear sensitive input
                 apiKeyInput.value = '';
 
-                resultDiv.innerHTML = '<div class="p-2 bg-green-50 rounded text-green-700"><span class="material-icons" style="font-size: 16px; vertical-align: middle;">check</span> Configuration saved and tested successfully!</div>';
+                resultDiv.innerHTML = '<div class="p-2 bg-green-50 rounded text-green-700"><span class="material-icons md-18">check</span> Configuration saved and tested successfully!</div>';
 
                 // Refresh toolbar status
                 refreshProviderStatus();
@@ -4988,11 +5316,11 @@ async function saveAndTestCloudProvider(providerId) {
                 }, 3000);
             }, 500);
         } else {
-            resultDiv.innerHTML = `<div class="p-2 bg-red-50 rounded text-red-700"><span class="material-icons" style="font-size: 16px; vertical-align: middle;">cancel</span> ${data.message || 'Failed to save'}</div>`;
+            resultDiv.innerHTML = `<div class="p-2 bg-red-50 rounded text-red-700"><span class="material-icons md-18">cancel</span> ${data.message || 'Failed to save'}</div>`;
         }
     } catch (err) {
         console.error('Failed to save cloud config:', err);
-        resultDiv.innerHTML = `<div class="p-2 bg-red-50 rounded text-red-700"><span class="material-icons" style="font-size: 16px; vertical-align: middle;">cancel</span> Error: ${err.message}</div>`;
+        resultDiv.innerHTML = `<div class="p-2 bg-red-50 rounded text-red-700"><span class="material-icons md-18">cancel</span> Error: ${err.message}</div>`;
     }
 }
 
@@ -5031,7 +5359,7 @@ function updateCloudProviderStatusUI(providerId, status) {
             tooltip += `\n[${status.reason_code}]`;
         }
         if (status.hint) {
-            tooltip += `\n\n💡 ${status.hint}`;
+            tooltip += `\n\nlightbulb ${status.hint}`;
         }
     }
 
@@ -5123,7 +5451,7 @@ async function clearCloudProvider(providerId) {
             document.getElementById(`${providerId}-api-key`).value = '';
             document.getElementById(`${providerId}-base-url`).value = '';
 
-            resultDiv.innerHTML = '<div class="p-2 bg-green-50 rounded text-green-700"><span class="material-icons" style="font-size: 16px; vertical-align: middle;">check</span> Configuration cleared</div>';
+            resultDiv.innerHTML = '<div class="p-2 bg-green-50 rounded text-green-700"><span class="material-icons md-18">check</span> Configuration cleared</div>';
 
             // Refresh status
             setTimeout(async () => {
@@ -5139,7 +5467,7 @@ async function clearCloudProvider(providerId) {
         }
     } catch (err) {
         console.error('Failed to clear cloud config:', err);
-        resultDiv.innerHTML = `<div class="p-2 bg-red-50 rounded text-red-700"><span class="material-icons" style="font-size: 16px; vertical-align: middle;">cancel</span> Error: ${err.message}</div>`;
+        resultDiv.innerHTML = `<div class="p-2 bg-red-50 rounded text-red-700"><span class="material-icons md-18">cancel</span> Error: ${err.message}</div>`;
     }
 }
 
@@ -5205,20 +5533,20 @@ function updateContextStatusSummary(data) {
     if (!summaryDiv) return;
 
     let stateColor = 'gray';
-    let stateIcon = '<span class="material-icons" style="font-size: 16px;">fiber_manual_record</span>';
+    let stateIcon = '<span class="material-icons md-18">fiber_manual_record</span>';
 
     if (data.state === 'ATTACHED') {
         stateColor = 'green';
-        stateIcon = '<span class="material-icons" style="font-size: 16px;">check</span>';
+        stateIcon = '<span class="material-icons md-18">check</span>';
     } else if (data.state === 'BUILDING') {
         stateColor = 'blue';
-        stateIcon = '<span class="material-icons" style="font-size: 16px;">refresh</span>';
+        stateIcon = '<span class="material-icons md-18">refresh</span>';
     } else if (data.state === 'STALE') {
         stateColor = 'yellow';
-        stateIcon = '<span class="material-icons" style="font-size: 16px;">warning</span>';
+        stateIcon = '<span class="material-icons md-18">warning</span>';
     } else if (data.state === 'ERROR') {
         stateColor = 'red';
-        stateIcon = '<span class="material-icons" style="font-size: 16px;">cancel</span>';
+        stateIcon = '<span class="material-icons md-18">cancel</span>';
     }
 
     summaryDiv.innerHTML = `
@@ -5669,4 +5997,262 @@ async function renderModeMonitorView(container) {
             </div>
         `;
     }
+}
+
+// Render Extensions View (PR-C: WebUI Extensions Management)
+async function renderExtensionsView(container) {
+    try {
+        console.log('Rendering Extensions View...');
+
+        // Check if ExtensionsView class is available
+        if (typeof window.ExtensionsView === 'undefined') {
+            console.error('ExtensionsView class not found');
+            container.innerHTML = `
+                <div class="p-6 text-center">
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                        <h2 class="text-xl font-bold text-yellow-900 mb-2">Extensions View Not Available</h2>
+                        <p class="text-yellow-700">The Extensions View component is not loaded. Please refresh the page.</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        // Cleanup previous view instance
+        if (state.currentViewInstance && typeof state.currentViewInstance.destroy === 'function') {
+            state.currentViewInstance.destroy();
+        }
+
+        // Create and render the view
+        const view = new window.ExtensionsView();
+        state.currentViewInstance = view;
+
+        await view.render(container);
+
+        console.log('Extensions View rendered successfully');
+    } catch (error) {
+        console.error('Failed to render Extensions View:', error);
+        container.innerHTML = `
+            <div class="p-6 text-center">
+                <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+                    <h2 class="text-xl font-bold text-red-900 mb-2">Rendering Error</h2>
+                    <p class="text-red-700 mb-2">Failed to load Extensions view.</p>
+                    <p class="text-sm text-red-600">Error: ${error.message}</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Render Models View (Model Download and Management)
+async function renderModelsView(container) {
+    try {
+        console.log('Rendering Models View...');
+
+        // Check if ModelsView class is available
+        if (typeof window.ModelsView === 'undefined') {
+            console.error('ModelsView class not found');
+            container.innerHTML = `
+                <div class="p-6 text-center">
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                        <h2 class="text-xl font-bold text-yellow-900 mb-2">Models View Not Available</h2>
+                        <p class="text-yellow-700">The Models View component is not loaded. Please refresh the page.</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        // Cleanup previous view instance
+        if (state.currentViewInstance && typeof state.currentViewInstance.destroy === 'function') {
+            state.currentViewInstance.destroy();
+        }
+
+        // Create and render the view
+        const view = new window.ModelsView();
+        state.currentViewInstance = view;
+
+        await view.render(container);
+
+        console.log('Models View rendered successfully');
+    } catch (error) {
+        console.error('Failed to render Models View:', error);
+        container.innerHTML = `
+            <div class="p-6 text-center">
+                <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+                    <h2 class="text-xl font-bold text-red-900 mb-2">Rendering Error</h2>
+                    <p class="text-red-700 mb-2">Failed to load Models view.</p>
+                    <p class="text-sm text-red-600">Error: ${error.message}</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
+
+// ============================================================================
+// Budget Indicator Functions (Task 5: Runtime Visualization)
+// ============================================================================
+
+/**
+ * Update budget indicator in chat header
+ * @param {Object} budgetData - Budget data from WebSocket
+ */
+function updateBudgetIndicator(budgetData) {
+    // Check if we have a budget indicator element (may not be on chat view)
+    let indicator = document.getElementById('budget-indicator');
+
+    if (!indicator) {
+        // Create budget indicator if it doesn't exist
+        const toolbar = document.getElementById('chat-toolbar');
+        if (!toolbar) {
+            console.log('Budget indicator: Not on chat view, skipping');
+            return;
+        }
+
+        // Insert budget indicator into toolbar
+        const row1 = toolbar.querySelector('.flex.items-center.justify-between.gap-4');
+        if (!row1) return;
+
+        const budgetHtml = `
+            <div class="budget-indicator" id="budget-indicator" style="display: none;">
+                <span class="budget-usage" id="budget-usage">bar_chart --</span>
+                <span class="budget-status" id="budget-status"></span>
+            </div>
+        `;
+
+        // Insert after model controls
+        row1.insertAdjacentHTML('beforeend', budgetHtml);
+        indicator = document.getElementById('budget-indicator');
+
+        // Add click handler for details modal
+        indicator.addEventListener('click', () => {
+            const currentData = indicator._budgetData;
+            if (currentData) {
+                showBudgetDetails(currentData);
+            }
+        });
+    }
+
+    // Store data for modal
+    indicator._budgetData = budgetData;
+
+    const usageEl = document.getElementById('budget-usage');
+    const statusEl = document.getElementById('budget-status');
+
+    if (!usageEl || !statusEl) return;
+
+    const percent = (budgetData.usage_ratio * 100).toFixed(0);
+    const usedK = (budgetData.total_tokens / 1000).toFixed(1);
+    const totalK = (budgetData.budget_tokens / 1000).toFixed(1);
+
+    usageEl.textContent = `bar_chart Budget: ` + usedK + `k/` + totalK + `k (` + percent + `%)`;
+
+    // Status configuration
+    const statusConfig = {
+        safe: {
+            class: 'badge-safe',
+            icon: 'circle',
+            text: 'Safe'
+        },
+        warning: {
+            class: 'badge-warning',
+            icon: 'circle',
+            text: 'Warning',
+            hint: 'Context nearing limit. Consider /summary.'
+        },
+        critical: {
+            class: 'badge-critical',
+            icon: 'circle',
+            text: 'Critical',
+            hint: 'Context full! Oldest messages truncated.'
+        }
+    };
+
+    const status = statusConfig[budgetData.watermark] || statusConfig.safe;
+    statusEl.className = `budget-status ` + status.class;
+    statusEl.innerHTML = status.icon + ` ` + status.text + (status.hint ? `<br><small>` + status.hint + `</small>` : '');
+
+    indicator.style.display = 'flex';
+
+    console.log(`Budget indicator updated: ` + percent + `% used (` + budgetData.watermark + `)`);
+}
+
+/**
+ * Show detailed budget breakdown modal
+ * @param {Object} budgetData - Budget data
+ */
+function showBudgetDetails(budgetData) {
+    const breakdown = budgetData.breakdown;
+    const total = budgetData.budget_tokens;
+
+    const bars = [
+        renderBudgetBar('System Prompt', breakdown.system, total),
+        renderBudgetBar('Conversation', breakdown.window, total),
+        renderBudgetBar('RAG Context', breakdown.rag, total),
+        renderBudgetBar('Memory Facts', breakdown.memory, total)
+    ].join('');
+
+    const html = `<div class="budget-detail-modal"><h3>Token Budget Breakdown</h3><div class="budget-bars">` + bars + `</div><p class="budget-tip">lightbulb Tip: Use /context to see detailed breakdown</p></div>`;
+
+    // Use existing modal system if available, otherwise create simple modal
+    if (window.Dialog && window.Dialog.alert) {
+        window.Dialog.alert(html, { title: 'Token Budget Details', isHtml: true });
+    } else {
+        // Fallback: simple alert
+        const pct = (x, t) => ((x / t) * 100).toFixed(1);
+        const msg = 'Token Budget Details\n\n' +
+            'System: ' + breakdown.system.toLocaleString() + ' (' + pct(breakdown.system, total) + '%)\n' +
+            'Window: ' + breakdown.window.toLocaleString() + ' (' + pct(breakdown.window, total) + '%)\n' +
+            'RAG: ' + breakdown.rag.toLocaleString() + ' (' + pct(breakdown.rag, total) + '%)\n' +
+            'Memory: ' + breakdown.memory.toLocaleString() + ' (' + pct(breakdown.memory, total) + '%)';
+        alert(msg);
+    }
+}
+
+/**
+ * Render a single budget bar
+ * @param {string} label - Component label
+ * @param {number} tokens - Token count
+ * @param {number} total - Total budget
+ * @returns {string} HTML string
+ */
+function renderBudgetBar(label, tokens, total) {
+    const percent = ((tokens / total) * 100).toFixed(1);
+    const width = Math.min(percent, 100);
+
+    // Determine fill class based on percentage
+    let fillClass = '';
+    if (percent >= 80) {
+        fillClass = 'critical';
+    } else if (percent >= 60) {
+        fillClass = 'warning';
+    }
+
+    // Simple HTML escaping for label
+    const safeLabel = label.replace(/[&<>"']/g, (m) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[m]));
+
+    return `<div class="budget-bar-item"><label>` + safeLabel + `: ` + tokens.toLocaleString() + ` (` + percent + `%)</label><div class="progress-bar"><div class="progress-fill ` + fillClass + `" style="width: ` + width + `%"></div></div></div>`;
+}
+
+// ============================================================================
+// BrainOS Dashboard View
+// ============================================================================
+
+function renderBrainDashboardView(container) {
+    state.currentViewInstance = new BrainDashboardView(container);
+}
+
+// ============================================================================
+// BrainOS Query Console View
+// ============================================================================
+
+function renderBrainQueryConsoleView(container) {
+    state.currentViewInstance = new BrainQueryConsoleView(container);
 }

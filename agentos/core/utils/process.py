@@ -97,7 +97,7 @@ def is_process_running(pid: int) -> bool:
         pid: 进程 ID
 
     Returns:
-        True: 进程运行中
+        True: 进程Running
         False: 进程不存在
     """
     system = platform.system()
@@ -203,14 +203,14 @@ def _is_process_running_unix(pid: int) -> bool:
                 logger.debug(f"Process {pid} is zombie (not running)")
                 return False
         except (ImportError, psutil.NoSuchProcess, psutil.AccessDenied):
-            # 如果 psutil 不可用或无法访问进程信息,回退到基本检查
+            # 如果 psutil 不Available或无法访问进程信息,回退到基本检查
             pass
 
         return True
     except ProcessLookupError:
         return False
     except PermissionError:
-        # 进程存在但无权限,视为运行中
+        # 进程存在但无权限,视为Running
         return True
 
 

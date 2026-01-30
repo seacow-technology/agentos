@@ -30,14 +30,17 @@ class ExecutionPlansView {
             <div class="execution-plans-view">
                 <div class="view-header">
                     <div class="header-left">
-                        <h2>Execution Plans</h2>
+                        <div>
+                            <h1>Execution Plans</h1>
+                            <p class="text-sm text-gray-600 mt-1">View and analyze task execution plans</p>
+                        </div>
                         <div class="header-breadcrumb" id="plan-breadcrumb">
                             <!-- Breadcrumb will be rendered here -->
                         </div>
                     </div>
                     <div class="header-actions">
                         <button class="btn-secondary" id="plan-export" disabled>
-                            <span class="material-icons md-18">download</span> Export Plan
+                            <span class="material-icons md-18">arrow_downward</span> Export Plan
                         </button>
                         <button class="btn-secondary" id="plan-refresh">
                             <span class="material-icons md-18">refresh</span> Refresh Status
@@ -300,7 +303,7 @@ class ExecutionPlansView {
             <div class="plan-section steps-section">
                 <div class="section-header">
                     <h3>
-                        <span class="material-icons md-18">timeline</span>
+                        <span class="material-icons md-18">analytics</span>
                         Execution Steps (${steps.length})
                     </h3>
                     <div class="timeline-controls">
@@ -342,7 +345,7 @@ class ExecutionPlansView {
                                     ${this.formatDuration(step.estimated_duration_ms)}
                                 </span>
                             ` : ''}
-                            <span class="material-icons md-18 step-toggle-icon">expand_more</span>
+                            <span class="material-icons md-18">arrow_drop_down</span>
                         </div>
                     </div>
 

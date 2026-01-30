@@ -58,7 +58,7 @@ class RouteDecisionCard {
                             <ul class="route-reasons-list">
                                 ${reasons.map(reason => `
                                     <li class="route-reason-item">
-                                        <span class="material-icons reason-check" style="font-size: 16px;">check</span>
+                                        <span class="material-icons md-18">check</span>
                                         <span class="reason-text">${this.formatReason(reason)}</span>
                                     </li>
                                 `).join('')}
@@ -99,7 +99,7 @@ class RouteDecisionCard {
                                         <span class="fallback-number">${idx + 1}</span>
                                         <span class="fallback-name">${inst}</span>
                                     </div>
-                                `).join('<div class="fallback-arrow"><span class="material-icons" style="font-size: 20px;">arrow_forward</span></div>')}
+                                `).join('<div class="fallback-arrow"><span class="material-icons md-18">arrow_forward</span></div>')}
                             </div>
                         </div>
                     ` : ''}

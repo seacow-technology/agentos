@@ -135,7 +135,7 @@ ON encryption_keys(key_type);
 
 -- Validation Status 定义：
 -- unknown: 未验证（新建凭证）
--- valid: 验证通过（可用）
+-- valid: 验证通过（Available）
 -- invalid: 验证失败（凭证无效或权限不足）
 -- expired: 凭证已过期（需要更新）
 

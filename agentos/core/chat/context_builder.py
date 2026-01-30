@@ -34,7 +34,14 @@ class ContextBudget:
     rag_tokens: int = 2000
     memory_tokens: int = 1000
     summary_tokens: int = 0  # Reserved for summary messages
-    
+
+    # NEW: Generation parameters
+    generation_max_tokens: int = 2000  # Maximum tokens for model generation
+
+    # NEW: Metadata fields
+    auto_derived: bool = False  # Whether this budget was auto-derived from model window
+    model_context_window: Optional[int] = None  # Original model context window (if auto-derived)
+
     # Watermark thresholds (as ratio of budget)
     safe_threshold: float = 0.6      # 60%
     critical_threshold: float = 0.8  # 80%
@@ -82,7 +89,14 @@ class ContextUsage:
             "tokens_summary": self.tokens_summary,
             "tokens_policy": self.tokens_policy,
             "usage_ratio": self.usage_ratio,
-            "watermark": self.watermark.value
+            "watermark": self.watermark.value,
+            # NEW: Add breakdown for frontend
+            "breakdown": {
+                "system": self.tokens_system,
+                "window": self.tokens_window,
+                "rag": self.tokens_rag,
+                "memory": self.tokens_memory
+            }
         }
 
 
@@ -115,17 +129,19 @@ class ContextBuilder:
         memory_service: Optional[MemoryService] = None,
         kb_service: Optional[ProjectKBService] = None,
         budget: Optional[ContextBudget] = None,
+        budget_resolver: Optional['BudgetResolver'] = None,
         db_path: Optional[str] = None,
         enable_auto_summary: bool = True,
         enable_snapshots: bool = True
     ):
         """Initialize ContextBuilder
-        
+
         Args:
             chat_service: ChatService instance
             memory_service: MemoryService instance
             kb_service: ProjectKBService instance
-            budget: Context budget configuration
+            budget: Context budget configuration (if None, uses budget_resolver)
+            budget_resolver: BudgetResolver for auto-deriving budgets
             db_path: Database path (for snapshots)
             enable_auto_summary: Whether to auto-trigger summaries
             enable_snapshots: Whether to save context snapshots
@@ -133,11 +149,20 @@ class ContextBuilder:
         self.chat_service = chat_service or ChatService()
         self.memory_service = memory_service or MemoryService()
         self.kb_service = kb_service or ProjectKBService()
-        self.budget = budget or ContextBudget()
         self.db_path = db_path or self.chat_service.db_path
+
+        # Budget resolution: use provided budget or resolve via budget_resolver
+        if budget is not None:
+            self.budget = budget
+        else:
+            # Import here to avoid circular dependency
+            from agentos.core.chat.budget_resolver import BudgetResolver
+            resolver = budget_resolver or BudgetResolver(db_path=self.db_path)
+            self.budget = resolver.get_default_budget()
+
         self.enable_auto_summary = enable_auto_summary
         self.enable_snapshots = enable_snapshots
-        
+
         # Summary artifacts cache (artifact_id -> message range)
         self._summary_cache: Dict[str, tuple[int, int]] = {}
     
@@ -150,18 +175,25 @@ class ContextBuilder:
         reason: Literal["send", "dry_run", "audit"] = "send"
     ) -> ContextPack:
         """Build context for a chat message
-        
+
         Args:
             session_id: Chat session ID
             user_input: User's input message
             rag_enabled: Whether to include RAG context
             memory_enabled: Whether to include Memory facts
             reason: Reason for building context (send/dry_run/audit)
-        
+
         Returns:
             ContextPack with assembled context
         """
         logger.info(f"Building context for session {session_id} (reason: {reason})")
+
+        # NEW: Log budget source
+        logger.info(
+            f"Budget: {self.budget.max_tokens} tokens "
+            f"(source: {'auto-derived' if self.budget.auto_derived else 'configured'}, "
+            f"model_window: {self.budget.model_context_window})"
+        )
         
         # 1. Load session window (recent messages)
         window_messages = self._load_session_window(session_id)
@@ -344,10 +376,10 @@ class ContextBuilder:
     
     def _apply_budget(self, context_parts: Dict[str, Any]) -> Dict[str, Any]:
         """Apply token budget and trim context if needed
-        
+
         Args:
             context_parts: Dictionary of context parts
-        
+
         Returns:
             Trimmed context parts
         """
@@ -356,30 +388,47 @@ class ContextBuilder:
         memory_tokens = sum(self._estimate_text_tokens(json.dumps(m)) for m in context_parts["memory"])
         rag_tokens = sum(self._estimate_text_tokens(c.get("content", "")) for c in context_parts["rag"])
         summary_tokens = sum(self._estimate_text_tokens(s.get("content", "")) for s in context_parts.get("summaries", []))
-        
+
         total = window_tokens + memory_tokens + rag_tokens + summary_tokens
-        
+
         logger.debug(f"Token usage: window={window_tokens}, memory={memory_tokens}, rag={rag_tokens}, summary={summary_tokens}, total={total}")
-        
+
         # If under budget, return as-is
         if total <= (self.budget.max_tokens - self.budget.system_tokens):
             return context_parts
-        
+
         # Otherwise, trim (priority: summaries > window > memory > rag)
         logger.warning(f"Context over budget ({total} tokens), trimming")
-        
+
+        # Store original counts for audit
+        original_window = len(context_parts["window"])
+        original_rag = len(context_parts["rag"])
+        original_memory = len(context_parts["memory"])
+
         # Trim RAG first
         if rag_tokens > self.budget.rag_tokens:
             context_parts["rag"] = self._trim_rag(context_parts["rag"], self.budget.rag_tokens)
-        
+
         # Trim memory if still over
         if memory_tokens > self.budget.memory_tokens:
             context_parts["memory"] = self._trim_memory(context_parts["memory"], self.budget.memory_tokens)
-        
+
         # Trim window if still over (keep most recent)
         if window_tokens > self.budget.window_tokens:
             context_parts["window"] = self._trim_window(context_parts["window"], self.budget.window_tokens)
-        
+
+        # NEW: Log trimming operations
+        trimmed_window = original_window - len(context_parts["window"])
+        trimmed_rag = original_rag - len(context_parts["rag"])
+        trimmed_memory = original_memory - len(context_parts["memory"])
+
+        if trimmed_window > 0:
+            logger.warning(f"Trimmed {trimmed_window} messages from window (budget: {self.budget.window_tokens})")
+        if trimmed_rag > 0:
+            logger.warning(f"Trimmed {trimmed_rag} RAG chunks (budget: {self.budget.rag_tokens})")
+        if trimmed_memory > 0:
+            logger.warning(f"Trimmed {trimmed_memory} memory facts (budget: {self.budget.memory_tokens})")
+
         return context_parts
     
     def _trim_rag(self, chunks: List[Dict[str, Any]], max_tokens: int) -> List[Dict[str, Any]]:
@@ -568,7 +617,7 @@ class ContextBuilder:
         usage: ContextUsage
     ) -> Dict[str, Any]:
         """Generate audit trail
-        
+
         Args:
             session_id: Session ID
             messages: Assembled messages
@@ -576,15 +625,15 @@ class ContextBuilder:
             memory_facts: Memory facts used
             summary_artifacts: Summary artifacts used
             usage: Usage statistics
-        
+
         Returns:
             Audit dictionary
         """
         # Compute context hash
         context_str = json.dumps(messages, sort_keys=True)
         context_hash = hashlib.sha256(context_str.encode()).hexdigest()[:16]
-        
-        return {
+
+        audit = {
             "session_id": session_id,
             "context_hash": context_hash,
             "rag_chunk_ids": [c.get("chunk_id") for c in rag_chunks],
@@ -592,8 +641,11 @@ class ContextBuilder:
             "summary_artifact_ids": [s.get("artifact_id") for s in summary_artifacts],
             "final_tokens": usage.total_tokens_est,
             "message_count": len(messages),
-            "usage": usage.to_dict()
+            "usage": usage.to_dict(),
+            "trimming_log": []  # NEW: Initialize trimming log
         }
+
+        return audit
     
     def _estimate_text_tokens(self, text: str) -> int:
         """Estimate token count for text"""

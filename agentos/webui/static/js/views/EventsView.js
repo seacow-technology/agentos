@@ -23,7 +23,10 @@ class EventsView {
         this.container.innerHTML = `
             <div class="events-view">
                 <div class="view-header">
-                    <h2>Event Stream</h2>
+                    <div>
+                        <h1>Event Stream</h1>
+                        <p class="text-sm text-gray-600 mt-1">Live event stream and activity feed</p>
+                    </div>
                     <div class="header-actions">
                         <div class="stream-toggle">
                             <label class="switch">
@@ -55,7 +58,7 @@ class EventsView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Event Details</h3>
-                            <button class="btn-close" id="events-drawer-close">✕</button>
+                            <button class="btn-close" id="events-drawer-close">close</button>
                         </div>
                         <div class="drawer-body" id="events-drawer-body">
                             <!-- Event details will be rendered here -->
@@ -508,7 +511,7 @@ class EventsView {
             'task.completed': { label: 'Task Completed', class: 'event-type-success', icon: '<span class="material-icons md-18">done</span>' },
             'task.failed': { label: 'Task Failed', class: 'event-type-error', icon: '<span class="material-icons md-18">cancel</span>' },
             'session.created': { label: 'Session Created', class: 'event-type-info', icon: '<span class="material-icons md-18">fiber_new</span>' },
-            'session.ended': { label: 'Session Ended', class: 'event-type-warning', icon: '<span class="material-icons md-18">event_busy</span>' },
+            'session.ended': { label: 'Session Ended', class: 'event-type-warning', icon: '<span class="material-icons md-18">block</span>' },
             'message.sent': { label: 'Message Sent', class: 'event-type-default', icon: '<span class="material-icons md-18">send</span>' },
             'message.received': { label: 'Message Received', class: 'event-type-default', icon: '<span class="material-icons md-18">inbox</span>' },
             'error': { label: 'Error', class: 'event-type-error', icon: '<span class="material-icons md-18">warning</span>' },

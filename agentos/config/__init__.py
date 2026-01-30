@@ -13,6 +13,14 @@ from agentos.config.loader import (
     RuleThresholds,
     AlertThresholds,
 )
+from agentos.config.budget_config import (
+    BudgetConfig,
+    BudgetAllocation,
+    BudgetConfigManager,
+    get_budget_config_manager,
+    load_budget_config,
+    save_budget_config,
+)
 
 __all__ = [
     "CLISettings",
@@ -24,4 +32,10 @@ __all__ = [
     "LeadConfig",
     "RuleThresholds",
     "AlertThresholds",
+    "BudgetConfig",
+    "BudgetAllocation",
+    "BudgetConfigManager",
+    "get_budget_config_manager",
+    "load_budget_config",
+    "save_budget_config",
 ]

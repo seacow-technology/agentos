@@ -168,7 +168,7 @@ class FloatingPet {
                 <div class="pet-shortcuts">
                     <button class="pet-shortcut-btn" data-action="chat">
                         <div class="pet-shortcut-icon">
-                            <span class="material-icons md-24">chat</span>
+                            <span class="material-icons md-24">add_comment</span>
                         </div>
                         <div class="pet-shortcut-content">
                             <div class="pet-shortcut-title">Chat</div>
@@ -177,7 +177,7 @@ class FloatingPet {
                     </button>
                     <button class="pet-shortcut-btn" data-action="task">
                         <div class="pet-shortcut-icon">
-                            <span class="material-icons md-24">task_alt</span>
+                            <span class="material-icons md-24">check_circle</span>
                         </div>
                         <div class="pet-shortcut-content">
                             <div class="pet-shortcut-title">New Task</div>
@@ -918,7 +918,7 @@ class FloatingPet {
         if (this._lottieEl) {
             this._lottieEl.innerHTML = `
                 <div style="font-size:48px; line-height:96px; text-align:center; color:#667EEA;">
-                    <span class="material-icons" style="font-size:64px;">pets</span>
+                    <span class="material-icons md-18">pets</span>
                 </div>
             `;
         }
@@ -930,7 +930,7 @@ class FloatingPet {
     _fallbackFabPet() {
         if (this._fabLottieEl) {
             this._fabLottieEl.innerHTML = `
-                <span class="material-icons" style="font-size:32px; color:#667EEA;">pets</span>
+                <span class="material-icons md-18">pets</span>
             `;
         }
     }

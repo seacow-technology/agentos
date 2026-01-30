@@ -15,7 +15,10 @@ class RuntimeView {
         this.container.innerHTML = `
             <div class="runtime-view">
                 <div class="view-header">
-                    <h2>Runtime Management</h2>
+                    <div>
+                        <h1>Runtime Management</h1>
+                        <p class="text-sm text-gray-600 mt-1">System runtime management and maintenance</p>
+                    </div>
                     <div class="header-actions">
                         <button class="btn-refresh" id="runtime-refresh">
                             <span class="icon"><span class="material-icons md-18">refresh</span></span> Refresh
@@ -258,7 +261,7 @@ class RuntimeView {
             if (statusDiv) {
                 const fixedFiles = result.fixed_files || [];
                 statusDiv.innerHTML = `
-                    <p class="text-sm text-green-600 font-semibold"><span class="material-icons" style="font-size: 16px; vertical-align: middle;">check</span> Permissions fixed successfully</p>
+                    <p class="text-sm text-green-600 font-semibold"><span class="material-icons md-18">check</span> Permissions fixed successfully</p>
                     ${fixedFiles.length > 0 ? `
                         <p class="text-xs text-gray-600 mt-2">Fixed ${fixedFiles.length} file(s):</p>
                         <ul class="text-xs text-gray-600 mt-1 ml-4 list-disc">
@@ -275,7 +278,7 @@ class RuntimeView {
             console.error('Failed to fix permissions:', error);
 
             if (statusDiv) {
-                statusDiv.innerHTML = `<p class="text-sm text-red-600"><span class="material-icons" style="font-size: 16px; vertical-align: middle;">cancel</span> Error: ${error.message}</p>`;
+                statusDiv.innerHTML = `<p class="text-sm text-red-600"><span class="material-icons md-18">cancel</span> Error: ${error.message}</p>`;
             }
 
             if (window.showToast) {

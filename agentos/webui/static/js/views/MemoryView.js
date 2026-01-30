@@ -22,7 +22,10 @@ class MemoryView {
         this.container.innerHTML = `
             <div class="memory-view">
                 <div class="view-header">
-                    <h2>Memory Management</h2>
+                    <div>
+                        <h1>Memory Management</h1>
+                        <p class="text-sm text-gray-600 mt-1">Store and retrieve long-term memory</p>
+                    </div>
                     <div class="header-actions">
                         <button class="btn-refresh" id="memory-refresh">
                             <span class="icon"><span class="material-icons md-18">refresh</span></span> Refresh
@@ -42,7 +45,7 @@ class MemoryView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Memory Details</h3>
-                            <button class="btn-close" id="memory-drawer-close">✕</button>
+                            <button class="btn-close" id="memory-drawer-close">close</button>
                         </div>
                         <div class="drawer-body" id="memory-drawer-body">
                             <!-- Memory details will be rendered here -->
@@ -55,7 +58,7 @@ class MemoryView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Add Memory Item</h3>
-                            <button class="btn-close" id="memory-add-close">✕</button>
+                            <button class="btn-close" id="memory-add-close">close</button>
                         </div>
                         <div class="drawer-body" id="memory-add-body">
                             <!-- Add memory form will be rendered here -->
@@ -396,7 +399,7 @@ class MemoryView {
                             </button>
                             ${memoryDetail.source ? `
                                 <button class="btn-sm btn-secondary" id="view-source">
-                                    🔗 View Source
+                                    link View Source
                                 </button>
                             ` : ''}
                         </div>

@@ -16,7 +16,7 @@
     <script src="/static/vendor/htmx/htmx.min.js?v=1"></script>
 
     <!-- Material Design Icons -->
-    <link href="/static/vendor/material-icons/material-icons.css?v=1" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
     <!-- Lottie Web for Animations -->
     <script src="/static/vendor/lottie/lottie.min.js?v=1"></script>
@@ -34,6 +34,7 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/static/css/main.css?v=13">
     <link rel="stylesheet" href="/static/css/components.css?v=4">
+    <link rel="stylesheet" href="/static/css/modal-unified.css?v=1">
     <link rel="stylesheet" href="/static/css/snippets.css?v=1">
     <link rel="stylesheet" href="/static/css/dialog.css?v=1">
     <link rel="stylesheet" href="/static/css/multi-repo.css?v=1">
@@ -48,7 +49,15 @@
     <link rel="stylesheet" href="/static/css/project-context.css?v=1">
     <link rel="stylesheet" href="/static/css/project-v31.css?v=1">
     <link rel="stylesheet" href="/static/css/pipeline-view.css?v=1">
+    <link rel="stylesheet" href="/static/css/evidence-drawer.css?v=1">
     <link rel="stylesheet" href="/static/css/mode-monitor.css?v=1">
+    <link rel="stylesheet" href="/static/css/extensions.css?v=1">
+    <link rel="stylesheet" href="/static/css/extension-wizard.css?v=1">
+    <link rel="stylesheet" href="/static/css/models.css?v=1">
+    <link rel="stylesheet" href="/static/css/budget-indicator.css?v=1">
+    <link rel="stylesheet" href="/static/css/budget-config.css?v=1">
+    <link rel="stylesheet" href="/static/css/brain.css?v=1">
+    <link rel="stylesheet" href="/static/css/explain.css?v=1">
 
     <!-- PrismJS Syntax Highlighting -->
     <link id="prism-theme" rel="stylesheet" href="/static/vendor/prismjs/themes/prism-tomorrow.min.css?v=1">
@@ -182,6 +191,12 @@
                 <!-- Knowledge Section -->
                 <div>
                     <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Knowledge</h2>
+                    <a href="#" class="nav-item" data-view="brain-dashboard">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        <span>BrainOS</span>
+                    </a>
                     <a href="#" class="nav-item" data-view="knowledge-playground">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -258,6 +273,19 @@
                 <!-- Settings Section -->
                 <div>
                     <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Settings</h2>
+                    <a href="#" class="nav-item" data-view="extensions">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                        <span>Extensions</span>
+                    </a>
+                    <a href="#" class="nav-item" data-view="models">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        <span>Models</span>
+                    </a>
                     <a href="#" class="nav-item" data-view="providers">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
@@ -385,14 +413,14 @@
                 },
             });
 
-            console.log('✓ Sentry initialized:', SENTRY_ENVIRONMENT, SENTRY_RELEASE);
+            console.log('check Sentry initialized:', SENTRY_ENVIRONMENT, SENTRY_RELEASE);
 
             // Set user context if available (can be updated dynamically)
             // Sentry.setUser({ id: "user_id", email: "user@example.com" });
         } else if (!SENTRY_ENABLED) {
             console.log('⊘ Sentry monitoring disabled');
         } else {
-            console.warn('⚠ Sentry SDK not loaded');
+            console.warn('warning Sentry SDK not loaded');
         }
     </script>
 
@@ -447,6 +475,10 @@
     <script src="/static/js/components/MetricCard.js?v=1"></script>
     <script src="/static/js/components/HealthIndicator.js?v=1"></script>
 
+    <!-- BrainOS Explain Components (PR-WebUI-BrainOS-1B) -->
+    <script src="/static/js/components/ExplainButton.js?v=1"></script>
+    <script src="/static/js/components/ExplainDrawer.js?v=1"></script>
+
     <!-- Guardian Components (Task #3) -->
     <script src="/static/js/components/GuardianReviewPanel.js?v=1"></script>
 
@@ -464,6 +496,7 @@
     <script src="/static/js/components/WorkItemCard.js?v=1"></script>
     <script src="/static/js/components/MergeNode.js?v=1"></script>
     <script src="/static/js/components/BranchArrow.js?v=1"></script>
+    <script src="/static/js/components/EvidenceDrawer.js?v=1"></script>
 
     <!-- View Controllers (PR-2: Observability Module) -->
     <script src="/static/js/views/TasksView.js?v=1"></script>
@@ -513,11 +546,27 @@
     <!-- View Controllers (PR-V4: Pipeline Visualization) -->
     <script src="/static/js/views/PipelineView.js?v=1"></script>
 
+    <!-- Event Stream Service (PR-V4: Pipeline Visualization) -->
+    <script type="module">
+        import EventStreamService from "/static/js/services/EventStreamService.js";
+        window.EventStreamService = EventStreamService;
+    </script>
+
     <!-- View Controllers (Mode Monitor - Task #15) -->
     <script type="module">
         import ModeMonitorView from "/static/js/views/ModeMonitorView.js";
         window.ModeMonitorView = ModeMonitorView;
     </script>
+
+    <!-- View Controllers (Extensions Management - PR-C) -->
+    <script src="/static/js/views/ExtensionsView.js?v=1"></script>
+
+    <!-- View Controllers (Models Management) -->
+    <script src="/static/js/views/ModelsView.js?v=1"></script>
+
+    <!-- BrainOS Views -->
+    <script src="/static/js/views/BrainDashboardView.js?v=1"></script>
+    <script src="/static/js/views/BrainQueryConsoleView.js?v=1"></script>
 
     <!-- HTML Preview Dialog -->
     <dialog id="htmlPreviewDlg" class="preview-dlg">

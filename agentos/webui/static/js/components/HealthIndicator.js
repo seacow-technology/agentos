@@ -166,7 +166,7 @@ class HealthIndicator {
         this.element.innerHTML = `
             <div class="health-label">${this.options.label}</div>
             <div class="health-error">
-                <span class="material-icons health-error-icon" style="font-size: 1.25rem;">warning</span>
+                <span class="material-icons md-18">warning</span>
                 <span class="health-error-text">${this.options.error}</span>
             </div>
         `;

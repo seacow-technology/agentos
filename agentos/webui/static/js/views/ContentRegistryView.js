@@ -51,7 +51,7 @@ class ContentRegistryView {
                 <!-- Runtime Mode Notice (Local) -->
                 <div id="local-mode-notice" style="display:none" class="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
                     <div class="flex items-start gap-2">
-                        <span class="material-icons md-18 text-blue-600">info</span>
+                        <span class="material-icons md-18">info</span>
                         <div>
                             <p class="text-sm text-blue-800 font-medium">Running in local mode</p>
                             <p class="text-xs text-blue-700 mt-1">
@@ -106,7 +106,7 @@ class ContentRegistryView {
                                     <span class="material-icons md-18">grid_view</span>
                                 </button>
                                 <button id="view-table" class="btn-icon" title="Table view">
-                                    <span class="material-icons md-18">view_list</span>
+                                    <span class="material-icons md-18">list</span>
                                 </button>
                             </div>
                         </div>
@@ -355,7 +355,7 @@ class ContentRegistryView {
         if (filtered.length === 0) {
             listContainer.innerHTML = `
                 <div class="empty-state">
-                    <span class="material-icons md-48 text-gray-400">inventory_2</span>
+                    <span class="material-icons md-48 text-gray-400">archive</span>
                     <p class="text-gray-600 mt-3">No content registered yet</p>
                     ${!this.isLocalMode && this.isAdmin ?
                         '<p class="text-sm text-gray-500 mt-1">Register your first agent, workflow, skill, or tool.</p>' :
@@ -440,7 +440,7 @@ class ContentRegistryView {
                         data-content-action="view"
                         data-content-id="${item.id}"
                     >
-                        <span class="material-icons md-18">visibility</span> View Details
+                        <span class="material-icons md-18">preview</span> View Details
                     </button>
 
                     ${canModify ? `
@@ -538,7 +538,7 @@ class ContentRegistryView {
                             data-content-action="view"
                             data-content-id="${item.id}"
                         >
-                            <span class="material-icons md-18">visibility</span>
+                            <span class="material-icons md-18">preview</span>
                         </button>
                         ${canModify ? `
                             ${item.status === 'active' ? `

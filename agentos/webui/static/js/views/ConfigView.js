@@ -28,9 +28,9 @@ class ConfigView {
                 <!-- 增强的 PageHeader -->
                 <div class="view-header">
                     <div>
-                        <h2>Configuration</h2>
+                        <h1>Configuration</h1>
                         <p class="text-sm text-gray-600 mt-1">
-                            Runtime configuration snapshot (read-only)
+                            View runtime configuration snapshot
                         </p>
                     </div>
                     <div class="header-actions">
@@ -41,7 +41,7 @@ class ConfigView {
                             <span class="icon"><span class="material-icons md-18">code</span></span> View Raw JSON
                         </button>
                         <button class="btn-secondary" id="config-download">
-                            <span class="icon"><span class="material-icons md-18">download</span></span> Download
+                            <span class="icon"><span class="material-icons md-18">arrow_downward</span></span> Download
                         </button>
                     </div>
                 </div>
@@ -69,7 +69,7 @@ class ConfigView {
                             </div>
                             <div class="json-viewer-container" id="raw-json-content"></div>
                             <p class="text-xs text-gray-500 mt-3">
-                                ⓘ This is a read-only view of the current configuration.
+                                info This is a read-only view of the current configuration.
                             </p>
                         </div>
                     </div>
@@ -135,6 +135,9 @@ class ConfigView {
             // 渲染 Structured View（唯一视图）
             this.renderStructuredView(contentDiv);
 
+            // Load budget configuration after main config is rendered
+            await this.loadBudgetConfig();
+
             // Show success toast (only on manual refresh)
             if (forceRefresh && window.showToast) {
                 window.showToast('Configuration reloaded', 'success', 1500);
@@ -164,6 +167,9 @@ class ConfigView {
 
         const html = `
             <div class="config-structured">
+                <!-- Token Budget Configuration (Task 4) -->
+                ${this.renderBudgetConfig()}
+
                 <!-- System Overview -->
                 <div class="config-section">
                     <h3 class="config-section-title">System Overview</h3>
@@ -204,7 +210,7 @@ class ConfigView {
                             </div>
                         </div>
                         <p class="text-xs text-gray-500 mt-2">
-                            🔒 Settings are read-only. Edit the config file to make changes.
+                            lock Settings are read-only. Edit the config file to make changes.
                         </p>
                     </div>
                 ` : ''}
@@ -228,7 +234,7 @@ class ConfigView {
                                 <span class="material-icons md-18">done</span> Run Self-check
                             </button>
                             <button class="btn-secondary" id="download-config-footer">
-                                <span class="material-icons md-18">download</span> Download Config
+                                <span class="material-icons md-18">arrow_downward</span> Download Config
                             </button>
                         </div>
                     </div>
@@ -286,7 +292,7 @@ class ConfigView {
                     ${status.needs_migration ? `
                         <div class="bg-orange-50 border border-orange-200 rounded p-3 mb-4">
                             <div class="flex items-start gap-2">
-                                <span class="material-icons md-18 text-orange-600">warning</span>
+                                <span class="material-icons md-18">warning</span>
                                 <div class="flex-1">
                                     <p class="text-sm text-orange-800 font-medium">Database migration required</p>
                                     <p class="text-xs text-orange-700 mt-1">
@@ -341,7 +347,7 @@ class ConfigView {
                     <div class="flex gap-2">
                         ${status.needs_migration ? `
                             <button class="btn-primary" id="run-migrations">
-                                <span class="material-icons md-18">upgrade</span> Run Migrations
+                                <span class="material-icons md-18">arrow_upward</span> Run Migrations
                             </button>
                         ` : ''}
                         <button class="btn-secondary" id="refresh-migrations">
@@ -350,7 +356,7 @@ class ConfigView {
                     </div>
                 </div>
                 <p class="text-xs text-gray-500 mt-2">
-                    ⓘ Database migrations are applied automatically. Manual migration is only needed in special cases.
+                    info Database migrations are applied automatically. Manual migration is only needed in special cases.
                 </p>
             </div>
         `;
@@ -374,7 +380,7 @@ class ConfigView {
                     <input
                         type="text"
                         id="env-filter"
-                        placeholder="🔍 Filter variables..."
+                        placeholder="search Filter variables..."
                         class="input-sm"
                         style="width: 240px;"
                         value="${this.envFilter}"
@@ -412,7 +418,7 @@ class ConfigView {
                     </button>
                 ` : ''}
                 <p class="text-xs text-gray-500 mt-2">
-                    ⓘ Sensitive values (API keys, secrets, passwords) are automatically filtered.
+                    info Sensitive values (API keys, secrets, passwords) are automatically filtered.
                 </p>
             </div>
         `;
@@ -611,7 +617,7 @@ class ConfigView {
 
             if (window.showToast) {
                 window.showToast(
-                    `<span class="material-icons" style="font-size: 16px; vertical-align: middle;">check</span> Migration successful: v${result.from_version} <span class="material-icons" style="font-size: 14px; vertical-align: middle;">arrow_forward</span> v${result.to_version} (${result.migrations_executed} migration(s))`,
+                    `<span class="material-icons md-18">check</span> Migration successful: v${result.from_version} <span class="material-icons md-18">arrow_forward</span> v${result.to_version} (${result.migrations_executed} migration(s))`,
                     'success',
                     3000
                 );
@@ -631,7 +637,7 @@ class ConfigView {
             const runBtn = this.container.querySelector('#run-migrations');
             if (runBtn) {
                 runBtn.disabled = false;
-                runBtn.innerHTML = '<span class="material-icons md-18">upgrade</span> Run Migrations';
+                runBtn.innerHTML = '<span class="material-icons md-18">arrow_upward</span> Run Migrations';
             }
         }
     }
@@ -673,6 +679,690 @@ class ConfigView {
             .split('_')
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
+    }
+
+    renderBudgetConfig() {
+        return `
+            <div class="config-section" id="budget-config-section">
+                <h3 class="config-section-title">
+                    <span class="material-icons md-18">account_balance_wallet</span>
+                    Token Budget Configuration
+                </h3>
+                <div class="config-card">
+                    <div id="budget-config-content" class="budget-loading">
+                        <div class="spinner"></div>
+                        <span style="margin-left: 10px;">Loading budget configuration...</span>
+                    </div>
+                </div>
+
+                <!-- P2-9: Budget Recommendation Card (collapsed by default) -->
+                <div id="budget-recommendation-section" style="display: none; margin-top: 16px;">
+                </div>
+            </div>
+        `;
+    }
+
+    async loadBudgetConfig() {
+        try {
+            const response = await apiClient.get('/api/budget/global');
+
+            if (!response.ok) {
+                throw new Error(response.error || 'Failed to load budget configuration');
+            }
+
+            this.budgetConfig = response.data || response;
+            await this.loadCurrentModelInfo();
+            this.renderBudgetConfigContent();
+
+        } catch (error) {
+            console.error('Failed to load budget config:', error);
+            const contentDiv = this.container.querySelector('#budget-config-content');
+            if (contentDiv) {
+                contentDiv.innerHTML = `
+                    <div class="budget-error">
+                        <span class="material-icons md-18">error</span>
+                        Failed to load budget configuration: ${error.message}
+                    </div>
+                `;
+            }
+        }
+    }
+
+    async loadCurrentModelInfo() {
+        try {
+            const response = await apiClient.get('/api/runtime/config');
+            if (response.ok && response.data) {
+                this.currentModelInfo = {
+                    name: response.data.model || 'unknown',
+                    context_window: response.data.context_window || 128000
+                };
+            }
+        } catch (error) {
+            console.warn('Failed to load current model info:', error);
+            this.currentModelInfo = {
+                name: 'unknown',
+                context_window: 128000
+            };
+        }
+    }
+
+    renderBudgetConfigContent() {
+        const contentDiv = this.container.querySelector('#budget-config-content');
+        if (!contentDiv || !this.budgetConfig) return;
+
+        const config = this.budgetConfig;
+        const autoDeriveChecked = config.auto_derive ? 'checked' : '';
+
+        contentDiv.innerHTML = `
+            <!-- Info Banner -->
+            <div class="budget-info-banner">
+                <span class="material-icons md-18">info</span>
+                <p>
+                    Token budget controls how AgentOS allocates context space for conversations, RAG, and memory.
+                    Enable auto-derive to automatically calculate optimal budgets based on your model's context window.
+                </p>
+            </div>
+
+            <!-- Auto-Derive Toggle -->
+            <div class="budget-auto-derive">
+                <input type="checkbox" id="budget-auto-derive" ${autoDeriveChecked}>
+                <label for="budget-auto-derive">Auto-derive from model (recommended)</label>
+                <span class="badge badge-info">Smart</span>
+            </div>
+
+            <!-- Preview Box -->
+            <div class="budget-preview-box" id="budget-preview-box">
+                <h4>Current Configuration</h4>
+                <div class="budget-preview-grid">
+                    <div class="budget-preview-item">
+                        <span class="budget-preview-label">Model</span>
+                        <span class="budget-preview-value">${this.escapeHtml(this.currentModelInfo.name)}</span>
+                    </div>
+                    <div class="budget-preview-item">
+                        <span class="budget-preview-label">Context Window</span>
+                        <span class="budget-preview-value">${this.formatNumber(this.currentModelInfo.context_window)} tokens</span>
+                    </div>
+                    <div class="budget-preview-item">
+                        <span class="budget-preview-label">Input Budget</span>
+                        <span class="budget-preview-value highlight">${this.formatNumber(config.max_tokens)} tokens</span>
+                    </div>
+                    <div class="budget-preview-item">
+                        <span class="budget-preview-label">Generation Limit</span>
+                        <span class="budget-preview-value highlight">${this.formatNumber(config.generation_max_tokens)} tokens</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Settings -->
+            <div class="budget-advanced-section">
+                <h4>Advanced Settings (Optional Override)</h4>
+                <div class="budget-advanced-fields">
+                    <div class="budget-field">
+                        <label for="budget-max-tokens">Max Input Tokens</label>
+                        <input type="number" id="budget-max-tokens"
+                               value="${config.max_tokens}"
+                               ${config.auto_derive ? 'disabled' : ''}>
+                        <span class="field-hint">${config.auto_derive ? '(auto)' : 'Total context budget'}</span>
+                    </div>
+                    <div class="budget-field">
+                        <label for="budget-generation">Max Generation Tokens</label>
+                        <input type="number" id="budget-generation"
+                               value="${config.generation_max_tokens}"
+                               ${config.auto_derive ? 'disabled' : ''}>
+                        <span class="field-hint">${config.auto_derive ? '(auto)' : 'Output token limit'}</span>
+                    </div>
+                    <div class="budget-field">
+                        <label for="budget-window">Conversation Window</label>
+                        <input type="number" id="budget-window"
+                               value="${config.allocation.window_tokens}"
+                               ${config.auto_derive ? 'disabled' : ''}>
+                        <span class="field-hint">${config.auto_derive ? '(auto)' : 'Recent messages'}</span>
+                    </div>
+                    <div class="budget-field">
+                        <label for="budget-rag">RAG Context</label>
+                        <input type="number" id="budget-rag"
+                               value="${config.allocation.rag_tokens}"
+                               ${config.auto_derive ? 'disabled' : ''}>
+                        <span class="field-hint">${config.auto_derive ? '(auto)' : 'Knowledge base results'}</span>
+                    </div>
+                    <div class="budget-field">
+                        <label for="budget-memory">Memory Facts</label>
+                        <input type="number" id="budget-memory"
+                               value="${config.allocation.memory_tokens}"
+                               ${config.auto_derive ? 'disabled' : ''}>
+                        <span class="field-hint">${config.auto_derive ? '(auto)' : 'Pinned memories'}</span>
+                    </div>
+                    <div class="budget-field">
+                        <label for="budget-system">System Prompt</label>
+                        <input type="number" id="budget-system"
+                               value="${config.allocation.system_tokens}"
+                               ${config.auto_derive ? 'disabled' : ''}>
+                        <span class="field-hint">${config.auto_derive ? '(auto)' : 'System instructions'}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Actions -->
+            <div class="budget-save-actions">
+                <button class="btn-secondary" id="budget-reset">
+                    <span class="material-icons md-18">restart_alt</span> Reset to Defaults
+                </button>
+                <button class="btn-secondary" id="budget-show-recommendation">
+                    <span class="material-icons md-18">lightbulb</span> Show Smart Recommendation
+                </button>
+                <button class="btn-primary" id="budget-save">
+                    <span class="material-icons md-18">save</span> Save Configuration
+                </button>
+            </div>
+        `;
+
+        this.setupBudgetEventListeners();
+    }
+
+    setupBudgetEventListeners() {
+        const autoDeriveCheckbox = this.container.querySelector('#budget-auto-derive');
+        const saveBtn = this.container.querySelector('#budget-save');
+        const resetBtn = this.container.querySelector('#budget-reset');
+        const showRecommendationBtn = this.container.querySelector('#budget-show-recommendation');
+
+        if (autoDeriveCheckbox) {
+            autoDeriveCheckbox.addEventListener('change', async (e) => {
+                const enabled = e.target.checked;
+                await this.handleAutoDeriveToggle(enabled);
+            });
+        }
+
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => this.saveBudgetConfig());
+        }
+
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => this.resetBudgetConfig());
+        }
+
+        if (showRecommendationBtn) {
+            showRecommendationBtn.addEventListener('click', () => this.loadBudgetRecommendation());
+        }
+    }
+
+    async handleAutoDeriveToggle(enabled) {
+        try {
+            // Toggle field states
+            const fields = this.container.querySelectorAll('.budget-field input');
+            fields.forEach(field => {
+                field.disabled = enabled;
+                const hint = field.parentElement.querySelector('.field-hint');
+                if (hint) {
+                    hint.textContent = enabled ? '(auto)' : hint.dataset.originalHint || '';
+                }
+            });
+
+            // If enabling auto-derive, preview the result
+            if (enabled) {
+                await this.previewDerivedBudget();
+            }
+
+        } catch (error) {
+            console.error('Failed to toggle auto-derive:', error);
+            if (window.showToast) {
+                window.showToast('Failed to toggle auto-derive', 'error');
+            }
+        }
+    }
+
+    async previewDerivedBudget() {
+        try {
+            if (window.showToast) {
+                window.showToast('Calculating optimal budget...', 'info', 1500);
+            }
+
+            const response = await apiClient.post('/api/budget/derive', {
+                model_id: this.currentModelInfo.name,
+                context_window: this.currentModelInfo.context_window
+            });
+
+            if (!response.ok) {
+                throw new Error(response.error || 'Failed to derive budget');
+            }
+
+            const derived = response.data || response;
+
+            // Update preview values
+            const maxTokensInput = this.container.querySelector('#budget-max-tokens');
+            const generationInput = this.container.querySelector('#budget-generation');
+            const windowInput = this.container.querySelector('#budget-window');
+            const ragInput = this.container.querySelector('#budget-rag');
+            const memoryInput = this.container.querySelector('#budget-memory');
+            const systemInput = this.container.querySelector('#budget-system');
+
+            if (maxTokensInput) maxTokensInput.value = derived.budget.max_tokens;
+            if (generationInput) generationInput.value = derived.budget.generation_max_tokens;
+            if (windowInput) windowInput.value = derived.budget.allocation.window_tokens;
+            if (ragInput) ragInput.value = derived.budget.allocation.rag_tokens;
+            if (memoryInput) memoryInput.value = derived.budget.allocation.memory_tokens;
+            if (systemInput) systemInput.value = derived.budget.allocation.system_tokens;
+
+            // Update preview box
+            const previewBox = this.container.querySelector('#budget-preview-box');
+            if (previewBox) {
+                const inputBudgetValue = previewBox.querySelector('.budget-preview-value.highlight');
+                if (inputBudgetValue) {
+                    inputBudgetValue.textContent = this.formatNumber(derived.budget.max_tokens) + ' tokens';
+                }
+            }
+
+            if (window.showToast) {
+                window.showToast('Budget calculated successfully', 'success', 1500);
+            }
+
+        } catch (error) {
+            console.error('Failed to preview derived budget:', error);
+            if (window.showToast) {
+                window.showToast(`Preview failed: ${error.message}`, 'error');
+            }
+        }
+    }
+
+    async saveBudgetConfig() {
+        try {
+            const autoDeriveCheckbox = this.container.querySelector('#budget-auto-derive');
+            const autoDeriveEnabled = autoDeriveCheckbox ? autoDeriveCheckbox.checked : false;
+
+            const requestData = {
+                auto_derive: autoDeriveEnabled
+            };
+
+            // If manual mode, include field values
+            if (!autoDeriveEnabled) {
+                const maxTokens = parseInt(this.container.querySelector('#budget-max-tokens')?.value || '8000');
+                const generation = parseInt(this.container.querySelector('#budget-generation')?.value || '2000');
+                const window = parseInt(this.container.querySelector('#budget-window')?.value || '4000');
+                const rag = parseInt(this.container.querySelector('#budget-rag')?.value || '2000');
+                const memory = parseInt(this.container.querySelector('#budget-memory')?.value || '1000');
+                const system = parseInt(this.container.querySelector('#budget-system')?.value || '1000');
+
+                requestData.max_tokens = maxTokens;
+                requestData.generation_max_tokens = generation;
+                requestData.window_tokens = window;
+                requestData.rag_tokens = rag;
+                requestData.memory_tokens = memory;
+                requestData.system_tokens = system;
+            }
+
+            if (window.showToast) {
+                window.showToast('Saving budget configuration...', 'info', 1500);
+            }
+
+            const response = await apiClient.put('/api/budget/global', requestData);
+
+            if (!response.ok) {
+                throw new Error(response.error || 'Failed to save budget configuration');
+            }
+
+            this.budgetConfig = response.data || response;
+
+            if (window.showToast) {
+                window.showToast('Budget configuration saved successfully', 'success', 2000);
+            }
+
+            // Reload budget config to reflect changes
+            await this.loadBudgetConfig();
+
+        } catch (error) {
+            console.error('Failed to save budget config:', error);
+            if (window.showToast) {
+                window.showToast(`Save failed: ${error.message}`, 'error');
+            }
+        }
+    }
+
+    async resetBudgetConfig() {
+        const confirmed = await Dialog.confirm(
+            'Reset budget configuration to defaults?\n\nThis will restore the default 8k context window allocation.',
+            {
+                title: 'Reset Budget Configuration',
+                confirmText: 'Reset',
+                danger: false
+            }
+        );
+
+        if (!confirmed) return;
+
+        try {
+            const defaultConfig = {
+                auto_derive: false,
+                max_tokens: 8000,
+                generation_max_tokens: 2000,
+                window_tokens: 4000,
+                rag_tokens: 2000,
+                memory_tokens: 1000,
+                system_tokens: 1000
+            };
+
+            const response = await apiClient.put('/api/budget/global', defaultConfig);
+
+            if (!response.ok) {
+                throw new Error(response.error || 'Failed to reset budget configuration');
+            }
+
+            if (window.showToast) {
+                window.showToast('Budget configuration reset to defaults', 'success', 2000);
+            }
+
+            // Reload budget config
+            await this.loadBudgetConfig();
+
+        } catch (error) {
+            console.error('Failed to reset budget config:', error);
+            if (window.showToast) {
+                window.showToast(`Reset failed: ${error.message}`, 'error');
+            }
+        }
+    }
+
+    async loadBudgetRecommendation() {
+        try {
+            const recommendationSection = this.container.querySelector('#budget-recommendation-section');
+            if (!recommendationSection) return;
+
+            // Show loading state
+            recommendationSection.style.display = 'block';
+            recommendationSection.innerHTML = `
+                <div class="config-card">
+                    <div class="budget-loading">
+                        <div class="spinner"></div>
+                        <span style="margin-left: 10px;">Analyzing usage patterns...</span>
+                    </div>
+                </div>
+            `;
+
+            // Get current session ID (from chat or use default)
+            const sessionId = window.currentSessionId || 'default';
+
+            // Request recommendation
+            const response = await apiClient.post('/api/budget/recommend', {
+                session_id: sessionId,
+                model_id: this.currentModelInfo.name,
+                context_window: this.currentModelInfo.context_window,
+                last_n: 30
+            });
+
+            if (!response.ok) {
+                throw new Error(response.error || 'Failed to load recommendation');
+            }
+
+            const data = response.data || response;
+
+            if (!data.available) {
+                this.renderRecommendationUnavailable(recommendationSection, data);
+            } else {
+                this.renderRecommendation(recommendationSection, data);
+            }
+
+        } catch (error) {
+            console.error('Failed to load budget recommendation:', error);
+            const recommendationSection = this.container.querySelector('#budget-recommendation-section');
+            if (recommendationSection) {
+                recommendationSection.innerHTML = `
+                    <div class="config-card">
+                        <div class="budget-error">
+                            <span class="material-icons md-18">error</span>
+                            Failed to load recommendation: ${error.message}
+                        </div>
+                    </div>
+                `;
+            }
+            if (window.showToast) {
+                window.showToast(`Recommendation failed: ${error.message}`, 'error');
+            }
+        }
+    }
+
+    renderRecommendationUnavailable(container, data) {
+        container.innerHTML = `
+            <div class="config-card" style="background: #f9fafb; border: 1px solid #e5e7eb;">
+                <div style="display: flex; align-items: start; gap: 12px;">
+                    <span class="material-icons md-18">info</span>
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #374151;">
+                            Smart Recommendation Not Available
+                        </h4>
+                        <p style="margin: 0 0 12px 0; font-size: 13px; color: #6b7280;">
+                            ${this.escapeHtml(data.hint || 'Unable to generate recommendation.')}
+                        </p>
+                        ${data.reason === 'insufficient_data' ? `
+                            <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #f3f4f6; border-radius: 6px; font-size: 12px; color: #4b5563;">
+                                <span class="material-icons md-14">analytics</span>
+                                <span>Minimum ${data.min_samples} conversations needed</span>
+                            </div>
+                        ` : ''}
+                        <button class="btn-sm btn-secondary" id="dismiss-recommendation" style="margin-top: 12px;">
+                            <span class="material-icons md-14">close</span> Dismiss
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const dismissBtn = container.querySelector('#dismiss-recommendation');
+        if (dismissBtn) {
+            dismissBtn.addEventListener('click', () => {
+                container.style.display = 'none';
+            });
+        }
+    }
+
+    renderRecommendation(container, data) {
+        const current = data.current;
+        const recommended = data.recommended;
+        const stats = data.stats;
+
+        // Calculate changes
+        const changes = {
+            window: this.calculateChange(current.window_tokens, recommended.window_tokens),
+            rag: this.calculateChange(current.rag_tokens, recommended.rag_tokens),
+            memory: this.calculateChange(current.memory_tokens, recommended.memory_tokens),
+            system: this.calculateChange(current.system_tokens, recommended.system_tokens)
+        };
+
+        const totalSavings = recommended.metadata.estimated_savings;
+        const confidenceBadge = this.getConfidenceBadge(recommended.metadata.confidence);
+
+        container.innerHTML = `
+            <div class="config-card" style="background: linear-gradient(to bottom, #fefce8, #ffffff); border: 2px solid #fbbf24;">
+                <div style="display: flex; align-items: start; gap: 12px;">
+                    <span class="material-icons md-18">lightbulb</span>
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                            <h4 style="margin: 0; font-size: 16px; font-weight: 600; color: #374151;">
+                                Smart Recommendation
+                            </h4>
+                            ${confidenceBadge}
+                        </div>
+
+                        <p style="margin: 0 0 16px 0; font-size: 13px; color: #4b5563; line-height: 1.5;">
+                            ${this.escapeHtml(data.message || 'Based on your usage patterns, we recommend the following budget adjustments.')}
+                        </p>
+
+                        <!-- Comparison Table -->
+                        <div style="overflow-x: auto; margin-bottom: 16px;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                <thead>
+                                    <tr style="background: #f9fafb; border-bottom: 2px solid #e5e7eb;">
+                                        <th style="padding: 8px 12px; text-align: left; font-weight: 600; color: #374151;">Component</th>
+                                        <th style="padding: 8px 12px; text-align: right; font-weight: 600; color: #374151;">Current</th>
+                                        <th style="padding: 8px 12px; text-align: right; font-weight: 600; color: #374151;">Recommended</th>
+                                        <th style="padding: 8px 12px; text-align: right; font-weight: 600; color: #374151;">Change</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${this.renderComparisonRow('Window', current.window_tokens, recommended.window_tokens, changes.window)}
+                                    ${this.renderComparisonRow('RAG', current.rag_tokens, recommended.rag_tokens, changes.rag)}
+                                    ${this.renderComparisonRow('Memory', current.memory_tokens, recommended.memory_tokens, changes.memory)}
+                                    ${this.renderComparisonRow('System', current.system_tokens, recommended.system_tokens, changes.system)}
+                                    <tr style="border-top: 2px solid #e5e7eb; font-weight: 600; background: #fafafa;">
+                                        <td style="padding: 10px 12px;">Total</td>
+                                        <td style="padding: 10px 12px; text-align: right;">${this.formatNumber(current.window_tokens + current.rag_tokens + current.memory_tokens + current.system_tokens)}</td>
+                                        <td style="padding: 10px 12px; text-align: right;">${this.formatNumber(recommended.max_tokens)}</td>
+                                        <td style="padding: 10px 12px; text-align: right;">${this.formatChangePercent(totalSavings)}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Stats Summary -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; padding: 12px; background: #f9fafb; border-radius: 6px;">
+                            <div>
+                                <div style="font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Based On</div>
+                                <div style="font-size: 15px; font-weight: 600; color: #374151;">${stats.sample_size} conversations</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Est. Savings</div>
+                                <div style="font-size: 15px; font-weight: 600; color: ${totalSavings > 0 ? '#10b981' : '#ef4444'};">${totalSavings > 0 ? '-' : '+'}${Math.abs(totalSavings).toFixed(0)}%</div>
+                            </div>
+                            ${stats.truncation_rate > 0.1 ? `
+                            <div>
+                                <div style="font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Truncation Rate</div>
+                                <div style="font-size: 15px; font-weight: 600; color: #ef4444;">${(stats.truncation_rate * 100).toFixed(0)}%</div>
+                            </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Actions -->
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button class="btn-primary" id="apply-recommendation-btn">
+                                <span class="material-icons md-18">check_circle</span> Apply Recommendation
+                            </button>
+                            <button class="btn-secondary" id="dismiss-recommendation-btn">
+                                <span class="material-icons md-18">close</span> Dismiss
+                            </button>
+                            <span style="flex: 1;"></span>
+                            <span style="font-size: 11px; color: #6b7280;">
+                                lightbulb This is a suggestion only. You can dismiss or modify it.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Setup event listeners
+        const applyBtn = container.querySelector('#apply-recommendation-btn');
+        if (applyBtn) {
+            applyBtn.addEventListener('click', () => this.applyRecommendation(recommended));
+        }
+
+        const dismissBtn = container.querySelector('#dismiss-recommendation-btn');
+        if (dismissBtn) {
+            dismissBtn.addEventListener('click', () => {
+                container.style.display = 'none';
+                if (window.showToast) {
+                    window.showToast('Recommendation dismissed', 'info', 1500);
+                }
+            });
+        }
+    }
+
+    renderComparisonRow(label, current, recommended, change) {
+        const changeColor = change.percent > 0 ? '#10b981' : change.percent < 0 ? '#ef4444' : '#6b7280';
+        const changeIcon = change.percent > 0 ? '▼' : change.percent < 0 ? '▲' : '—';
+
+        return `
+            <tr style="border-bottom: 1px solid #f3f4f6;">
+                <td style="padding: 8px 12px; color: #4b5563;">${label}</td>
+                <td style="padding: 8px 12px; text-align: right; color: #6b7280; font-family: monospace;">${this.formatNumber(current)}</td>
+                <td style="padding: 8px 12px; text-align: right; color: #1f2937; font-weight: 600; font-family: monospace;">${this.formatNumber(recommended)}</td>
+                <td style="padding: 8px 12px; text-align: right; color: ${changeColor}; font-weight: 500; font-family: monospace;">
+                    ${changeIcon} ${Math.abs(change.percent).toFixed(0)}%
+                </td>
+            </tr>
+        `;
+    }
+
+    calculateChange(current, recommended) {
+        if (current === 0) return { percent: 0, absolute: 0 };
+        const absolute = recommended - current;
+        const percent = (absolute / current) * 100;
+        return { percent, absolute };
+    }
+
+    formatChangePercent(percent) {
+        if (percent === 0) return '<span style="color: #6b7280;">—</span>';
+        const sign = percent > 0 ? '▼' : '▲';
+        const color = percent > 0 ? '#10b981' : '#ef4444';
+        return `<span style="color: ${color}; font-weight: 600;">${sign} ${Math.abs(percent).toFixed(0)}%</span>`;
+    }
+
+    getConfidenceBadge(confidence) {
+        const badges = {
+            high: '<span class="badge badge-success badge-sm">High Confidence</span>',
+            medium: '<span class="badge badge-info badge-sm">Medium Confidence</span>',
+            low: '<span class="badge badge-warning badge-sm">Low Confidence</span>'
+        };
+        return badges[confidence] || badges.medium;
+    }
+
+    async applyRecommendation(recommended) {
+        try {
+            // Confirmation dialog
+            const confirmed = await Dialog.confirm(
+                'Apply this recommendation to your budget configuration?\n\n' +
+                'Your current budget will be replaced with the recommended values. ' +
+                'This action can be reversed by using the Reset button.',
+                {
+                    title: 'Apply Budget Recommendation',
+                    confirmText: 'Apply',
+                    danger: false
+                }
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            if (window.showToast) {
+                window.showToast('Applying recommendation...', 'info', 1500);
+            }
+
+            // Apply recommendation
+            const sessionId = window.currentSessionId || 'default';
+            const response = await apiClient.post('/api/budget/apply-recommendation', {
+                recommendation: {
+                    window_tokens: recommended.window_tokens,
+                    rag_tokens: recommended.rag_tokens,
+                    memory_tokens: recommended.memory_tokens,
+                    system_tokens: recommended.system_tokens
+                },
+                session_id: sessionId
+            });
+
+            if (!response.ok) {
+                throw new Error(response.error || 'Failed to apply recommendation');
+            }
+
+            if (window.showToast) {
+                window.showToast('Recommendation applied successfully! celebration', 'success', 2500);
+            }
+
+            // Hide recommendation section
+            const recommendationSection = this.container.querySelector('#budget-recommendation-section');
+            if (recommendationSection) {
+                recommendationSection.style.display = 'none';
+            }
+
+            // Reload budget config to show updated values
+            await this.loadBudgetConfig();
+
+        } catch (error) {
+            console.error('Failed to apply recommendation:', error);
+            if (window.showToast) {
+                window.showToast(`Failed to apply: ${error.message}`, 'error');
+            }
+        }
+    }
+
+    formatNumber(num) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     }
 
     escapeHtml(text) {

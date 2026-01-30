@@ -22,10 +22,13 @@ class KnowledgeJobsView {
         this.container.innerHTML = `
             <div class="knowledge-jobs-view">
                 <div class="view-header">
-                    <h2>Index Jobs</h2>
+                    <div>
+                        <h1>Index Jobs</h1>
+                        <p class="text-sm text-gray-600 mt-1">Monitor knowledge indexing jobs and status</p>
+                    </div>
                     <div class="header-actions">
                         <button class="btn-primary" id="jobs-trigger-incremental">
-                            <span class="material-icons md-18">update</span> Incremental
+                            <span class="material-icons md-18">refresh</span> Incremental
                         </button>
                         <button class="btn-primary" id="jobs-trigger-rebuild">
                             <span class="material-icons md-18">refresh</span> Rebuild
@@ -34,7 +37,7 @@ class KnowledgeJobsView {
                             <span class="material-icons md-18">build</span> Repair
                         </button>
                         <button class="btn-secondary" id="jobs-trigger-vacuum">
-                            <span class="material-icons md-18">cleaning_services</span> Vacuum
+                            <span class="material-icons md-18">delete_sweep</span> Vacuum
                         </button>
                         <button class="btn-refresh" id="jobs-refresh">
                             <span class="material-icons md-18">refresh</span> Refresh
@@ -52,7 +55,7 @@ class KnowledgeJobsView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Job Details</h3>
-                            <button class="btn-close" id="jobs-drawer-close">✕</button>
+                            <button class="btn-close" id="jobs-drawer-close">close</button>
                         </div>
                         <div class="drawer-body" id="jobs-drawer-body">
                             <!-- Job details will be rendered here -->

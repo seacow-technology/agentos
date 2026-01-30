@@ -66,6 +66,10 @@ class ProjectSettings(BaseModel):
         default=None,
         description="Risk and security configuration"
     )
+    budget: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Token budget configuration (overrides global config)"
+    )
 
     @field_validator("risk_profile", mode="before")
     @classmethod
@@ -120,7 +124,7 @@ class RepoSpec(BaseModel):
     name: str = Field(..., description="User-friendly repository name (e.g., 'frontend', 'backend')")
     remote_url: Optional[str] = Field(None, description="Remote repository URL (for clone/pull)")
     default_branch: str = Field("main", description="Default branch name")
-    workspace_relpath: str = Field(..., description="Relative path from project workspace (e.g., '.', 'services/api', '../shared')")
+    workspace_relpath: str = Field(".", description="Relative path from project workspace (e.g., '.', 'services/api', '../shared')")
     role: RepoRole = Field(RepoRole.CODE, description="Repository role")
     is_writable: bool = Field(True, description="Whether the repository is writable")
     auth_profile: Optional[str] = Field(None, description="Authentication profile name (e.g., 'github-pat', 'gitlab-ssh')")
@@ -181,7 +185,7 @@ class RepoSpec(BaseModel):
             name=row["name"],
             remote_url=row.get("remote_url"),
             default_branch=row.get("default_branch") or "main",
-            workspace_relpath=row["workspace_relpath"],
+            workspace_relpath=row.get("workspace_relpath") or ".",
             role=RepoRole(row.get("role", "code")),
             is_writable=bool(row.get("is_writable", 1)),
             auth_profile=row.get("auth_profile"),

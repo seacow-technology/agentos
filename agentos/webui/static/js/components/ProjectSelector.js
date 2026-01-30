@@ -33,7 +33,7 @@ class ProjectSelector {
                 <div class="project-dropdown" id="project-dropdown">
                     <button class="project-dropdown-toggle" id="project-dropdown-toggle">
                         <span class="project-name" id="current-project-name">${this.escapeHtml(currentProjectName)}</span>
-                        <span class="material-icons md-16 dropdown-icon">arrow_drop_down</span>
+                        <span class="material-icons md-16">arrow_drop_down</span>
                     </button>
                     <div class="project-dropdown-menu hidden" id="project-dropdown-menu">
                         <div class="dropdown-menu-content">
@@ -72,7 +72,7 @@ class ProjectSelector {
             <div class="dropdown-item ${!currentProjectId ? 'active' : ''}" data-project-id="">
                 <span class="material-icons md-16">apps</span>
                 <span>All Projects</span>
-                ${!currentProjectId ? '<span class="material-icons md-16 check-icon">check</span>' : ''}
+                ${!currentProjectId ? '<span class="material-icons md-16">check</span>' : ''}
             </div>
             ${updatedProjects.length > 0 ? '<div class="dropdown-divider"></div>' : ''}
             ${updatedProjects.map(project => `
@@ -80,7 +80,7 @@ class ProjectSelector {
                      data-project-id="${project.project_id}">
                     <span class="material-icons md-16">folder</span>
                     <span>${this.escapeHtml(project.name)}</span>
-                    ${project.project_id === currentProjectId ? '<span class="material-icons md-16 check-icon">check</span>' : ''}
+                    ${project.project_id === currentProjectId ? '<span class="material-icons md-16">check</span>' : ''}
                 </div>
             `).join('')}
             ${updatedProjects.length === 0 ? `

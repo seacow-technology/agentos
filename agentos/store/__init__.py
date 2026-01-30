@@ -22,6 +22,8 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "get_db",
+    "get_db_path",
+    "get_store_path",
     "init_db",
     "ensure_migrations",
     "get_migration_status",
@@ -42,6 +44,28 @@ _writer_instance: Optional["SQLiteWriter"] = None
 def get_db_path() -> Path:
     """Get the database path"""
     return Path("store/registry.sqlite")
+
+
+def get_store_path(subdir: str = "") -> Path:
+    """
+    Get a path within the store directory
+
+    Args:
+        subdir: Subdirectory name (e.g., "extensions", "logs", "cache")
+               If empty, returns the store root directory
+
+    Returns:
+        Path to the requested directory
+
+    Examples:
+        >>> get_store_path()  # Returns "store/"
+        >>> get_store_path("extensions")  # Returns "store/extensions/"
+        >>> get_store_path("logs")  # Returns "store/logs/"
+    """
+    store_root = get_db_path().parent
+    if subdir:
+        return store_root / subdir
+    return store_root
 
 
 def get_db():

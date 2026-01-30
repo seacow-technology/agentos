@@ -23,13 +23,16 @@ class HistoryView {
         this.container.innerHTML = `
             <div class="history-view">
                 <div class="view-header">
-                    <h2>Command History</h2>
+                    <div class="header-title">
+                        <h1>Command History</h1>
+                        <p class="text-sm text-gray-600 mt-1">Browse command execution history</p>
+                    </div>
                     <div class="header-actions">
                         <button class="btn-refresh" id="history-refresh">
                             <span class="icon"><span class="material-icons md-18">refresh</span></span> Refresh
                         </button>
                         <button class="btn-secondary" id="history-view-pinned">
-                            <span class="icon"><span class="material-icons md-18">push_pin</span></span> Pinned
+                            <span class="icon"><span class="material-icons md-18">attachment</span></span> Pinned
                         </button>
                     </div>
                 </div>
@@ -116,7 +119,7 @@ class HistoryView {
                     key: 'command_id',
                     label: 'Command',
                     render: (value, row) => {
-                        const pinIcon = row.is_pinned ? '<span class="material-icons md-14 text-yellow-600">push_pin</span>' : '';
+                        const pinIcon = row.is_pinned ? '<span class="material-icons md-14">attachment</span>' : '';
                         return `<div class="flex items-center gap-2">
                             ${pinIcon}
                             <code class="text-xs font-mono">${value}</code>
@@ -206,7 +209,7 @@ class HistoryView {
 
             if (this.dataTable) {
                 this.dataTable.setData(history);
-                this.dataTable.setLoading(false);  // ✅ 关闭加载状态
+                this.dataTable.setLoading(false);  // check_circle 关闭加载状态
             }
 
             if (forceRefresh && window.showToast) {
@@ -243,7 +246,7 @@ class HistoryView {
 
             if (this.dataTable) {
                 this.dataTable.setData(pinned);
-                this.dataTable.setLoading(false);  // ✅ 关闭加载状态
+                this.dataTable.setLoading(false);  // check_circle 关闭加载状态
             }
 
             if (window.showToast) {
@@ -357,11 +360,11 @@ class HistoryView {
                     <div class="detail-actions">
                         ${history.is_pinned ? `
                             <button class="btn-secondary" id="unpin-command">
-                                <span class="material-icons md-18">push_pin</span> Unpin
+                                <span class="material-icons md-18">attachment</span> Unpin
                             </button>
                         ` : `
                             <button class="btn-primary" id="pin-command">
-                                <span class="material-icons md-18">push_pin</span> Pin
+                                <span class="material-icons md-18">attachment</span> Pin
                             </button>
                         `}
                         <button class="btn-secondary" id="copy-command-id">

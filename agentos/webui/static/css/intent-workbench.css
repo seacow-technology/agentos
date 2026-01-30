@@ -9,7 +9,7 @@
     padding: 20px;
 }
 
-.view-header {
+.intent-workbench .view-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -18,22 +18,29 @@
     border-bottom: 1px solid #e5e7eb;
 }
 
-.header-left {
+.intent-workbench .view-header .header-left {
     display: flex;
-    align-items: center;
-    gap: 1rem;
+    flex-direction: column;
+    gap: 0;
 }
 
-.header-left h2 {
+.intent-workbench .view-header h1 {
     margin: 0;
-    font-size: 1.5rem;
+    font-size: 18px;  /* Task #26: Standardized to match global view-header h1 style (18px) */
     font-weight: 600;
-    color: #111827;
+    color: #212529;
+}
+
+.intent-workbench .view-header p {
+    margin: 0;
+    font-size: 14px;  /* Task #26: Subtitle at 14px, ratio with h1 is 1.29x */
+    color: #6b7280;
 }
 
 .breadcrumb {
     display: flex;
     align-items: center;
+    margin-top: 8px;  /* Task #26: Add spacing between subtitle and breadcrumb */
 }
 
 .breadcrumb-link {
@@ -112,59 +119,108 @@
 }
 
 /* ===== Tabs ===== */
+/* 使用统一的 nav-pills 样式 (见 components.css) */
 .intent-tabs {
     display: flex;
-    gap: 0.5rem;
-    padding: 0.5rem 1.5rem;
+    gap: 8px;
+    padding: 16px 24px;
     background: white;
     border-bottom: 1px solid #e5e7eb;
     overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
 }
 
-.tab-btn {
-    display: flex;
+.intent-tabs::-webkit-scrollbar {
+    height: 4px;
+}
+
+.intent-tabs::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.intent-tabs::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+}
+
+.intent-tabs::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.intent-tabs .tab-btn {
+    display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.625rem 1rem;
-    background: #2c3e50;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #f3f4f6;
     border: none;
-    border-radius: 6px;
-    color: white;
-    font-size: 0.875rem;
+    border-radius: 20px;
+    color: #6b7280;
+    font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
     white-space: nowrap;
 }
 
-.tab-btn:hover {
-    background: #34495e;
-    color: #3b82f6;
+.intent-tabs .tab-btn:hover {
+    background: #e5e7eb;
+    color: #374151;
 }
 
-.tab-btn.active {
+.intent-tabs .tab-btn.active {
     background: #3b82f6;
-    color: #ffffff !important;
+    color: #ffffff;
 }
 
-.tab-btn.active:hover {
+.intent-tabs .tab-btn.active:hover {
     background: #2563eb;
-    color: #ffffff !important;
+    color: #ffffff;
 }
 
 /* ===== Tab Content ===== */
 .intent-tab-content {
     flex: 1;
     overflow-y: auto;
-    padding: 1.5rem;
+    padding: 24px;
 }
 
 .tab-pane {
     display: none;
+    animation: tabFadeIn 0.3s ease;
 }
 
 .tab-pane.active {
     display: block;
+}
+
+@keyframes tabFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 响应式：移动端优化 */
+@media (max-width: 768px) {
+    .intent-tabs {
+        padding: 12px 16px;
+        gap: 6px;
+    }
+
+    .intent-tabs .tab-btn {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+
+    .intent-tab-content {
+        padding: 16px;
+    }
 }
 
 /* ===== Builder Explain ===== */
@@ -834,12 +890,14 @@
 }
 
 .status-badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.25rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid transparent;
 }
 
 .status-badge.status-pending {

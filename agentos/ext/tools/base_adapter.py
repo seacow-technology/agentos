@@ -36,7 +36,7 @@ class BaseToolAdapter(ABC):
         健康检查（Runtime 必须）
         
         四态模型：
-        - connected: 工具可用
+        - connected: 工具Available
         - not_configured: CLI 不存在
         - invalid_token: 认证失败
         - unreachable: 超时/不可达

@@ -163,7 +163,7 @@ class MetricCard {
                 <div class="metric-card-title">${this.options.title}</div>
             </div>
             <div class="metric-card-body">
-                <div class="metric-card-error-icon"><span class="material-icons" style="font-size: 2rem; color: #EF4444;">warning</span></div>
+                <div class="metric-card-error-icon"><span class="material-icons md-18">warning</span></div>
                 <div class="metric-card-error-text">${this.options.error}</div>
             </div>
         `;

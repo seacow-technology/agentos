@@ -22,7 +22,10 @@ class SessionsView {
         this.container.innerHTML = `
             <div class="sessions-view">
                 <div class="view-header">
-                    <h2>Session Management</h2>
+                    <div>
+                        <h1>Session Management</h1>
+                        <p class="text-sm text-gray-600 mt-1">Manage chat sessions and conversations</p>
+                    </div>
                     <div class="header-actions">
                         <button class="btn-refresh" id="sessions-refresh">
                             <span class="material-icons md-18">refresh</span> Refresh
@@ -42,7 +45,7 @@ class SessionsView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Session Details</h3>
-                            <button class="btn-close" id="sessions-drawer-close">✕</button>
+                            <button class="btn-close" id="sessions-drawer-close">close</button>
                         </div>
                         <div class="drawer-body" id="sessions-drawer-body">
                             <!-- Session details will be rendered here -->
@@ -305,7 +308,7 @@ class SessionsView {
                             </div>
                         </div>
                         <button class="btn-primary" id="session-open-chat">
-                            <span class="material-icons md-18">chat</span> Open Chat
+                            <span class="material-icons md-18">add_comment</span> Open Chat
                         </button>
                     </div>
                 </div>
@@ -354,7 +357,7 @@ class SessionsView {
                             <span class="material-icons md-18">content_copy</span> View Tasks
                         </button>
                         <button class="btn-secondary" id="session-view-events">
-                            📡 View Events
+                            sensors View Events
                         </button>
                         <button class="btn-secondary" id="session-view-logs">
                             <span class="material-icons md-18">edit_note</span> View Logs

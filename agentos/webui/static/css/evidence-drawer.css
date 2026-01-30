@@ -135,15 +135,27 @@
 .drawer-close-btn {
     background: none;
     border: none;
+    font-size: 24px;
+    color: #6b7280;
     cursor: pointer;
-    padding: 8px;
-    border-radius: 50%;
-    transition: background-color 0.2s;
-    color: var(--evidence-text-secondary);
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
 }
 
 .drawer-close-btn:hover {
-    background: var(--evidence-bg-secondary);
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+.drawer-close-btn:active {
+    background: #e5e7eb;
 }
 
 /* ============================================
@@ -182,10 +194,14 @@
  * Status Badge
  * ============================================ */
 .status-badge {
-    padding: 16px;
-    border-radius: 8px;
-    margin-bottom: 24px;
-    border: 2px solid;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid transparent;
 }
 
 .status-badge.status-verified {
@@ -668,3 +684,4 @@
 .material-icons.md-20 { font-size: 20px; }
 .material-icons.md-24 { font-size: 24px; }
 .material-icons.md-48 { font-size: 48px; }
+.material-icons.md-64 { font-size: 64px; }

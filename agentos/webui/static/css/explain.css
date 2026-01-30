@@ -1,0 +1,883 @@
+/**
+ * Explain Component Styles
+ *
+ * Styles for ExplainButton and ExplainDrawer components
+ * Part of: PR-WebUI-BrainOS-1B (Explain Button Embedding)
+ */
+
+/* ============================================================================
+   Explain Button
+   ============================================================================ */
+
+.explain-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    opacity: 0.5;
+    transition: all 0.2s ease;
+    padding: 5px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.explain-btn:hover {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+.explain-btn:active {
+    transform: scale(1.1);
+}
+
+/* Task Detail Header with Explain Button */
+.task-detail-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.task-title-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.task-title-section h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    flex: 1;
+}
+
+/* Extension Title Row with Explain Button */
+.extension-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.extension-title-row h3 {
+    margin: 0;
+    flex: 1;
+}
+
+/* Context Section Header with Explain Button */
+.section-header-with-explain {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.section-header-with-explain h3 {
+    margin: 0;
+}
+
+/* ============================================================================
+   Explain Drawer
+   ============================================================================ */
+
+.explain-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    display: none;
+    pointer-events: none;
+}
+
+.explain-drawer.active {
+    display: block;
+    pointer-events: auto;
+}
+
+.explain-drawer-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+}
+
+.explain-drawer-content {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 500px;
+    max-width: 90%;
+    height: 100%;
+    background: white;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+/* ============================================================================
+   Drawer Header
+   ============================================================================ */
+
+.explain-drawer-header {
+    padding: 20px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+}
+
+.explain-drawer-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+    font-weight: 600;
+}
+
+.explain-drawer-close {
+    background: none;
+    border: none;
+    font-size: 30px;
+    cursor: pointer;
+    color: #666;
+    line-height: 1;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.explain-drawer-close:hover {
+    color: #333;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+}
+
+/* ============================================================================
+   Entity Search Container (P1-B Task 4)
+   ============================================================================ */
+
+.entity-search-container {
+    position: relative;
+    padding: 15px 20px;
+    border-bottom: 1px solid #ddd;
+    background: #fafafa;
+}
+
+#entity-search-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+
+#entity-search-input:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+/* Entity Search Dropdown */
+.entity-search-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 20px;
+    right: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1001;
+    margin-top: -10px;
+}
+
+/* Entity Search Item */
+.entity-search-item {
+    padding: 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s;
+}
+
+.entity-search-item:last-child {
+    border-bottom: none;
+}
+
+.entity-search-item:hover,
+.entity-search-item.selected {
+    background: #f5f5f5;
+}
+
+.entity-search-item.safe:hover,
+.entity-search-item.safe.selected {
+    background: #f0f9f4;
+}
+
+.entity-search-item.warning:hover,
+.entity-search-item.warning.selected {
+    background: #fffbf0;
+}
+
+.entity-search-item.dangerous:hover,
+.entity-search-item.dangerous.selected {
+    background: #fff5f5;
+}
+
+/* Item Header */
+.entity-search-item .item-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.entity-search-item .safety-icon {
+    font-size: 16px;
+}
+
+.entity-search-item.safe .safety-icon {
+    color: #28a745;
+}
+
+.entity-search-item.warning .safety-icon {
+    color: #ffc107;
+}
+
+.entity-search-item.dangerous .safety-icon {
+    color: #dc3545;
+}
+
+.item-type-badge {
+    background: #007bff;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.entity-search-item .item-name {
+    font-weight: 500;
+    font-size: 14px;
+    color: #333;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Item Hint */
+.entity-search-item .item-hint {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.item-hint.safe {
+    color: #28a745;
+}
+
+.item-hint.warning {
+    color: #d39e00;
+}
+
+.item-hint.dangerous {
+    color: #dc3545;
+}
+
+/* Item Warning (for high-risk blind spots) */
+.entity-search-item .item-warning {
+    font-size: 12px;
+    color: #dc3545;
+    background: #fff5f5;
+    padding: 6px 8px;
+    border-radius: 3px;
+    margin-top: 6px;
+    border-left: 3px solid #dc3545;
+}
+
+.entity-search-item .item-warning strong {
+    font-weight: 600;
+}
+
+/* ============================================================================
+   Tabs
+   ============================================================================ */
+
+.explain-tabs {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    padding: 0 20px;
+    background: white;
+}
+
+.explain-tab {
+    padding: 12px 20px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+}
+
+.explain-tab:hover {
+    color: #007bff;
+    background: rgba(0, 123, 255, 0.05);
+}
+
+.explain-tab.active {
+    border-bottom-color: #007bff;
+    color: #007bff;
+    font-weight: 600;
+}
+
+/* ============================================================================
+   Content Area
+   ============================================================================ */
+
+.explain-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: white;
+}
+
+/* Loading State */
+#explain-loading {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   Results Display
+   ============================================================================ */
+
+.explain-summary {
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    color: #495057;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.no-result {
+    color: #666;
+    font-style: italic;
+    padding: 20px;
+    text-align: center;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.no-result-hint {
+    color: #888;
+    font-size: 13px;
+    font-style: italic;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: #f0f0f0;
+    border-left: 3px solid #ccc;
+    border-radius: 3px;
+    text-align: left;
+}
+
+.error {
+    color: #dc3545;
+    padding: 12px;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* ============================================================================
+   Why Query Results
+   ============================================================================ */
+
+.explain-paths {
+    margin-top: 10px;
+}
+
+.explain-path {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 12px;
+    background: white;
+}
+
+.path-header {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+    font-size: 13px;
+}
+
+.path-node {
+    margin: 6px 0;
+    padding-left: 10px;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.path-edge {
+    margin: 4px 0;
+    padding-left: 20px;
+    color: #666;
+    font-size: 12px;
+    font-style: italic;
+}
+
+.node-type {
+    background: #007bff;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: inline-block;
+    margin-right: 4px;
+}
+
+.node-name {
+    color: #333;
+    font-weight: 500;
+}
+
+.node-link,
+.evidence-link {
+    color: #007bff;
+    text-decoration: none;
+    margin-left: 4px;
+    font-weight: 600;
+}
+
+.node-link:hover,
+.evidence-link:hover {
+    text-decoration: underline;
+}
+
+/* Evidence Section */
+.explain-evidence {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #ddd;
+}
+
+.explain-evidence h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.evidence-item {
+    margin: 6px 0;
+    font-size: 13px;
+    padding: 6px 10px;
+    background: #f8f9fa;
+    border-radius: 3px;
+}
+
+.evidence-type {
+    font-weight: 600;
+    color: #28a745;
+    text-transform: capitalize;
+}
+
+.evidence-ref {
+    color: #495057;
+}
+
+/* ============================================================================
+   Impact Query Results
+   ============================================================================ */
+
+.explain-risks {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 15px;
+}
+
+.explain-risks h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #856404;
+}
+
+.risk-hint {
+    margin: 6px 0;
+    font-size: 13px;
+    color: #856404;
+    padding-left: 10px;
+    border-left: 3px solid #ffc107;
+    padding: 6px 0 6px 10px;
+}
+
+.explain-affected {
+    margin-top: 10px;
+}
+
+.explain-affected h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.affected-node {
+    margin: 6px 0;
+    padding: 8px;
+    border-left: 3px solid #dc3545;
+    padding-left: 10px;
+    background: #fff;
+    border-radius: 0 4px 4px 0;
+}
+
+/* ============================================================================
+   Trace Query Results
+   ============================================================================ */
+
+.explain-timeline {
+    border-left: 2px solid #007bff;
+    padding-left: 15px;
+    margin-left: 10px;
+}
+
+.timeline-event {
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.timeline-event::before {
+    content: '●';
+    position: absolute;
+    left: -21px;
+    color: #007bff;
+    font-size: 12px;
+}
+
+.event-time {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.event-node {
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.event-relation {
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+}
+
+/* ============================================================================
+   Map Query Results
+   ============================================================================ */
+
+.explain-nodes,
+.explain-edges {
+    margin-top: 10px;
+}
+
+.explain-nodes h4,
+.explain-edges h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.subgraph-node {
+    margin: 6px 0;
+    padding: 8px;
+    border-left: 3px solid #28a745;
+    padding-left: 10px;
+    background: #f8f9fa;
+    border-radius: 0 4px 4px 0;
+    font-size: 13px;
+}
+
+.subgraph-edge {
+    font-size: 12px;
+    color: #666;
+    padding: 4px 0 4px 20px;
+    border-left: 2px dashed #ddd;
+    margin-left: 10px;
+}
+
+.node-distance {
+    font-size: 11px;
+    color: #999;
+    font-style: italic;
+}
+
+/* ============================================================================
+   Coverage Badge
+   ============================================================================ */
+
+.coverage-badge {
+    margin: 15px 0;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    background: #f9f9f9;
+}
+
+.coverage-badge-high {
+    border-color: #28a745;
+    background: #f1f9f3;
+}
+
+.coverage-badge-medium {
+    border-color: #ffc107;
+    background: #fffbf0;
+}
+
+.coverage-badge-low {
+    border-color: #dc3545;
+    background: #fff5f5;
+}
+
+.coverage-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.coverage-icon {
+    font-size: 16px;
+}
+
+.coverage-label {
+    font-weight: 600;
+    font-size: 13px;
+    color: #333;
+}
+
+.source-tag {
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.source-tag.active {
+    background: #28a745;
+    color: white;
+}
+
+.source-tag.inactive {
+    background: #e0e0e0;
+    color: #999;
+}
+
+.coverage-count {
+    font-size: 12px;
+    color: #666;
+    font-weight: 500;
+}
+
+.coverage-explanation {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.explanation-icon {
+    font-size: 14px;
+}
+
+.explanation-text {
+    color: #555;
+}
+
+/* ============================================================================
+   Blind Spot Warning
+   ============================================================================ */
+
+.blind-spot-warning {
+    margin: 15px 0;
+    padding: 15px;
+    border-radius: 6px;
+    border-left: 4px solid #ffc107;
+    background: #fffbf0;
+}
+
+.blind-spot-warning.high {
+    border-color: #dc3545;
+    background: #fff5f5;
+}
+
+.blind-spot-warning.medium {
+    border-color: #ffc107;
+    background: #fffbf0;
+}
+
+.blind-spot-warning.low {
+    border-color: #17a2b8;
+    background: #e7f7fa;
+}
+
+.warning-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.warning-icon {
+    font-size: 18px;
+}
+
+.warning-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #856404;
+    flex: 1;
+}
+
+.blind-spot-warning.high .warning-title {
+    color: #721c24;
+}
+
+.blind-spot-warning.low .warning-title {
+    color: #0c5460;
+}
+
+.severity-badge {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #ffc107;
+    color: #333;
+}
+
+.blind-spot-warning.high .severity-badge {
+    background: #dc3545;
+    color: white;
+}
+
+.blind-spot-warning.low .severity-badge {
+    background: #17a2b8;
+    color: white;
+}
+
+.warning-body {
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.warning-reason {
+    margin: 0 0 8px 0;
+    color: #555;
+}
+
+.warning-action {
+    margin: 0;
+    color: #333;
+}
+
+.warning-action strong {
+    color: #856404;
+}
+
+.blind-spot-warning.high .warning-action strong {
+    color: #721c24;
+}
+
+.blind-spot-warning.low .warning-action strong {
+    color: #0c5460;
+}
+
+/* ============================================================================
+   Responsive Design
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    .explain-drawer-content {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .explain-tabs {
+        padding: 0 10px;
+    }
+
+    .explain-tab {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    .explain-content {
+        padding: 15px;
+    }
+
+    .coverage-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .source-tag {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+}

@@ -430,5 +430,10 @@ export class EventStreamService {
     }
 }
 
-// Export as default
+// Export as default for ES6 module imports
 export default EventStreamService;
+
+// Also expose as global variable for non-module scripts
+if (typeof window !== 'undefined') {
+    window.EventStreamService = EventStreamService;
+}

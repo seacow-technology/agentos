@@ -22,7 +22,17 @@ class ModeMonitorView {
     async render(container) {
         container.innerHTML = `
             <div class="mode-monitor">
-                <h2>🛡️ Mode System Monitor</h2>
+                <div class="view-header">
+                    <div>
+                        <h1>shield Mode System Monitor</h1>
+                        <p class="text-sm text-gray-600 mt-1">Real-time mode system monitoring and alerts</p>
+                    </div>
+                    <div class="header-actions">
+                        <button id="refresh-btn" class="btn-primary">
+                            <span class="icon"><span class="material-icons md-18">refresh</span></span> Refresh
+                        </button>
+                    </div>
+                </div>
 
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -43,8 +53,6 @@ class ModeMonitorView {
                     <h3>Recent Alerts</h3>
                     <div id="alerts-list"></div>
                 </div>
-
-                <button id="refresh-btn" class="btn-primary">Refresh</button>
             </div>
         `;
 

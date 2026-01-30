@@ -30,7 +30,7 @@ class ContainerClient:
         self.engine = engine
     
     def check_available(self) -> bool:
-        """检查引擎是否可用"""
+        """检查引擎是否Available"""
         if self.engine == ContainerEngine.NONE:
             return False
         
@@ -161,13 +161,13 @@ class ContainerClientFactory:
     @staticmethod
     def detect_engine(prefer: Optional[str] = None) -> ContainerEngine:
         """
-        检测可用的容器引擎
+        检测Available的容器引擎
         
         Args:
             prefer: 首选引擎 ("docker" 或 "podman")
         
         Returns:
-            可用的引擎类型
+            Available的引擎类型
         """
         if prefer:
             client = ContainerClient(ContainerEngine(prefer))

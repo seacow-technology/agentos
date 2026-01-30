@@ -29,11 +29,18 @@
     gap: 8px;
 }
 
-.execution-plans-view .view-header h2 {
-    margin: 0;
-    font-size: 24px;
+/* Task #25: Execution Plans 页面标题大小调整 - 比副标题大一点点 */
+.execution-plans-view .view-header h1 {
+    font-size: 18px;  /* Task #50: 统一标准 h1 大小，比副标题的 14px 大，比例 1.29x */
     font-weight: 600;
-    color: #212529;
+    color: #1f2937;
+    margin: 0 0 4px 0;
+}
+
+.execution-plans-view .view-header p {
+    margin: 0;
+    font-size: 0.875rem;  /* 14px - 副标题 */
+    color: #6b7280;
 }
 
 .execution-plans-view .header-breadcrumb {

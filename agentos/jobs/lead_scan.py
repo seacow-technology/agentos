@@ -221,7 +221,7 @@ class LeadScanJob:
         # 记录版本到日志
         console.print(f"[dim]Contract versions: storage={storage_version}, miner={miner_version}[/dim]")
 
-        # 检查版本兼容性（当前简单比较，未来可用语义化版本）
+        # 检查版本兼容性（当前简单比较，未来Available语义化版本）
         compatible = storage_version == miner_version
 
         if not compatible:
@@ -518,7 +518,7 @@ class LeadScanJob:
 
             if dry_run:
                 # dry-run: 不实际写库，直接返回（不去重）
-                # 注意：这里不去重是因为 dry-run 时数据库中没有历史数据可用于去重判断
+                # 注意：这里不去重是因为 dry-run 时数据库中没有历史数据Available于去重判断
                 # 返回所有转换后的 findings
                 new_findings.append(dedupe_finding)
             else:

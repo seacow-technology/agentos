@@ -17,7 +17,10 @@ class KnowledgeHealthView {
         this.container.innerHTML = `
             <div class="knowledge-health-view">
                 <div class="view-header">
-                    <h2>Knowledge Health</h2>
+                    <div class="header-title-group">
+                        <h1 style="font-size: 24px; font-weight: 600; margin: 0;">Knowledge Health</h1>
+                        <p class="text-sm text-gray-600 mt-1">Knowledge base health metrics and diagnostics</p>
+                    </div>
                     <div class="header-actions">
                         <button class="btn-refresh" id="health-refresh">
                             <span class="icon"><span class="material-icons md-18">refresh</span></span> Refresh
@@ -33,7 +36,7 @@ class KnowledgeHealthView {
 
                 <!-- Error State -->
                 <div id="health-error" class="error-message" style="display: none;">
-                    <span class="error-icon"><span class="material-icons" style="font-size: 24px;">warning</span></span>
+                    <span class="error-icon"><span class="material-icons md-18">warning</span></span>
                     <div class="error-text" id="health-error-text"></div>
                 </div>
 
@@ -311,7 +314,7 @@ class KnowledgeHealthView {
                     </ul>
                 </div>
                 <div class="bad-smell-suggestion">
-                    <span class="suggestion-icon">💡</span>
+                    <span class="suggestion-icon">lightbulb</span>
                     <span>${this.escapeHtml(smell.suggestion)}</span>
                 </div>
             </div>

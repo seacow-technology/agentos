@@ -214,7 +214,7 @@ class TrendSparkline {
         // Add arrow indicator if enabled
         if (this.options.showArrow) {
             const arrow = document.createElement('span');
-            arrow.className = `material-icons sparkline-arrow sparkline-arrow-${direction}`;
+            arrow.className = "material-icons sparkline-arrow sparkline-arrow-${direction}";
             arrow.textContent = this.getArrowSymbol(direction);
             arrow.style.color = color;
             arrow.style.fontSize = '1rem';

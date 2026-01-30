@@ -109,7 +109,7 @@ class AdminTokenGate {
             <div class="admin-token-content">
                 <div class="admin-token-header">
                     <h3>${title}</h3>
-                    <button class="btn-close" id="token-dialog-close">✕</button>
+                    <button class="btn-close" id="token-dialog-close">close</button>
                 </div>
                 <div class="admin-token-body">
                     <p>${message}</p>

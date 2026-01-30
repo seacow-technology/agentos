@@ -75,13 +75,13 @@ class WorkItemCard {
     getStatusLabel() {
         switch (this.status) {
             case WorkItemCard.STATUS.DISPATCHED:
-                return '🟡 Dispatched';
+                return 'circle Dispatched';
             case WorkItemCard.STATUS.RUNNING:
-                return '🔵 Running';
+                return 'circle Running';
             case WorkItemCard.STATUS.DONE:
-                return '🟢 Done';
+                return 'circle Done';
             case WorkItemCard.STATUS.FAILED:
-                return '🔴 Failed';
+                return 'circle Failed';
             default:
                 return 'Unknown';
         }

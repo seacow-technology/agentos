@@ -39,7 +39,8 @@ class IntentWorkbenchView {
             <div class="intent-workbench">
                 <div class="view-header">
                     <div class="header-left">
-                        <h2>Intent Workbench</h2>
+                        <h1>Intent Workbench</h1>
+                        <p class="text-sm text-gray-600 mt-1">Test and refine intent detection</p>
                         ${this.currentTaskId ? `
                             <div class="breadcrumb">
                                 <a href="#" class="breadcrumb-link" id="back-to-task">
@@ -82,19 +83,15 @@ class IntentWorkbenchView {
                 <!-- Tab Navigation -->
                 <div class="intent-tabs">
                     <button class="tab-btn ${this.currentTab === 'explain' ? 'active' : ''}" data-tab="explain">
-                        <span class="material-icons md-18">psychology</span>
                         Builder Explain
                     </button>
                     <button class="tab-btn ${this.currentTab === 'diff' ? 'active' : ''}" data-tab="diff">
-                        <span class="material-icons md-18">compare_arrows</span>
                         Evaluator Diff
                     </button>
                     <button class="tab-btn ${this.currentTab === 'merge' ? 'active' : ''}" data-tab="merge">
-                        <span class="material-icons md-18">merge</span>
                         Merge Proposal
                     </button>
                     <button class="tab-btn ${this.currentTab === 'history' ? 'active' : ''}" data-tab="history">
-                        <span class="material-icons md-18">history</span>
                         History
                     </button>
                 </div>
@@ -340,7 +337,7 @@ class IntentWorkbenchView {
                 <!-- NL Request Input -->
                 <div class="explain-section">
                     <div class="section-header">
-                        <h3><span class="material-icons md-18">chat</span> Original NL Request</h3>
+                        <h3><span class="material-icons md-18">add_comment</span> Original NL Request</h3>
                     </div>
                     <div class="nl-request-box">
                         <pre>${this.escapeHtml(nlRequest)}</pre>
@@ -409,7 +406,7 @@ class IntentWorkbenchView {
                 <!-- Governance Actions -->
                 <div class="explain-section governance-section">
                     <div class="section-header">
-                        <h3><span class="material-icons md-18">verified_user</span> Governance</h3>
+                        <h3><span class="material-icons md-18">done</span> Governance</h3>
                     </div>
                     <div class="governance-actions">
                         <button class="btn-primary" id="submit-guardian-review-btn">
@@ -626,11 +623,11 @@ class IntentWorkbenchView {
                 <!-- Actions -->
                 <div class="diff-actions">
                     <button class="btn-secondary" id="export-diff-btn">
-                        <span class="material-icons md-18">download</span>
+                        <span class="material-icons md-18">arrow_downward</span>
                         Export Diff
                     </button>
                     <button class="btn-primary" id="create-merge-proposal-btn">
-                        <span class="material-icons md-18">merge</span>
+                        <span class="material-icons md-18">alt_route</span>
                         Create Merge Proposal
                     </button>
                 </div>
@@ -695,7 +692,7 @@ class IntentWorkbenchView {
             deleted: '<span class="material-icons md-18">remove_circle</span>',
             modified: '<span class="material-icons md-18">edit</span>'
         };
-        return icons[type] || '<span class="material-icons md-18">circle</span>';
+        return icons[type] || '<span class="material-icons md-18">radio_button_unchecked</span>';
     }
 
     /**
@@ -775,7 +772,7 @@ class IntentWorkbenchView {
         if (!this.diffData) {
             mergeContent.innerHTML = `
                 <div class="empty-state">
-                    <span class="material-icons md-48">merge</span>
+                    <span class="material-icons md-48">alt_route</span>
                     <h3>No Diff Available</h3>
                     <p>Please run a diff comparison first before creating a merge proposal.</p>
                     <button class="btn-primary" id="goto-diff-tab-btn">Go to Diff Tab</button>
@@ -816,7 +813,7 @@ class IntentWorkbenchView {
                         Reset
                     </button>
                     <button class="btn-primary" id="generate-merge-proposal-btn">
-                        <span class="material-icons md-18">merge</span>
+                        <span class="material-icons md-18">alt_route</span>
                         Generate Merge Proposal
                     </button>
                 </div>
@@ -1002,7 +999,7 @@ class IntentWorkbenchView {
         } finally {
             if (generateBtn) {
                 generateBtn.disabled = false;
-                generateBtn.innerHTML = '<span class="material-icons md-18">merge</span> Generate Merge Proposal';
+                generateBtn.innerHTML = '<span class="material-icons md-18">alt_route</span> Generate Merge Proposal';
             }
         }
     }
@@ -1160,7 +1157,7 @@ class IntentWorkbenchView {
                                     ` : ''}
                                     <div class="version-actions">
                                         <button class="btn-link" data-action="view" data-intent-id="${version.intent_id}">
-                                            <span class="material-icons md-18">visibility</span> View
+                                            <span class="material-icons md-18">preview</span> View
                                         </button>
                                         ${idx < versions.length - 1 ? `
                                             <button class="btn-link" data-action="diff" data-intent-a="${version.intent_id}" data-intent-b="${versions[idx + 1].intent_id}">

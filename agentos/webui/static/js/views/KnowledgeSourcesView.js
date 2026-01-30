@@ -20,7 +20,10 @@ class KnowledgeSourcesView {
         this.container.innerHTML = `
             <div class="knowledge-sources-view">
                 <div class="view-header">
-                    <h2>Data Sources</h2>
+                    <div>
+                        <h1>Data Sources</h1>
+                        <p class="text-sm text-gray-600 mt-1">Manage knowledge base data sources and indexing</p>
+                    </div>
                     <div class="header-actions">
                         <button class="btn-primary" id="sources-add">
                             <span class="icon"><span class="material-icons md-18">add</span></span> Add Source
@@ -48,7 +51,7 @@ class KnowledgeSourcesView {
                     <div class="modal-content modal-lg">
                         <div class="modal-header">
                             <h3 id="sources-modal-title">Add Data Source</h3>
-                            <button class="modal-close" id="sources-modal-close">✕</button>
+                            <button class="modal-close" id="sources-modal-close">close</button>
                         </div>
                         <div class="modal-body">
                             <form id="sources-form">
@@ -103,7 +106,7 @@ class KnowledgeSourcesView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Source Details</h3>
-                            <button class="btn-close" id="sources-drawer-close">✕</button>
+                            <button class="btn-close" id="sources-drawer-close">close</button>
                         </div>
                         <div class="drawer-body" id="sources-drawer-body">
                             <!-- Source details will be rendered here -->

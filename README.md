@@ -1,6 +1,6 @@
 # AgentOS
 
-![Version](https://img.shields.io/badge/version-0.4.0-blue)
+![Version](https://img.shields.io/badge/version-0.6.0-blue)
 ![Reliability](https://img.shields.io/badge/reliability-production--ready-green)
 ![Concurrency](https://img.shields.io/badge/concurrency-fixed-brightgreen)
 ![Tests](https://img.shields.io/badge/tests-2234-success)
@@ -34,7 +34,30 @@ Unlike chat-centric tools that emphasize "full automation", AgentOS emphasizes *
 
 ## **📌 Current Status**
 
-**v0.4.0 — Project-Aware Task Operating System**
+### **v0.6.0 — Planning Safety (Latest)**
+
+**AgentOS v0.6 introduces planning safety as a first-class concept.**
+**Planning is side-effect free by convention and guarded by enforcement helpers.**
+**System-level invariants and cryptographic guarantees are scheduled for v0.6.1.**
+
+**Key Features**:
+- ✅ Chat → Execution hard gate (system-level enforcement)
+- ✅ Planning side-effect detection and prevention
+- ✅ Frozen spec validation framework
+- 🔍 Self-tested with penetration testing (48 tests)
+- 🎯 Clear upgrade path to system-level enforcement (v0.6.1)
+
+**Engineering Maturity**:
+- One boundary at system-level enforcement (Chat → Execution)
+- Two boundaries with convention + guard helpers (Planning, Frozen Spec)
+- Honest about enforcement boundaries and limitations
+- 3 critical vulnerabilities identified and documented for v0.6.1
+
+[📖 See v0.6.0 Release Notes →](docs/releases/V0.6.0_RELEASE_NOTES.md)
+
+---
+
+### **v0.4.0 — Project-Aware Task Operating System**
 
 Major architecture upgrade with multi-repository project management and strict governance.
 
@@ -444,8 +467,8 @@ uv run ruff format .
 
 ## **📊 Project Status**
 
-- **Version**: 0.3.x
-- **Status**: 🟢 Architecture-stable, production-candidate (local)
+- **Version**: 0.6.0
+- **Status**: 🟢 Architecture-stable with planning safety boundaries
 - **License**: Apache License 2.0 (Apache-2.0)
 
 ---

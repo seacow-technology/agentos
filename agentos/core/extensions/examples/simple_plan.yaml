@@ -1,0 +1,56 @@
+# Simple Installation Plan - For Testing
+# This is a minimal plan that can be used for quick testing
+
+id: test.simple
+version: 0.1.0
+
+steps:
+  # Detect platform
+  - id: detect_platform
+    type: detect.platform
+
+  # Create a test marker file
+  - id: create_marker
+    type: exec.shell
+    command: |
+      echo "Installation started at $(date)" > install_marker.txt
+      echo "Platform: $(uname -s)" >> install_marker.txt
+
+  # Write configuration
+  - id: save_config
+    type: write.config
+    config_key: installed
+    config_value: "true"
+
+  - id: save_date
+    type: write.config
+    config_key: install_date
+    config_value: "2026-01-30"
+
+  # Verify success
+  - id: verify
+    type: exec.shell
+    command: |
+      if [ -f install_marker.txt ]; then
+        echo "Installation marker found"
+        cat install_marker.txt
+      else
+        echo "ERROR: Installation marker not found"
+        exit 1
+      fi
+
+uninstall:
+  steps:
+    # Remove marker file
+    - id: remove_marker
+      type: exec.shell
+      command: |
+        rm -f install_marker.txt
+        echo "Marker file removed"
+
+    # Remove config
+    - id: remove_config
+      type: exec.shell
+      command: |
+        rm -f config.json
+        echo "Configuration removed"

@@ -22,7 +22,10 @@ class SkillsView {
         this.container.innerHTML = `
             <div class="skills-view">
                 <div class="view-header">
-                    <h2>Skills Management</h2>
+                    <div>
+                        <h1>Skills Management</h1>
+                        <p class="text-sm text-gray-600 mt-1">Manage available skills and extensions</p>
+                    </div>
                     <div class="header-actions">
                         <button class="btn-refresh" id="skills-refresh">
                             <span class="icon"><span class="material-icons md-18">refresh</span></span> Refresh
@@ -39,7 +42,7 @@ class SkillsView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Skill Details</h3>
-                            <button class="btn-close" id="skills-drawer-close">✕</button>
+                            <button class="btn-close" id="skills-drawer-close">close</button>
                         </div>
                         <div class="drawer-body" id="skills-drawer-body">
                             <!-- Skill details will be rendered here -->
@@ -116,8 +119,8 @@ class SkillsView {
                     label: 'Executable',
                     width: '10%',
                     render: (value) => value
-                        ? '<span class="badge badge-success"><span class="material-icons" style="font-size: 14px; vertical-align: middle;">check</span> Yes</span>'
-                        : '<span class="badge badge-error"><span class="material-icons" style="font-size: 14px; vertical-align: middle;">cancel</span> No</span>'
+                        ? '<span class="badge badge-success"><span class="material-icons md-18">check</span> Yes</span>'
+                        : '<span class="badge badge-error"><span class="material-icons md-18">cancel</span> No</span>'
                 },
                 {
                     key: 'last_execution',
@@ -294,8 +297,8 @@ class SkillsView {
                                 <span class="detail-label">Executable</span>
                                 <span class="detail-value">
                                     ${skillDetail.executable
-                                        ? '<span class="badge badge-success"><span class="material-icons" style="font-size: 14px; vertical-align: middle;">check</span> Yes</span>'
-                                        : '<span class="badge badge-error"><span class="material-icons" style="font-size: 14px; vertical-align: middle;">cancel</span> No</span>'}
+                                        ? '<span class="badge badge-success"><span class="material-icons md-18">check</span> Yes</span>'
+                                        : '<span class="badge badge-error"><span class="material-icons md-18">cancel</span> No</span>'}
                                 </span>
                             </div>
                             <div class="detail-item">

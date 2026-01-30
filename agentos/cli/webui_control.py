@@ -43,8 +43,20 @@ def webui_group():
     is_flag=True,
     help="Run in foreground (not background)",
 )
-def start_cmd(host: str, port: int, foreground: bool):
-    """Start WebUI service"""
+@click.option(
+    "--skip-checks",
+    is_flag=True,
+    help="Skip all environment checks and start directly",
+)
+@click.option(
+    "--auto-fix",
+    is_flag=True,
+    help="Automatically fix all issues (non-interactive mode)",
+)
+def start_cmd(host: str, port: int, foreground: bool, skip_checks: bool, auto_fix: bool):
+    """Start WebUI service (interactive)"""
+    from agentos.cli.startup_checker import StartupChecker
+
     settings = load_settings()
 
     # 使用配置或命令行参数
@@ -60,14 +72,29 @@ def start_cmd(host: str, port: int, foreground: bool):
         rprint(f"[cyan]URL: http://{actual_host}:{actual_port}[/cyan]")
         return
 
+    # 执行启动前检查
+    if not skip_checks:
+        rprint("[bold cyan]═══════════════════════════════════════[/bold cyan]")
+        rprint("[bold cyan]     AgentOS WebUI 启动检查[/bold cyan]")
+        rprint("[bold cyan]═══════════════════════════════════════[/bold cyan]")
+
+        checker = StartupChecker(auto_fix=auto_fix)
+
+        if not checker.run_all_checks():
+            rprint("\n[red]✗ 启动检查失败，已中止启动[/red]")
+            return
+
+        rprint("\n[bold cyan]═══════════════════════════════════════[/bold cyan]")
+
     # 启动
-    rprint(f"[blue]🚀 Starting WebUI at {actual_host}:{actual_port}...[/blue]")
+    rprint(f"\n[blue]🚀 Starting WebUI at {actual_host}:{actual_port}...[/blue]")
 
     if daemon.start(background=not foreground):
         if not foreground:
-            rprint(f"[green]✅ WebUI started successfully[/green]")
-            rprint(f"[cyan]URL: http://{actual_host}:{actual_port}[/cyan]")
-            rprint(f"[dim]Logs: {daemon.log_file}[/dim]")
+            rprint(f"\n[green]✅ WebUI started successfully[/green]")
+            rprint(f"[cyan]🌐 URL: http://{actual_host}:{actual_port}[/cyan]")
+            rprint(f"[dim]📋 Logs: {daemon.log_file}[/dim]")
+            rprint(f"\n[dim]提示: 使用 'agentos webui stop' 停止服务[/dim]")
     else:
         rprint("[red]❌ Failed to start WebUI[/red]")
 

@@ -33,7 +33,10 @@ class SnippetsView {
         this.container.innerHTML = `
             <div class="snippets-view">
                 <div class="view-header">
-                    <h2>Code Snippets</h2>
+                    <div>
+                        <h1>Code Snippets</h1>
+                        <p class="text-sm text-gray-600 mt-1">Reusable code templates and snippets</p>
+                    </div>
                     <div class="header-actions">
                         <button class="btn-refresh" id="snippets-refresh">
                             <span class="icon"><span class="material-icons md-18">refresh</span></span> Refresh
@@ -50,7 +53,7 @@ class SnippetsView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Snippet Details</h3>
-                            <button class="btn-close" id="snippets-drawer-close">✕</button>
+                            <button class="btn-close" id="snippets-drawer-close">close</button>
                         </div>
                         <div class="drawer-body" id="snippets-drawer-body">
                             <!-- Snippet details will be rendered here -->
@@ -63,7 +66,7 @@ class SnippetsView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Edit Snippet</h3>
-                            <button class="btn-close" id="snippets-edit-close">✕</button>
+                            <button class="btn-close" id="snippets-edit-close">close</button>
                         </div>
                         <div class="drawer-body" id="snippets-edit-body">
                             <!-- Edit form will be rendered here -->
@@ -184,7 +187,7 @@ class SnippetsView {
                     render: (_, row) => `
                         <div class="table-actions">
                             <button class="btn-sm btn-action" data-action="view" data-id="${row.id}" title="View">
-                                <span class="material-icons md-18">visibility</span>
+                                <span class="material-icons md-18">preview</span>
                             </button>
                             <button class="btn-sm btn-action" data-action="copy" data-id="${row.id}" title="Copy">
                                 <span class="material-icons md-18">content_copy</span>
@@ -576,11 +579,11 @@ class SnippetsView {
                 <div class="preview-dialog-content" style="width: 500px; height: auto;">
                     <div class="preview-dialog-header">
                         <div class="preview-dialog-title">
-                            <span class="material-icons">psychology</span>
+                            <span class="material-icons md-18">psychology</span>
                             Explain Code
                         </div>
                         <button class="preview-dialog-close" id="explain-dialog-close">
-                            <span class="material-icons">close</span>
+                            <span class="material-icons md-18">close</span>
                         </button>
                     </div>
                     <div class="preview-dialog-body" style="padding: 1.5rem; overflow-y: auto;">

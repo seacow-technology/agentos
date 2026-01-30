@@ -77,7 +77,7 @@ class JsonViewer {
         // Download button
         const downloadBtn = document.createElement('button');
         downloadBtn.className = 'json-btn';
-        downloadBtn.innerHTML = '<span class="material-icons md-18">download</span> Download';
+        downloadBtn.innerHTML = '<span class="material-icons md-18">arrow_downward</span> Download';
         downloadBtn.onclick = () => this.download();
         toolbar.appendChild(downloadBtn);
 
