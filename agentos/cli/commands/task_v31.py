@@ -282,8 +282,23 @@ def mark_task_ready(task_id: str, output_json: bool):
         binding_service = BindingService()
         task_service = TaskService()
 
+        # Get binding first to retrieve project_id and repo_id
+        binding = binding_service.get_binding(task_id)
+        if not binding:
+            console.print(f"[red]✗ Error: Task {task_id} has no binding. Use 'agentos task bind' first.[/red]")
+            raise click.Abort()
+
         # Validate binding
-        binding_service.validate_binding(task_id)
+        is_valid, errors = binding_service.validate_binding(
+            task_id=task_id,
+            project_id=binding.project_id,
+            repo_id=binding.repo_id
+        )
+        if not is_valid:
+            console.print(f"[red]✗ Binding validation failed:[/red]")
+            for error in errors:
+                console.print(f"  - {error}")
+            raise click.Abort()
 
         # Transition to READY state
         state_machine = TaskStateMachine()
