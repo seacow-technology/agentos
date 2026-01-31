@@ -1,0 +1,135 @@
+{
+  "id": "telegram",
+  "name": "Telegram",
+  "icon": "telegram",
+  "description": "Connect Telegram Bot API for instant messaging and automation",
+  "long_description": "Telegram Bot API provides a powerful and flexible way to integrate Telegram messaging into AgentOS. This channel allows you to receive and send messages through your Telegram bot. Each user maintains their own conversation session, ensuring privacy in group chats.",
+  "version": "1.0.0",
+  "provider": "Telegram",
+  "docs_url": "https://core.telegram.org/bots/api",
+  "required_config_fields": [
+    {
+      "name": "bot_token",
+      "label": "Bot Token",
+      "type": "password",
+      "required": true,
+      "placeholder": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+      "help_text": "Your Telegram Bot API token (get from @BotFather, keep this secret)",
+      "secret": true,
+      "validation_regex": "^[0-9]{8,10}:[A-Za-z0-9_-]{35}$",
+      "validation_error": "Bot token must be in format: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+    },
+    {
+      "name": "webhook_secret_token",
+      "label": "Webhook Secret Token",
+      "type": "password",
+      "required": false,
+      "placeholder": "your-secret-token-here",
+      "help_text": "Optional: Secret token for webhook security (recommended, 1-256 characters)",
+      "secret": true,
+      "validation_regex": "^[A-Za-z0-9_-]{1,256}$",
+      "validation_error": "Secret token must be 1-256 characters (alphanumeric, underscore, hyphen)"
+    },
+    {
+      "name": "public_base_url",
+      "label": "Public Base URL",
+      "type": "url",
+      "required": false,
+      "placeholder": "https://your-domain.com",
+      "help_text": "Optional: Override the public base URL for webhook registration (auto-detected if not provided)",
+      "validation_regex": "^https://[a-zA-Z0-9.-]+(?::[0-9]+)?$",
+      "validation_error": "Must be a valid HTTPS URL (e.g., https://example.com)"
+    }
+  ],
+  "webhook_paths": [
+    "/api/channels/telegram/webhook"
+  ],
+  "session_scope": "user_conversation",
+  "capabilities": [
+    "inbound_text",
+    "outbound_text"
+  ],
+  "security_defaults": {
+    "mode": "chat_only",
+    "allow_execute": false,
+    "allowed_commands": ["/session", "/help"],
+    "rate_limit_per_minute": 30,
+    "retention_days": 7,
+    "require_signature": false
+  },
+  "setup_steps": [
+    {
+      "title": "Create Telegram Bot",
+      "description": "Create a new bot using Telegram's @BotFather",
+      "instruction": "1. Open Telegram and search for @BotFather\n2. Send /newbot command\n3. Follow the prompts to choose a name and username\n4. @BotFather will send you a bot token - save it securely",
+      "checklist": [
+        "Messaged @BotFather",
+        "Created new bot with /newbot",
+        "Received bot token from @BotFather",
+        "Saved bot token securely"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Get Bot Token",
+      "description": "Copy your bot token from @BotFather",
+      "instruction": "If you lost your token:\n1. Message @BotFather\n2. Send /mybots command\n3. Select your bot\n4. Click 'API Token' to view or regenerate\n5. Copy the token (format: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz)",
+      "checklist": [
+        "Located bot in @BotFather",
+        "Copied bot token",
+        "Token format validated"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Set Webhook URL",
+      "description": "Register the webhook with Telegram API",
+      "instruction": "DO NOT automate this step. After filling in the configuration form, manually set the webhook using this command:\n\ncurl -X POST https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n    \"url\": \"<WEBHOOK_URL>\",\n    \"secret_token\": \"<YOUR_SECRET_TOKEN>\"\n  }'\n\nReplace:\n- <YOUR_BOT_TOKEN> with your actual bot token\n- <WEBHOOK_URL> with the webhook URL shown in AgentOS (e.g., https://your-domain.com/api/channels/telegram/webhook)\n- <YOUR_SECRET_TOKEN> with the secret token you configured (if any)\n\nSuccessful response: {\"ok\":true,\"result\":true,\"description\":\"Webhook was set\"}",
+      "checklist": [
+        "Prepared curl command with correct values",
+        "Executed setWebhook API call",
+        "Received success response from Telegram",
+        "Verified webhook URL is registered"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Fill Configuration",
+      "description": "Enter bot credentials in AgentOS",
+      "instruction": "1. Paste your bot token in the 'Bot Token' field\n2. (Optional) Generate a random secret token for webhook security\n3. (Optional) Override public base URL if AgentOS auto-detection is incorrect\n4. Click Save to store the configuration",
+      "checklist": [
+        "Entered bot token",
+        "Optionally set webhook secret token",
+        "Optionally set public base URL",
+        "Saved configuration"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Test Connection",
+      "description": "Send a test message to verify the setup",
+      "instruction": "1. Find your bot on Telegram by searching for its username\n2. Click 'Start' or send any message to your bot\n3. Verify the message appears in AgentOS\n4. Send a reply from AgentOS and verify it appears in Telegram",
+      "checklist": [
+        "Found bot on Telegram",
+        "Sent test message to bot",
+        "Message received in AgentOS",
+        "Reply sent successfully from AgentOS"
+      ],
+      "auto_check": true
+    }
+  ],
+  "privacy_badges": [
+    "No Auto Provisioning",
+    "Chat-only by Default",
+    "Local Storage",
+    "Secrets Encrypted",
+    "User-Conversation Session Scope"
+  ],
+  "metadata": {
+    "category": "messaging",
+    "official": true,
+    "verified": true,
+    "cost": "free",
+    "setup_difficulty": "easy"
+  }
+}

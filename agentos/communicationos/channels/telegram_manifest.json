@@ -1,0 +1,115 @@
+{
+  "id": "telegram",
+  "name": "Telegram Bot",
+  "icon": "telegram",
+  "description": "Connect Telegram using Telegram Bot API for seamless messaging",
+  "long_description": "Telegram Bot API provides a straightforward way to integrate Telegram messaging into AgentOS. This channel allows you to receive and send messages through your Telegram bot, supporting rich media, inline keyboards, and various message types.",
+  "version": "1.0.0",
+  "provider": "Telegram",
+  "docs_url": "https://core.telegram.org/bots/api",
+  "required_config_fields": [
+    {
+      "name": "bot_token",
+      "label": "Bot Token",
+      "type": "password",
+      "required": true,
+      "placeholder": "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11",
+      "help_text": "Your Telegram Bot Token from @BotFather (keep this secret)",
+      "secret": true
+    },
+    {
+      "name": "webhook_secret",
+      "label": "Webhook Secret Token",
+      "type": "password",
+      "required": true,
+      "help_text": "Secret token for webhook verification (generate a secure random string)",
+      "secret": true
+    }
+  ],
+  "webhook_paths": [
+    "/api/channels/telegram/webhook"
+  ],
+  "session_scope": "user",
+  "capabilities": [
+    "inbound_text",
+    "outbound_text",
+    "inbound_image",
+    "outbound_image",
+    "inbound_audio",
+    "outbound_audio",
+    "inbound_video",
+    "outbound_video",
+    "inbound_file",
+    "outbound_file",
+    "inbound_location",
+    "outbound_location",
+    "interactive_buttons"
+  ],
+  "security_defaults": {
+    "mode": "chat_only",
+    "allow_execute": false,
+    "allowed_commands": ["/session", "/help", "/start"],
+    "rate_limit_per_minute": 30,
+    "retention_days": 7,
+    "require_signature": true
+  },
+  "setup_steps": [
+    {
+      "title": "Create Telegram Bot",
+      "description": "Create a new bot using BotFather and get your bot token",
+      "instruction": "1. Open Telegram and search for @BotFather\n2. Send /newbot command\n3. Follow the prompts to choose a name and username\n4. Copy the bot token provided by BotFather\n5. Keep this token secure - it's like a password",
+      "checklist": [
+        "Created bot via @BotFather",
+        "Received bot token",
+        "Saved token securely"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Generate Webhook Secret",
+      "description": "Create a secure random string for webhook verification",
+      "instruction": "Generate a secure random string (at least 32 characters) to use as your webhook secret token. This will be sent with webhook requests to verify authenticity.\n\nExample using command line:\nopenssl rand -hex 32",
+      "checklist": [
+        "Generated secure random string",
+        "Saved secret securely"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Configure Webhook URL",
+      "description": "Set the webhook URL in Telegram to receive messages",
+      "instruction": "After saving your configuration, AgentOS will automatically register the webhook URL with Telegram. You can verify the webhook is set correctly by using the Test button below.",
+      "checklist": [
+        "Webhook URL configured",
+        "Webhook verified successfully"
+      ],
+      "auto_check": true
+    },
+    {
+      "title": "Test Connection",
+      "description": "Send a test message to verify the setup",
+      "instruction": "Click the Test button below to verify webhook and credentials. Then send a message to your bot on Telegram to ensure end-to-end connectivity.",
+      "checklist": [
+        "Test passed successfully",
+        "Sent message to bot",
+        "Received response from bot"
+      ],
+      "auto_check": true
+    }
+  ],
+  "privacy_badges": [
+    "No Auto Provisioning",
+    "Chat-only by Default",
+    "Local Storage",
+    "Secrets Encrypted",
+    "Webhook Signature Verified",
+    "Bot Loop Protection"
+  ],
+  "metadata": {
+    "category": "messaging",
+    "official": true,
+    "verified": true,
+    "cost": "free",
+    "setup_difficulty": "easy"
+  }
+}

@@ -1,0 +1,168 @@
+{
+  "id": "slack",
+  "name": "Slack Bot",
+  "icon": "slack",
+  "description": "Connect Slack using Slack Events API for seamless team communication",
+  "long_description": "Slack Events API provides real-time integration with Slack workspaces. This channel allows you to receive and send messages through your Slack bot, supporting threads, mentions, direct messages, and rich message formatting. The adapter handles Slack's async webhook requirements, idempotency, and bot loop prevention.",
+  "version": "1.0.0",
+  "provider": "Slack",
+  "docs_url": "https://api.slack.com/apis/connections/events-api",
+  "required_config_fields": [
+    {
+      "name": "bot_token",
+      "label": "Bot User OAuth Token",
+      "type": "password",
+      "required": true,
+      "placeholder": "xoxb-YOUR-BOT-TOKEN-HERE",
+      "help_text": "Your Slack Bot User OAuth Token (starts with xoxb-)",
+      "secret": true
+    },
+    {
+      "name": "signing_secret",
+      "label": "Signing Secret",
+      "type": "password",
+      "required": true,
+      "placeholder": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
+      "help_text": "Your Slack App Signing Secret for request verification",
+      "secret": true
+    },
+    {
+      "name": "trigger_policy",
+      "label": "Trigger Policy",
+      "type": "select",
+      "required": true,
+      "default": "mention_or_dm",
+      "options": [
+        {
+          "value": "dm_only",
+          "label": "Direct Messages Only"
+        },
+        {
+          "value": "mention_or_dm",
+          "label": "Mentions and Direct Messages"
+        },
+        {
+          "value": "all_messages",
+          "label": "All Messages in Joined Channels"
+        }
+      ],
+      "help_text": "When should the bot respond to messages"
+    }
+  ],
+  "webhook_paths": [
+    "/api/channels/slack/webhook"
+  ],
+  "session_scope": "thread",
+  "capabilities": [
+    "inbound_text",
+    "outbound_text",
+    "inbound_image",
+    "outbound_image",
+    "inbound_file",
+    "outbound_file",
+    "threaded_conversations",
+    "mentions",
+    "rich_formatting",
+    "interactive_buttons"
+  ],
+  "security_defaults": {
+    "mode": "chat_only",
+    "allow_execute": false,
+    "allowed_commands": ["/session", "/help"],
+    "rate_limit_per_minute": 60,
+    "retention_days": 7,
+    "require_signature": true,
+    "idempotency_enabled": true,
+    "bot_loop_protection": true
+  },
+  "setup_steps": [
+    {
+      "title": "Create Slack App",
+      "description": "Create a new Slack App in your workspace",
+      "instruction": "1. Go to https://api.slack.com/apps\n2. Click 'Create New App'\n3. Choose 'From scratch'\n4. Enter app name and select workspace\n5. Click 'Create App'",
+      "checklist": [
+        "Created Slack App",
+        "Selected workspace",
+        "App created successfully"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Configure Bot Token Scopes",
+      "description": "Add required OAuth scopes for the bot",
+      "instruction": "1. In your app settings, go to 'OAuth & Permissions'\n2. Scroll to 'Scopes' section\n3. Add the following Bot Token Scopes:\n   - chat:write (send messages)\n   - channels:history (read channel messages)\n   - groups:history (read private channel messages)\n   - im:history (read DM messages)\n   - mpim:history (read group DM messages)\n   - users:read (get user info)\n   - channels:read (list channels)\n   - groups:read (list private channels)\n   - im:read (list DMs)\n   - mpim:read (list group DMs)\n4. Click 'Save Changes'",
+      "checklist": [
+        "Added chat:write scope",
+        "Added history scopes",
+        "Added read scopes",
+        "Saved changes"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Install App to Workspace",
+      "description": "Install the app and get the Bot User OAuth Token",
+      "instruction": "1. In 'OAuth & Permissions', click 'Install to Workspace'\n2. Review permissions and click 'Allow'\n3. Copy the 'Bot User OAuth Token' (starts with xoxb-)\n4. Keep this token secure - it's like a password",
+      "checklist": [
+        "Installed app to workspace",
+        "Received Bot User OAuth Token",
+        "Saved token securely"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Get Signing Secret",
+      "description": "Copy the Signing Secret for webhook verification",
+      "instruction": "1. In your app settings, go to 'Basic Information'\n2. Scroll to 'App Credentials' section\n3. Copy the 'Signing Secret'\n4. Keep this secret secure",
+      "checklist": [
+        "Found Signing Secret",
+        "Copied secret",
+        "Saved secret securely"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Enable Event Subscriptions",
+      "description": "Configure webhook URL and subscribe to events",
+      "instruction": "1. In your app settings, go to 'Event Subscriptions'\n2. Toggle 'Enable Events' to On\n3. Enter your Request URL (will be provided by AgentOS)\n4. Wait for URL verification (challenge response)\n5. Scroll to 'Subscribe to bot events'\n6. Add the following bot events:\n   - message.channels (messages in channels)\n   - message.groups (messages in private channels)\n   - message.im (direct messages)\n   - message.mpim (group direct messages)\n7. Click 'Save Changes'\n8. Reinstall app if prompted",
+      "checklist": [
+        "Enabled Event Subscriptions",
+        "URL verified successfully",
+        "Subscribed to message events",
+        "Saved changes"
+      ],
+      "auto_check": true
+    },
+    {
+      "title": "Test Connection",
+      "description": "Send a test message to verify the setup",
+      "instruction": "Click the Test button below to verify webhook and credentials. Then:\n1. Invite your bot to a channel: /invite @YourBotName\n2. Send a message mentioning the bot: @YourBotName hello\n3. Or send a direct message to the bot\n4. Verify you receive a response",
+      "checklist": [
+        "Test passed successfully",
+        "Invited bot to channel",
+        "Sent message to bot",
+        "Received response from bot"
+      ],
+      "auto_check": true
+    }
+  ],
+  "privacy_badges": [
+    "No Auto Provisioning",
+    "Chat-only by Default",
+    "Local Storage",
+    "Secrets Encrypted",
+    "Webhook Signature Verified",
+    "Bot Loop Protection",
+    "Idempotency Enabled",
+    "3-Second Response Guarantee"
+  ],
+  "metadata": {
+    "category": "messaging",
+    "official": true,
+    "verified": true,
+    "cost": "free",
+    "setup_difficulty": "medium",
+    "async_webhook": true,
+    "requires_3sec_response": true
+  }
+}

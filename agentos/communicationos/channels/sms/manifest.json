@@ -1,0 +1,222 @@
+{
+  "id": "sms",
+  "name": "SMS (Bidirectional)",
+  "icon": "message",
+  "description": "Send and receive SMS via Twilio with inbound webhook support",
+  "long_description": "SMS Channel provides bidirectional SMS communication through Twilio's API. Supports both outbound sending and inbound webhook processing for replies. Each message is sent to/from a single phone number. Inbound messages are processed asynchronously through the MessageBus pipeline with deduplication and rate limiting.",
+  "version": "2.0.0",
+  "variant": "bidirectional",
+  "provider": "Twilio",
+  "docs_url": "https://www.twilio.com/docs/sms",
+  "required_config_fields": [
+    {
+      "name": "twilio_account_sid",
+      "label": "Twilio Account SID",
+      "type": "text",
+      "required": true,
+      "placeholder": "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "help_text": "Your Twilio Account SID (found in Twilio Console, starts with AC)",
+      "secret": true,
+      "validation_regex": "^AC[a-f0-9]{32}$",
+      "validation_error": "Account SID must start with AC and be 34 characters long"
+    },
+    {
+      "name": "twilio_auth_token",
+      "label": "Twilio Auth Token",
+      "type": "password",
+      "required": true,
+      "placeholder": "your_auth_token_here",
+      "help_text": "Your Twilio Auth Token (keep this secret, found in Twilio Console)",
+      "secret": true,
+      "validation_regex": "^[a-f0-9]{32}$",
+      "validation_error": "Auth Token must be 32 hexadecimal characters"
+    },
+    {
+      "name": "twilio_from_number",
+      "label": "From Phone Number",
+      "type": "text",
+      "required": true,
+      "placeholder": "+15551234567",
+      "help_text": "Your Twilio phone number to send from (E.164 format: +1234567890)",
+      "secret": false,
+      "validation_regex": "^\\+[1-9]\\d{1,14}$",
+      "validation_error": "Phone number must be in E.164 format (e.g., +15551234567)"
+    },
+    {
+      "name": "sms_max_len",
+      "label": "Max Message Length",
+      "type": "number",
+      "required": false,
+      "default": 480,
+      "placeholder": "480",
+      "help_text": "Maximum SMS message length in characters (default 480, max 1600 for concatenated SMS)",
+      "validation_regex": "^[1-9][0-9]{1,3}$",
+      "validation_error": "Max length must be between 10 and 1600 characters"
+    },
+    {
+      "name": "webhook_path_token",
+      "label": "Webhook Path Token",
+      "type": "password",
+      "required": true,
+      "placeholder": "Generate a 32+ character random string",
+      "help_text": "Secret token for webhook URL security (prevents unauthorized access). Use a cryptographically random string. Generate with: python -c 'import secrets; print(secrets.token_urlsafe(32))'",
+      "secret": true,
+      "validation_regex": "^[a-zA-Z0-9_-]{32,}$",
+      "validation_error": "Path token must be at least 32 alphanumeric characters"
+    },
+    {
+      "name": "test_to_number",
+      "label": "Test Recipient Number (Optional)",
+      "type": "text",
+      "required": false,
+      "placeholder": "+15559876543",
+      "help_text": "Optional: A phone number to use for connection testing (E.164 format)",
+      "secret": false,
+      "validation_regex": "^\\+[1-9]\\d{1,14}$",
+      "validation_error": "Phone number must be in E.164 format (e.g., +15559876543)"
+    }
+  ],
+  "webhook_paths": [
+    "/api/channels/sms/twilio/webhook/{path_token}"
+  ],
+  "session_scope": "user",
+  "session_scope_notes": {
+    "user_key_format": "phone_number (E.164 format, e.g., +15551234567)",
+    "conversation_key_format": "phone_number (same as user_key for 1:1 SMS conversations)",
+    "send_only": false,
+    "allow_inbound": true,
+    "bidirectional": "Supports both sending and receiving SMS. Inbound messages processed via webhook with signature verification."
+  },
+  "capabilities": [
+    "outbound_text",
+    "inbound_text"
+  ],
+  "security_defaults": {
+    "mode": "bidirectional",
+    "allow_execute": false,
+    "allowed_commands": [],
+    "rate_limit_per_minute": 10,
+    "retention_days": 7,
+    "require_signature": true
+  },
+  "setup_steps": [
+    {
+      "title": "Create Twilio Account",
+      "description": "Sign up for Twilio and verify your account",
+      "instruction": "1. Go to https://www.twilio.com/try-twilio\n2. Sign up for a new account (free trial available)\n3. Verify your email address\n4. Complete phone verification\n5. You will receive free trial credits for testing",
+      "checklist": [
+        "Created Twilio account",
+        "Verified email address",
+        "Completed phone verification",
+        "Received trial credits"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Get Account Credentials",
+      "description": "Locate your Account SID and Auth Token",
+      "instruction": "1. Log in to Twilio Console (https://console.twilio.com)\n2. On the Dashboard page, find the 'Account Info' section\n3. Copy your Account SID (starts with 'AC')\n4. Click 'View' or the eye icon to reveal your Auth Token\n5. Copy your Auth Token (32-character hex string)\n6. Store both credentials securely - you'll need them in step 5\n\nSecurity Note: Treat your Auth Token like a password. Never commit it to version control or share it publicly.",
+      "checklist": [
+        "Logged into Twilio Console",
+        "Located Account Info section",
+        "Copied Account SID (AC...)",
+        "Revealed and copied Auth Token",
+        "Stored credentials securely"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Get or Buy a Phone Number",
+      "description": "Acquire a Twilio phone number for sending SMS",
+      "instruction": "1. In Twilio Console, navigate to Phone Numbers > Manage > Buy a number\n2. Select your country/region\n3. Check the 'SMS' capability filter\n4. Choose a phone number from the available list\n5. Click 'Buy' to purchase the number (trial accounts can get one free number)\n6. Copy the phone number in E.164 format (e.g., +15551234567)\n\nNote: Trial accounts can only send SMS to verified phone numbers. To send to any number, upgrade your account.",
+      "checklist": [
+        "Navigated to Buy a Number page",
+        "Selected country/region",
+        "Filtered for SMS capability",
+        "Purchased/acquired a phone number",
+        "Copied phone number in E.164 format"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Verify Test Recipient (Trial Accounts)",
+      "description": "For trial accounts: verify the phone number you want to test with",
+      "instruction": "If you are using a Twilio trial account:\n\n1. In Twilio Console, go to Phone Numbers > Manage > Verified Caller IDs\n2. Click the '+' button to add a new verified number\n3. Enter the phone number you want to send test messages to\n4. Twilio will send a verification code to that number\n5. Enter the verification code to complete verification\n\nNote: Upgraded accounts can skip this step and send to any number.\n\nIf you've already upgraded your account, you can skip this step entirely.",
+      "checklist": [
+        "Checked account status (trial or upgraded)",
+        "If trial: navigated to Verified Caller IDs",
+        "If trial: added and verified test recipient number",
+        "If upgraded: skipped this step"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Configure SMS Channel in AgentOS",
+      "description": "Enter your Twilio credentials and settings",
+      "instruction": "1. Paste your Twilio Account SID in the 'Twilio Account SID' field\n2. Paste your Twilio Auth Token in the 'Twilio Auth Token' field\n3. Enter your Twilio phone number in E.164 format (e.g., +15551234567)\n4. Optionally set Max Message Length (default 480 characters)\n   - Standard SMS: up to 160 characters (single segment)\n   - Extended SMS: 480 characters recommended (3 segments)\n   - Concatenated SMS: up to 1600 characters (10 segments, higher cost)\n5. Optionally enter a Test Recipient Number for connection testing\n6. Click 'Save' to store the configuration\n\nSecurity: Your credentials are encrypted at rest in AgentOS.",
+      "checklist": [
+        "Entered Twilio Account SID",
+        "Entered Twilio Auth Token",
+        "Entered From Phone Number (E.164 format)",
+        "Set Max Message Length (or kept default)",
+        "Optionally added Test Recipient Number",
+        "Saved configuration"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Test SMS Sending",
+      "description": "Send a test message to verify the setup",
+      "instruction": "1. If you provided a Test Recipient Number in step 5, click 'Test Connection' button below\n2. AgentOS will send a test SMS to that number\n3. Check the recipient phone for the test message\n4. If successful, you'll see a success confirmation\n5. If failed, check error message and verify:\n   - Account SID and Auth Token are correct\n   - From Number is valid and SMS-capable\n   - Test recipient is verified (for trial accounts)\n   - You have sufficient Twilio credits\n\nAlternatively, you can test by sending an actual notification through AgentOS.\n\nNote: Each SMS segment costs money. Standard rates apply. Check Twilio pricing for your region.",
+      "checklist": [
+        "Clicked Test Connection (if test number provided)",
+        "Received test SMS on recipient phone",
+        "Verified SMS sender shows your From Number",
+        "Confirmed configuration is working"
+      ],
+      "auto_check": true
+    },
+    {
+      "title": "Configure Twilio Inbound Webhook (Optional)",
+      "description": "Enable inbound SMS by configuring Twilio webhook for replies",
+      "instruction": "To receive SMS replies:\n\n1. Log in to Twilio Console (https://console.twilio.com)\n2. Navigate to Phone Numbers > Manage > Active Numbers\n3. Click on your SMS phone number\n4. Scroll to 'Messaging Configuration' section\n5. Set 'A MESSAGE COMES IN' webhook URL to:\n   https://YOUR_DOMAIN.com/api/channels/sms/twilio/webhook/YOUR_PATH_TOKEN\n   (Replace YOUR_DOMAIN with your actual domain)\n   (Replace YOUR_PATH_TOKEN with the webhook path token from step 5)\n6. Set HTTP method to: POST\n7. Click 'Save' at the bottom of the page\n\nSecurity Notes:\n- Keep your webhook path token secret\n- Use HTTPS in production (required for security)\n- Twilio will sign requests with your Auth Token (automatically verified)\n\nIf you only need to send SMS (no replies), you can skip this step.",
+      "checklist": [
+        "Logged into Twilio Console",
+        "Navigated to Active Numbers",
+        "Selected my SMS phone number",
+        "Configured 'A MESSAGE COMES IN' webhook URL",
+        "Set HTTP method to POST",
+        "Saved configuration",
+        "Or: Skipped this step (send-only mode)"
+      ],
+      "auto_check": false
+    }
+  ],
+  "privacy_badges": [
+    "No Auto Provisioning",
+    "Bidirectional (Webhook Optional)",
+    "Signature Verification Required",
+    "Local Storage",
+    "Secrets Encrypted",
+    "1:1 Conversation Tracking"
+  ],
+  "metadata": {
+    "category": "messaging",
+    "official": true,
+    "verified": true,
+    "cost": "paid",
+    "setup_difficulty": "easy",
+    "send_only": false,
+    "bidirectional": true,
+    "version_notes": "v2 adds inbound webhook support for bidirectional SMS."
+  },
+  "limitations": {
+    "send_only": false,
+    "webhook_optional": "Inbound webhook is optional - channel works in send-only mode without it",
+    "https_required": "HTTPS required in production for webhook security",
+    "trial_restrictions": "Trial accounts can only send to verified phone numbers",
+    "rate_limits": "Subject to Twilio account rate limits",
+    "cost_per_message": "Each SMS segment incurs Twilio charges",
+    "concatenation": "Messages over 160 characters are split into multiple segments (higher cost)"
+  }
+}

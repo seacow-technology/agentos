@@ -1,0 +1,228 @@
+{
+  "id": "discord",
+  "name": "Discord",
+  "icon": "discord",
+  "description": "Connect Discord Interactions API (Slash Commands) for community engagement and bot interactions",
+  "long_description": "Discord Interactions API provides a secure, slash-command-based integration for Discord servers. This channel uses Discord's Interactions endpoint (not Gateway/WebSocket) to handle slash commands only, ensuring chat-only safety by default. Each user maintains their own conversation session, with support for thread-based conversations. The bot responds only when explicitly invoked via slash commands (e.g., /agent hello), making it ideal for controlled, permission-based interactions without monitoring all server messages.",
+  "version": "1.0.0",
+  "variant": "interactions_slash_command",
+  "provider": "Discord",
+  "docs_url": "https://discord.com/developers/docs/interactions/application-commands",
+  "required_config_fields": [
+    {
+      "name": "application_id",
+      "label": "Application ID",
+      "type": "string",
+      "required": true,
+      "placeholder": "123456789012345678",
+      "help_text": "Your Discord Application ID (18-19 digit number, found in General Information page of Discord Developer Portal)",
+      "secret": false,
+      "validation_regex": "^[0-9]{18,19}$",
+      "validation_error": "Application ID must be an 18-19 digit number"
+    },
+    {
+      "name": "public_key",
+      "label": "Public Key",
+      "type": "string",
+      "required": true,
+      "placeholder": "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456",
+      "help_text": "Your Discord Application Public Key (64-character hexadecimal string, used for Ed25519 signature verification, found in General Information page)",
+      "secret": false,
+      "validation_regex": "^[a-f0-9]{64}$",
+      "validation_error": "Public Key must be exactly 64 hexadecimal characters"
+    },
+    {
+      "name": "bot_token",
+      "label": "Bot Token",
+      "type": "password",
+      "required": true,
+      "placeholder": "YOUR-DISCORD-BOT-TOKEN-HERE",
+      "help_text": "Your Discord Bot Token (starts with MTI..., get from Bot page in Discord Developer Portal, keep this secret, used for calling Discord API)",
+      "secret": true,
+      "validation_regex": "^[A-Za-z0-9._-]{59,}$",
+      "validation_error": "Bot token must be at least 59 characters and contain only alphanumeric, dots, underscores, and hyphens"
+    },
+    {
+      "name": "command_name",
+      "label": "Slash Command Name",
+      "type": "string",
+      "required": false,
+      "default": "agent",
+      "placeholder": "agent",
+      "help_text": "The slash command name users will type (e.g., /agent hello). Must be lowercase, 1-32 characters, alphanumeric and hyphens only. Default: 'agent'",
+      "validation_regex": "^[a-z0-9-]{1,32}$",
+      "validation_error": "Command name must be lowercase, 1-32 characters, alphanumeric and hyphens only"
+    },
+    {
+      "name": "max_reply_chars",
+      "label": "Max Reply Characters",
+      "type": "number",
+      "required": false,
+      "default": 1800,
+      "placeholder": "1800",
+      "help_text": "Maximum characters per reply message (Discord limit is 2000, recommended 1800 for safety margin). Default: 1800",
+      "validation_regex": "^[0-9]{1,4}$",
+      "validation_error": "Must be a number between 1 and 2000"
+    }
+  ],
+  "webhook_paths": [
+    "/api/channels/discord/interactions"
+  ],
+  "session_scope": "user_conversation",
+  "session_scope_notes": {
+    "conversation_key_format": "For guild channels: guild_id:thread_id (if in thread) or guild_id:channel_id (if not in thread). For DMs: dm:channel_id",
+    "user_key_format": "user_id (Discord user ID, 18-19 digit snowflake)",
+    "message_id_format": "interaction_id (unique snowflake ID for each interaction)",
+    "thread_isolation": "Threads in Discord channels are isolated into separate conversation_keys, enabling multiple parallel conversations in the same guild channel. DMs are also isolated per user."
+  },
+  "capabilities": [
+    "inbound_text",
+    "outbound_text"
+  ],
+  "security_defaults": {
+    "mode": "chat_only",
+    "allow_execute": false,
+    "allowed_commands": ["/session", "/help"],
+    "rate_limit_per_minute": 30,
+    "retention_days": 7,
+    "require_signature": true
+  },
+  "webhook_verification": {
+    "challenge_type": "ping_pong",
+    "description": "Discord sends interaction type=1 (PING) to verify the interactions endpoint. The adapter must verify the Ed25519 signature using the public_key, then respond with {\"type\": 1} (PONG). All subsequent interactions must also verify the signature before processing.",
+    "example_request": {
+      "type": 1,
+      "application_id": "123456789012345678",
+      "id": "987654321098765432",
+      "token": "interaction_token_example",
+      "version": 1
+    },
+    "example_response": {
+      "status_code": 200,
+      "content_type": "application/json",
+      "body": {
+        "type": 1
+      }
+    },
+    "signature_verification": {
+      "algorithm": "Ed25519",
+      "headers": {
+        "X-Signature-Ed25519": "Signature of the request body",
+        "X-Signature-Timestamp": "Timestamp of the request"
+      },
+      "verification_message_format": "timestamp + request_body",
+      "notes": "Concatenate the X-Signature-Timestamp header value with the raw request body, then verify the Ed25519 signature using the public_key. Reject requests with invalid signatures to prevent unauthorized access."
+    }
+  },
+  "setup_steps": [
+    {
+      "title": "Create Discord Application",
+      "description": "Create a new Discord application in the Discord Developer Portal",
+      "instruction": "1. Go to https://discord.com/developers/applications\n2. Click 'New Application' button in the top-right\n3. Enter your Application Name (e.g., 'AgentOS Bot')\n4. Read and accept the Discord Developer Terms of Service\n5. Click 'Create' button\n6. You will be redirected to your application's General Information page\n7. Copy and save your Application ID (18-19 digit number) and Public Key (64-character hex string) - you'll need these in Step 3",
+      "checklist": [
+        "Visited Discord Developer Portal",
+        "Created new application",
+        "Accepted Terms of Service",
+        "Application created successfully",
+        "Copied Application ID",
+        "Copied Public Key"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Configure Bot Token and Public Key",
+      "description": "Set up bot credentials and copy essential keys",
+      "instruction": "1. In your application settings, navigate to 'Bot' in the left sidebar\n2. Click 'Add Bot' button (if not already created)\n3. Confirm by clicking 'Yes, do it!'\n4. Under the 'TOKEN' section, click 'Reset Token' button\n5. Copy the Bot Token (starts with MTI...) and save it securely - you'll need it in Step 3\n   IMPORTANT: This token grants full access to your bot, keep it secret!\n6. Scroll down to 'Privileged Gateway Intents' section\n   NOTE: For slash commands via Interactions API, you do NOT need to enable any Gateway Intents\n   (Gateway Intents are only for WebSocket Gateway API, which we are NOT using)\n7. Return to 'General Information' page to verify you have:\n   - Application ID (already copied in Step 1)\n   - Public Key (already copied in Step 1)\n   - Bot Token (just copied)",
+      "checklist": [
+        "Navigated to Bot page",
+        "Created bot user",
+        "Copied Bot Token (MTI...)",
+        "Saved Bot Token securely",
+        "Verified no Gateway Intents needed for slash commands",
+        "Confirmed all three credentials available"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Fill Configuration in AgentOS",
+      "description": "Enter bot credentials in AgentOS",
+      "instruction": "1. Return to AgentOS Discord channel configuration page\n2. Enter the Application ID (18-19 digit number)\n3. Enter the Public Key (64-character hex string)\n4. Enter the Bot Token (starts with MTI..., keep this secret)\n5. (Optional) Customize the Slash Command Name (default: 'agent')\n   - Must be lowercase, 1-32 characters, alphanumeric and hyphens only\n   - Example: 'agent', 'ask', 'chat'\n6. (Optional) Adjust Max Reply Characters (default: 1800)\n   - Discord's limit is 2000 characters\n   - Recommended: 1800 to leave safety margin\n7. Click 'Save' to store the configuration\n8. After saving, AgentOS will provide your webhook URL:\n   Format: https://your-domain.com/api/channels/discord/interactions\n   Copy this URL - you'll need it in Step 4",
+      "checklist": [
+        "Entered Application ID in AgentOS",
+        "Entered Public Key in AgentOS",
+        "Entered Bot Token in AgentOS",
+        "Configured Slash Command Name (or kept default)",
+        "Configured Max Reply Characters (or kept default)",
+        "Saved configuration",
+        "Copied webhook URL for Step 4"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Register Slash Command",
+      "description": "Register the slash command with Discord API",
+      "instruction": "1. You need to register your slash command with Discord using their API\n2. This is a one-time manual step using curl (or any HTTP client)\n3. Replace the placeholders in the command below:\n   - YOUR_APPLICATION_ID: Your Application ID from Step 1\n   - YOUR_BOT_TOKEN: Your Bot Token from Step 2\n   - YOUR_COMMAND_NAME: Your chosen command name (default: 'agent')\n\n4. Run this curl command in your terminal:\n\n```bash\ncurl -X POST \\\n  \"https://discord.com/api/v10/applications/YOUR_APPLICATION_ID/commands\" \\\n  -H \"Authorization: Bot YOUR_BOT_TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"name\": \"YOUR_COMMAND_NAME\",\n    \"description\": \"Interact with AgentOS AI assistant\",\n    \"options\": [\n      {\n        \"name\": \"message\",\n        \"description\": \"Your message to the AI assistant\",\n        \"type\": 3,\n        \"required\": true\n      }\n    ]\n  }'\n```\n\n5. Example with actual values (command name: 'agent'):\n\n```bash\ncurl -X POST \\\n  \"https://discord.com/api/v10/applications/123456789012345678/commands\" \\\n  -H \"Authorization: Bot YOUR-DISCORD-BOT-TOKEN-HERE\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"name\": \"agent\",\n    \"description\": \"Interact with AgentOS AI assistant\",\n    \"options\": [\n      {\n        \"name\": \"message\",\n        \"description\": \"Your message to the AI assistant\",\n        \"type\": 3,\n        \"required\": true\n      }\n    ]\n  }'\n```\n\n6. Successful response will look like:\n```json\n{\n  \"id\": \"987654321098765432\",\n  \"application_id\": \"123456789012345678\",\n  \"name\": \"agent\",\n  \"description\": \"Interact with AgentOS AI assistant\",\n  \"version\": \"1\",\n  \"type\": 1,\n  \"options\": [...]\n}\n```\n\n7. The command will be available globally within ~1 hour (Discord's propagation time)\n8. For testing, you can register a guild-specific command (instant availability):\n   - Use endpoint: /applications/YOUR_APPLICATION_ID/guilds/YOUR_GUILD_ID/commands\n   - Same request body, but command only works in that specific guild\n\n9. Next, configure the Interactions Endpoint URL in Discord Developer Portal:\n   - Go to your application's 'General Information' page\n   - Scroll to 'Interactions Endpoint URL' field\n   - Enter your webhook URL: https://your-domain.com/api/channels/discord/interactions\n   - Click 'Save Changes'\n   - Discord will send a PING (type=1) request to verify the endpoint\n   - Your AgentOS adapter will verify the signature and respond with PONG ({\"type\": 1})\n   - If verification succeeds, the URL will be saved\n   - If verification fails, check your public_key and ensure AgentOS is publicly accessible",
+      "checklist": [
+        "Replaced placeholders in curl command",
+        "Ran curl command to register slash command",
+        "Received successful response from Discord API",
+        "Command ID returned in response",
+        "Entered Interactions Endpoint URL in Discord Developer Portal",
+        "URL verification succeeded (PING-PONG handshake)",
+        "Interactions Endpoint URL saved"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Verify Signature and Test Endpoint",
+      "description": "Verify Ed25519 signature verification is working",
+      "instruction": "1. The Interactions Endpoint URL verification (Step 4) already tested signature verification\n2. If verification succeeded, Ed25519 signature verification is working correctly\n3. Optional: Test manually by clicking 'Test' button in AgentOS Discord channel config\n   - This will simulate a Discord PING interaction\n   - Verify that signature validation passes\n   - Verify that PONG response is returned\n4. Important security notes:\n   - All Discord interactions MUST be signature-verified using Ed25519\n   - The adapter concatenates X-Signature-Timestamp header + raw request body\n   - Then verifies the Ed25519 signature in X-Signature-Ed25519 header using public_key\n   - Reject any requests with invalid or missing signatures\n   - This prevents unauthorized parties from sending fake interactions\n5. If signature verification fails:\n   - Double-check your Public Key (64-character hex string)\n   - Ensure you copied it correctly from Discord Developer Portal General Information page\n   - Verify your AgentOS instance is using the latest public_key value\n   - Check server logs for detailed error messages",
+      "checklist": [
+        "Interactions Endpoint URL verification succeeded",
+        "Signature verification working (PING-PONG handshake passed)",
+        "Optionally tested using AgentOS Test button",
+        "Signature validation passes",
+        "PONG response returned correctly",
+        "Understood security requirements"
+      ],
+      "auto_check": true
+    },
+    {
+      "title": "Test Slash Command",
+      "description": "Send a test slash command to verify the full setup",
+      "instruction": "1. Invite your bot to a Discord server:\n   - Go to your application's 'OAuth2' page in Discord Developer Portal\n   - Navigate to 'OAuth2 URL Generator'\n   - Under 'SCOPES', check 'bot' and 'applications.commands'\n   - Under 'BOT PERMISSIONS', select:\n     - Send Messages\n     - Read Message History (optional, for context)\n     - Use Slash Commands\n   - Copy the generated URL at the bottom\n   - Open the URL in a browser and select a server to invite the bot\n   - Click 'Authorize'\n\n2. Wait for slash command propagation:\n   - Global commands: Up to 1 hour\n   - Guild-specific commands: Instant\n\n3. In Discord, open any text channel where the bot has permissions\n\n4. Type / (slash) and you should see your command appear in the autocomplete:\n   - Example: /agent\n\n5. Select the command and type your message:\n   - Example: /agent message:Hello, how are you?\n\n6. Press Enter to send the slash command\n\n7. Verify the bot responds:\n   - Response should appear within a few seconds\n   - Response is posted as a follow-up message (not ephemeral)\n   - Conversation state is maintained per user-conversation\n\n8. Test in different contexts:\n   - Test in server channel (guild conversation)\n   - Test in thread (isolated guild:thread conversation)\n   - Test in DM (isolated dm:channel conversation)\n   - Verify each context maintains separate conversation state\n\n9. Verify conversation isolation:\n   - Start a conversation in one channel\n   - Start a different conversation in another channel\n   - Verify contexts don't mix\n   - Threads should isolate conversations within the same channel\n\n10. Check AgentOS logs:\n    - Verify incoming interactions are logged\n    - Verify signature validation passes for all interactions\n    - Verify responses are sent successfully\n    - Check for any error messages",
+      "checklist": [
+        "Generated OAuth2 invite URL",
+        "Invited bot to test server",
+        "Waited for command propagation (or used guild command)",
+        "Slash command appears in autocomplete",
+        "Sent test slash command: /agent message:Hello",
+        "Bot responded successfully",
+        "Response appeared in Discord",
+        "Tested in server channel",
+        "Tested in thread (verified isolation)",
+        "Tested in DM (verified isolation)",
+        "Verified conversation state per context",
+        "Checked AgentOS logs for successful interactions"
+      ],
+      "auto_check": true
+    }
+  ],
+  "privacy_badges": [
+    "No Auto Provisioning",
+    "Chat-only by Default",
+    "Local Storage",
+    "Secrets Encrypted",
+    "User-Conversation Session Scope",
+    "Slash Command Only"
+  ],
+  "metadata": {
+    "category": "messaging",
+    "official": true,
+    "verified": true,
+    "cost": "free",
+    "setup_difficulty": "medium",
+    "complexity_notes": "Medium complexity: Requires manual slash command registration via API, Ed25519 signature verification, and interactions endpoint URL configuration. Simpler than Slack (no OAuth flow) but requires understanding of Discord's Interactions API (not Gateway API).",
+    "architecture_notes": "Uses Discord Interactions API (HTTP-based slash commands) NOT Gateway API (WebSocket-based message monitoring). This design ensures slash-command-only interaction, preventing the bot from monitoring all server messages, which aligns with chat-only security defaults."
+  }
+}

@@ -3598,8 +3598,12 @@ function createMessageElement(role, content, metadata = {}) {
     } else {
         div.className = `message ${role}`;
 
+        // 检查是否为语音消息
+        const isVoiceMessage = metadata && metadata.source === 'voice';
+        const voiceIcon = isVoiceMessage ? (role === 'user' ? '🎤' : '🔊') : '';
+
         div.innerHTML = `
-            <div class="role">${role}</div>
+            <div class="role">${role}${voiceIcon ? ' ' + voiceIcon : ''}</div>
             <div class="content">${escapeHtml(content)}</div>
             <div class="timestamp">${new Date().toLocaleTimeString()}</div>
         `;
@@ -8616,6 +8620,10 @@ function renderAgentMatrixView(container) {
 
 /**
  * ChatVoiceManager - Manages voice interaction in Chat
+ *
+ * 方案 A：完整语音对话循环
+ * - handsfree 模式：录音 → 转录 → 自动发送 → AI 回复（文本+语音）→ 可继续对话
+ * - hybrid 模式：录音 → 转录 → 插入输入框 → 用户编辑/发送 → AI 回复（文本+语音）
  */
 class ChatVoiceManager {
     constructor() {
@@ -8625,6 +8633,12 @@ class ChatVoiceManager {
         this.voiceSessionId = null;
         this.partialTranscript = '';
         this.finalTranscript = '';
+
+        // 语音对话模式
+        this.mode = 'handsfree'; // 'handsfree' | 'hybrid'
+
+        // TTS 音频播放器（复用 VoiceAudioPlayer）
+        this.audioPlayer = null;
 
         this.button = document.getElementById('voice-input-btn');
         this.input = document.getElementById('chat-input');
@@ -8637,6 +8651,32 @@ class ChatVoiceManager {
         console.log('[ChatVoice] Initializing...');
         this.button.addEventListener('click', () => this.toggle());
         this.updateButtonUI();
+
+        // 初始化 TTS 音频播放器
+        this.initAudioPlayer();
+
+        // 从 localStorage 恢复模式
+        const savedMode = localStorage.getItem('chat_voice_mode');
+        if (savedMode === 'hybrid' || savedMode === 'handsfree') {
+            this.mode = savedMode;
+        }
+        console.log('[ChatVoice] Mode:', this.mode);
+    }
+
+    /**
+     * 初始化 TTS 音频播放器
+     */
+    initAudioPlayer() {
+        try {
+            if (window.VoiceAudioPlayer) {
+                this.audioPlayer = new VoiceAudioPlayer();
+                console.log('[ChatVoice] Audio player initialized');
+            } else {
+                console.warn('[ChatVoice] VoiceAudioPlayer not available, TTS playback disabled');
+            }
+        } catch (error) {
+            console.error('[ChatVoice] Failed to initialize audio player:', error);
+        }
     }
 
     async toggle() {
@@ -8653,17 +8693,16 @@ class ChatVoiceManager {
             this.setState('processing');
 
             // 1. Create voice session
-            const sessionResponse = await fetch('/api/voice/sessions', {
+            const sessionResponse = await fetch('/api/voice/sessions', withCsrfToken({
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': getCsrfToken() || ''
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     mode: 'chat_input',
                     language: 'auto'
                 })
-            });
+            }));
 
             if (!sessionResponse.ok) {
                 throw new Error('Failed to create voice session');
@@ -8731,16 +8770,38 @@ class ChatVoiceManager {
             // Wait for final transcript
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // Insert transcript into input
-            if (this.finalTranscript) {
-                this.insertTextIntoInput(this.finalTranscript);
-                Toast.success('Transcript inserted');
+            // 处理转录文本（根据模式）
+            if (this.finalTranscript && this.finalTranscript.trim()) {
+                if (this.mode === 'handsfree') {
+                    // 方案 A：自动发送消息
+                    console.log('[ChatVoice] Handsfree mode: auto-sending message');
+                    await this.sendVoiceMessage(this.finalTranscript);
+                    Toast.success('Voice message sent');
+
+                    // 隐藏预览
+                    this.hidePreview();
+
+                    // 保持 WebSocket 连接，等待 assistant 回复（对话循环）
+                    this.cleanup(true); // keepSession = true
+
+                } else {
+                    // Hybrid 模式：插入输入框（旧行为）
+                    console.log('[ChatVoice] Hybrid mode: inserting to input');
+                    this.insertTextIntoInput(this.finalTranscript);
+                    Toast.success('Transcript inserted');
+
+                    // 完全清理资源
+                    this.cleanup(false); // keepSession = false
+                    this.hidePreview();
+                }
+            } else {
+                // 没有转录内容，完全清理资源
+                this.cleanup(false);
+                this.hidePreview();
             }
 
-            // Cleanup
-            this.cleanup();
+            // 更新状态
             this.setState('idle');
-            this.hidePreview();
 
         } catch (error) {
             console.error('[ChatVoice] Failed to stop recording:', error);
@@ -8752,6 +8813,7 @@ class ChatVoiceManager {
     }
 
     setupWebSocketHandlers() {
+        // ========== STT 事件 ==========
         // Partial transcript (real-time)
         this.voiceWS.on('stt.partial', (data) => {
             this.partialTranscript = data.text;
@@ -8766,14 +8828,67 @@ class ChatVoiceManager {
             console.log('[ChatVoice] Final transcript:', data.text);
         });
 
-        // Error handling
+        // ========== Assistant 文本响应 ==========
+        this.voiceWS.on('assistant.text', (data) => {
+            const { text, timestamp } = data;
+            const isComplete = data.isComplete !== false; // 默认为 true
+
+            console.log('[ChatVoice] Assistant text:', { text, isComplete });
+
+            // 添加到 Chat 消息列表
+            this.addAssistantMessage(text, {
+                source: 'voice',
+                session_id: this.voiceSessionId,
+                isComplete,
+                timestamp
+            });
+        });
+
+        // ========== TTS 播放事件 ==========
+        this.voiceWS.on('tts.start', (data) => {
+            console.log('[ChatVoice] TTS started:', data.requestId);
+
+            // 重置播放器，准备接收新的音频流
+            if (this.audioPlayer) {
+                this.audioPlayer.reset();
+            }
+        });
+
+        this.voiceWS.on('tts.chunk', (data) => {
+            console.log('[ChatVoice] TTS chunk received');
+            // handleTTSChunk 在 VoiceWebSocket 中自动处理
+            // 音频会自动入队并播放
+        });
+
+        this.voiceWS.on('tts.end', (data) => {
+            console.log('[ChatVoice] TTS ended:', data.requestId);
+            // TTS 播放完毕，可以准备下次录音（可选）
+        });
+
+        // ========== Barge-in 控制 ==========
+        this.voiceWS.on('control.stop_playback', (data) => {
+            console.log('[ChatVoice] Barge-in: stop playback');
+
+            // 立即停止 TTS 播放
+            if (this.audioPlayer) {
+                this.audioPlayer.stopPlayback();
+            }
+        });
+
+        // ========== 会话事件 ==========
+        this.voiceWS.on('session.complete', (data) => {
+            console.log('[ChatVoice] Session complete');
+            // 会话完成，清理资源
+            this.cleanup();
+        });
+
+        // ========== 错误和连接 ==========
         this.voiceWS.on('error', (data) => {
             console.error('[ChatVoice] WebSocket error:', data);
             Toast.error('Voice error: ' + data.error);
             this.stopRecording();
         });
 
-        // Connection events
         this.voiceWS.on('disconnected', () => {
             if (this.state === 'recording') {
                 Toast.warning('Connection lost');
@@ -8847,29 +8962,153 @@ class ChatVoiceManager {
         // sendMessage();
     }
 
-    cleanup() {
+    /**
+     * 添加 Assistant 消息到 Chat 列表
+     * @param {string} text - 消息文本
+     * @param {object} metadata - 元数据
+     */
+    addAssistantMessage(text, metadata = {}) {
+        const messagesDiv = document.getElementById('messages');
+        if (!messagesDiv) {
+            console.warn('[ChatVoice] Messages container not found');
+            return;
+        }
+
+        // 创建消息元素（带语音标记）
+        const msgElement = createMessageElement('assistant', text, {
+            ...metadata,
+            source: 'voice', // 标记为语音消息
+            voice_icon: true // 显示语音图标
+        });
+
+        // 添加到消息列表
+        messagesDiv.appendChild(msgElement);
+
+        // 自动滚动到底部
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+        console.log('[ChatVoice] Assistant message added to chat');
+    }
+
+    /**
+     * 发送用户消息（handsfree 模式）
+     * @param {string} text - 消息文本
+     */
+    async sendVoiceMessage(text) {
+        if (!text || !text.trim()) {
+            console.warn('[ChatVoice] Empty message, skipping send');
+            return;
+        }
+
+        const messagesDiv = document.getElementById('messages');
+        if (!messagesDiv) return;
+
+        // 添加用户消息到 UI（带语音标记）
+        const userMsg = createMessageElement('user', text, {
+            source: 'voice',
+            voice_icon: true
+        });
+        messagesDiv.appendChild(userMsg);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+        console.log('[ChatVoice] Sending voice message:', text);
+
+        // 获取当前 provider/model 配置
+        const providerEl = document.getElementById('model-provider');
+        const modelEl = document.getElementById('model-name');
+        const modelTypeEl = document.getElementById('model-type');
+
+        const metadata = {
+            source: 'voice',
+            voice_session_id: this.voiceSessionId
+        };
+
+        if (modelTypeEl && modelTypeEl.value) {
+            metadata.model_type = modelTypeEl.value;
+        }
+        if (providerEl && providerEl.value) {
+            metadata.provider = providerEl.value;
+        }
+        if (modelEl && modelEl.value) {
+            metadata.model = modelEl.value;
+        }
+
+        // 通过消息队列发送（复用现有的 sendMessage 逻辑）
+        const sent = await messageQueue.enqueue({
+            type: 'user_message',
+            content: text,
+            metadata: metadata,
+        });
+
+        if (!sent) {
+            console.error('[ChatVoice] Failed to send message');
+            Toast.error('Failed to send voice message');
+
+            // 显示错误消息
+            const errorMsg = createMessageElement('assistant', '⚠️ Failed to send voice message. Please try again.');
+            messagesDiv.appendChild(errorMsg);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    }
+
+    /**
+     * 切换语音对话模式
+     * @param {string} mode - 'handsfree' | 'hybrid'
+     */
+    setMode(mode) {
+        if (mode !== 'handsfree' && mode !== 'hybrid') {
+            console.warn('[ChatVoice] Invalid mode:', mode);
+            return;
+        }
+
+        this.mode = mode;
+        localStorage.setItem('chat_voice_mode', mode);
+        console.log('[ChatVoice] Mode changed to:', mode);
+
+        Toast.info(`Voice mode: ${mode === 'handsfree' ? 'Hands-free (auto-send)' : 'Hybrid (manual-send)'}`);
+    }
+
+    /**
+     * 清理资源
+     * @param {boolean} keepSession - 是否保留 session 和 WebSocket（用于对话循环）
+     */
+    cleanup(keepSession = false) {
+        // 停止麦克风
         if (this.micCapture) {
             this.micCapture.stop();
             this.micCapture = null;
         }
 
-        if (this.voiceWS) {
-            this.voiceWS.close();
-            this.voiceWS = null;
-        }
-
-        if (this.voiceSessionId) {
-            // Optionally stop session via API
-            fetch(`/api/voice/sessions/${this.voiceSessionId}/stop`, {
-                method: 'POST',
-                headers: { 'X-CSRF-Token': getCsrfToken() || '' }
-            }).catch(err => console.warn('[ChatVoice] Failed to stop session:', err));
-
-            this.voiceSessionId = null;
-        }
-
+        // 清理转录缓存
         this.partialTranscript = '';
         this.finalTranscript = '';
+
+        // 根据模式决定是否保留 session
+        if (!keepSession) {
+            // 关闭 WebSocket
+            if (this.voiceWS) {
+                this.voiceWS.close();
+                this.voiceWS = null;
+            }
+
+            // 停止 session via API
+            if (this.voiceSessionId) {
+                fetch(`/api/voice/sessions/${this.voiceSessionId}/stop`, withCsrfToken({
+                    method: 'POST'
+                })).catch(err => console.warn('[ChatVoice] Failed to stop session:', err));
+
+                this.voiceSessionId = null;
+            }
+
+            // 停止音频播放
+            if (this.audioPlayer) {
+                this.audioPlayer.reset();
+            }
+
+            console.log('[ChatVoice] Full cleanup completed');
+        } else {
+            console.log('[ChatVoice] Partial cleanup (keeping session for next turn)');
+        }
     }
 }
 

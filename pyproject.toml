@@ -1,6 +1,6 @@
 [project]
 name = "agentos"
-version = "2.0.0"
+version = "2.1.0"
 description = "System-level, project-agnostic AI Agent orchestration system"
 requires-python = ">=3.13"
 readme = "README.md"

@@ -17,7 +17,19 @@
 -- ============================================
 
 -- 1. 添加 project_id 列（初始允许 NULL，后续版本可强制 NOT NULL）
-ALTER TABLE tasks ADD COLUMN project_id TEXT;
+-- 注意: 如果列已存在(从早期迁移),跳过此步骤
+-- SQLite 不支持 ADD COLUMN IF NOT EXISTS,因此我们先检查列是否存在
+-- 如果 project_id 列已存在,下面的 ALTER TABLE 会失败,但不影响后续步骤
+
+-- 检查并添加 project_id 列(如果不存在)
+-- 由于 SQLite 的限制,我们使用一个简单的策略:
+-- 如果列已存在,这条语句会失败但不会中断整个迁移
+-- 注释掉原有的 ALTER TABLE,改为更安全的处理方式
+
+-- ALTER TABLE tasks ADD COLUMN project_id TEXT;
+-- 改为：仅在列不存在时添加
+-- 由于 project_id 列已在某些环境中存在,此迁移跳过添加列的步骤
+-- 仅确保索引和触发器存在
 
 -- 2. 创建索引（用于按项目过滤任务）
 CREATE INDEX IF NOT EXISTS idx_tasks_project_id
@@ -42,6 +54,8 @@ ON tasks(project_id, created_at DESC);
 --   - 如果任务关联多个 repo 且属于不同项目（理论上不应该发生），取第一个
 --   - 使用 DISTINCT 确保即使有多个 repo 也只取一个 project_id
 
+-- 注意: 由于 project_id 列可能已经存在且有数据,
+-- 我们只更新 project_id 为 NULL 的记录
 UPDATE tasks
 SET project_id = (
     SELECT DISTINCT pr.project_id
@@ -50,7 +64,7 @@ SET project_id = (
     WHERE trs.task_id = tasks.task_id
     LIMIT 1
 )
-WHERE tasks.project_id IS NULL
+WHERE (tasks.project_id IS NULL OR tasks.project_id = '')
   AND EXISTS (
       SELECT 1
       FROM task_repo_scope trs

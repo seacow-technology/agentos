@@ -1,0 +1,131 @@
+{
+  "id": "whatsapp_twilio",
+  "name": "WhatsApp (Twilio)",
+  "icon": "whatsapp",
+  "description": "Connect WhatsApp using Twilio's API for business messaging",
+  "long_description": "Twilio's WhatsApp Business API provides a reliable and scalable way to integrate WhatsApp messaging into AgentOS. This channel allows you to receive and send messages through your Twilio-provisioned WhatsApp number.",
+  "version": "1.0.0",
+  "provider": "Twilio",
+  "docs_url": "https://www.twilio.com/docs/whatsapp",
+  "required_config_fields": [
+    {
+      "name": "account_sid",
+      "label": "Account SID",
+      "type": "text",
+      "required": true,
+      "placeholder": "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "help_text": "Your Twilio Account SID (found in Twilio Console)",
+      "secret": false,
+      "validation_regex": "^AC[a-f0-9]{32}$",
+      "validation_error": "Account SID must start with AC and be 34 characters"
+    },
+    {
+      "name": "auth_token",
+      "label": "Auth Token",
+      "type": "password",
+      "required": true,
+      "help_text": "Your Twilio Auth Token (keep this secret)",
+      "secret": true
+    },
+    {
+      "name": "phone_number",
+      "label": "WhatsApp Phone Number",
+      "type": "text",
+      "required": true,
+      "placeholder": "+14155238886",
+      "help_text": "Your Twilio WhatsApp number (format: +1234567890)",
+      "validation_regex": "^\\+[1-9]\\d{1,14}$",
+      "validation_error": "Phone number must be in E.164 format (+1234567890)"
+    },
+    {
+      "name": "messaging_service_sid",
+      "label": "Messaging Service SID",
+      "type": "text",
+      "required": false,
+      "placeholder": "MGxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "help_text": "Optional: Messaging Service SID for advanced features",
+      "validation_regex": "^MG[a-f0-9]{32}$",
+      "validation_error": "Messaging Service SID must start with MG"
+    }
+  ],
+  "webhook_paths": [
+    "/api/channels/whatsapp_twilio/webhook"
+  ],
+  "session_scope": "user",
+  "capabilities": [
+    "inbound_text",
+    "outbound_text",
+    "inbound_image",
+    "outbound_image",
+    "inbound_audio",
+    "outbound_audio",
+    "inbound_file",
+    "outbound_file"
+  ],
+  "security_defaults": {
+    "mode": "chat_only",
+    "allow_execute": false,
+    "allowed_commands": ["/session", "/help"],
+    "rate_limit_per_minute": 20,
+    "retention_days": 7,
+    "require_signature": true
+  },
+  "setup_steps": [
+    {
+      "title": "Get Twilio Credentials",
+      "description": "Sign up for Twilio and get your Account SID and Auth Token",
+      "instruction": "1. Go to https://www.twilio.com/console\n2. Create an account or sign in\n3. Copy your Account SID and Auth Token",
+      "checklist": [
+        "Created Twilio account",
+        "Found Account SID in console",
+        "Copied Auth Token securely"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Configure WhatsApp Sender",
+      "description": "Request a WhatsApp-enabled phone number from Twilio",
+      "instruction": "1. In Twilio Console, go to Messaging > WhatsApp senders\n2. Request a new WhatsApp sender\n3. Follow the approval process\n4. Copy your approved WhatsApp number",
+      "checklist": [
+        "Requested WhatsApp sender",
+        "Completed approval process",
+        "Noted down WhatsApp number"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Set Webhook URL",
+      "description": "Configure Twilio to send messages to AgentOS",
+      "instruction": "Copy the webhook URL shown below and paste it in Twilio Console under WhatsApp Sandbox settings or your approved sender settings.",
+      "checklist": [
+        "Copied webhook URL",
+        "Pasted in Twilio Console",
+        "Saved webhook configuration"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Test Connection",
+      "description": "Send a test message to verify the setup",
+      "instruction": "Click the Test button below to verify webhook and credentials",
+      "checklist": [
+        "Test passed successfully"
+      ],
+      "auto_check": true
+    }
+  ],
+  "privacy_badges": [
+    "No Auto Provisioning",
+    "Chat-only by Default",
+    "Local Storage",
+    "Secrets Encrypted",
+    "Webhook Signature Verified"
+  ],
+  "metadata": {
+    "category": "messaging",
+    "official": true,
+    "verified": true,
+    "cost": "paid",
+    "setup_difficulty": "medium"
+  }
+}

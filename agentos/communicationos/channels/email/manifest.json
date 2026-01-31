@@ -1,0 +1,343 @@
+{
+  "id": "email",
+  "name": "Email",
+  "icon": "email",
+  "description": "Connect email accounts for asynchronous communication via SMTP/IMAP or OAuth",
+  "long_description": "Email channel provides asynchronous communication capabilities through standard email protocols. This channel supports multiple providers (Gmail OAuth, Outlook OAuth, generic SMTP/IMAP) and maintains conversation context using email threads (Message-ID, References, In-Reply-To headers). Each email thread is tracked as a separate conversation session, ensuring proper context isolation.",
+  "version": "1.0.0",
+  "provider_type": "multi_provider",
+  "supported_providers": ["gmail", "outlook", "smtp_imap"],
+  "docs_url": "https://datatracker.ietf.org/doc/html/rfc5322",
+  "required_config_fields": [
+    {
+      "name": "provider",
+      "label": "Email Provider",
+      "type": "select",
+      "required": true,
+      "options": [
+        {"value": "gmail", "label": "Gmail (OAuth)"},
+        {"value": "outlook", "label": "Outlook (OAuth)"},
+        {"value": "smtp_imap", "label": "Generic SMTP/IMAP"}
+      ],
+      "help_text": "Select your email provider. OAuth providers (Gmail, Outlook) are recommended for security and reliability.",
+      "default": "gmail"
+    },
+    {
+      "name": "email_address",
+      "label": "Email Address",
+      "type": "email",
+      "required": true,
+      "placeholder": "agent@example.com",
+      "help_text": "The email address to monitor for inbound messages and use for sending replies",
+      "validation_regex": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+      "validation_error": "Must be a valid email address"
+    },
+    {
+      "name": "oauth_client_id",
+      "label": "OAuth Client ID",
+      "type": "text",
+      "required": false,
+      "placeholder": "123456789.apps.googleusercontent.com",
+      "help_text": "OAuth 2.0 Client ID from your provider (required for Gmail/Outlook providers)",
+      "visible_when": {
+        "field": "provider",
+        "value": ["gmail", "outlook"]
+      }
+    },
+    {
+      "name": "oauth_client_secret",
+      "label": "OAuth Client Secret",
+      "type": "password",
+      "required": false,
+      "placeholder": "GOCSPX-...",
+      "help_text": "OAuth 2.0 Client Secret from your provider (required for Gmail/Outlook providers, keep this secret)",
+      "secret": true,
+      "visible_when": {
+        "field": "provider",
+        "value": ["gmail", "outlook"]
+      }
+    },
+    {
+      "name": "oauth_refresh_token",
+      "label": "OAuth Refresh Token",
+      "type": "password",
+      "required": false,
+      "placeholder": "1//0g...",
+      "help_text": "OAuth 2.0 Refresh Token obtained through OAuth flow (auto-generated during setup, keep this secret)",
+      "secret": true,
+      "visible_when": {
+        "field": "provider",
+        "value": ["gmail", "outlook"]
+      }
+    },
+    {
+      "name": "smtp_host",
+      "label": "SMTP Server",
+      "type": "text",
+      "required": false,
+      "placeholder": "smtp.example.com",
+      "help_text": "SMTP server hostname for sending emails (required for smtp_imap provider)",
+      "visible_when": {
+        "field": "provider",
+        "value": "smtp_imap"
+      }
+    },
+    {
+      "name": "smtp_port",
+      "label": "SMTP Port",
+      "type": "number",
+      "required": false,
+      "placeholder": "587",
+      "default": 587,
+      "help_text": "SMTP server port (587 for STARTTLS, 465 for SSL/TLS, 25 for unencrypted)",
+      "visible_when": {
+        "field": "provider",
+        "value": "smtp_imap"
+      }
+    },
+    {
+      "name": "smtp_username",
+      "label": "SMTP Username",
+      "type": "text",
+      "required": false,
+      "placeholder": "agent@example.com",
+      "help_text": "Username for SMTP authentication (often same as email address)",
+      "visible_when": {
+        "field": "provider",
+        "value": "smtp_imap"
+      }
+    },
+    {
+      "name": "smtp_password",
+      "label": "SMTP Password",
+      "type": "password",
+      "required": false,
+      "placeholder": "••••••••",
+      "help_text": "Password for SMTP authentication (keep this secret)",
+      "secret": true,
+      "visible_when": {
+        "field": "provider",
+        "value": "smtp_imap"
+      }
+    },
+    {
+      "name": "smtp_use_tls",
+      "label": "Use STARTTLS",
+      "type": "checkbox",
+      "required": false,
+      "default": true,
+      "help_text": "Use STARTTLS for secure SMTP connection (recommended for port 587)",
+      "visible_when": {
+        "field": "provider",
+        "value": "smtp_imap"
+      }
+    },
+    {
+      "name": "imap_host",
+      "label": "IMAP Server",
+      "type": "text",
+      "required": false,
+      "placeholder": "imap.example.com",
+      "help_text": "IMAP server hostname for receiving emails (required for smtp_imap provider)",
+      "visible_when": {
+        "field": "provider",
+        "value": "smtp_imap"
+      }
+    },
+    {
+      "name": "imap_port",
+      "label": "IMAP Port",
+      "type": "number",
+      "required": false,
+      "placeholder": "993",
+      "default": 993,
+      "help_text": "IMAP server port (993 for SSL/TLS, 143 for STARTTLS)",
+      "visible_when": {
+        "field": "provider",
+        "value": "smtp_imap"
+      }
+    },
+    {
+      "name": "imap_username",
+      "label": "IMAP Username",
+      "type": "text",
+      "required": false,
+      "placeholder": "agent@example.com",
+      "help_text": "Username for IMAP authentication (often same as email address)",
+      "visible_when": {
+        "field": "provider",
+        "value": "smtp_imap"
+      }
+    },
+    {
+      "name": "imap_password",
+      "label": "IMAP Password",
+      "type": "password",
+      "required": false,
+      "placeholder": "••••••••",
+      "help_text": "Password for IMAP authentication (keep this secret)",
+      "secret": true,
+      "visible_when": {
+        "field": "provider",
+        "value": "smtp_imap"
+      }
+    },
+    {
+      "name": "imap_use_ssl",
+      "label": "Use SSL/TLS",
+      "type": "checkbox",
+      "required": false,
+      "default": true,
+      "help_text": "Use SSL/TLS for secure IMAP connection (recommended for port 993)",
+      "visible_when": {
+        "field": "provider",
+        "value": "smtp_imap"
+      }
+    },
+    {
+      "name": "poll_interval_seconds",
+      "label": "Poll Interval (seconds)",
+      "type": "number",
+      "required": false,
+      "placeholder": "60",
+      "default": 60,
+      "help_text": "How often to check for new emails (minimum 30 seconds recommended to avoid rate limits)"
+    },
+    {
+      "name": "mailbox_folder",
+      "label": "Mailbox Folder",
+      "type": "text",
+      "required": false,
+      "placeholder": "INBOX",
+      "default": "INBOX",
+      "help_text": "IMAP folder to monitor for inbound messages (default: INBOX)"
+    }
+  ],
+  "webhook_paths": [],
+  "session_scope": "user_conversation",
+  "session_scope_notes": {
+    "conversation_key_format": "email_thread_id (computed from Message-ID, References, In-Reply-To headers)",
+    "user_key_format": "sender_email_address (from 'From' header)",
+    "message_id_format": "Message-ID header value (RFC 5322 unique identifier)",
+    "thread_isolation": "Email threads are tracked using standard email threading headers (Message-ID, References, In-Reply-To). Each thread is treated as a separate conversation_key, enabling multiple parallel conversations with the same user.",
+    "thread_detection_algorithm": "1. Extract Message-ID from current message\n2. Extract References and In-Reply-To headers\n3. If References exists, use first Message-ID as thread root\n4. If only In-Reply-To exists, use that as thread root\n5. If neither exists, current Message-ID becomes new thread root"
+  },
+  "capabilities": [
+    "inbound_text",
+    "outbound_text",
+    "threads",
+    "attachments",
+    "html_formatting"
+  ],
+  "polling_mode": {
+    "enabled": true,
+    "description": "Email channel operates in polling mode, periodically checking for new messages via IMAP or provider API. This is different from webhook-based channels (Telegram, Slack) that receive push notifications.",
+    "default_interval_seconds": 60,
+    "min_interval_seconds": 30,
+    "max_interval_seconds": 3600
+  },
+  "security_defaults": {
+    "mode": "chat_only",
+    "allow_execute": false,
+    "allowed_commands": ["/session", "/help"],
+    "rate_limit_per_minute": 10,
+    "retention_days": 30,
+    "require_signature": false
+  },
+  "setup_steps": [
+    {
+      "title": "Choose Email Provider",
+      "description": "Select your email provider type",
+      "instruction": "Choose one of the following:\n\n1. Gmail (OAuth) - Recommended for Gmail/Google Workspace accounts\n   - More secure (OAuth 2.0)\n   - No need to enable 'Less Secure Apps'\n   - Requires Google Cloud Console setup\n\n2. Outlook (OAuth) - Recommended for Outlook/Microsoft 365 accounts\n   - More secure (OAuth 2.0)\n   - Works with Outlook.com and Microsoft 365\n   - Requires Azure App Registration setup\n\n3. Generic SMTP/IMAP - For other email providers\n   - Works with any email provider\n   - Requires SMTP and IMAP credentials\n   - May require enabling IMAP access in your email settings",
+      "checklist": [
+        "Decided on email provider type",
+        "Have access to email account",
+        "Ready to configure OAuth or SMTP/IMAP"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Gmail Setup (OAuth)",
+      "description": "Configure Google Cloud Console for Gmail OAuth",
+      "instruction": "If you selected Gmail provider, follow these steps:\n\n1. Go to https://console.cloud.google.com/\n2. Create a new project or select existing project\n3. Enable Gmail API:\n   - Navigate to 'APIs & Services' > 'Library'\n   - Search for 'Gmail API'\n   - Click 'Enable'\n4. Configure OAuth consent screen:\n   - Navigate to 'APIs & Services' > 'OAuth consent screen'\n   - Select 'External' user type (or 'Internal' for Google Workspace)\n   - Fill in app name, user support email, developer email\n   - Add scope: https://www.googleapis.com/auth/gmail.readonly\n   - Add scope: https://www.googleapis.com/auth/gmail.send\n   - Add test users if needed\n5. Create OAuth 2.0 credentials:\n   - Navigate to 'APIs & Services' > 'Credentials'\n   - Click 'Create Credentials' > 'OAuth 2.0 Client ID'\n   - Application type: 'Desktop app' or 'Web application'\n   - Add authorized redirect URIs: http://localhost:8080/oauth/callback\n   - Copy Client ID and Client Secret\n6. Generate refresh token:\n   - Use OAuth flow to authorize and get refresh token\n   - AgentOS will provide a helper script for this",
+      "checklist": [
+        "Created/selected Google Cloud project",
+        "Enabled Gmail API",
+        "Configured OAuth consent screen",
+        "Added required Gmail scopes",
+        "Created OAuth 2.0 credentials",
+        "Copied Client ID and Client Secret",
+        "Generated refresh token"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Outlook Setup (OAuth)",
+      "description": "Configure Azure App Registration for Outlook OAuth",
+      "instruction": "If you selected Outlook provider, follow these steps:\n\n1. Go to https://portal.azure.com/\n2. Navigate to 'Azure Active Directory' > 'App registrations'\n3. Click 'New registration'\n4. Configure app:\n   - Name: 'AgentOS Email Channel'\n   - Supported account types: 'Accounts in any organizational directory and personal Microsoft accounts'\n   - Redirect URI: Web, http://localhost:8080/oauth/callback\n5. Copy Application (client) ID\n6. Create client secret:\n   - Navigate to 'Certificates & secrets'\n   - Click 'New client secret'\n   - Add description and expiration\n   - Copy the secret value (shown only once)\n7. Configure API permissions:\n   - Navigate to 'API permissions'\n   - Add permission > Microsoft Graph > Delegated permissions\n   - Add: Mail.Read, Mail.Send\n   - Grant admin consent if required\n8. Generate refresh token:\n   - Use OAuth flow to authorize and get refresh token\n   - AgentOS will provide a helper script for this",
+      "checklist": [
+        "Registered Azure app",
+        "Copied Application (client) ID",
+        "Created and copied client secret",
+        "Added Mail.Read and Mail.Send permissions",
+        "Granted admin consent if needed",
+        "Generated refresh token"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Generic SMTP/IMAP Setup",
+      "description": "Configure SMTP and IMAP credentials",
+      "instruction": "If you selected Generic SMTP/IMAP provider, follow these steps:\n\n1. Locate your email provider's SMTP and IMAP settings:\n   - Check your email provider's documentation\n   - Common examples:\n     * Gmail: smtp.gmail.com:587 (STARTTLS), imap.gmail.com:993 (SSL)\n     * Outlook: smtp-mail.outlook.com:587 (STARTTLS), outlook.office365.com:993 (SSL)\n     * Yahoo: smtp.mail.yahoo.com:587 (STARTTLS), imap.mail.yahoo.com:993 (SSL)\n\n2. Enable IMAP access in your email account:\n   - Gmail: Settings > Forwarding and POP/IMAP > Enable IMAP\n   - Outlook: Should be enabled by default\n   - Other providers: Check account settings\n\n3. Generate app-specific password (if required):\n   - Gmail: Google Account > Security > 2-Step Verification > App passwords\n   - Outlook: Account > Security > App passwords\n   - Use app password instead of regular password for better security\n\n4. Test connection:\n   - Verify you can send test email via SMTP\n   - Verify you can list messages via IMAP",
+      "checklist": [
+        "Located SMTP and IMAP server settings",
+        "Enabled IMAP access",
+        "Generated app-specific password (if applicable)",
+        "Ready to enter credentials"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Fill Configuration",
+      "description": "Enter email credentials in AgentOS",
+      "instruction": "1. Enter your email address\n2. For Gmail/Outlook OAuth:\n   - Paste OAuth Client ID\n   - Paste OAuth Client Secret\n   - Paste OAuth Refresh Token\n3. For Generic SMTP/IMAP:\n   - Enter SMTP server hostname and port\n   - Enter SMTP username and password\n   - Enable STARTTLS if using port 587\n   - Enter IMAP server hostname and port\n   - Enter IMAP username and password\n   - Enable SSL/TLS if using port 993\n4. Configure poll interval (default: 60 seconds)\n5. Optionally specify mailbox folder (default: INBOX)\n6. Click Save to store the configuration",
+      "checklist": [
+        "Entered email address",
+        "Entered OAuth credentials OR SMTP/IMAP credentials",
+        "Configured poll interval",
+        "Saved configuration"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Test Connection",
+      "description": "Send a test email to verify the setup",
+      "instruction": "1. Send a test email to your configured email address from another account\n2. Wait for the poll interval to pass (default: 60 seconds)\n3. Verify the message appears in AgentOS\n4. Send a reply from AgentOS\n5. Verify the reply appears in the original sender's inbox\n6. Test email threading:\n   - Reply to the test email from the external account\n   - Verify AgentOS maintains thread context\n   - Verify conversation_key remains consistent for the thread",
+      "checklist": [
+        "Sent test email to configured address",
+        "Message received in AgentOS",
+        "Reply sent successfully from AgentOS",
+        "Reply received in external inbox",
+        "Email threading works correctly",
+        "Thread context maintained"
+      ],
+      "auto_check": true
+    }
+  ],
+  "privacy_badges": [
+    "OAuth Security Supported",
+    "Local Credential Storage",
+    "Polling Mode (No Webhooks)",
+    "Thread Isolation Support",
+    "User-Conversation Session Scope",
+    "Encrypted Secrets"
+  ],
+  "metadata": {
+    "category": "email",
+    "official": true,
+    "verified": true,
+    "cost": "free",
+    "setup_difficulty": "medium",
+    "complexity_notes": "OAuth providers require more initial setup but are more secure. Generic SMTP/IMAP is simpler but may require app-specific passwords."
+  }
+}

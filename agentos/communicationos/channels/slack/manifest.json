@@ -1,0 +1,198 @@
+{
+  "id": "slack",
+  "name": "Slack",
+  "icon": "slack",
+  "description": "Connect Slack Events API for team communication and collaboration",
+  "long_description": "Slack Events API provides a powerful way to integrate Slack workspace messaging into AgentOS. This channel allows you to receive and send messages through your Slack bot. Each user maintains their own conversation session, with support for threaded conversations for better organization. Messages can be scoped to direct messages only, mentions, or all messages based on your trigger policy.",
+  "version": "1.0.0",
+  "variant": "events_api",
+  "provider": "Slack",
+  "docs_url": "https://api.slack.com/apis/connections/events-api",
+  "required_config_fields": [
+    {
+      "name": "bot_token",
+      "label": "Bot User OAuth Token",
+      "type": "password",
+      "required": true,
+      "placeholder": "xoxb-YOUR-BOT-TOKEN-HERE",
+      "help_text": "Your Slack Bot User OAuth Token (starts with xoxb-, get from OAuth & Permissions page, keep this secret)",
+      "secret": true,
+      "validation_regex": "^xoxb-[0-9]{10,13}-[0-9]{10,13}-[A-Za-z0-9]{24}$",
+      "validation_error": "Bot token must start with xoxb- and follow the format: xoxb-YOUR-BOT-TOKEN-HERE"
+    },
+    {
+      "name": "signing_secret",
+      "label": "Signing Secret",
+      "type": "password",
+      "required": true,
+      "placeholder": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
+      "help_text": "Your Slack App Signing Secret for webhook verification (32 characters, get from Basic Information page, keep this secret)",
+      "secret": true,
+      "validation_regex": "^[a-f0-9]{32}$",
+      "validation_error": "Signing secret must be exactly 32 hexadecimal characters"
+    },
+    {
+      "name": "trigger_policy",
+      "label": "Trigger Policy",
+      "type": "select",
+      "required": true,
+      "options": [
+        {"value": "dm_only", "label": "Direct Messages Only"},
+        {"value": "mention_or_dm", "label": "Mentions or Direct Messages (Recommended)"},
+        {"value": "all_messages", "label": "All Messages (High Volume)"}
+      ],
+      "default": "mention_or_dm",
+      "help_text": "When should the bot respond? DM only = private messages only. Mention or DM = when @mentioned in channels or DM. All messages = every message in subscribed channels (high volume, use with caution)."
+    },
+    {
+      "name": "public_base_url",
+      "label": "Public Base URL",
+      "type": "url",
+      "required": false,
+      "placeholder": "https://your-domain.com",
+      "help_text": "Optional: Override the public base URL for webhook registration (auto-detected if not provided, must be HTTPS)",
+      "validation_regex": "^https://[a-zA-Z0-9.-]+(?::[0-9]+)?$",
+      "validation_error": "Must be a valid HTTPS URL (e.g., https://example.com)"
+    }
+  ],
+  "webhook_paths": [
+    "/api/channels/slack/webhook"
+  ],
+  "session_scope": "user_conversation",
+  "session_scope_notes": {
+    "conversation_key_format": "channel_id:thread_ts (if threaded) or channel_id (if not threaded)",
+    "user_key_format": "user_id (Slack user ID, starts with U)",
+    "message_id_format": "client_msg_id (if present) or event_ts:channel:user (fallback)",
+    "thread_isolation": "Threads in Slack channels are isolated into separate conversation_keys, enabling multiple parallel conversations in the same channel"
+  },
+  "capabilities": [
+    "inbound_text",
+    "outbound_text",
+    "threads"
+  ],
+  "security_defaults": {
+    "mode": "chat_only",
+    "allow_execute": false,
+    "allowed_commands": ["/session", "/help"],
+    "rate_limit_per_minute": 30,
+    "retention_days": 7,
+    "require_signature": true
+  },
+  "webhook_verification": {
+    "challenge_type": "url_verification",
+    "description": "Slack sends a url_verification challenge on first webhook registration. The adapter must extract the 'challenge' field from the request body and return it in the response with Content-Type: text/plain. This is a one-time handshake to verify webhook ownership.",
+    "example_request": {
+      "type": "url_verification",
+      "token": "deprecated_verification_token",
+      "challenge": "3eZbrw1aBm2rZgRNFdxV2595E9CY3gmdALWMmHkvFXO7tYXAYM8P"
+    },
+    "example_response": {
+      "status_code": 200,
+      "content_type": "text/plain",
+      "body": "3eZbrw1aBm2rZgRNFdxV2595E9CY3gmdALWMmHkvFXO7tYXAYM8P"
+    }
+  },
+  "setup_steps": [
+    {
+      "title": "Create Slack App",
+      "description": "Create a new Slack app in your workspace",
+      "instruction": "1. Go to https://api.slack.com/apps\n2. Click 'Create New App'\n3. Select 'From scratch'\n4. Enter your App Name (e.g., 'AgentOS Bot')\n5. Select your Workspace\n6. Click 'Create App'\n7. You will be redirected to your app's Basic Information page",
+      "checklist": [
+        "Visited Slack API dashboard",
+        "Created new app from scratch",
+        "Selected target workspace",
+        "App created successfully"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Configure Bot Token Scopes",
+      "description": "Grant necessary permissions to your bot",
+      "instruction": "1. In your app settings, navigate to 'OAuth & Permissions' in the left sidebar\n2. Scroll down to 'Scopes' section\n3. Under 'Bot Token Scopes', click 'Add an OAuth Scope'\n4. Add the following scopes:\n   - chat:write (Send messages as bot)\n   - app_mentions:read (View messages that @mention your bot)\n   - im:read (View direct messages sent to your bot)\n   - im:write (Send direct messages)\n   - channels:read (View basic channel information)\n   - groups:read (View basic private channel information)\n   - im:history (View direct message history)\n   - channels:history (View channel message history, if using all_messages trigger)\n5. Save changes",
+      "checklist": [
+        "Navigated to OAuth & Permissions",
+        "Added chat:write scope",
+        "Added app_mentions:read scope",
+        "Added im:read and im:write scopes",
+        "Added channels:read scope",
+        "Added groups:read scope",
+        "Added im:history scope",
+        "Optionally added channels:history scope"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Install App to Workspace",
+      "description": "Install the app and get the Bot Token",
+      "instruction": "1. Still in 'OAuth & Permissions' page, scroll to the top\n2. Click 'Install to Workspace' button\n3. Review the permissions and click 'Allow'\n4. You will see a 'Bot User OAuth Token' starting with 'xoxb-'\n5. Copy this token and save it securely (you'll need it in step 5)\n6. Note: Keep this token secret, it provides access to your Slack workspace",
+      "checklist": [
+        "Clicked 'Install to Workspace'",
+        "Authorized permissions",
+        "Copied Bot User OAuth Token (xoxb-...)",
+        "Saved token securely"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Configure Event Subscriptions",
+      "description": "Enable webhook endpoint for receiving messages",
+      "instruction": "1. In your app settings, navigate to 'Event Subscriptions' in the left sidebar\n2. Toggle 'Enable Events' to ON\n3. In the 'Request URL' field, enter your webhook URL:\n   Format: https://your-domain.com/api/channels/slack/webhook\n   (Replace your-domain.com with your actual AgentOS public URL)\n4. Slack will send a challenge request to verify the URL\n   - Your adapter must respond with the challenge value to complete verification\n   - If verification fails, ensure your AgentOS instance is publicly accessible\n5. Once verified, scroll down to 'Subscribe to bot events'\n6. Click 'Add Bot User Event' and add:\n   - message.im (Direct messages to bot)\n   - app_mention (Messages mentioning @yourbot in channels)\n   - message.channels (Optional: All messages in channels, only if using 'all_messages' trigger)\n   - message.groups (Optional: All messages in private channels, only if using 'all_messages' trigger)\n7. Click 'Save Changes' at the bottom\n\nIMPORTANT: The URL verification challenge must be handled by your adapter's webhook endpoint. The endpoint should:\n- Check if request body contains 'type': 'url_verification'\n- Extract the 'challenge' value\n- Return it immediately with status 200 and Content-Type: text/plain",
+      "checklist": [
+        "Navigated to Event Subscriptions",
+        "Enabled Events",
+        "Entered Request URL",
+        "URL verification succeeded",
+        "Added message.im event",
+        "Added app_mention event",
+        "Optionally added message.channels and message.groups",
+        "Saved changes"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Fill Configuration in AgentOS",
+      "description": "Enter bot credentials in AgentOS",
+      "instruction": "1. In your Slack app settings, navigate to 'Basic Information'\n2. Scroll down to 'App Credentials' section\n3. Copy the 'Signing Secret' (32-character hexadecimal string)\n4. Return to AgentOS channel configuration page\n5. Paste the Bot User OAuth Token (xoxb-...) from step 3\n6. Paste the Signing Secret\n7. Select your preferred Trigger Policy:\n   - 'Direct Messages Only': Bot only responds in DMs\n   - 'Mentions or Direct Messages' (Recommended): Bot responds when @mentioned in channels or DM\n   - 'All Messages': Bot processes every message in subscribed channels (high volume)\n8. (Optional) Override public base URL if needed\n9. Click Save to store the configuration",
+      "checklist": [
+        "Located Signing Secret in Basic Information",
+        "Copied Signing Secret",
+        "Entered Bot Token in AgentOS",
+        "Entered Signing Secret in AgentOS",
+        "Selected Trigger Policy",
+        "Saved configuration"
+      ],
+      "auto_check": false
+    },
+    {
+      "title": "Test Connection",
+      "description": "Send a test message to verify the setup",
+      "instruction": "1. In Slack, search for your bot by name in the Apps section\n2. Open a direct message conversation with your bot\n3. Send a test message (e.g., 'Hello')\n4. Verify the message appears in AgentOS\n5. Send a reply from AgentOS and verify it appears in Slack\n6. (Optional) Test in a channel:\n   - Invite your bot to a channel: /invite @yourbotname\n   - Send a message mentioning the bot: '@yourbotname hello'\n   - Verify the bot responds\n7. (Optional) Test threaded conversations:\n   - Reply to a message in a thread\n   - Verify thread isolation works correctly",
+      "checklist": [
+        "Found bot in Slack Apps",
+        "Sent test DM to bot",
+        "Message received in AgentOS",
+        "Reply sent successfully from AgentOS",
+        "Reply appeared in Slack DM",
+        "Optionally tested channel mentions",
+        "Optionally tested threaded replies"
+      ],
+      "auto_check": true
+    }
+  ],
+  "privacy_badges": [
+    "No Auto Provisioning",
+    "Chat-only by Default",
+    "Local Storage",
+    "Secrets Encrypted",
+    "User-Conversation Session Scope",
+    "Thread Isolation Support"
+  ],
+  "metadata": {
+    "category": "messaging",
+    "official": true,
+    "verified": true,
+    "cost": "free",
+    "setup_difficulty": "medium",
+    "complexity_notes": "More complex than Telegram due to OAuth flow, workspace installation, and event subscription setup"
+  }
+}

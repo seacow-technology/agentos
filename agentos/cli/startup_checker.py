@@ -608,7 +608,7 @@ class StartupChecker:
 
     def prepare_database(self) -> bool:
         """
-        准备数据库 (交互式)
+        准备数据库 (交互式) - 检查所有组件数据库
 
         Returns:
             是否准备成功
@@ -616,29 +616,65 @@ class StartupChecker:
         rprint("\n[cyan]═══ 检查数据库 ═══[/cyan]")
 
         try:
-            from agentos.store import get_db_path, init_db, get_migration_status
+            from agentos.core.storage.paths import ALLOWED_COMPONENTS, component_db_path
+            from agentos.store import get_migration_status, ensure_migrations, init_db
 
-            db_path = get_db_path()
+            # 检查所有组件数据库
+            all_ok = True
+            db_status = []
 
-            # 检查数据库是否存在
-            if not db_path.exists():
-                rprint(f"[yellow]✗ 数据库文件不存在: {db_path}[/yellow]")
+            for component in sorted(ALLOWED_COMPONENTS):
+                db_path = component_db_path(component)
+                exists = db_path.exists()
+
+                status_symbol = "✓" if exists else "✗"
+                status_color = "green" if exists else "yellow"
+
+                db_status.append({
+                    "component": component,
+                    "path": db_path,
+                    "exists": exists
+                })
+
+                rprint(f"[{status_color}]{status_symbol} {component:15s}: {db_path}[/{status_color}]")
+
+                if not exists:
+                    all_ok = False
+
+            # 如果有数据库不存在
+            if not all_ok:
+                rprint("\n[yellow]⚠️  部分数据库文件不存在[/yellow]")
 
                 if self.auto_fix:
                     create = True
                 else:
-                    create = Confirm.ask("是否创建数据库?", default=True)
+                    create = Confirm.ask("是否创建缺失的数据库?", default=True)
 
                 if create:
-                    return self._create_database(db_path)
+                    for status in db_status:
+                        if not status["exists"]:
+                            component = status["component"]
+                            db_path = status["path"]
+                            rprint(f"\n[blue]正在创建 {component} 数据库...[/blue]")
+
+                            # 确保目录存在
+                            db_path.parent.mkdir(parents=True, exist_ok=True)
+
+                            # 为agentos组件使用init_db，其他组件使用ensure_db_exists
+                            if component == "agentos":
+                                init_db(auto_migrate_after_init=False)
+                            else:
+                                from agentos.core.storage.paths import ensure_db_exists
+                                ensure_db_exists(component)
+
+                            rprint(f"[green]✓ {component} 数据库已创建[/green]")
                 else:
                     rprint("[red]✗ 已取消，无法继续启动[/red]")
                     return False
-            else:
-                rprint(f"[green]✓ 数据库文件存在: {db_path}[/green]")
 
-            # 检查迁移状态
-            return self._check_migrations(db_path)
+            # 检查agentos主数据库的迁移状态
+            agentos_db = component_db_path("agentos")
+            return self._check_migrations(agentos_db)
 
         except Exception as e:
             rprint(f"[red]✗ 数据库检查失败: {e}[/red]")

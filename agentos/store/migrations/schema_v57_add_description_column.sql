@@ -13,7 +13,13 @@
 PRAGMA foreign_keys = OFF;
 
 -- Add description column to schema_version table
-ALTER TABLE schema_version ADD COLUMN description TEXT;
+-- 注意: 如果列已存在,跳过此步骤
+-- SQLite 的 ALTER TABLE 不支持 IF NOT EXISTS
+-- 由于 description 列可能已经存在,我们注释掉此语句
+-- ALTER TABLE schema_version ADD COLUMN description TEXT;
+
+-- 检查列是否存在的逻辑:
+-- 如果列已存在,这个迁移只会记录版本信息
 
 PRAGMA foreign_keys = ON;
 

@@ -942,7 +942,7 @@ async def voice_session_websocket(websocket: WebSocket, session_id: str):
                                             "request_id": tts_request_id,
                                             "payload_b64": payload_b64,
                                             "format": {
-                                                "codec": "opus",  # OpenAI returns opus by default
+                                                "codec": "pcm_s16le",  # ITTSProvider contract: PCM s16le
                                                 "sample_rate": 16000,
                                                 "channels": 1,
                                             },

@@ -17,6 +17,34 @@ from agentos.core.utils.process import terminate_process, kill_process, is_proce
 logger = logging.getLogger(__name__)
 
 
+def load_env_file(env_file: Path) -> dict:
+    """
+    从.env文件加载环境变量
+
+    Args:
+        env_file: .env文件路径
+
+    Returns:
+        环境变量字典
+    """
+    env_vars = {}
+    if env_file.exists():
+        try:
+            with open(env_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    # 跳过空行和注释
+                    if not line or line.startswith('#'):
+                        continue
+                    # 解析 KEY=VALUE 格式
+                    if '=' in line:
+                        key, value = line.split('=', 1)
+                        env_vars[key.strip()] = value.strip()
+        except Exception as e:
+            logger.warning(f"Failed to load .env file: {e}")
+    return env_vars
+
+
 class WebUIDaemon:
     """WebUI 后台服务管理器"""
 
@@ -96,6 +124,20 @@ class WebUIDaemon:
         """后台启动 WebUI"""
         logger.info(f"Starting WebUI in background at {self.host}:{self.port}")
 
+        # 加载.env文件中的环境变量
+        project_root = Path(__file__).parent.parent.parent  # agentos/webui/daemon.py -> AgentOS/
+        env_file = project_root / ".env"
+
+        # 合并当前环境变量和.env文件变量
+        env = os.environ.copy()
+        env_vars = load_env_file(env_file)
+        env.update(env_vars)
+
+        if env_vars:
+            logger.info(f"Loaded {len(env_vars)} variables from {env_file}")
+        else:
+            logger.warning(f".env file not found or empty at {env_file}")
+
         # 使用 uvicorn 命令启动
         cmd = [
             sys.executable,
@@ -113,11 +155,12 @@ class WebUIDaemon:
         # 打开日志文件
         log_fd = open(self.log_file, "a", encoding="utf-8")
 
-        # 启动进程
+        # 启动进程，传递环境变量
         process = subprocess.Popen(
             cmd,
             stdout=log_fd,
             stderr=subprocess.STDOUT,
+            env=env,  # 传递环境变量
             start_new_session=True,  # 创建新会话，避免被父进程杀死
         )
 
