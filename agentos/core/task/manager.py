@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
 import logging
+from agentos.core.time import utc_now, utc_now_iso
+
 
 try:
     from ulid import ULID
@@ -26,25 +28,38 @@ logger = logging.getLogger(__name__)
 
 class TaskManager:
     """Task Manager: CRUD + aggregation queries"""
-    
-    def __init__(self, db_path: Optional[Path] = None):
+
+    def __init__(self, db_path: Optional[Path] = None, auto_route: bool = True):
         """
         Initialize Task Manager
-        
+
         Args:
             db_path: Optional path to database (defaults to store default)
+            auto_route: Enable automatic task routing on creation (default: True).
+                       Set to False in high-concurrency scenarios to avoid database locks.
         """
         self.db_path = db_path
+        self.auto_route = auto_route
         self.trace_builder = TraceBuilder()
     
-    def _get_conn(self) -> sqlite3.Connection:
-        """Get database connection"""
+    def _get_conn(self) -> tuple[sqlite3.Connection, bool]:
+        """Get database connection.
+
+        Returns:
+            Tuple of (connection, should_close).
+            - should_close=True: Created new connection, caller must close
+            - should_close=False: Using shared connection from registry_db, do NOT close
+        """
         if self.db_path:
+            # Custom db_path: create new connection that caller must close
             conn = sqlite3.connect(str(self.db_path))
+            conn.row_factory = sqlite3.Row
+            return conn, True
         else:
+            # Use shared registry_db connection: do NOT close (managed by registry_db)
             conn = get_db()
-        conn.row_factory = sqlite3.Row
-        return conn
+            conn.row_factory = sqlite3.Row
+            return conn, False
     
     def create_task(
         self,
@@ -76,13 +91,13 @@ class TaskManager:
         Returns:
             Task object
         """
-        task_id = str(ULID.from_datetime(datetime.now(timezone.utc)))
-        now = datetime.now(timezone.utc).isoformat()
+        task_id = str(ULID.from_datetime(utc_now()))
+        now = utc_now_iso()
 
         # Auto-generate session_id if not provided
         auto_created_session = False
         if not session_id:
-            timestamp = int(datetime.now(timezone.utc).timestamp())
+            timestamp = int(utc_now().timestamp())
             session_id = f"auto_{task_id[:8]}_{timestamp}"
             auto_created_session = True
 
@@ -113,7 +128,7 @@ class TaskManager:
             router_version=router_version,
         )
 
-        conn = self._get_conn()
+        conn, should_close = self._get_conn()
         try:
             cursor = conn.cursor()
 
@@ -121,15 +136,18 @@ class TaskManager:
             if auto_created_session:
                 cursor.execute(
                     """
-                    INSERT OR IGNORE INTO task_sessions (session_id, channel, metadata, created_at, last_activity)
-                    VALUES (?, ?, ?, ?, ?)
+                    INSERT OR IGNORE INTO chat_sessions (session_id, title, task_id, created_at, updated_at, channel, last_activity, metadata)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         session_id,
+                        f"Auto Task Session {task_id[:8]}",
+                        task_id,
+                        now,
+                        now,
                         "auto",
+                        now,
                         json.dumps({"auto_created": True, "task_id": task_id}),
-                        now,
-                        now,
                     ),
                 )
 
@@ -159,25 +177,29 @@ class TaskManager:
             conn.commit()
             logger.info(f"Created task: {task_id} (session: {session_id})")
 
-            # 🔵 AUTO ROUTE TASK AFTER CREATION
-            try:
-                from agentos.core.task.routing_service import TaskRoutingService
-                import asyncio
-                routing_service = TaskRoutingService()
-                # Build task_spec for routing
-                task_spec = {
-                    "task_id": task.task_id,
-                    "title": task.title,
-                    "metadata": task.metadata or {},
-                }
-                # Run async route_new_task in sync context
-                asyncio.run(routing_service.route_new_task(task.task_id, task_spec))
-            except Exception as e:
-                logger.exception(f"Task routing failed for task {task.task_id}: {e}")
+            # 🔵 AUTO ROUTE TASK AFTER CREATION (if enabled)
+            if self.auto_route:
+                try:
+                    from agentos.core.task.routing_service import TaskRoutingService
+                    import asyncio
+                    routing_service = TaskRoutingService()
+                    # Build task_spec for routing
+                    task_spec = {
+                        "task_id": task.task_id,
+                        "title": task.title,
+                        "metadata": task.metadata or {},
+                    }
+                    # Run async route_new_task in sync context
+                    asyncio.run(routing_service.route_new_task(task.task_id, task_spec))
+                except Exception as e:
+                    logger.exception(f"Task routing failed for task {task.task_id}: {e}")
+            else:
+                logger.debug(f"Skipping auto-route for task {task_id} (auto_route=False)")
 
             return task
         finally:
-            conn.close()
+            if should_close:
+                conn.close()
     
     def create_orphan_task(
         self,
@@ -216,7 +238,7 @@ class TaskManager:
         Returns:
             Task object or None
         """
-        conn = self._get_conn()
+        conn, should_close = self._get_conn()
         try:
             cursor = conn.cursor()
             row = cursor.execute(
@@ -296,7 +318,8 @@ class TaskManager:
                 workdir=workdir,  # v0.4
             )
         finally:
-            conn.close()
+            if should_close:
+                conn.close()
     
     def list_tasks(
         self,
@@ -317,7 +340,7 @@ class TaskManager:
         Returns:
             List of tasks
         """
-        conn = self._get_conn()
+        conn, should_close = self._get_conn()
         try:
             cursor = conn.cursor()
             
@@ -409,7 +432,8 @@ class TaskManager:
 
             return tasks
         finally:
-            conn.close()
+            if should_close:
+                conn.close()
     
     def update_task_status(self, task_id: str, status: str) -> None:
         """
@@ -436,10 +460,10 @@ class TaskManager:
             stacklevel=2
         )
 
-        conn = self._get_conn()
+        conn, should_close = self._get_conn()
         try:
             cursor = conn.cursor()
-            now = datetime.now(timezone.utc).isoformat()
+            now = utc_now_iso()
             cursor.execute(
                 "UPDATE tasks SET status = ?, updated_at = ? WHERE task_id = ?",
                 (status, now, task_id)
@@ -447,7 +471,8 @@ class TaskManager:
             conn.commit()
             logger.warning(f"⚠️ Direct status update (deprecated): task {task_id} -> {status}")
         finally:
-            conn.close()
+            if should_close:
+                conn.close()
 
     def update_task(self, task: Task) -> None:
         """
@@ -456,10 +481,10 @@ class TaskManager:
         Args:
             task: Task object with updated fields
         """
-        conn = self._get_conn()
+        conn, should_close = self._get_conn()
         try:
             cursor = conn.cursor()
-            now = datetime.now(timezone.utc).isoformat()
+            now = utc_now_iso()
             cursor.execute(
                 """
                 UPDATE tasks
@@ -478,7 +503,8 @@ class TaskManager:
             conn.commit()
             logger.info(f"Updated task {task.task_id}: status={task.status}, metadata keys={list(task.metadata.keys()) if task.metadata else []}")
         finally:
-            conn.close()
+            if should_close:
+                conn.close()
 
     def update_task_exit_reason(self, task_id: str, exit_reason: str, status: Optional[str] = None) -> None:
         """
@@ -497,10 +523,10 @@ class TaskManager:
             logger.warning(f"Invalid exit_reason '{exit_reason}', setting to 'unknown'")
             exit_reason = 'unknown'
 
-        conn = self._get_conn()
+        conn, should_close = self._get_conn()
         try:
             cursor = conn.cursor()
-            now = datetime.now(timezone.utc).isoformat()
+            now = utc_now_iso()
 
             if status:
                 cursor.execute(
@@ -517,7 +543,8 @@ class TaskManager:
 
             conn.commit()
         finally:
-            conn.close()
+            if should_close:
+                conn.close()
 
     def add_lineage(
         self,
@@ -537,10 +564,10 @@ class TaskManager:
             phase: Optional phase
             metadata: Optional metadata
         """
-        conn = self._get_conn()
+        conn, should_close = self._get_conn()
         try:
             cursor = conn.cursor()
-            now = datetime.now(timezone.utc).isoformat()
+            now = utc_now_iso()
             
             cursor.execute(
                 """
@@ -559,7 +586,8 @@ class TaskManager:
             conn.commit()
             logger.debug(f"Added lineage: task={task_id}, kind={kind}, ref={ref_id}")
         finally:
-            conn.close()
+            if should_close:
+                conn.close()
     
     def get_lineage(self, task_id: str) -> List[TaskLineageEntry]:
         """
@@ -571,7 +599,7 @@ class TaskManager:
         Returns:
             List of lineage entries (sorted by created_at)
         """
-        conn = self._get_conn()
+        conn, should_close = self._get_conn()
         try:
             cursor = conn.cursor()
             rows = cursor.execute(
@@ -593,7 +621,8 @@ class TaskManager:
             
             return entries
         finally:
-            conn.close()
+            if should_close:
+                conn.close()
     
     def get_trace(self, task_id: str) -> Optional[TaskTrace]:
         """
@@ -612,7 +641,7 @@ class TaskManager:
         lineage = self.get_lineage(task_id)
         
         # Get agents
-        conn = self._get_conn()
+        conn, should_close = self._get_conn()
         try:
             cursor = conn.cursor()
             agent_rows = cursor.execute(
@@ -630,7 +659,8 @@ class TaskManager:
             
             audits = [dict(row) for row in audit_rows]
         finally:
-            conn.close()
+            if should_close:
+                conn.close()
         
         return TaskTrace(
             task=task,
@@ -655,10 +685,10 @@ class TaskManager:
             level: Log level (info|warn|error)
             payload: Optional event payload
         """
-        conn = self._get_conn()
+        conn, should_close = self._get_conn()
         try:
             cursor = conn.cursor()
-            now = datetime.now(timezone.utc).isoformat()
+            now = utc_now_iso()
             
             cursor.execute(
                 """
@@ -675,7 +705,8 @@ class TaskManager:
             )
             conn.commit()
         finally:
-            conn.close()
+            if should_close:
+                conn.close()
 
     def update_task_routing(
         self,
@@ -695,10 +726,10 @@ class TaskManager:
             selected_instance_id: Selected provider instance ID
             router_version: Router version
         """
-        conn = self._get_conn()
+        conn, should_close = self._get_conn()
         try:
             cursor = conn.cursor()
-            now = datetime.now(timezone.utc).isoformat()
+            now = utc_now_iso()
             cursor.execute(
                 """
                 UPDATE tasks
@@ -714,4 +745,5 @@ class TaskManager:
             conn.commit()
             logger.info(f"Updated routing for task {task_id}: instance={selected_instance_id}")
         finally:
-            conn.close()
+            if should_close:
+                conn.close()

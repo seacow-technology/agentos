@@ -1,0 +1,24 @@
+{
+  "id": "intent_set_api_analysis_mergeable",
+  "type": "intent_set",
+  "schema_version": "0.9.3",
+  "created_at": "2026-01-25T11:00:00Z",
+  "intent_ids": [
+    "intent_analyze_api_performance",
+    "intent_analyze_api_security"
+  ],
+  "context": {
+    "project_id": "agentos",
+    "env": "local",
+    "tags": ["api", "analysis", "readonly"]
+  },
+  "lineage": {
+    "introduced_in": "0.9.3",
+    "derived_from": []
+  },
+  "checksum": "f1e2d3c4b5a69780123456789abcdef0123456789abcdef0123456789abcdef0",
+  "metadata": {
+    "created_by": "human_operator",
+    "purpose": "Evaluate mergeable intents (both read-only analysis)"
+  }
+}

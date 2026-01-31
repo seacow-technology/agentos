@@ -13,10 +13,15 @@ Endpoints:
 """
 
 import logging
+from datetime import timezone
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+
+
+from agentos.webui.api.time_format import iso_z
+from agentos.core.time import utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -226,7 +231,7 @@ async def validate_auth_profile(profile_id: str):
         if is_valid:
             message = f"Successfully authenticated to {profile.get('host', 'host')}"
             _auth_profiles[profile_id]["status"] = "valid"
-            _auth_profiles[profile_id]["last_validated"] = datetime.utcnow().isoformat() + "Z"
+            _auth_profiles[profile_id]["last_validated"] = iso_z(utc_now()) + "Z"
         else:
             message = f"Authentication failed: Connection timeout to {profile.get('host', 'host')}"
             _auth_profiles[profile_id]["status"] = "invalid"
@@ -238,7 +243,7 @@ async def validate_auth_profile(profile_id: str):
             "data": {
                 "valid": is_valid,
                 "message": message,
-                "tested_at": datetime.utcnow().isoformat() + "Z"
+                "tested_at": iso_z(utc_now()) + "Z"
             }
         }
 

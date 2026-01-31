@@ -55,7 +55,9 @@ class KnowledgeJobsView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Job Details</h3>
-                            <button class="btn-close" id="jobs-drawer-close">close</button>
+                            <button class="btn-close" id="jobs-drawer-close">
+                                <span class="material-icons">close</span>
+                            </button>
                         </div>
                         <div class="drawer-body" id="jobs-drawer-body">
                             <!-- Job details will be rendered here -->
@@ -315,7 +317,8 @@ class KnowledgeJobsView {
 
     async triggerJob(type) {
         try {
-            const response = await fetch('/api/knowledge/jobs', {
+            // CSRF Fix: Use fetchWithCSRF for protected endpoint
+            const response = await window.fetchWithCSRF('/api/knowledge/jobs', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -358,7 +361,8 @@ class KnowledgeJobsView {
             Toast.info('Cleaning stale jobs...');
 
             // Call API
-            const response = await fetch('/api/knowledge/jobs/cleanup', {
+            // CSRF Fix: Use fetchWithCSRF for protected endpoint
+            const response = await window.fetchWithCSRF('/api/knowledge/jobs/cleanup', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 from agentos.core.task import TaskManager, RunMode, ModelPolicy, TaskMetadata
 from agentos.config import load_settings, save_settings, CLISettings
 from agentos.i18n import set_language, t, get_available_languages
+from agentos.core.time import utc_now_iso
+
 
 
 class InteractiveCLI:
@@ -300,7 +302,7 @@ class InteractiveCLI:
                 metadata={
                     "action": "approved",
                     "approved_by": "cli_user",  # Could be enhanced with actual user ID
-                    "approved_at": datetime.now(timezone.utc).isoformat()
+                    "approved_at": utc_now_iso()
                 }
             )
             

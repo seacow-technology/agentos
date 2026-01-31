@@ -10,6 +10,8 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
+from agentos.core.time import utc_now
+
 
 logger = logging.getLogger(__name__)
 
@@ -52,8 +54,8 @@ class LeadFinding:
         self.title = title
         self.description = description
         self.window_kind = window_kind
-        self.first_seen_at = first_seen_at or datetime.now(timezone.utc)
-        self.last_seen_at = last_seen_at or datetime.now(timezone.utc)
+        self.first_seen_at = first_seen_at or utc_now()
+        self.last_seen_at = last_seen_at or utc_now()
         self.count = count
         self.evidence = evidence or {}
         self.linked_task_id = linked_task_id

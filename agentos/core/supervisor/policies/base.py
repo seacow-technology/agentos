@@ -12,6 +12,8 @@ from typing import Optional
 
 from ..models import SupervisorEvent, Decision
 from ..adapters import GateAdapter, EvaluatorAdapter, AuditAdapter
+from agentos.core.time import utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +162,7 @@ class BasePolicy(ABC):
             SET status = ?, updated_at = ?
             WHERE task_id = ?
             """,
-            (new_status, datetime.now(timezone.utc).isoformat(), task_id),
+            (new_status, utc_now_iso(), task_id),
         )
 
         logger.info(f"Task {task_id} status updated: {new_status}")

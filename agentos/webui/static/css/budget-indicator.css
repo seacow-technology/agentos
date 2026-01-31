@@ -63,6 +63,7 @@
     transition: all 0.2s ease;
     padding: 6px 12px;
     border-radius: 8px;
+    margin-left: auto;
 }
 
 .budget-indicator:hover {
@@ -70,19 +71,33 @@
 }
 
 .budget-usage {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
     font-size: 13px;
     color: var(--text-primary, #111827);
     font-weight: 500;
 }
 
+.budget-usage .material-icons {
+    color: var(--text-secondary, #6b7280);
+}
+
 .budget-status {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     padding: 4px 12px;
     border-radius: 12px;
     font-size: 12px;
     font-weight: 600;
     line-height: 1.5;
     white-space: nowrap;
+}
+
+.budget-status .material-icons {
+    font-size: 16px;
 }
 
 .budget-status small {

@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Literal
 from datetime import datetime, timezone
 import uuid
+from agentos.core.time import utc_now_iso
+
 
 # VerdictStatus type definition
 VerdictStatus = Literal["PASS", "FAIL", "NEEDS_CHANGES"]
@@ -50,7 +52,7 @@ class GuardianAssignment:
             assignment_id=f"assignment_{uuid.uuid4().hex[:12]}",
             task_id=task_id,
             guardian_code=guardian_code,
-            created_at=datetime.now(timezone.utc).isoformat(),
+            created_at=utc_now_iso(),
             reason=reason,
         )
 
@@ -119,7 +121,7 @@ class GuardianVerdictSnapshot:
             flags=flags,
             evidence=evidence,
             recommendations=recommendations,
-            created_at=datetime.now(timezone.utc).isoformat(),
+            created_at=utc_now_iso(),
         )
 
     def to_dict(self) -> Dict[str, Any]:

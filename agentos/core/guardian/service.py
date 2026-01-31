@@ -19,6 +19,8 @@ from typing import Dict, Any, List, Optional
 from agentos.core.guardian.models import GuardianReview
 from agentos.core.guardian.storage import GuardianStorage
 from agentos.store import get_db_path
+from agentos.core.time import utc_now
+
 
 logger = logging.getLogger(__name__)
 
@@ -254,7 +256,7 @@ class GuardianService:
 
             # 获取最近 7 天的统计
             from datetime import datetime, timedelta, timezone
-            since = datetime.now(timezone.utc) - timedelta(days=7)
+            since = utc_now() - timedelta(days=7)
             recent_stats = service.get_statistics(since=since)
             print(f"Recent pass rate: {recent_stats['pass_rate']:.2%}")
             ```

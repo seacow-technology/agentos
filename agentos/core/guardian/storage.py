@@ -23,6 +23,8 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 
 from agentos.core.guardian.models import GuardianReview
+from agentos.core.time import utc_now
+
 
 logger = logging.getLogger(__name__)
 
@@ -312,7 +314,7 @@ class GuardianStorage:
 
             # 统计最近 7 天
             from datetime import datetime, timedelta, timezone
-            since = datetime.now(timezone.utc) - timedelta(days=7)
+            since = utc_now() - timedelta(days=7)
             recent = storage.get_stats(since=since)
             ```
         """

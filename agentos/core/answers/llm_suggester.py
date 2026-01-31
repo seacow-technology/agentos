@@ -4,6 +4,8 @@ import os
 import hashlib
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime, timezone
+from agentos.core.time import utc_now_iso
+
 
 try:
     from openai import OpenAI
@@ -107,7 +109,7 @@ class LLMSuggester:
         for sugg in suggestions:
             sugg["source"] = f"{self.provider}/{self.model}"
             sugg["prompt_hash"] = prompt_hash
-            sugg["generated_at"] = datetime.now(timezone.utc).isoformat()
+            sugg["generated_at"] = utc_now_iso()
         
         return suggestions
     

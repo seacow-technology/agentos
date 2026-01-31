@@ -11,6 +11,8 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
 
 from agentos.core.infra.git_client import GitClientFactory
+from agentos.core.time import utc_now_iso
+
 
 
 class RollbackManager:
@@ -50,7 +52,7 @@ class RollbackManager:
                 "commit_hash": commit_hash,
                 "worktree_path": str(worktree_path),
                 "checksums": checksums or {},
-                "created_at": datetime.now(timezone.utc).isoformat()
+                "created_at": utc_now_iso()
             }
         else:
             # 主仓库模式：记录当前commit
@@ -61,7 +63,7 @@ class RollbackManager:
                 "type": "main_repo",
                 "commit_hash": commit_hash,
                 "checksums": checksums or {},
-                "created_at": datetime.now(timezone.utc).isoformat()
+                "created_at": utc_now_iso()
             }
         
         self.rollback_points.append(rollback_point)
@@ -183,7 +185,7 @@ class RollbackManager:
         """
         proof = {
             "rollback_proof_version": "1.0",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": utc_now_iso(),
             "success": rollback_result["success"],
             "checksums_match": rollback_result["checksums_match"],
             "checksums_verified": len(rollback_result.get("expected_checksums", {})),

@@ -55,7 +55,9 @@ class TasksView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Task Details</h3>
-                            <button class="btn-close" id="tasks-drawer-close">close</button>
+                            <button class="btn-close" id="tasks-drawer-close">
+                                <span class="material-icons">close</span>
+                            </button>
                         </div>
                         <div class="drawer-body" id="tasks-drawer-body">
                             <!-- Task details will be rendered here -->

@@ -135,9 +135,7 @@ async def list_task_assignments(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-    finally:
-        if 'conn' in locals():
-            conn.close()
+        # Do NOT close: get_db() returns shared thread-local connection
 
 
 @router.get("/assignments/{assignment_id}", response_model=GuardianAssignmentResponse)
@@ -198,9 +196,7 @@ async def get_assignment(assignment_id: str) -> GuardianAssignmentResponse:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-    finally:
-        if 'conn' in locals():
-            conn.close()
+        # Do NOT close: get_db() returns shared thread-local connection
 
 
 @router.get("/tasks/{task_id}/verdicts", response_model=VerdictsListResponse)
@@ -287,9 +283,7 @@ async def list_task_verdicts(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-    finally:
-        if 'conn' in locals():
-            conn.close()
+        # Do NOT close: get_db() returns shared thread-local connection
 
 
 @router.get("/verdicts/{verdict_id}", response_model=GuardianVerdictResponse)
@@ -358,6 +352,4 @@ async def get_verdict(verdict_id: str) -> GuardianVerdictResponse:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-    finally:
-        if 'conn' in locals():
-            conn.close()
+        # Do NOT close: get_db() returns shared thread-local connection

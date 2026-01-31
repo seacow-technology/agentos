@@ -1,0 +1,120 @@
+{
+  "id": "intent_deploy_service_v2_9",
+  "type": "execution_intent",
+  "title": "Deploy API service v2.9 (hotfix) to staging",
+  "description": "Deploy hotfix version 2.9 with critical bug fixes",
+  "version": "0.9.1",
+  "status": "proposed",
+  "created_at": "2026-01-25T10:25:00Z",
+  "lineage": {
+    "introduced_in": "0.9.1",
+    "derived_from": [],
+    "supersedes": []
+  },
+  "scope": {
+    "project_id": "agentos",
+    "repo_root": "/Users/pangge/PycharmProjects/AgentOS",
+    "targets": {
+      "files": [
+        "deployment/staging/api-service.yaml"
+      ],
+      "modules": [],
+      "areas": [
+        "ops"
+      ]
+    }
+  },
+  "objective": {
+    "goal": "Deploy hotfix v2.9 with critical security fixes",
+    "success_criteria": [
+      "Service v2.9 deployed successfully",
+      "Security vulnerability patched",
+      "No service disruption"
+    ],
+    "non_goals": [
+      "Add new features"
+    ]
+  },
+  "selected_workflows": [
+    {
+      "workflow_id": "hotfix_deployment_workflow",
+      "phases": [
+        "validation",
+        "operations"
+      ],
+      "reason": "Hotfix deployment workflow"
+    }
+  ],
+  "selected_agents": [
+    {
+      "agent_id": "deployment_agent",
+      "role": "deployer",
+      "responsibilities": [
+        "Validate hotfix deployment",
+        "Deploy to staging",
+        "Verify security patch"
+      ]
+    }
+  ],
+  "planned_commands": [
+    {
+      "command_id": "deploy_hotfix_to_staging",
+      "intent": "Deploy API service v2.9 hotfix to staging",
+      "effects": [
+        "deploy"
+      ],
+      "risk_level": "medium",
+      "evidence_refs": [
+        "scan://file/deployment/staging/api-service.yaml",
+        "registry://release/v2.9",
+        "security://cve-2026-001"
+      ]
+    }
+  ],
+  "interaction": {
+    "mode": "semi_auto",
+    "question_budget": 2,
+    "question_policy": "blockers_only"
+  },
+  "risk": {
+    "overall": "medium",
+    "drivers": [
+      "Deployment to staging environment",
+      "Hotfix with security implications"
+    ],
+    "requires_review": [
+      "security",
+      "operations"
+    ]
+  },
+  "budgets": {
+    "max_files": 5,
+    "max_commits": 1,
+    "max_tokens": 25000,
+    "max_cost_usd": 2.0
+  },
+  "evidence_refs": [
+    "registry://release/v2.9",
+    "security://cve-2026-001",
+    "scan://file/deployment/staging/api-service.yaml"
+  ],
+  "constraints": {
+    "execution": "forbidden",
+    "no_fabrication": true,
+    "registry_only": true,
+    "lock_scope": {
+      "mode": "files",
+      "paths": [
+        "deployment/staging/api-service.yaml"
+      ]
+    }
+  },
+  "audit": {
+    "created_by": "human_operator",
+    "source": "human",
+    "checksum": "a7b8c9d0e1f234567890abcdef0123456789abcdef0123456789abcdef456789"
+  },
+  "metadata": {
+    "priority": 7
+  }
+}

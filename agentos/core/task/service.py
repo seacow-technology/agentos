@@ -19,6 +19,8 @@ import logging
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timezone
+from agentos.core.time import utc_now, utc_now_iso
+
 
 try:
     from ulid import ULID
@@ -64,6 +66,13 @@ class TaskService:
         self.state_machine = TaskStateMachine(db_path=db_path)
         self.settings_inheritance = ProjectSettingsInheritance(db_path=db_path)
 
+        # Initialize writer for this specific db_path
+        if db_path:
+            from agentos.core.db import SQLiteWriter
+            self._writer = SQLiteWriter(str(db_path))
+        else:
+            self._writer = None  # Will use global writer from get_writer()
+
     # =========================================================================
     # TASK CREATION (State: DRAFT)
     # =========================================================================
@@ -100,15 +109,20 @@ class TaskService:
         Returns:
             Task object in DRAFT state
         """
-        task_id = str(ULID.from_datetime(datetime.now(timezone.utc)))
-        now = datetime.now(timezone.utc).isoformat()
+        task_id = str(ULID.from_datetime(utc_now()))
+        now = utc_now_iso()
 
-        # Auto-generate session_id if not provided
+        # Auto-generate session_id if not provided (Step 2: C-1 Fix)
+        # Format: "auto_{task_id[:8]}_{timestamp}"
         auto_created_session = False
         if not session_id:
-            timestamp = int(datetime.now(timezone.utc).timestamp())
+            timestamp = int(utc_now().timestamp())
             session_id = f"auto_{task_id[:8]}_{timestamp}"
             auto_created_session = True
+            logger.info(f"Auto-generated session_id: {session_id} for task {task_id}")
+        else:
+            # Validate session exists (optional - for better error messages)
+            pass  # FK constraint will handle validation
 
         # Enhance metadata with execution context
         if metadata is None:
@@ -141,23 +155,34 @@ class TaskService:
             """将任务写入数据库（在 writer 线程中执行）"""
             cursor = conn.cursor()
 
-            # 1. If we auto-created session_id, create the session record first
-            if auto_created_session:
+            # CRITICAL: Break circular FK dependency
+            # - tasks.session_id FK -> chat_sessions.session_id (needs session first)
+            # - chat_sessions.task_id FK -> tasks.task_id (needs task first)
+            # Solution: 3-step insert
+            # 1. INSERT chat_sessions (task_id=NULL) - breaks cycle
+            # 2. INSERT tasks (session_id=auto_xxx) - FK now valid
+            # 3. UPDATE chat_sessions SET task_id - completes the link
+
+            # Step 1: If auto-created session, insert session first WITHOUT task_id
+            if auto_created_session and session_id:
                 cursor.execute(
                     """
-                    INSERT OR IGNORE INTO task_sessions (session_id, channel, metadata, created_at, last_activity)
-                    VALUES (?, ?, ?, ?, ?)
+                    INSERT OR IGNORE INTO chat_sessions (session_id, title, created_at, updated_at, channel, last_activity, metadata)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         session_id,
+                        f"Auto Task Session {task_id[:8]}",
+                        now,
+                        now,
                         "auto",
-                        json.dumps({"auto_created": True, "task_id": task_id}),
                         now,
-                        now,
+                        json.dumps({"auto_created": True, "will_link_task": task_id}),
                     ),
                 )
+                logger.debug(f"Created auto-generated session (step 1/3): {session_id}")
 
-            # 2. Insert task record
+            # Step 2: Insert task record with session_id (FK now valid)
             cursor.execute(
                 """
                 INSERT INTO tasks (
@@ -182,8 +207,25 @@ class TaskService:
                     task.router_version,
                 ),
             )
+            logger.debug(f"Created task (step 2/3): {task_id}")
 
-            # 3. Record creation audit
+            # Step 3: Link session back to task (complete bidirectional link)
+            if auto_created_session and session_id:
+                cursor.execute(
+                    """
+                    UPDATE chat_sessions
+                    SET task_id = ?, metadata = ?
+                    WHERE session_id = ?
+                    """,
+                    (
+                        task_id,
+                        json.dumps({"auto_created": True, "task_id": task_id}),
+                        session_id,
+                    ),
+                )
+                logger.debug(f"Linked session to task (step 3/3): {session_id} -> {task_id}")
+
+            # Record creation audit
             cursor.execute(
                 """
                 INSERT INTO task_audits (task_id, level, event_type, payload, created_at)
@@ -205,7 +247,8 @@ class TaskService:
             return task_id
 
         # Submit write operation through SQLiteWriter (serialized, avoids lock conflicts)
-        writer = get_writer()
+        # Use instance-specific writer if db_path was provided, otherwise use global writer
+        writer = self._writer if self._writer else get_writer()
         try:
             result_task_id = writer.submit(_write_task_to_db, timeout=10.0)
             logger.info(f"Created draft task: {result_task_id} (session: {session_id})")
@@ -635,7 +678,7 @@ class TaskService:
 
         task.metadata["cancel_actor"] = actor
         task.metadata["cancel_reason"] = reason
-        task.metadata["cancel_requested_at"] = datetime.now(timezone.utc).isoformat()
+        task.metadata["cancel_requested_at"] = utc_now_iso()
 
         # Update task metadata first (runner will detect this)
         self.task_manager.update_task(task)
@@ -956,7 +999,7 @@ class TaskService:
             return True
 
         # Update spec_frozen flag
-        now = datetime.now(timezone.utc).isoformat()
+        now = utc_now_iso()
 
         def _freeze_spec_in_db(conn):
             cursor = conn.cursor()
@@ -967,7 +1010,7 @@ class TaskService:
             conn.commit()
 
         # Submit write operation
-        writer = get_writer()
+        writer = self._writer if self._writer else get_writer()
         try:
             writer.submit(_freeze_spec_in_db, timeout=10.0)
         except Exception as e:
@@ -1059,7 +1102,7 @@ class TaskService:
             return True
 
         # Update spec_frozen flag
-        now = datetime.now(timezone.utc).isoformat()
+        now = utc_now_iso()
 
         def _unfreeze_spec_in_db(conn):
             cursor = conn.cursor()
@@ -1070,7 +1113,7 @@ class TaskService:
             conn.commit()
 
         # Submit write operation
-        writer = get_writer()
+        writer = self._writer if self._writer else get_writer()
         try:
             writer.submit(_unfreeze_spec_in_db, timeout=10.0)
         except Exception as e:

@@ -1,0 +1,49 @@
+# High Risk Operation Approval Policy
+#
+# Purpose: Require approval for high-risk operations
+# Domain: Global
+# Risk: HIGH
+
+policy:
+  id: "high_risk_approval"
+  version: "1.0.0"
+  domain: "global"
+  name: "High Risk Approval Policy"
+  description: "Requires explicit approval for high-risk operations based on risk score and agent trust"
+
+  rules:
+    - condition: "risk_level == 'CRITICAL'"
+      condition_type: "expression"
+      action: "DENY"
+      rationale: "CRITICAL risk operations require explicit admin override token"
+      priority: 5
+
+    - condition: "risk_level == 'HIGH' and trust_tier < 'T3'"
+      condition_type: "expression"
+      action: "DENY"
+      rationale: "HIGH risk operations require trust tier T3 or higher"
+      priority: 10
+
+    - condition: "risk_level == 'HIGH' and trust_tier >= 'T3'"
+      condition_type: "expression"
+      action: "ESCALATE"
+      rationale: "HIGH risk operations require approval even for trusted agents"
+      priority: 15
+
+    - condition: "side_effects_count > 3"
+      condition_type: "threshold"
+      action: "ESCALATE"
+      rationale: "Operations with many side effects require review"
+      priority: 20
+
+  evolution_history:
+    - version: "1.0.0"
+      changes: "Initial version"
+      reason: "Establish risk-based approval gates"
+      changed_by: "system"
+      date: "2026-02-01"
+
+  metadata:
+    owner: "security_team"
+    enforcement_level: "strict"
+    exemptions: []

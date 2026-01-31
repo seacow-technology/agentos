@@ -1,0 +1,108 @@
+{
+  "id": "system_design",
+  "type": "workflow",
+  "version": "0.6.0",
+  "status": "draft",
+  "metadata": {
+    "created_at": "2026-01-25T05:37:21.385442+00:00",
+    "checksum": "f2173294585b840fe1f00785c7f6f3c013d2d8395192f6a220602640b45a53e2",
+    "is_root": true,
+    "tags": [
+      "architecture",
+      "design",
+      "decision-making"
+    ]
+  },
+  "spec": {
+    "id": "system_design",
+    "version": "0.6.0",
+    "category": "design",
+    "description": "Produce system-level architecture design.\nThis workflow guides architectural decision-making by exploring options, analyzing tradeoffs, and documenting decisions. It's for scenarios requiring significant architectural choices.\n",
+    "phases": [
+      {
+        "id": "architecture_options",
+        "description": "Identify and document architecture options",
+        "requires": [
+          "requirements",
+          "constraints"
+        ],
+        "produces": [
+          "architecture_options"
+        ],
+        "allows_questions": true,
+        "risk_level": "high"
+      },
+      {
+        "id": "tradeoff_analysis",
+        "description": "Analyze tradeoffs between options",
+        "requires": [
+          "architecture_options"
+        ],
+        "produces": [
+          "tradeoff_analysis"
+        ],
+        "allows_questions": true,
+        "risk_level": "high"
+      },
+      {
+        "id": "decision_record",
+        "description": "Document the architectural decision",
+        "requires": [
+          "tradeoff_analysis"
+        ],
+        "produces": [
+          "adr",
+          "decision_rationale"
+        ],
+        "allows_questions": false,
+        "risk_level": "medium"
+      }
+    ],
+    "interaction": {
+      "default_mode": "question_only",
+      "question_policy": {
+        "trigger_when": [
+          "conflicting_constraints",
+          "risk_level == \"critical\"",
+          "multiple_viable_options"
+        ]
+      },
+      "allowed_phases": [
+        "architecture_options",
+        "tradeoff_analysis"
+      ]
+    },
+    "constraints": {
+      "execution": "forbidden",
+      "side_effects": "forbidden",
+      "requires_approval": false,
+      "max_duration_minutes": 240
+    },
+    "lineage": {
+      "introduced_in": "v0.6",
+      "derived_from": null,
+      "change_reason": null
+    },
+    "metadata": {
+      "tags": [
+        "architecture",
+        "design",
+        "decision-making"
+      ],
+      "related_workflows": [
+        "requirements_definition",
+        "detailed_design"
+      ],
+      "use_cases": [
+        "New system or major feature with multiple design approaches",
+        "Technology stack decisions",
+        "Scalability or performance-critical designs"
+      ],
+      "anti_use_cases": [
+        "Small feature implementations",
+        "Implementation-level decisions",
+        "Routine component additions"
+      ]
+    }
+  }
+}

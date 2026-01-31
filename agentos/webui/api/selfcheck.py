@@ -52,6 +52,7 @@ class SelfCheckResponse(BaseModel):
     summary: str
     ts: str
     items: List[CheckItemResponse]
+    version: str = "unknown"
 
 
 class ChatHealthResponse(BaseModel):
@@ -123,6 +124,7 @@ async def run_selfcheck(request: SelfCheckRequest) -> SelfCheckResponse:
         summary=result.summary,
         ts=result.ts,
         items=items,
+        version=result.version,
     )
 
     # Apply sanitization as safety net

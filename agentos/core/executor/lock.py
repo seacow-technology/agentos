@@ -9,6 +9,8 @@ import time
 from pathlib import Path
 from typing import Optional, Dict, Any
 from datetime import datetime, timezone, timedelta
+from agentos.core.time import utc_now, utc_now_iso
+
 
 
 class ExecutionLock:
@@ -44,7 +46,7 @@ class ExecutionLock:
                 
                 # 检查是否过期
                 expires_at = datetime.fromisoformat(existing_lock["expires_at"])
-                if datetime.now(timezone.utc) < expires_at:
+                if utc_now() < expires_at:
                     # 锁仍然有效
                     return False
                 
@@ -57,8 +59,8 @@ class ExecutionLock:
         lock_data = {
             "run_id": run_id,
             "repo_hash": repo_hash,
-            "acquired_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) + timedelta(seconds=ttl_seconds)).isoformat(),
+            "acquired_at": utc_now_iso(),
+            "expires_at": (utc_now() + timedelta(seconds=ttl_seconds)).isoformat(),
             "ttl_seconds": ttl_seconds
         }
         
@@ -85,7 +87,7 @@ class ExecutionLock:
         
         # 更新过期时间
         self.current_lock["expires_at"] = (
-            datetime.now(timezone.utc) + timedelta(seconds=additional_seconds)
+            utc_now() + timedelta(seconds=additional_seconds)
         ).isoformat()
         
         with open(self.lock_file, "w", encoding="utf-8") as f:
@@ -105,7 +107,7 @@ class ExecutionLock:
                 lock_data = json.load(f)
             
             expires_at = datetime.fromisoformat(lock_data["expires_at"])
-            return datetime.now(timezone.utc) < expires_at
+            return utc_now() < expires_at
             
         except (json.JSONDecodeError, KeyError, ValueError):
             return False

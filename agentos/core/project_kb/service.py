@@ -44,7 +44,7 @@ class ProjectKBService:
 
         Args:
             root_dir: 项目根目录 (默认当前目录)
-            db_path: 数据库路径 (默认 store/registry.sqlite)
+            db_path: 数据库路径 (默认 component_db_path("agentos"))
             config: 配置对象 (优先使用)
             config_path: 配置文件路径 (如果 config 为 None)
             fail_safe: 是否启用 fail-safe 模式（Gate #6）

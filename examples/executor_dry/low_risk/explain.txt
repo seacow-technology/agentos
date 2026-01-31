@@ -1,0 +1,32 @@
+======================================================================
+DRY EXECUTION RESULT EXPLANATION
+======================================================================
+
+Result ID: dryexec_163e4e86532c880e
+Schema Version: 0.10.0
+Created: 2026-01-25T10:20:19.655621Z
+
+Source Intent: intent_example_low_risk
+Intent Checksum: e87e081eaa352ae...
+
+--- Execution Graph ---
+Nodes: 6
+Edges: 5
+Swimlanes: 1
+
+--- Patch Plan ---
+Files: 2
+  - modify: agentos/utils/format.py (risk: low)
+  - modify: agentos/utils/validation.py (risk: low)
+
+--- Commit Plan ---
+Commits: 1
+  - commit_0001: feat(agentos): update 2 file(s)
+    Files: 2, Risk: low
+
+--- Review Requirements ---
+Dominant Risk: low
+Required Reviews: release
+Estimated Review Time: quick
+
+======================================================================

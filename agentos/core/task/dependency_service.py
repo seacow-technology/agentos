@@ -41,7 +41,7 @@ import logging
 import sqlite3
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -51,6 +51,8 @@ from agentos.core.task.repo_context import ExecutionEnv
 from agentos.core.task.artifact_service import TaskArtifactService, ArtifactRefType
 from agentos.core.task.audit_service import TaskAuditService
 from agentos.store import get_db
+from agentos.core.time import utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -644,7 +646,7 @@ class TaskDependencyService:
             dependency_type=dependency_type,
             reason=reason,
             created_by=created_by,
-            created_at=datetime.utcnow().isoformat(),
+            created_at=utc_now_iso(),
             metadata=metadata or {}
         )
 

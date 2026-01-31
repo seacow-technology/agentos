@@ -12,9 +12,10 @@ Design Goals:
 
 Usage Example:
     from agentos.core.db import SQLiteWriter
+    from agentos.core.storage.paths import component_db_path
 
     # Initialize writer (singleton pattern)
-    writer = SQLiteWriter(db_path="store/registry.sqlite")
+    writer = SQLiteWriter(db_path=str(component_db_path("agentos")))
 
     # Submit write operations
     def insert_task(conn):
@@ -157,6 +158,9 @@ class SQLiteWriter:
             sqlite3.Connection configured for write operations
         """
         conn = sqlite3.connect(self.db_path)
+
+        # Configure row_factory for dict-style access (needed for some read-after-write scenarios)
+        conn.row_factory = sqlite3.Row
 
         # Configure for optimal write performance and concurrency
         conn.execute("PRAGMA journal_mode=WAL")

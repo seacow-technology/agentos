@@ -28,6 +28,7 @@ import yaml
 from fastapi import APIRouter, HTTPException, UploadFile, File, Query, Body
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field
+from agentos.webui.api.time_format import iso_z
 
 from agentos.core.extensions.registry import ExtensionRegistry
 from agentos.core.extensions.engine import ExtensionInstallEngine
@@ -79,6 +80,41 @@ def get_installer() -> ZipInstaller:
     return _installer
 
 
+def load_extension_manifest(extension_id: str) -> Optional[ExtensionManifest]:
+    """
+    Load extension manifest from disk
+
+    Args:
+        extension_id: Extension ID
+
+    Returns:
+        ExtensionManifest or None if not found
+    """
+    try:
+        from agentos.store import get_store_path
+        import json
+        import os
+
+        # Get absolute path to ensure it works regardless of working directory
+        ext_dir = get_store_path("extensions") / extension_id
+        # Convert to absolute path if relative
+        if not ext_dir.is_absolute():
+            ext_dir = Path(os.getcwd()) / ext_dir
+
+        manifest_path = ext_dir / "manifest.json"
+
+        if not manifest_path.exists():
+            logger.warning(f"Manifest not found for extension {extension_id} at {manifest_path}")
+            return None
+
+        with open(manifest_path, 'r', encoding='utf-8') as f:
+            manifest_dict = json.load(f)
+        return ExtensionManifest(**manifest_dict)
+    except Exception as e:
+        logger.warning(f"Failed to load manifest for {extension_id}: {e}")
+        return None
+
+
 # ============================================
 # Request/Response Models
 # ============================================
@@ -103,6 +139,12 @@ class ExtensionListItem(BaseModel):
     installed_at: str
     permissions_required: List[str] = Field(default_factory=list)
     capabilities: List[ExtensionCapabilityResponse] = Field(default_factory=list)
+    runtime: Optional[str] = None
+    python_version: Optional[str] = None
+    python_dependencies: List[str] = Field(default_factory=list)
+    has_external_bins: bool = False
+    external_bins_count: int = 0
+    adr_ext_002_compliant: bool = True
 
 
 class ExtensionDetail(BaseModel):
@@ -120,6 +162,11 @@ class ExtensionDetail(BaseModel):
     usage_doc: Optional[str] = None
     commands: Optional[Dict[str, Any]] = None
     metadata: Optional[Dict[str, Any]] = None
+    runtime: Optional[str] = None
+    python_config: Optional[Dict[str, Any]] = None
+    external_bins: List[str] = Field(default_factory=list)
+    adr_ext_002_compliant: bool = True
+    adr_ext_002_reason: Optional[str] = None
 
 
 class InstallFromURLRequest(BaseModel):
@@ -247,6 +294,38 @@ async def list_extensions(
                 for cap in ext.capabilities
             ]
 
+            # Load manifest to get runtime information
+            runtime = None
+            python_version = None
+            python_dependencies = []
+            has_external_bins = False
+            external_bins_count = 0
+            adr_ext_002_compliant = True
+
+            try:
+                manifest = load_extension_manifest(ext.id)
+                if manifest:
+                    # Extract runtime information
+                    runtime = manifest.runtime.value if manifest.runtime else None
+
+                    # Extract Python configuration
+                    if manifest.python:
+                        python_version = manifest.python.version
+                        python_dependencies = manifest.python.dependencies or []
+
+                    # Extract external_bins information
+                    external_bins = manifest.external_bins or []
+                    has_external_bins = len(external_bins) > 0
+                    external_bins_count = len(external_bins)
+
+                    # Check ADR-EXT-002 compliance
+                    from agentos.core.extensions.policy import PolicyChecker
+                    policy_result = PolicyChecker.check_runtime_policy(manifest.model_dump())
+                    adr_ext_002_compliant = policy_result.allowed
+            except Exception as e:
+                logger.warning(f"Failed to extract runtime info for {ext.id}: {e}")
+                # Use default values
+
             result.append(ExtensionListItem(
                 id=ext.id,
                 name=ext.name,
@@ -255,9 +334,15 @@ async def list_extensions(
                 icon_path=icon_path,
                 enabled=ext.enabled,
                 status=ext.status.value,
-                installed_at=ext.installed_at.isoformat(),
+                installed_at=iso_z(ext.installed_at),
                 permissions_required=ext.permissions_required,
-                capabilities=capabilities
+                capabilities=capabilities,
+                runtime=runtime,
+                python_version=python_version,
+                python_dependencies=python_dependencies,
+                has_external_bins=has_external_bins,
+                external_bins_count=external_bins_count,
+                adr_ext_002_compliant=adr_ext_002_compliant
             ))
 
         return {"extensions": result}
@@ -336,6 +421,36 @@ async def get_extension_detail(extension_id: str):
             for cap in ext.capabilities
         ]
 
+        # Load manifest to get runtime information
+        runtime = None
+        python_config = None
+        external_bins = []
+        adr_ext_002_compliant = True
+        adr_ext_002_reason = None
+
+        try:
+            manifest = load_extension_manifest(ext.id)
+            if manifest:
+                # Extract runtime
+                runtime = manifest.runtime.value if manifest.runtime else None
+
+                # Extract complete Python configuration
+                if manifest.python:
+                    python_config = manifest.python.model_dump()
+
+                # Extract external_bins
+                external_bins = manifest.external_bins or []
+
+                # Check ADR-EXT-002 compliance
+                from agentos.core.extensions.policy import PolicyChecker
+                policy_result = PolicyChecker.check_runtime_policy(manifest.model_dump())
+                adr_ext_002_compliant = policy_result.allowed
+                if not policy_result.allowed:
+                    adr_ext_002_reason = policy_result.reason
+        except Exception as e:
+            logger.warning(f"Failed to extract runtime info for {ext.id}: {e}")
+            # Use default values
+
         return ExtensionDetail(
             id=ext.id,
             name=ext.name,
@@ -344,12 +459,17 @@ async def get_extension_detail(extension_id: str):
             icon_path=icon_path,
             enabled=ext.enabled,
             status=ext.status.value,
-            installed_at=ext.installed_at.isoformat(),
+            installed_at=iso_z(ext.installed_at),
             permissions_required=ext.permissions_required,
             capabilities=capabilities,
             usage_doc=usage_doc,
             commands=commands,
-            metadata=ext.metadata
+            metadata=ext.metadata,
+            runtime=runtime,
+            python_config=python_config,
+            external_bins=external_bins,
+            adr_ext_002_compliant=adr_ext_002_compliant,
+            adr_ext_002_reason=adr_ext_002_reason
         )
 
     except HTTPException:

@@ -29,7 +29,7 @@ def check_schema_version() -> tuple[bool, Optional[str]]:
         # Get current version from database
         conn = get_db()
         current = get_current_version(conn)
-        conn.close()
+        # Do NOT close: get_db() returns shared thread-local connection
         
         # Get latest version from filesystem
         migrations_dir = Path(__file__).parent.parent / "store" / "migrations"

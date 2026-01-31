@@ -55,8 +55,8 @@ class EvidenceDrawer {
             <!-- Drawer -->
             <div class="evidence-drawer" id="evidence-drawer">
                 <div class="drawer-header">
-                    <h2 class="drawer-title">证据查看器</h2>
-                    <button class="drawer-close-btn" id="evidence-drawer-close" title="关闭">
+                    <h2 class="drawer-title">Evidence Viewer</h2>
+                    <button class="drawer-close-btn" id="evidence-drawer-close" title="Close">
                         <span class="material-icons md-24">close</span>
                     </button>
                 </div>
@@ -71,7 +71,7 @@ class EvidenceDrawer {
                 <div class="drawer-footer">
                     <button class="btn-text" id="evidence-toggle-advanced">
                         <span class="material-icons md-18">preview</span>
-                        显示高级信息
+                        Show高级Info
                     </button>
                 </div>
             </div>
@@ -146,7 +146,7 @@ class EvidenceDrawer {
         this.drawerEl.classList.remove('advanced-visible');
         this.toggleAdvancedBtn.innerHTML = `
             <span class="material-icons md-18">preview</span>
-            显示高级信息
+            Show高级Info
         `;
     }
 
@@ -187,20 +187,20 @@ class EvidenceDrawer {
                     <div class="info-row">
                         <span class="info-label">Checkpoint ID:</span>
                         <code class="info-value">${data.checkpoint_id}</code>
-                        <button class="btn-icon btn-copy" data-copy="${data.checkpoint_id}" title="复制">
+                        <button class="btn-icon btn-copy" data-copy="${data.checkpoint_id}" title="Copy">
                             <span class="material-icons md-16">content_copy</span>
                         </button>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">类型:</span>
+                        <span class="info-label">Type:</span>
                         <span class="info-value">${this.formatCheckpointType(data.checkpoint_type)}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">序号:</span>
+                        <span class="info-label">Sequence:</span>
                         <span class="info-value">#${data.sequence_number}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">创建时间:</span>
+                        <span class="info-label">Created:</span>
                         <span class="info-value">${this.formatTimestamp(data.created_at)}</span>
                     </div>
                 </div>
@@ -236,12 +236,12 @@ class EvidenceDrawer {
             verified: {
                 icon: 'check_circle',
                 text: '已验证',
-                description: '所有证据已通过验证，此检查点可安全恢复'
+                description: '所有证据已Passed验证，此检查点可安全恢复'
             },
             invalid: {
                 icon: 'error',
                 text: '失效（需回滚）',
-                description: '部分证据验证失败，此检查点无法恢复'
+                description: '部分证据验证Failed，此检查点无法恢复'
             },
             pending: {
                 icon: 'schedule',
@@ -353,7 +353,7 @@ class EvidenceDrawer {
                 </button>
             </div>
             <div class="detail-row">
-                <span class="detail-label">类型:</span>
+                <span class="detail-label">Type:</span>
                 <span class="detail-value">${details.type}</span>
             </div>
             <div class="detail-row">
@@ -387,7 +387,7 @@ class EvidenceDrawer {
             ` : ''}
             ${details.stderr_preview ? `
                 <div class="detail-row">
-                    <span class="detail-label">错误输出:</span>
+                    <span class="detail-label">Error输出:</span>
                     <pre class="detail-value error">${details.stderr_preview}</pre>
                 </div>
             ` : ''}
@@ -429,7 +429,7 @@ class EvidenceDrawer {
             <div class="detail-row">
                 <span class="detail-label">SHA256:</span>
                 <code class="detail-value sha256">${details.sha256_short}</code>
-                <button class="btn-icon btn-copy" data-copy="${details.sha256}" title="复制完整哈希">
+                <button class="btn-icon btn-copy" data-copy="${details.sha256}" title="Copy完整哈希">
                     <span class="material-icons md-14">content_copy</span>
                 </button>
             </div>
@@ -452,7 +452,7 @@ class EvidenceDrawer {
      */
     renderMetadata(data) {
         return `
-            <h3>高级信息</h3>
+            <h3>高级Info</h3>
             <div class="metadata-grid">
                 <div class="metadata-item">
                     <span class="metadata-label">Task ID:</span>
@@ -461,8 +461,8 @@ class EvidenceDrawer {
                 <div class="metadata-item">
                     <span class="metadata-label">验证统计:</span>
                     <span class="metadata-value">
-                        ${data.summary.verified}/${data.summary.total} 通过
-                        ${data.summary.failed > 0 ? `, ${data.summary.failed} 失败` : ''}
+                        ${data.summary.verified}/${data.summary.total} Passed
+                        ${data.summary.failed > 0 ? `, ${data.summary.failed} Failed` : ''}
                     </span>
                 </div>
                 ${data.last_verified_at ? `
@@ -482,9 +482,9 @@ class EvidenceDrawer {
         this.bodyEl.innerHTML = `
             <div class="evidence-error">
                 <span class="material-icons md-48">warning</span>
-                <h3>加载失败</h3>
-                <p>${error.message || '未知错误'}</p>
-                <button class="btn-primary" onclick="location.reload()">刷新页面</button>
+                <h3>加载Failed</h3>
+                <p>${error.message || '未知Error'}</p>
+                <button class="btn-primary" onclick="location.reload()">Refresh面</button>
             </div>
         `;
     }
@@ -496,8 +496,8 @@ class EvidenceDrawer {
         const isVisible = this.drawerEl.classList.toggle('advanced-visible');
 
         this.toggleAdvancedBtn.innerHTML = isVisible
-            ? `<span class="material-icons md-18">block</span> 隐藏高级信息`
-            : `<span class="material-icons md-18">preview</span> 显示高级信息`;
+            ? `<span class="material-icons md-18">block</span> Hide高级Info`
+            : `<span class="material-icons md-18">preview</span> Show高级Info`;
     }
 
     /**
@@ -573,7 +573,7 @@ class EvidenceDrawer {
             'command': 'settings 命令执行',
             'db_row': 'save 数据库记录',
             'file_sha256': 'lock 文件哈希',
-            'timestamp': 'schedule 时间戳'
+            'timestamp': 'schedule Timestamp'
         };
         return labels[type] || type;
     }
@@ -583,14 +583,14 @@ class EvidenceDrawer {
      */
     formatCheckpointType(type) {
         const labels = {
-            'iteration_start': '迭代开始',
+            'iteration_start': '迭代Start',
             'iteration_end': '迭代结束',
             'tool_executed': '工具执行',
             'llm_response': 'LLM 响应',
             'approval_point': '审批点',
-            'state_transition': '状态转换',
+            'state_transition': 'Status转换',
             'manual_checkpoint': '手动检查点',
-            'error_boundary': '错误边界'
+            'error_boundary': 'Error边界'
         };
         return labels[type] || type;
     }

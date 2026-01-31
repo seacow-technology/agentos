@@ -1,0 +1,35 @@
+======================================================================
+DRY EXECUTION RESULT EXPLANATION
+======================================================================
+
+Result ID: (generated)
+Schema Version: 0.10.0
+Created: (timestamp)
+
+Source Intent: intent_example_medium_risk
+
+--- Execution Graph ---
+Nodes: 9 (4 phases + 5 actions)
+Edges: 13
+Swimlanes: 2 (backend_engineer, qa_engineer)
+
+--- Patch Plan ---
+Files: 5
+  - modify: agentos/api/routes/notifications.py (risk: medium)
+  - modify: agentos/services/notification_service.py (risk: medium)
+  - modify: agentos/models/notification.py (risk: low)
+  - modify: tests/unit/test_notification_service.py (risk: low)
+  - modify: tests/integration/test_notifications_api.py (risk: medium)
+
+--- Commit Plan ---
+Commits: 3-5
+  - Grouped by module (api, services, models, tests)
+  - Respects max_commits budget: true
+  - Commit dependencies established
+
+--- Review Requirements ---
+Dominant Risk: medium
+Required Reviews: architecture, release
+Estimated Review Time: thorough
+
+======================================================================

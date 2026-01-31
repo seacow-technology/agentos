@@ -42,7 +42,9 @@ class SkillsView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Skill Details</h3>
-                            <button class="btn-close" id="skills-drawer-close">close</button>
+                            <button class="btn-close" id="skills-drawer-close">
+                                <span class="material-icons">close</span>
+                            </button>
                         </div>
                         <div class="drawer-body" id="skills-drawer-body">
                             <!-- Skill details will be rendered here -->

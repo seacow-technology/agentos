@@ -18,6 +18,7 @@ from typing import Dict, Any, Optional
 from dataclasses import dataclass, field
 import logging
 
+from agentos.core.time import utc_now, utc_now_iso
 from agentos.core.lead.models import (
     LeadFinding,
     ScanWindow,
@@ -174,7 +175,7 @@ class LeadService:
             )
 
         # 计算时间范围
-        end_time = datetime.now(timezone.utc)
+        end_time = utc_now()
         if window_kind == "24h":
             start_time = end_time - timedelta(hours=24)
         elif window_kind == "7d":
@@ -238,7 +239,7 @@ class LeadService:
                 storage_data["decisions"].append({
                     "task_id": task["task_id"],
                     "decision_type": "BLOCK",
-                    "timestamp": datetime.now(timezone.utc).isoformat()
+                    "timestamp": utc_now_iso()
                 })
 
             # Query 3: Retry then fail (for rule 3)
@@ -249,13 +250,13 @@ class LeadService:
                         "task_id": task_id,
                         "decision_type": "RETRY",
                         "decision_id": f"retry_{task_id}",
-                        "timestamp": datetime.now(timezone.utc).isoformat()
+                        "timestamp": utc_now_iso()
                     })
                     storage_data["decisions"].append({
                         "task_id": task_id,
                         "decision_type": "BLOCK",
                         "decision_id": f"block_{task_id}",
-                        "timestamp": datetime.now(timezone.utc).isoformat()
+                        "timestamp": utc_now_iso()
                     })
 
             # Query 4: Decision lag (for rule 4)
@@ -410,7 +411,7 @@ class LeadService:
         Returns:
             扫描 ID（格式: scan_<timestamp>）
         """
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = utc_now().strftime("%Y%m%d_%H%M%S")
         return f"scan_{timestamp}"
 
     def get_config(self) -> Dict[str, Any]:

@@ -79,7 +79,7 @@ class RegisterArtifactRequest(BaseModel):
 # ============================================================================
 
 
-@router.post("/api/tasks/{task_id}/spec/freeze")
+@router.post("/tasks/{task_id}/spec/freeze")
 async def freeze_task_spec(task_id: str) -> Dict[str, Any]:
     """Freeze task spec (DRAFT → PLANNED)
 
@@ -156,7 +156,7 @@ async def freeze_task_spec(task_id: str) -> Dict[str, Any]:
 # ============================================================================
 
 
-@router.post("/api/tasks/{task_id}/bind")
+@router.post("/tasks/{task_id}/bind")
 async def bind_task(
     task_id: str,
     request: BindTaskRequest
@@ -234,7 +234,7 @@ async def bind_task(
         )
 
 
-@router.post("/api/tasks/{task_id}/ready")
+@router.post("/tasks/{task_id}/ready")
 async def mark_task_ready(task_id: str) -> Dict[str, Any]:
     """Mark task as ready (PLANNED → READY)
 
@@ -321,7 +321,7 @@ async def mark_task_ready(task_id: str) -> Dict[str, Any]:
 # ============================================================================
 
 
-@router.get("/api/tasks/{task_id}/artifacts")
+@router.get("/tasks/{task_id}/artifacts")
 async def list_task_artifacts(task_id: str) -> Dict[str, Any]:
     """List artifacts for a task
 
@@ -371,7 +371,7 @@ async def list_task_artifacts(task_id: str) -> Dict[str, Any]:
         )
 
 
-@router.post("/api/tasks/{task_id}/artifacts")
+@router.post("/tasks/{task_id}/artifacts")
 async def register_artifact(
     task_id: str,
     request: RegisterArtifactRequest

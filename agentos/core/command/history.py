@@ -12,6 +12,8 @@ from typing import Optional, List
 
 from agentos.core.command.types import CommandStatus
 from agentos.store import get_db_path
+from agentos.core.time import utc_now, utc_now_iso
+
 
 
 @dataclass
@@ -95,7 +97,7 @@ class CommandHistoryService:
             History entry ID
         """
         history_id = f"hist_{uuid.uuid4().hex[:12]}"
-        executed_at = datetime.now(timezone.utc).isoformat()
+        executed_at = utc_now_iso()
         
         conn = self._get_connection()
         cursor = conn.cursor()
@@ -231,7 +233,7 @@ class CommandHistoryService:
             Pin ID
         """
         pin_id = f"pin_{uuid.uuid4().hex[:12]}"
-        pinned_at = datetime.now(timezone.utc).isoformat()
+        pinned_at = utc_now_iso()
         
         conn = self._get_connection()
         cursor = conn.cursor()
@@ -314,7 +316,7 @@ class CommandHistoryService:
         if older_than_days:
             # Calculate cutoff date
             from datetime import timedelta
-            cutoff = (datetime.now(timezone.utc) - timedelta(days=older_than_days)).isoformat()
+            cutoff = (utc_now() - timedelta(days=older_than_days)).isoformat()
             cursor.execute(
                 "DELETE FROM command_history WHERE executed_at < ?",
                 (cutoff,)
@@ -334,7 +336,7 @@ class CommandHistoryService:
         entries = self.list(limit=10000)  # Export up to 10k entries
         
         data = {
-            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "exported_at": utc_now_iso(),
             "total_entries": len(entries),
             "entries": [entry.to_dict() for entry in entries],
         }

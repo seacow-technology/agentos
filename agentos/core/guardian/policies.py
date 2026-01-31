@@ -26,6 +26,8 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 
 from agentos.store import get_db_path
+from agentos.core.time import utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +55,7 @@ class GuardianPolicy:
     rules: Dict[str, Any]
     checksum: str
     created_at: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+        default_factory=lambda: utc_now_iso()
     )
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -112,7 +114,7 @@ class GuardianPolicy:
             version=data["version"],
             rules=data["rules"],
             checksum=data["checksum"],
-            created_at=data.get("created_at", datetime.now(timezone.utc).isoformat()),
+            created_at=data.get("created_at", utc_now_iso()),
             metadata=data.get("metadata", {})
         )
 

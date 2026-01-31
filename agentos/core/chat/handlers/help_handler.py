@@ -33,6 +33,7 @@ def handle_help_command(command: str, args: List[str], context: Dict[str, Any]) 
         "context": "Show context information for the current session",
         "stream": "Toggle streaming mode for responses",
         "export": "Export conversation history",
+        "comm": "Communication commands (search, fetch, brief) - execution phase only",
         "help": "Show this help message"
     }
 

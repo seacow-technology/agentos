@@ -1,0 +1,166 @@
+syntax = "proto3";
+
+package agentos.voice;
+
+// VoiceWorker service for voice processing in a separate Python 3.13 sidecar.
+//
+// This service runs in a separate process to maintain compatibility with
+// libraries like faster-whisper that require Python 3.13, while the main
+// AgentOS process runs on Python 3.14.
+//
+// Communication pattern:
+// 1. Main process (gRPC client) creates session
+// 2. Bidirectional streaming for audio processing (audio in → events out)
+// 3. Main process stops session when done
+// 4. Health checks verify sidecar liveness
+service VoiceWorker {
+  // CreateSession creates a new voice session in the sidecar.
+  //
+  // Returns session metadata including allocated resources.
+  rpc CreateSession(CreateSessionRequest) returns (CreateSessionResponse);
+
+  // ProcessAudio handles bidirectional audio streaming.
+  //
+  // Client sends audio chunks → Server returns STT/TTS events.
+  // Stream remains open until client closes or session stops.
+  rpc ProcessAudio(stream AudioChunk) returns (stream AudioEvent);
+
+  // StopSession gracefully stops a voice session.
+  //
+  // Flushes pending audio buffers and releases resources.
+  rpc StopSession(StopSessionRequest) returns (StopSessionResponse);
+
+  // HealthCheck verifies sidecar is alive and responsive.
+  //
+  // Main process calls this every 10 seconds to detect failures.
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+// CreateSessionRequest contains parameters for creating a voice session.
+message CreateSessionRequest {
+  // Unique session identifier (from main process)
+  string session_id = 1;
+
+  // Project ID for billing and context
+  string project_id = 2;
+
+  // STT provider to use (whisper_local, google, azure, aws)
+  string stt_provider = 3;
+
+  // TTS provider to use (openai, elevenlabs, local, mock)
+  optional string tts_provider = 4;
+
+  // TTS voice ID (e.g., "alloy", "echo")
+  optional string tts_voice_id = 5;
+
+  // TTS speed multiplier (0.25 - 4.0)
+  optional float tts_speed = 6;
+
+  // Additional session configuration
+  map<string, string> config = 7;
+}
+
+// CreateSessionResponse confirms session creation.
+message CreateSessionResponse {
+  // Session ID (echoed back)
+  string session_id = 1;
+
+  // Worker ID handling this session
+  string worker_id = 2;
+
+  // Allocated buffer size (bytes)
+  int64 buffer_size_bytes = 3;
+
+  // Status message
+  string status = 4;
+}
+
+// AudioChunk represents a chunk of audio data.
+message AudioChunk {
+  // Session ID this chunk belongs to
+  string session_id = 1;
+
+  // Raw audio data (PCM s16le recommended)
+  bytes audio_data = 2;
+
+  // Sample rate in Hz (e.g., 16000, 48000)
+  int32 sample_rate = 3;
+
+  // Number of audio channels (1 = mono, 2 = stereo)
+  int32 channels = 4;
+
+  // Timestamp in epoch milliseconds
+  int64 timestamp_ms = 5;
+
+  // Chunk sequence number (for ordering)
+  int64 sequence_number = 6;
+}
+
+// AudioEvent represents an event during audio processing.
+message AudioEvent {
+  // Event type (stt.partial, stt.final, tts.chunk, etc.)
+  string event_type = 1;
+
+  // Session ID this event belongs to
+  string session_id = 2;
+
+  // Text content (for STT results or assistant text)
+  optional string text = 3;
+
+  // Audio data (for TTS chunks)
+  optional bytes audio_data = 4;
+
+  // Timestamp in epoch milliseconds
+  int64 timestamp_ms = 5;
+
+  // Additional event metadata
+  map<string, string> metadata = 6;
+}
+
+// StopSessionRequest requests stopping a voice session.
+message StopSessionRequest {
+  // Session ID to stop
+  string session_id = 1;
+
+  // Reason for stopping (user_requested, timeout, error, etc.)
+  string reason = 2;
+
+  // Whether to force immediate stop (skip buffer flush)
+  bool force = 3;
+}
+
+// StopSessionResponse confirms session stopped.
+message StopSessionResponse {
+  // Session ID (echoed back)
+  string session_id = 1;
+
+  // Status message
+  string status = 2;
+
+  // Final audio buffer size flushed (bytes)
+  int64 flushed_bytes = 3;
+}
+
+// HealthCheckRequest requests health status.
+message HealthCheckRequest {
+  // Optional timeout in milliseconds
+  optional int32 timeout_ms = 1;
+}
+
+// HealthCheckResponse returns health status.
+message HealthCheckResponse {
+  // Status (OK, DEGRADED, UNHEALTHY)
+  string status = 1;
+
+  // Number of active sessions
+  int32 active_sessions = 2;
+
+  // Total memory usage in bytes
+  int64 memory_usage_bytes = 3;
+
+  // Uptime in seconds
+  int64 uptime_seconds = 4;
+
+  // Additional health metrics
+  map<string, string> metrics = 5;
+}

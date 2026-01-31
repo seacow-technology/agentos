@@ -1,0 +1,49 @@
+# Trust Verification Policy
+#
+# Purpose: Require verification for low-trust agents
+# Domain: Global
+# Risk: MEDIUM
+
+policy:
+  id: "trust_verification"
+  version: "1.0.0"
+  domain: "global"
+  name: "Trust Verification Policy"
+  description: "Requires additional verification for operations by low-trust agents"
+
+  rules:
+    - condition: "trust_tier == 'T0'"
+      condition_type: "expression"
+      action: "DENY"
+      rationale: "Untrusted agents (T0) cannot perform any operations without explicit override"
+      priority: 5
+
+    - condition: "trust_tier == 'T1' and operation in ['write', 'delete', 'execute']"
+      condition_type: "expression"
+      action: "DENY"
+      rationale: "Limited trust agents (T1) can only read, not modify"
+      priority: 10
+
+    - condition: "trust_tier == 'T2' and capability_risk_level in ['HIGH', 'CRITICAL']"
+      condition_type: "expression"
+      action: "ESCALATE"
+      rationale: "Basic trust agents (T2) need approval for high-risk operations"
+      priority: 15
+
+    - condition: "agent_id.startswith('test_') and capability_domain == 'action'"
+      condition_type: "expression"
+      action: "WARN"
+      rationale: "Test agents performing actions - ensure sandbox isolation"
+      priority: 20
+
+  evolution_history:
+    - version: "1.0.0"
+      changes: "Initial trust policy"
+      reason: "Establish trust-based access control"
+      changed_by: "security_team"
+      date: "2026-02-01"
+
+  metadata:
+    owner: "security_team"
+    enforcement_level: "strict"
+    trust_elevation_process: "manual_review"

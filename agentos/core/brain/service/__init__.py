@@ -25,7 +25,17 @@ from .stats import get_stats
 from .query_why import query_why, QueryResult
 from .query_impact import query_impact
 from .query_trace import query_trace
-from .query_subgraph import query_subgraph
+from .subgraph import (
+    query_subgraph,
+    SubgraphNode,
+    SubgraphEdge,
+    SubgraphResult,
+    SubgraphMetadata,
+    NodeVisual,
+    EdgeVisual,
+    compute_node_visual,
+    compute_edge_visual
+)
 from .coverage import compute_coverage, CoverageMetrics
 from .blind_spot import (
     detect_blind_spots,
@@ -52,8 +62,18 @@ __all__ = [
     "query_why",
     "query_impact",
     "query_trace",
-    "query_subgraph",
     "QueryResult",
+
+    # P2: Subgraph Query (P2-2)
+    "query_subgraph",
+    "SubgraphNode",
+    "SubgraphEdge",
+    "SubgraphResult",
+    "SubgraphMetadata",
+    "NodeVisual",
+    "EdgeVisual",
+    "compute_node_visual",
+    "compute_edge_visual",
 
     # P1: Coverage, Blind Spot, and Autocomplete
     "compute_coverage",

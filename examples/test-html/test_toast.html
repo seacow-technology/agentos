@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Toast Test</title>
+    <script src="/static/js/components/Toast.js?v=2"></script>
+</head>
+<body>
+    <h1>Toast Test Page</h1>
+    <button onclick="testToast()">Test Toast</button>
+
+    <script>
+        function testToast() {
+            console.log('window.Toast:', window.Toast);
+            console.log('window.toastManager:', window.toastManager);
+            console.log('window.showToast:', window.showToast);
+
+            if (window.Toast) {
+                window.Toast.success('Toast is working!');
+            } else {
+                alert('Toast is not defined!');
+            }
+        }
+
+        // Auto test on load
+        window.addEventListener('load', () => {
+            console.log('Page loaded');
+            console.log('Toast defined:', typeof window.Toast);
+            console.log('toastManager defined:', typeof window.toastManager);
+            console.log('showToast defined:', typeof window.showToast);
+        });
+    </script>
+</body>
+</html>

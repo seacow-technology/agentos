@@ -33,6 +33,10 @@ from agentos.core.intent_builder.builder import IntentBuilder
 from agentos.core.evaluator.engine import EvaluationResult
 from agentos.core.content.registry import ContentRegistry
 
+
+from agentos.webui.api.time_format import iso_z
+from agentos.core.time import utc_now
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -303,7 +307,7 @@ async def get_intent_detail(intent_id: str) -> UnifiedResponse:
             commands=intent.get("commands", []),
             risk=intent.get("risk", {}),
             constraints=intent.get("constraints", {}),
-            created_at=intent.get("created_at", datetime.now(timezone.utc).isoformat())
+            created_at=intent.get("created_at", iso_z(utc_now()))
         )
 
         # Record audit
@@ -669,7 +673,7 @@ async def generate_merge_proposal(
             merged_intent=merged_intent,
             requires_approval=True,
             status="pending_review",
-            created_at=datetime.now(timezone.utc).isoformat()
+            created_at=iso_z(utc_now())
         )
 
         # Store proposal (in task metadata or separate storage)
@@ -696,13 +700,13 @@ async def generate_merge_proposal(
                     "conflicts": conflicts,
                     "merged_intent": merged_intent,
                     "status": "pending_review",
-                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "created_at": iso_z(utc_now()),
                     "created_by": request.actor
                 })
 
                 cursor.execute(
                     "UPDATE tasks SET metadata = ?, updated_at = ? WHERE task_id = ?",
-                    (json.dumps(current_metadata), datetime.now(timezone.utc).isoformat(), intent_id)
+                    (json.dumps(current_metadata), iso_z(utc_now()), intent_id)
                 )
                 conn.commit()
             finally:

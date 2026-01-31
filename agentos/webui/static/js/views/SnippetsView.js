@@ -53,7 +53,9 @@ class SnippetsView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Snippet Details</h3>
-                            <button class="btn-close" id="snippets-drawer-close">close</button>
+                            <button class="btn-close" id="snippets-drawer-close">
+                                <span class="material-icons">close</span>
+                            </button>
                         </div>
                         <div class="drawer-body" id="snippets-drawer-body">
                             <!-- Snippet details will be rendered here -->
@@ -66,7 +68,9 @@ class SnippetsView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Edit Snippet</h3>
-                            <button class="btn-close" id="snippets-edit-close">close</button>
+                            <button class="btn-close" id="snippets-edit-close">
+                                <span class="material-icons">close</span>
+                            </button>
                         </div>
                         <div class="drawer-body" id="snippets-edit-body">
                             <!-- Edit form will be rendered here -->
@@ -717,7 +721,8 @@ class SnippetsView {
             const prompt = promptResponse.data.prompt;
 
             // 3. Create new session
-            const sessionResponse = await fetch('/api/sessions', {
+            // CSRF Fix: Use fetchWithCSRF for protected endpoint
+            const sessionResponse = await window.fetchWithCSRF('/api/sessions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -929,7 +934,8 @@ class SnippetsView {
             showToast('Creating preview...', 'info', 2000);
 
             // Create preview via API
-            const response = await fetch(`/api/snippets/${snippet.id}/preview`, {
+            // CSRF Fix: Use fetchWithCSRF for protected endpoint
+            const response = await window.fetchWithCSRF(`/api/snippets/${snippet.id}/preview`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ preset })
@@ -1053,12 +1059,33 @@ class SnippetsView {
                 return;
             }
 
+            // Layer 3: 二次确认对话框
+            const confirmed = await Dialog.confirm(
+                `您即将执行代码片段 "${snippet.title}"，这将创建文件到 ${targetPath}。此操作可能会修改系统状态。`,
+                {
+                    title: '确认执行代码片段',
+                    confirmText: '确认执行',
+                    cancelText: '取消',
+                    danger: true
+                }
+            );
+
+            if (!confirmed) {
+                console.log('[SnippetsView] User cancelled materialize confirmation');
+                return;
+            }
+
             showToast('Creating task draft...', 'info', 2000);
 
             // Call materialize API
-            const response = await fetch(`/api/snippets/${snippet.id}/materialize`, {
+            // CSRF Fix: Use fetchWithCSRF for protected endpoint
+            // Layer 3: Add X-Confirm-Intent header for extra protection
+            const response = await window.fetchWithCSRF(`/api/snippets/${snippet.id}/materialize`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Confirm-Intent': 'snippet-execute'  // Layer 3: Confirm Intent
+                },
                 body: JSON.stringify({
                     target_path: targetPath,
                     description: `Write ${snippet.title || 'snippet'} to ${targetPath}`

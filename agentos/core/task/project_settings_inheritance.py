@@ -27,6 +27,8 @@ from typing import Dict, Any, Optional, List
 from agentos.schemas.project import Project, ProjectSettings, RiskProfile
 from agentos.core.task.models import Task
 from agentos.store import get_db
+from agentos.core.time import utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -91,8 +93,8 @@ class ProjectSettingsInheritance:
             # Create Project object (repos can be empty for this use case)
             project = Project.from_db_row(project_data, repos=[])
 
-            if self.db_path:
-                conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection
+            # conn.close()  # REMOVED
 
             return project
 
@@ -313,7 +315,7 @@ class ProjectSettingsInheritance:
                 conn = get_db()
 
             cursor = conn.cursor()
-            now = datetime.now(timezone.utc).isoformat()
+            now = utc_now_iso()
 
             cursor.execute("""
                 INSERT INTO task_audits (task_id, level, event_type, payload, created_at)
@@ -328,6 +330,8 @@ class ProjectSettingsInheritance:
 
             conn.commit()
 
+            # Do NOT close: get_db() returns shared thread-local connection
+            # Only close if we created a new connection (self.db_path is set)
             if self.db_path:
                 conn.close()
 

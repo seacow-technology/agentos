@@ -17,11 +17,12 @@ Created for Task #4 Phase 3: RESTful API Implementation
 import logging
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Query, Request, HTTPException
+from fastapi import APIRouter, Query, Request, HTTPException, Header
 from pydantic import BaseModel, Field
 
 from agentos.core.project.service import ProjectService
 from agentos.core.project.repo_service import RepoService
+from agentos.core.project.idempotency import get_idempotency_store
 from agentos.core.project.errors import (
     ProjectNotFoundError,
     ProjectNameConflictError,
@@ -72,7 +73,7 @@ class AddRepoRequest(BaseModel):
 # ============================================================================
 
 
-@router.get("/api/projects")
+@router.get("/projects")
 async def list_projects(
     limit: int = Query(100, ge=1, le=500, description="Max results"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
@@ -132,9 +133,15 @@ async def list_projects(
         )
 
 
-@router.post("/api/projects")
-async def create_project(request: CreateProjectRequest) -> Dict[str, Any]:
-    """Create a new project
+@router.post("/projects")
+async def create_project(
+    request: CreateProjectRequest,
+    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key")
+) -> Dict[str, Any]:
+    """Create a new project (with idempotency support)
+
+    Headers:
+        Idempotency-Key: Optional client-provided key to prevent duplicate creates
 
     Body:
         {
@@ -152,12 +159,52 @@ async def create_project(request: CreateProjectRequest) -> Dict[str, Any]:
 
     Errors:
         400 - PROJECT_NAME_CONFLICT: Name already exists
+        409 - DUPLICATE_REQUEST: Idempotency key already used with different parameters
 
     Example:
         POST /api/projects
+        Idempotency-Key: create-proj-2026-01-31-abc123
         {"name": "E-Commerce Platform", "tags": ["backend", "api"]}
+
+    Idempotency Behavior:
+        - If Idempotency-Key provided and matches cached request, returns cached response (200)
+        - If Idempotency-Key provided and matches cached request with different params, returns 409
+        - If no Idempotency-Key provided, proceeds normally (may create duplicates if name unique)
+        - Cached responses expire after 24 hours
     """
     try:
+        # Check idempotency
+        if idempotency_key:
+            store = get_idempotency_store()
+            cached = store.get(idempotency_key)
+
+            if cached is not None:
+                # Verify request matches cached request
+                cached_request = cached.get("request")
+                current_request = {
+                    "name": request.name,
+                    "description": request.description,
+                    "tags": request.tags or [],
+                    "default_repo_id": request.default_repo_id,
+                }
+
+                if cached_request != current_request:
+                    # Different parameters with same key - conflict
+                    raise HTTPException(
+                        status_code=409,
+                        detail={
+                            "success": False,
+                            "reason_code": "DUPLICATE_IDEMPOTENCY_KEY",
+                            "message": f"Idempotency key '{idempotency_key}' already used with different parameters",
+                            "hint": "Use a different idempotency key or ensure request parameters match the original",
+                        }
+                    )
+
+                # Return cached response
+                logger.info(f"Returning cached project creation for key: {idempotency_key}")
+                return cached.get("response")
+
+        # Create project
         service = ProjectService()
 
         project = service.create_project(
@@ -167,10 +214,29 @@ async def create_project(request: CreateProjectRequest) -> Dict[str, Any]:
             default_repo_id=request.default_repo_id,
         )
 
-        return {
+        response = {
             "success": True,
             "project": project.to_dict(),
         }
+
+        # Cache response if idempotency key provided
+        if idempotency_key:
+            store = get_idempotency_store()
+            store.set(
+                idempotency_key,
+                {
+                    "request": {
+                        "name": request.name,
+                        "description": request.description,
+                        "tags": request.tags or [],
+                        "default_repo_id": request.default_repo_id,
+                    },
+                    "response": response,
+                }
+            )
+            logger.info(f"Cached project creation with key: {idempotency_key}")
+
+        return response
 
     except ProjectNameConflictError as e:
         raise HTTPException(
@@ -196,7 +262,7 @@ async def create_project(request: CreateProjectRequest) -> Dict[str, Any]:
         )
 
 
-@router.get("/api/projects/{project_id}")
+@router.get("/projects/{project_id}")
 async def get_project(project_id: str) -> Dict[str, Any]:
     """Get project details by ID
 
@@ -220,6 +286,10 @@ async def get_project(project_id: str) -> Dict[str, Any]:
 
         # Get project
         project = service.get_project(project_id)
+
+        # Check if project exists
+        if project is None:
+            raise ProjectNotFoundError(project_id)
 
         # Get repos
         repos = repo_service.list_repos(project_id=project_id)
@@ -259,7 +329,7 @@ async def get_project(project_id: str) -> Dict[str, Any]:
         )
 
 
-@router.patch("/api/projects/{project_id}")
+@router.patch("/projects/{project_id}")
 async def update_project(
     project_id: str,
     request: UpdateProjectRequest
@@ -345,7 +415,7 @@ async def update_project(
         )
 
 
-@router.delete("/api/projects/{project_id}")
+@router.delete("/projects/{project_id}")
 async def delete_project(
     project_id: str,
     force: bool = Query(False, description="Force delete even if has tasks")
@@ -408,7 +478,7 @@ async def delete_project(
 # ============================================================================
 
 
-@router.get("/api/projects/{project_id}/repos")
+@router.get("/projects/{project_id}/repos")
 async def get_project_repos(project_id: str) -> Dict[str, Any]:
     """Get all repositories for a project
 
@@ -462,7 +532,7 @@ async def get_project_repos(project_id: str) -> Dict[str, Any]:
         )
 
 
-@router.post("/api/projects/{project_id}/repos")
+@router.post("/projects/{project_id}/repos")
 async def add_repo_to_project(
     project_id: str,
     request: AddRepoRequest

@@ -14,6 +14,8 @@ from dataclasses import dataclass
 from typing import Optional, Dict, Any
 from datetime import datetime, timezone, timedelta
 import logging
+from agentos.core.time import utc_now, utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +104,7 @@ class TimeoutManager:
         Returns:
             Updated timeout state with start time
         """
-        now = datetime.now(timezone.utc).isoformat()
+        now = utc_now_iso()
         timeout_state.execution_start_time = now
         timeout_state.last_heartbeat = now
         timeout_state.warning_issued = False
@@ -136,7 +138,7 @@ class TimeoutManager:
 
         # Calculate elapsed time
         start_time = datetime.fromisoformat(timeout_state.execution_start_time)
-        now = datetime.now(timezone.utc)
+        now = utc_now()
         elapsed_seconds = (now - start_time).total_seconds()
 
         # Check for timeout
@@ -173,7 +175,7 @@ class TimeoutManager:
         Returns:
             Updated timeout state
         """
-        timeout_state.last_heartbeat = datetime.now(timezone.utc).isoformat()
+        timeout_state.last_heartbeat = utc_now_iso()
         return timeout_state
 
     def mark_warning_issued(
@@ -218,7 +220,7 @@ class TimeoutManager:
             }
 
         start_time = datetime.fromisoformat(timeout_state.execution_start_time)
-        now = datetime.now(timezone.utc)
+        now = utc_now()
         elapsed_seconds = (now - start_time).total_seconds()
 
         return {

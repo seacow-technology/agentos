@@ -106,7 +106,9 @@ class KnowledgeSourcesView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Source Details</h3>
-                            <button class="btn-close" id="sources-drawer-close">close</button>
+                            <button class="btn-close" id="sources-drawer-close">
+                                <span class="material-icons">close</span>
+                            </button>
                         </div>
                         <div class="drawer-body" id="sources-drawer-body">
                             <!-- Source details will be rendered here -->
@@ -387,7 +389,8 @@ class KnowledgeSourcesView {
 
             if (this.currentSourceId) {
                 // Update existing source
-                const response = await fetch(`/api/knowledge/sources/${this.currentSourceId}`, {
+                // CSRF Fix: Use fetchWithCSRF for protected endpoint
+                const response = await window.fetchWithCSRF(`/api/knowledge/sources/${this.currentSourceId}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ path, config })
@@ -403,7 +406,8 @@ class KnowledgeSourcesView {
                 }
             } else {
                 // Create new source
-                const response = await fetch('/api/knowledge/sources', {
+                // CSRF Fix: Use fetchWithCSRF for protected endpoint
+                const response = await window.fetchWithCSRF('/api/knowledge/sources', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ type, path, config })
@@ -435,7 +439,8 @@ class KnowledgeSourcesView {
         }
 
         try {
-            const response = await fetch(`/api/knowledge/sources/${sourceId}`, {
+            // CSRF Fix: Use fetchWithCSRF for protected endpoint
+            const response = await window.fetchWithCSRF(`/api/knowledge/sources/${sourceId}`, {
                 method: 'DELETE'
             });
 

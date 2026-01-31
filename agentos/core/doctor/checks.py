@@ -47,6 +47,7 @@ def run_all_checks(project_root: Path) -> List[CheckResult]:
         check_pytest(),
         check_git(),
         check_basic_imports(),
+        check_networkos_db(),
     ]
     return checks
 
@@ -384,4 +385,73 @@ def check_basic_imports() -> CheckResult:
             details=[str(e)],
             fix_cmd=["uv", "sync", "--all-extras"],
             needs_admin=False
+        )
+
+
+# ============================================
+# Database Health Checks
+# ============================================
+
+def check_networkos_db() -> CheckResult:
+    """Check NetworkOS database health"""
+    try:
+        from agentos.networkos.health import NetworkOSHealthCheck
+
+        checker = NetworkOSHealthCheck()
+        all_passed, results = checker.run_all_checks()
+
+        if all_passed:
+            return CheckResult(
+                name="networkos",
+                status=CheckStatus.PASS,
+                summary="NetworkOS 数据库健康",
+                details=[
+                    f"通过检查: {results['summary']['passed_count']}/{results['summary']['passed_count']}"
+                ]
+            )
+
+        # Get details of failed checks
+        failed_details = []
+        for check_name in results['summary']['checks_failed']:
+            if check_name in results:
+                failed_details.append(f"{check_name}: {results[check_name]['message']}")
+
+        # Determine if it's a warning or failure
+        # If DB doesn't exist yet, it's a warning (will be created on first use)
+        if 'check_db_exists' in results['summary']['checks_failed']:
+            return CheckResult(
+                name="networkos",
+                status=CheckStatus.WARN,
+                summary="NetworkOS 数据库未初始化",
+                details=[
+                    "数据库将在首次使用时自动创建",
+                    "或运行: agentos migrate"
+                ]
+            )
+
+        # Other failures are more serious
+        return CheckResult(
+            name="networkos",
+            status=CheckStatus.FAIL,
+            summary=f"NetworkOS 数据库健康检查失败 ({results['summary']['failed_count']} 项)",
+            details=failed_details,
+            fix_cmd=["agentos", "migrate"],
+            needs_admin=False
+        )
+
+    except ImportError as e:
+        return CheckResult(
+            name="networkos",
+            status=CheckStatus.WARN,
+            summary="无法导入 NetworkOS 健康检查模块",
+            details=[str(e)],
+            fix_cmd=["uv", "sync", "--all-extras"],
+            needs_admin=False
+        )
+    except Exception as e:
+        return CheckResult(
+            name="networkos",
+            status=CheckStatus.FAIL,
+            summary="NetworkOS 健康检查异常",
+            details=[str(e)]
         )

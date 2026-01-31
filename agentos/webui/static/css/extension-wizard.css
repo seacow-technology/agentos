@@ -349,6 +349,120 @@
 }
 
 /* ========================================
+   ADR-EXT-002 Policy UI Components
+   ======================================== */
+
+/* Policy notice box */
+.policy-notice {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+    border-left: 4px solid #3b82f6;
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+
+.policy-notice-icon .material-icons {
+    font-size: 32px;
+    color: #3b82f6;
+}
+
+.policy-notice-content h4 {
+    margin: 0 0 8px 0;
+    color: #1e40af;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.policy-notice-content p {
+    margin: 8px 0;
+    color: #1f2937;
+    line-height: 1.5;
+}
+
+.policy-notice-content ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.policy-notice-content li {
+    margin: 6px 0;
+    color: #1f2937;
+    line-height: 1.6;
+}
+
+.policy-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 6px;
+    font-size: 13px;
+    color: #374151;
+}
+
+.policy-note .material-icons {
+    color: #f59e0b;
+}
+
+/* Best practices section */
+.best-practices {
+    margin: 12px 0;
+}
+
+.practice-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px;
+    margin: 8px 0;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+}
+
+.practice-item .material-icons {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.practice-item .text-success {
+    color: #10b981;
+}
+
+.practice-item .text-danger {
+    color: #ef4444;
+}
+
+.practice-item strong {
+    color: #1f2937;
+    font-size: 14px;
+}
+
+.practice-item code {
+    padding: 2px 6px;
+    background: #f3f4f6;
+    border-radius: 3px;
+    font-size: 11px;
+    font-family: 'Monaco', 'Menlo', monospace;
+    color: #4b5563;
+}
+
+.learn-more a {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.learn-more a:hover {
+    text-decoration: underline;
+}
+
+/* ========================================
    Animations
    ======================================== */
 @keyframes slideIn {

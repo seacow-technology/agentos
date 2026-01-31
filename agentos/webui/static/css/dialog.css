@@ -158,26 +158,5 @@
     background-color: #991B1B;
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-    .dialog-container {
-        background: #1F2937;
-    }
-
-    .dialog-title {
-        color: #F9FAFB;
-    }
-
-    .dialog-message {
-        color: #D1D5DB;
-    }
-
-    .dialog-btn.btn-secondary {
-        background-color: #374151;
-        color: #F9FAFB;
-    }
-
-    .dialog-btn.btn-secondary:hover {
-        background-color: #4B5563;
-    }
-}
+/* Force light theme - dialog always uses light colors for consistency */
+/* Dark mode removed to ensure consistent light appearance */

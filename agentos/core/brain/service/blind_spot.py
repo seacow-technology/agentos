@@ -26,6 +26,8 @@ from enum import Enum
 from typing import Dict, List, Optional
 
 from ..store import SQLiteStore
+from agentos.core.time import utc_now, utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -149,12 +151,12 @@ def detect_blind_spots(
         BlindSpotReport with all detected blind spots, sorted by severity
 
     Examples:
-        >>> store = SQLiteStore("./brainos.db")
-        >>> store.connect()
+        >>> from agentos.core.db import registry_db
+        >>> conn = registry_db.get_db()
+        >>> store = SQLiteStore.from_connection(conn)
         >>> report = detect_blind_spots(store)
         >>> print(f"Total blind spots: {report.total_blind_spots}")
         >>> print(f"High severity: {report.by_severity['high']}")
-        >>> store.close()
 
     Notes:
         - Returns empty report on error rather than crashing
@@ -163,7 +165,7 @@ def detect_blind_spots(
         - Limited to max_results to avoid overwhelming output
     """
     logger.info(f"Detecting blind spots (threshold={high_fan_in_threshold}, max={max_results})")
-    start_time = datetime.now(timezone.utc)
+    start_time = utc_now()
 
     try:
         # Get graph version
@@ -196,8 +198,8 @@ def detect_blind_spots(
         by_type = _count_by_type(limited_blind_spots)
         by_severity = _count_by_severity(limited_blind_spots)
 
-        computed_at = datetime.now(timezone.utc).isoformat()
-        duration_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
+        computed_at = utc_now_iso()
+        duration_ms = int((utc_now() - start_time).total_seconds() * 1000)
 
         logger.info(
             f"Blind spot detection completed in {duration_ms}ms: "
@@ -308,7 +310,7 @@ def detect_high_fan_in_undocumented(
                     reason=f"Critical file with {fan_in_count} dependents but no documentation",
                     metrics={'fan_in_count': fan_in_count, 'doc_count': 0},
                     suggested_action="Add ADR or design doc explaining this file's purpose and architecture",
-                    detected_at=datetime.now(timezone.utc).isoformat()
+                    detected_at=utc_now_iso()
                 )
 
                 blind_spots.append(blind_spot)
@@ -399,7 +401,7 @@ def detect_capability_no_implementation(
                     reason="Declared capability with no implementation files",
                     metrics={'implementation_count': 0},
                     suggested_action="Add implementation file or remove orphaned capability declaration",
-                    detected_at=datetime.now(timezone.utc).isoformat()
+                    detected_at=utc_now_iso()
                 )
 
                 blind_spots.append(blind_spot)
@@ -512,7 +514,7 @@ def detect_trace_discontinuity(
                         'mention_count': 0
                     },
                     suggested_action="Add commit messages or ADR explaining changes and evolution",
-                    detected_at=datetime.now(timezone.utc).isoformat()
+                    detected_at=utc_now_iso()
                 )
 
                 blind_spots.append(blind_spot)
@@ -641,5 +643,150 @@ def _empty_report(graph_version: str, start_time: datetime) -> BlindSpotReport:
         by_severity={"high": 0, "medium": 0, "low": 0},
         blind_spots=[],
         graph_version=graph_version,
-        computed_at=datetime.now(timezone.utc).isoformat()
+        computed_at=utc_now_iso()
     )
+
+
+def detect_blind_spots_for_entities(
+    store: SQLiteStore,
+    entity_ids: List[str]
+) -> List[BlindSpot]:
+    """
+    Detect blind spots for specific entities (used by Navigation P3-A).
+
+    This is a lightweight version that checks if given entities are blind spots
+    without running full detection algorithms.
+
+    Args:
+        store: SQLiteStore instance
+        entity_ids: List of entity IDs to check
+
+    Returns:
+        List of BlindSpot objects for the given entities
+    """
+    logger.debug(f"Checking blind spots for {len(entity_ids)} entities")
+    blind_spots = []
+
+    try:
+        conn = store.connect()
+        cursor = conn.cursor()
+
+        for entity_id in entity_ids:
+            # Get entity info
+            cursor.execute("""
+                SELECT type, key, name
+                FROM entities
+                WHERE id = ?
+            """, (entity_id,))
+
+            entity = cursor.fetchone()
+            if not entity:
+                continue
+
+            entity_type, entity_key, entity_name = entity
+
+            # Check Type 1: High fan-in undocumented (only for files)
+            if entity_type == 'file':
+                cursor.execute("""
+                    SELECT COUNT(*)
+                    FROM edges
+                    WHERE dst_entity_id = ? AND type = 'depends_on'
+                """, (entity_id,))
+                fan_in_count = cursor.fetchone()[0]
+
+                cursor.execute("""
+                    SELECT COUNT(*)
+                    FROM edges
+                    WHERE dst_entity_id = ? AND type = 'references'
+                """, (entity_id,))
+                doc_count = cursor.fetchone()[0]
+
+                if fan_in_count >= 5 and doc_count == 0:
+                    severity = calculate_severity(
+                        BlindSpotType.HIGH_FAN_IN_UNDOCUMENTED,
+                        {'fan_in_count': fan_in_count}
+                    )
+
+                    blind_spot = BlindSpot(
+                        entity_type=entity_type,
+                        entity_key=entity_key,
+                        entity_name=entity_name,
+                        blind_spot_type=BlindSpotType.HIGH_FAN_IN_UNDOCUMENTED,
+                        severity=severity,
+                        reason=f"Critical file with {fan_in_count} dependents but no documentation",
+                        metrics={'fan_in_count': fan_in_count, 'doc_count': 0},
+                        suggested_action="Add ADR or design doc explaining this file's purpose",
+                        detected_at=utc_now_iso()
+                    )
+                    blind_spots.append(blind_spot)
+
+            # Check Type 2: Capability without implementation
+            if entity_type == 'capability':
+                cursor.execute("""
+                    SELECT COUNT(*)
+                    FROM edges
+                    WHERE dst_entity_id = ? AND type = 'implements'
+                """, (entity_id,))
+                implementation_count = cursor.fetchone()[0]
+
+                if implementation_count == 0:
+                    severity = calculate_severity(
+                        BlindSpotType.CAPABILITY_NO_IMPLEMENTATION,
+                        {'implementation_count': 0}
+                    )
+
+                    blind_spot = BlindSpot(
+                        entity_type=entity_type,
+                        entity_key=entity_key,
+                        entity_name=entity_name,
+                        blind_spot_type=BlindSpotType.CAPABILITY_NO_IMPLEMENTATION,
+                        severity=severity,
+                        reason="Declared capability with no implementation files",
+                        metrics={'implementation_count': 0},
+                        suggested_action="Add implementation or remove orphaned capability",
+                        detected_at=utc_now_iso()
+                    )
+                    blind_spots.append(blind_spot)
+
+            # Check Type 3: Trace discontinuity (only for files)
+            if entity_type == 'file':
+                cursor.execute("""
+                    SELECT COUNT(*)
+                    FROM edges
+                    WHERE dst_entity_id = ? AND type = 'modifies'
+                """, (entity_id,))
+                commit_count = cursor.fetchone()[0]
+
+                if commit_count > 0:
+                    cursor.execute("""
+                        SELECT COUNT(*)
+                        FROM edges
+                        WHERE dst_entity_id = ? AND type IN ('references', 'mentions')
+                    """, (entity_id,))
+                    doc_mention_count = cursor.fetchone()[0]
+
+                    if doc_mention_count == 0:
+                        severity = calculate_severity(
+                            BlindSpotType.TRACE_DISCONTINUITY,
+                            {'commit_count': commit_count}
+                        )
+
+                        blind_spot = BlindSpot(
+                            entity_type=entity_type,
+                            entity_key=entity_key,
+                            entity_name=entity_name,
+                            blind_spot_type=BlindSpotType.TRACE_DISCONTINUITY,
+                            severity=severity,
+                            reason=f"Active file ({commit_count} commits) with no documented evolution",
+                            metrics={'commit_count': commit_count, 'doc_count': 0},
+                            suggested_action="Add commit messages or ADR explaining changes",
+                            detected_at=utc_now_iso()
+                        )
+                        blind_spots.append(blind_spot)
+
+        logger.debug(f"Found {len(blind_spots)} blind spots for given entities")
+        return blind_spots
+
+    except Exception as e:
+        logger.error(f"Failed to check blind spots for entities: {e}", exc_info=True)
+        return []

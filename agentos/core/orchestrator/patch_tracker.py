@@ -20,7 +20,8 @@ class PatchTracker:
     def __init__(self, db_path: Optional[Path] = None):
         """Initialize patch tracker."""
         if db_path is None:
-            db_path = Path.home() / ".agentos" / "store.db"
+            from agentos.core.storage.paths import component_db_path
+            db_path = component_db_path("agentos")
         self.db_path = db_path
 
     def _get_connection(self) -> sqlite3.Connection:

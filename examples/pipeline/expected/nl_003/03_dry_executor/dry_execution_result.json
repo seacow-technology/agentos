@@ -1,0 +1,216 @@
+{
+  "result_id": "dryexec_7f4b07b598e7774a",
+  "schema_version": "0.10.0",
+  "intent_ref": {
+    "intent_id": "intent_090378008b53",
+    "checksum": "2057b2f869c922c1c7639000c13fe5e7598f3eafa0eff9f303d8cb0538ad85c0",
+    "version": "1.0.0"
+  },
+  "created_at": "2026-01-25T11:27:52.867819Z",
+  "graph": {
+    "graph_id": "graph_7f4b07b598e7774a",
+    "schema_version": "0.10.0",
+    "intent_id": "intent_090378008b53",
+    "created_at": "2026-01-25T11:27:52.867698Z",
+    "nodes": [
+      {
+        "node_id": "node_0001",
+        "node_type": "phase",
+        "label": "documentation: analysis",
+        "description": "Phase 'analysis' from workflow 'documentation'",
+        "phase_ref": "documentation.analysis",
+        "evidence_refs": [
+          "intent://intent_090378008b53/selected_workflows/documentation",
+          "workflow selection"
+        ]
+      },
+      {
+        "node_id": "node_0002",
+        "node_type": "phase",
+        "label": "documentation: implementation",
+        "description": "Phase 'implementation' from workflow 'documentation'",
+        "phase_ref": "documentation.implementation",
+        "evidence_refs": [
+          "intent://intent_090378008b53/selected_workflows/documentation",
+          "workflow selection"
+        ]
+      },
+      {
+        "node_id": "node_0003",
+        "node_type": "phase",
+        "label": "documentation: review",
+        "description": "Phase 'review' from workflow 'documentation'",
+        "phase_ref": "documentation.review",
+        "evidence_refs": [
+          "intent://intent_090378008b53/selected_workflows/documentation",
+          "workflow selection"
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "edge_id": "edge_0001",
+        "from_node": "node_0001",
+        "to_node": "node_0002",
+        "edge_type": "sequential"
+      },
+      {
+        "edge_id": "edge_0002",
+        "from_node": "node_0002",
+        "to_node": "node_0003",
+        "edge_type": "sequential"
+      }
+    ],
+    "swimlanes": [
+      {
+        "swimlane_id": "swimlane_technical_writer",
+        "agent_id": "technical_writer",
+        "role": "documentation",
+        "node_refs": []
+      }
+    ],
+    "lineage": {
+      "derived_from_intent": "intent_090378008b53",
+      "intent_checksum": "2057b2f869c922c1c7639000c13fe5e7598f3eafa0eff9f303d8cb0538ad85c0",
+      "dry_executor_version": "0.10.0"
+    },
+    "checksum": "8686d8cde6bb71464f2cb8cd84cc6ca7c23d37f706c6ceb40cc5de7805f2c090"
+  },
+  "patch_plan": {
+    "plan_id": "patchplan_7f4b07b598e7774a",
+    "schema_version": "0.10.0",
+    "intent_id": "intent_090378008b53",
+    "created_at": "2026-01-25T11:27:52.867752Z",
+    "files": [],
+    "estimated_diffs": [],
+    "constraints": {
+      "no_exec": true,
+      "no_fs_write": true,
+      "no_fabrication": true
+    },
+    "unknowns": [],
+    "checksum": "e7133adfd66cfe936a58f2268b14a7aec7c36e770e52d315e97b6318d85d1edd"
+  },
+  "commit_plan": {
+    "plan_id": "commitplan_7f4b07b598e7774a",
+    "schema_version": "0.10.0",
+    "intent_id": "intent_090378008b53",
+    "created_at": "2026-01-25T11:27:52.867780Z",
+    "commits": [
+      {
+        "commit_id": "commit_0001",
+        "title": "chore: planning artifact",
+        "scope": "docs",
+        "files": [],
+        "rationale": "No file changes planned",
+        "depends_on": [],
+        "risk": "low",
+        "evidence_refs": [
+          "intent://intent_090378008b53/scope"
+        ],
+        "rollback_strategy": "revert",
+        "estimated_review_time": "quick",
+        "tags": [
+          "refactor"
+        ]
+      }
+    ],
+    "rules_applied": [],
+    "metadata": {
+      "total_files": 0,
+      "max_files_per_commit": 0,
+      "respects_max_commits_budget": true,
+      "commit_dag_depth": 1
+    },
+    "freeze_checksum": "4e3650b33e7e5164ea105765013d6e9080fb6e41a640769b78b800e3d5d46634"
+  },
+  "review_pack_stub": {
+    "risk_summary": {
+      "dominant_risk": "medium",
+      "risk_factors": [
+        "Risk level: medium"
+      ],
+      "mitigation_notes": [
+        "Single reviewer approval required",
+        "Test in staging environment",
+        "Have rollback plan ready"
+      ]
+    },
+    "requires_review": [],
+    "evidence_coverage": {
+      "total_nodes": 3,
+      "nodes_with_evidence": 3,
+      "coverage_percentage": 100.0,
+      "gaps": []
+    },
+    "estimated_review_time": "quick"
+  },
+  "audit_log": [
+    {
+      "timestamp": "2026-01-25T11:27:52.867627Z",
+      "decision_type": "graph_structure",
+      "decision": "Starting dry execution planning",
+      "rationale": "Processing intent intent_090378008b53 with risk level medium"
+    },
+    {
+      "timestamp": "2026-01-25T11:27:52.867744Z",
+      "decision_type": "graph_structure",
+      "decision": "Built execution graph with 3 nodes",
+      "rationale": "Graph structure derived from intent workflows and commands"
+    },
+    {
+      "timestamp": "2026-01-25T11:27:52.867768Z",
+      "decision_type": "file_inclusion",
+      "decision": "Planned changes for 0 files",
+      "rationale": "Files from intent scope.targets.files",
+      "evidence_refs": [
+        "risk_assessment:medium",
+        "nl_input:0:253",
+        "nl_request:nl_req_003"
+      ]
+    },
+    {
+      "timestamp": "2026-01-25T11:27:52.867799Z",
+      "decision_type": "commit_grouping",
+      "decision": "Grouped into 1 commits",
+      "rationale": "Respects max_commits budget: True"
+    },
+    {
+      "timestamp": "2026-01-25T11:27:52.867815Z",
+      "decision_type": "risk_assessment",
+      "decision": "Dominant risk: medium",
+      "rationale": "Risk determined from intent and planned changes"
+    }
+  ],
+  "metadata": {
+    "dry_executor_version": "0.10.0",
+    "execution_mode": "dry_run",
+    "constraints_enforced": [
+      "DE1_no_exec",
+      "DE2_no_fs_write",
+      "DE3_no_fabrication",
+      "DE4_evidence_required",
+      "DE5_high_risk_review",
+      "DE6_freezable"
+    ],
+    "warnings": [],
+    "processing_time_ms": 0
+  },
+  "lineage": {
+    "derived_from": [
+      {
+        "type": "intent",
+        "id": "intent_090378008b53",
+        "checksum": "2057b2f869c922c1c7639000c13fe5e7598f3eafa0eff9f303d8cb0538ad85c0"
+      }
+    ],
+    "generation_context": {
+      "environment": "dry_executor_v0.10"
+    }
+  },
+  "coordinator_ref": {
+    "run_id": "unknown",
+    "outputs_used": []
+  },
+  "checksum": "a1e2f445f306d9c0f465972de04704c1d4a6ac888ab0e58b2cdebb854c166c50"
+}

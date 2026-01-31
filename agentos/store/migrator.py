@@ -64,6 +64,10 @@ class Migrator:
                 match = re.search(r'0\.(\d+)\.', version_str)
                 if match:
                     versions.append(int(match.group(1)))
+                # 同时匹配 "vXX" 格式（用于手动标记的迁移）
+                match_v = re.search(r'v(\d+)$', version_str)
+                if match_v:
+                    versions.append(int(match_v.group(1)))
 
             # 返回最大版本号
             return max(versions) if versions else 0
@@ -191,7 +195,8 @@ class Migrator:
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS schema_version (
                     version TEXT PRIMARY KEY,
-                    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    description TEXT
                 )
             """)
             conn.commit()
@@ -244,7 +249,8 @@ class Migrator:
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS schema_version (
                     version TEXT PRIMARY KEY,
-                    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    description TEXT
                 )
             """)
             conn.commit()

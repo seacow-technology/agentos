@@ -1,0 +1,103 @@
+{
+  "id": "problem_discovery",
+  "type": "workflow",
+  "version": "0.6.0",
+  "status": "draft",
+  "metadata": {
+    "created_at": "2026-01-25T05:37:21.366604+00:00",
+    "checksum": "637a43480f767cafa409b30368c2953903a77effe95bee6dc82d1ee3bc838678",
+    "is_root": true,
+    "tags": [
+      "discovery",
+      "problem-solving",
+      "exploration"
+    ]
+  },
+  "spec": {
+    "id": "problem_discovery",
+    "version": "0.6.0",
+    "category": "discovery",
+    "description": "Identify and frame a real problem worth solving.\nThis workflow guides the process of collecting signals, framing the problem boundary, and defining what success looks like. It's designed for scenarios where the problem space is unclear or needs validation.\n",
+    "phases": [
+      {
+        "id": "signal_collection",
+        "description": "Collect signals and evidence about the problem",
+        "requires": [],
+        "produces": [
+          "signals",
+          "evidence"
+        ],
+        "allows_questions": true,
+        "risk_level": "low"
+      },
+      {
+        "id": "problem_framing",
+        "description": "Frame the problem boundary and scope",
+        "requires": [
+          "signals"
+        ],
+        "produces": [
+          "problem_statement",
+          "scope"
+        ],
+        "allows_questions": true,
+        "risk_level": "medium"
+      },
+      {
+        "id": "success_criteria",
+        "description": "Define what success looks like",
+        "requires": [
+          "problem_statement"
+        ],
+        "produces": [
+          "success_criteria",
+          "metrics"
+        ],
+        "allows_questions": true,
+        "risk_level": "low"
+      }
+    ],
+    "interaction": {
+      "default_mode": "question_only",
+      "question_policy": {
+        "trigger_when": [
+          "ambiguity_score > 0.6",
+          "missing_required_field",
+          "conflicting_signals"
+        ]
+      },
+      "allowed_phases": [
+        "signal_collection",
+        "problem_framing",
+        "success_criteria"
+      ]
+    },
+    "constraints": {
+      "execution": "forbidden",
+      "side_effects": "forbidden",
+      "requires_approval": false
+    },
+    "lineage": {
+      "introduced_in": "v0.6",
+      "derived_from": null,
+      "change_reason": null
+    },
+    "metadata": {
+      "tags": [
+        "discovery",
+        "problem-solving",
+        "exploration"
+      ],
+      "use_cases": [
+        "Project inception with unclear requirements",
+        "Vague feature requests that need clarification",
+        "User pain point identification"
+      ],
+      "anti_use_cases": [
+        "Well-defined technical tasks",
+        "Dependency upgrades or routine maintenance",
+        "Urgent bug fixes with known root cause"
+      ]
+    }
+  }
+}

@@ -48,7 +48,7 @@ class UpdateRepoRequest(BaseModel):
 # ============================================================================
 
 
-@router.get("/api/repos/{repo_id}")
+@router.get("/repos/{repo_id}")
 async def get_repo(repo_id: str) -> Dict[str, Any]:
     """Get repository details by ID
 
@@ -97,7 +97,7 @@ async def get_repo(repo_id: str) -> Dict[str, Any]:
         )
 
 
-@router.patch("/api/repos/{repo_id}")
+@router.patch("/repos/{repo_id}")
 async def update_repo(
     repo_id: str,
     request: UpdateRepoRequest
@@ -184,7 +184,7 @@ async def update_repo(
         )
 
 
-@router.post("/api/repos/{repo_id}/scan")
+@router.post("/repos/{repo_id}/scan")
 async def scan_repo(repo_id: str) -> Dict[str, Any]:
     """Scan Git repository for current state (P1 feature)
 

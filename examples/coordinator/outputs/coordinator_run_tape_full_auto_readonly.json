@@ -1,0 +1,235 @@
+{
+  "run_id": "coord_run_example_full_auto",
+  "schema_version": "0.9.2",
+  "intent_id": "intent_example_full_auto_readonly",
+  "coordinator_version": "0.9.2",
+  "started_at": "2026-01-25T12:05:00Z",
+  "completed_at": "2026-01-25T12:08:45Z",
+  "final_state": "DONE",
+  "states": [
+    {
+      "sequence": 1,
+      "from_state": "INIT",
+      "to_state": "RECEIVED",
+      "timestamp": "2026-01-25T12:05:00Z",
+      "trigger": "Intent submitted",
+      "guards_evaluated": [],
+      "duration_ms": 50
+    },
+    {
+      "sequence": 2,
+      "from_state": "RECEIVED",
+      "to_state": "PRECHECKED",
+      "timestamp": "2026-01-25T12:05:08Z",
+      "trigger": "Schema validation passed",
+      "guards_evaluated": [
+        {
+          "guard_name": "intent_schema_valid",
+          "passed": true,
+          "reason": "Intent conforms to v0.9.1 schema",
+          "evidence_refs": ["intent_example_full_auto_readonly"]
+        },
+        {
+          "guard_name": "full_auto_invariants",
+          "passed": true,
+          "reason": "Verified question_budget=0 and question_policy=never for full_auto",
+          "evidence_refs": []
+        }
+      ],
+      "outputs_produced": [
+        {
+          "artifact_type": "precheck_report",
+          "artifact_id": "precheck_full_auto_001"
+        }
+      ],
+      "duration_ms": 8000
+    },
+    {
+      "sequence": 3,
+      "from_state": "PRECHECKED",
+      "to_state": "CONTEXT_BUILT",
+      "timestamp": "2026-01-25T12:05:20Z",
+      "trigger": "Context assembled",
+      "guards_evaluated": [
+        {
+          "guard_name": "memory_pack_available",
+          "passed": true,
+          "reason": "MemoryPack with security scan conventions loaded",
+          "evidence_refs": ["memory_pack://agentos/security"]
+        }
+      ],
+      "outputs_produced": [
+        {
+          "artifact_type": "context_bundle",
+          "artifact_id": "context_full_auto_001"
+        }
+      ],
+      "duration_ms": 12000
+    },
+    {
+      "sequence": 4,
+      "from_state": "CONTEXT_BUILT",
+      "to_state": "RULES_EVALUATED",
+      "timestamp": "2026-01-25T12:05:28Z",
+      "trigger": "Rules adjudication complete",
+      "guards_evaluated": [
+        {
+          "guard_name": "all_rules_decidable",
+          "passed": true,
+          "reason": "All read-only operations allowed by security rules",
+          "evidence_refs": []
+        }
+      ],
+      "outputs_produced": [
+        {
+          "artifact_type": "rule_decisions",
+          "artifact_id": "decisions_full_auto_001"
+        }
+      ],
+      "duration_ms": 8000
+    },
+    {
+      "sequence": 5,
+      "from_state": "RULES_EVALUATED",
+      "to_state": "GRAPH_DRAFTED",
+      "timestamp": "2026-01-25T12:05:38Z",
+      "trigger": "Graph construction complete",
+      "guards_evaluated": [
+        {
+          "guard_name": "graph_is_dag",
+          "passed": true,
+          "reason": "Graph validated as DAG with parallel branches",
+          "evidence_refs": []
+        }
+      ],
+      "outputs_produced": [
+        {
+          "artifact_type": "execution_graph",
+          "artifact_id": "graph_example_full_auto_readonly"
+        }
+      ],
+      "duration_ms": 10000
+    },
+    {
+      "sequence": 6,
+      "from_state": "GRAPH_DRAFTED",
+      "to_state": "GRAPH_FINALIZED",
+      "timestamp": "2026-01-25T12:05:42Z",
+      "trigger": "No questions allowed in full_auto mode",
+      "guards_evaluated": [
+        {
+          "guard_name": "question_budget_zero",
+          "passed": true,
+          "reason": "full_auto mode: question_budget must be 0",
+          "evidence_refs": ["policy://full_auto"]
+        }
+      ],
+      "outputs_produced": [],
+      "duration_ms": 4000
+    },
+    {
+      "sequence": 7,
+      "from_state": "GRAPH_FINALIZED",
+      "to_state": "REVIEW_PACK_BUILT",
+      "timestamp": "2026-01-25T12:08:30Z",
+      "trigger": "Review pack generated (automated checks only)",
+      "guards_evaluated": [
+        {
+          "guard_name": "requires_review_empty",
+          "passed": true,
+          "reason": "No review required for low-risk read-only operation",
+          "evidence_refs": []
+        }
+      ],
+      "outputs_produced": [
+        {
+          "artifact_type": "review_pack",
+          "artifact_id": "review_full_auto_001"
+        }
+      ],
+      "duration_ms": 8000
+    },
+    {
+      "sequence": 8,
+      "from_state": "REVIEW_PACK_BUILT",
+      "to_state": "FROZEN_OUTPUTS",
+      "timestamp": "2026-01-25T12:08:42Z",
+      "trigger": "All outputs frozen",
+      "guards_evaluated": [
+        {
+          "guard_name": "lineage_complete",
+          "passed": true,
+          "reason": "Full lineage chain documented",
+          "evidence_refs": []
+        }
+      ],
+      "outputs_produced": [
+        {
+          "artifact_type": "frozen_outputs",
+          "artifact_id": "frozen_full_auto_001"
+        }
+      ],
+      "duration_ms": 2000
+    },
+    {
+      "sequence": 9,
+      "from_state": "FROZEN_OUTPUTS",
+      "to_state": "DONE",
+      "timestamp": "2026-01-25T12:08:45Z",
+      "trigger": "Coordination complete",
+      "guards_evaluated": [],
+      "duration_ms": 3000
+    }
+  ],
+  "decisions": [
+    {
+      "decision_id": "decision_001",
+      "decision_type": "policy_check",
+      "timestamp": "2026-01-25T12:05:40Z",
+      "inputs": {
+        "context_refs": ["policy://full_auto"]
+      },
+      "rationale": "full_auto mode detected. Enforcing no questions, automated decisions only. Any uncertainty results in conservative fallback.",
+      "outcome": "full_auto_constraints_enforced"
+    },
+    {
+      "decision_id": "decision_002",
+      "decision_type": "graph_building",
+      "timestamp": "2026-01-25T12:05:35Z",
+      "inputs": {
+        "evidence_refs": ["workflow://security_scan_workflow"]
+      },
+      "rationale": "Two scan commands (scan_security_patterns and scan_dependencies) can run in parallel as they have no dependencies. Added parallel edges.",
+      "outcome": "parallel_execution_plan"
+    }
+  ],
+  "rule_evaluations": [
+    {
+      "evaluation_id": "eval_001",
+      "rule_id": "rule://rule_security_severity_classification",
+      "decision": "allow",
+      "timestamp": "2026-01-25T12:05:26Z",
+      "target": "all scan commands",
+      "evidence_used": ["effects:read", "effects:security"],
+      "reason": "Read-only security operations allowed"
+    }
+  ],
+  "model_routing_decisions": [
+    {
+      "decision_id": "model_decision_001",
+      "task_type": "security_pattern_matching",
+      "model_selected": "local_security_scanner",
+      "timestamp": "2026-01-25T12:05:33Z",
+      "reason": "Security scan uses local model for data confidentiality",
+      "cost_estimate": 0.0,
+      "budget_remaining": 3.0,
+      "data_sensitivity": "confidential",
+      "fallback_available": false
+    }
+  ],
+  "metadata": {
+    "total_duration_ms": 225000,
+    "state_transitions_count": 9,
+    "decisions_count": 2
+  }
+}

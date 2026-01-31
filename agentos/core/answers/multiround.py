@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 import hashlib
 
 from agentos.core.answers.llm_suggester import LLMSuggester
+from agentos.core.time import utc_now_iso
+
 
 
 class MultiRoundCoordinator:
@@ -67,7 +69,7 @@ class MultiRoundCoordinator:
             "depth": self.current_depth,
             "question_pack": question_pack,
             "answer_pack": None,
-            "started_at": datetime.now(timezone.utc).isoformat(),
+            "started_at": utc_now_iso(),
             "completed_at": None,
             "triggered_by": None  # question_id that triggered this round
         }
@@ -90,7 +92,7 @@ class MultiRoundCoordinator:
             raise ValueError(f"Round not found: {round_id}")
         
         round_data["answer_pack"] = answer_pack
-        round_data["completed_at"] = datetime.now(timezone.utc).isoformat()
+        round_data["completed_at"] = utc_now_iso()
     
     def should_generate_followup(self, answer_pack: Dict) -> Tuple[bool, str]:
         """
@@ -224,7 +226,7 @@ class MultiRoundCoordinator:
             "question_pack_id": self.initial_question_pack.get("pack_id"),
             "intent_id": self.initial_question_pack.get("intent_id"),
             "answers": [],
-            "provided_at": datetime.now(timezone.utc).isoformat(),
+            "provided_at": utc_now_iso(),
             "lineage": base_pack.get("lineage", {}),
             "metadata": {
                 "multi_round": True,
@@ -334,7 +336,7 @@ class MultiRoundCoordinator:
                 "intent_id": self.initial_question_pack.get("intent_id"),
                 "questions": response["questions"],
                 "policy_constraints": context.get("policy_constraints", {}),
-                "created_at": datetime.now(timezone.utc).isoformat(),
+                "created_at": utc_now_iso(),
                 "metadata": {
                     "generated_by": "multi_round_coordinator",
                     "triggered_by": triggered_by,

@@ -1,0 +1,143 @@
+# AgentOS MCP Servers Configuration Example
+# Copy to ~/.agentos/mcp_servers.yaml and customize
+#
+# This file configures MCP (Model Context Protocol) servers that provide
+# additional tools to AgentOS. Each server runs as a separate process
+# communicating via stdio.
+
+mcp_servers:
+  # Echo/Math Demo Server (低风险测试服务器)
+  # 用于演示和测试 MCP 集成
+  - id: echo-math
+    enabled: true
+    transport: stdio
+    command: ["node", "servers/echo-math/index.js"]
+
+    # 工具白名单 (空列表表示允许所有工具)
+    allow_tools:
+      - "echo"
+      - "sum"
+      - "multiply"
+
+    # 禁止的副作用标签
+    deny_side_effect_tags: []
+
+    # 环境变量
+    env:
+      NODE_ENV: "production"
+
+    # 超时设置 (毫秒)
+    timeout_ms: 5000
+
+  # HTTP Fetch Server (中风险网络服务器)
+  # 提供 HTTP 请求工具
+  - id: http-fetch
+    enabled: false  # 默认禁用,需要时启用
+    transport: stdio
+    command: ["python3", "-m", "mcp_http"]
+
+    allow_tools:
+      - "fetch"
+      - "get"
+
+    # 禁止支付相关的工具
+    deny_side_effect_tags:
+      - "payments"
+      - "cloud.resource_delete"
+
+    timeout_ms: 30000
+
+  # Filesystem Server (高风险文件系统服务器)
+  # 提供文件系统访问工具
+  - id: filesystem
+    enabled: false  # 默认禁用,使用需谨慎
+    transport: stdio
+    command: ["python3", "-m", "mcp_filesystem"]
+
+    # 只允许读取操作
+    allow_tools:
+      - "read_file"
+      - "list_directory"
+
+    # 禁止写入和删除操作
+    deny_side_effect_tags:
+      - "fs.write"
+      - "fs.delete"
+      - "fs.chmod"
+
+    env:
+      # 可以配置工作目录限制
+      MCP_FS_ROOT: "/safe/workspace"
+
+    timeout_ms: 15000
+
+  # Postman MCP Server (API 测试)
+  # 提供 Postman API 交互工具
+  - id: postman
+    enabled: false
+    transport: stdio
+    command: ["node", "/path/to/postman-mcp/index.js"]
+
+    allow_tools:
+      - "collections.list"
+      - "collections.get"
+      - "request.send"
+
+    deny_side_effect_tags:
+      - "payments"
+
+    env:
+      POSTMAN_API_KEY: "${POSTMAN_API_KEY}"  # 从环境变量读取
+
+    timeout_ms: 60000
+
+  # Database Query Server (数据库访问)
+  # 提供只读数据库查询工具
+  - id: database-read
+    enabled: false
+    transport: stdio
+    command: ["python3", "-m", "mcp_database"]
+
+    allow_tools:
+      - "query"
+      - "describe_table"
+
+    # 只允许读取,禁止写入和删除
+    deny_side_effect_tags:
+      - "database.write"
+      - "database.delete"
+
+    env:
+      DB_CONNECTION_STRING: "${DATABASE_URL}"
+      DB_READ_ONLY: "true"
+
+    timeout_ms: 30000
+
+# 配置说明:
+#
+# 字段说明:
+# - id: 服务器唯一标识符
+# - enabled: 是否启用该服务器
+# - transport: 传输协议 (目前只支持 "stdio")
+# - command: 启动服务器的命令 (数组格式)
+# - allow_tools: 允许的工具列表 (空列表 = 允许所有)
+# - deny_side_effect_tags: 禁止的副作用标签
+# - env: 环境变量配置
+# - timeout_ms: 操作超时时间 (毫秒)
+#
+# 副作用标签参考:
+# - fs.read, fs.write, fs.delete, fs.chmod: 文件系统操作
+# - network.http, network.socket, network.dns: 网络操作
+# - cloud.key_read, cloud.key_write: 云密钥操作
+# - cloud.resource_create, cloud.resource_delete: 云资源管理
+# - payments: 支付操作
+# - system.exec, system.env: 系统操作
+# - database.read, database.write, database.delete: 数据库操作
+#
+# 安全建议:
+# 1. 默认禁用所有高风险服务器 (enabled: false)
+# 2. 使用 allow_tools 白名单严格限制可用工具
+# 3. 使用 deny_side_effect_tags 禁止危险操作
+# 4. 设置合理的 timeout_ms 防止操作超时
+# 5. 敏感信息使用环境变量 (${VAR_NAME})
+# 6. 定期审查和更新配置

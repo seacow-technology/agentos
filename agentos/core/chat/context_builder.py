@@ -14,15 +14,17 @@ from agentos.core.chat.service import ChatService
 from agentos.core.memory.service import MemoryService
 from agentos.core.project_kb.service import ProjectKBService
 from agentos.util.ulid import ulid
+from agentos.core.time import utc_now, utc_now_ms
+
 
 logger = logging.getLogger(__name__)
 
 
 class UsageWatermark(Enum):
     """Token usage watermarks for auto-summary trigger"""
-    SAFE = "safe"          # < 60%
-    WARNING = "warning"    # 60-80%
-    CRITICAL = "critical"  # > 80%
+    SAFE = "safe"          # < 80%
+    WARNING = "warning"    # 80-95%
+    CRITICAL = "critical"  # >= 95%
 
 
 @dataclass
@@ -43,8 +45,8 @@ class ContextBudget:
     model_context_window: Optional[int] = None  # Original model context window (if auto-derived)
 
     # Watermark thresholds (as ratio of budget)
-    safe_threshold: float = 0.6      # 60%
-    critical_threshold: float = 0.8  # 80%
+    safe_threshold: float = 0.8      # 80%
+    critical_threshold: float = 0.95  # 95%
 
 
 @dataclass
@@ -70,9 +72,9 @@ class ContextUsage:
     def watermark(self) -> UsageWatermark:
         """Determine usage watermark level"""
         ratio = self.usage_ratio
-        if ratio >= 0.8:
+        if ratio >= 0.95:
             return UsageWatermark.CRITICAL
-        elif ratio >= 0.6:
+        elif ratio >= 0.8:
             return UsageWatermark.WARNING
         else:
             return UsageWatermark.SAFE
@@ -149,7 +151,28 @@ class ContextBuilder:
         self.chat_service = chat_service or ChatService()
         self.memory_service = memory_service or MemoryService()
         self.kb_service = kb_service or ProjectKBService()
-        self.db_path = db_path or self.chat_service.db_path
+
+        # Get db_path from registry_db if not provided
+        if db_path is None:
+            from agentos.core.db import registry_db
+            try:
+                # Get the database path from registry_db
+                conn = registry_db.get_db()
+                # SQLite connection has a way to get the database file path
+                import sqlite3
+                db_file = conn.execute("PRAGMA database_list").fetchone()
+                if db_file and len(db_file) > 2:
+                    self.db_path = db_file[2]  # The file path is the 3rd element
+                else:
+                    # Fallback to default registry path
+                    from agentos.core.storage.paths import component_db_path
+                    self.db_path = str(component_db_path("agentos"))
+            except Exception as e:
+                # Fallback to default registry path
+                from agentos.core.storage.paths import component_db_path
+                self.db_path = str(component_db_path("agentos"))
+        else:
+            self.db_path = db_path
 
         # Budget resolution: use provided budget or resolve via budget_resolver
         if budget is not None:
@@ -214,7 +237,21 @@ class ContextBuilder:
         memory_facts = []
         if memory_enabled:
             memory_facts = self._load_memory_facts(session_id)
-        
+
+            # Log memory context injection for observability
+            if memory_facts:
+                # Check if preferred_name exists
+                has_preferred_name = any(
+                    fact.get("content", {}).get("key") == "preferred_name"
+                    for fact in memory_facts
+                    if fact.get("type") in ("preference", "user_preference")
+                )
+
+                logger.info(
+                    f"Memory context loaded: {len(memory_facts)} facts "
+                    f"(preferred_name={'present' if has_preferred_name else 'absent'})"
+                )
+
         # 4. Load RAG context
         rag_chunks = []
         if rag_enabled:
@@ -252,6 +289,14 @@ class ContextBuilder:
             summary_artifacts=trimmed_parts["summaries"],
             user_input=user_input
         )
+
+        # Log audit event for memory context injection
+        if trimmed_parts["memory"]:
+            self._log_memory_injection_audit(
+                session_id=session_id,
+                memory_facts=trimmed_parts["memory"],
+                usage=usage
+            )
         
         # 9. Generate audit trail
         audit = self._generate_audit(
@@ -317,10 +362,15 @@ class ContextBuilder:
     
     def _load_memory_facts(self, session_id: str) -> List[Dict[str, Any]]:
         """Load pinned facts from Memory
-        
+
+        Supports three scenarios:
+        1. With explicit project_id: Load global + project + agent scope
+        2. project_id is None: Load only global + agent scope
+        3. "All Projects": Special handling, load all visible memories
+
         Args:
             session_id: Session ID
-        
+
         Returns:
             List of memory items
         """
@@ -328,23 +378,29 @@ class ContextBuilder:
             # Get session to find project_id
             session = self.chat_service.get_session(session_id)
             project_id = session.metadata.get("project_id")
-            
+
             if not project_id:
-                logger.debug("No project_id in session metadata, skipping memory")
-                return []
-            
-            # Build memory context
+                logger.info("No project_id, falling back to global + agent scope memories")
+                # Allow None to be passed to build_context
+                project_id = None
+
+            # Build memory context (project_id can be None)
+            from agentos.core.memory.budgeter import ContextBudget as MemoryBudget
             memory_context = self.memory_service.build_context(
                 project_id=project_id,
                 agent_type="chat",
                 confidence_threshold=0.3,
-                budget={"max_memories": 10, "max_tokens": self.budget.memory_tokens}
+                budget=MemoryBudget(max_memories=10, max_tokens=self.budget.memory_tokens)
             )
-            
+
             memories = memory_context.get("memories", [])
-            logger.debug(f"Loaded {len(memories)} memory facts")
+            scopes = memory_context.get("summary", {}).get("by_scope", {})
+            logger.info(
+                f"Loaded {len(memories)} memory facts "
+                f"(project_id={project_id or 'None/global'}, scopes={scopes})"
+            )
             return memories
-        
+
         except Exception as e:
             logger.warning(f"Failed to load memory facts: {e}")
             return []
@@ -485,35 +541,109 @@ class ContextBuilder:
         return trimmed
     
     def _build_system_prompt(self, context_parts: Dict[str, Any], session_id: str) -> str:
-        """Build system prompt with context
+        """Build system prompt with context and mode-aware guidance.
 
         Args:
             context_parts: Trimmed context parts
-            session_id: Session ID to get language preference
+            session_id: Session ID to get language preference and conversation mode
 
         Returns:
-            System prompt string
+            System prompt string with mode-specific guidance
         """
-        prompt_parts = [
-            "You are a helpful AI assistant in AgentOS Chat Mode.",
-            "",
+        from agentos.core.chat.prompts import get_system_prompt
+        from agentos.core.chat.models import ConversationMode
+
+        # Get conversation mode from session metadata
+        try:
+            session = self.chat_service.get_session(session_id)
+            conversation_mode = session.metadata.get(
+                "conversation_mode",
+                ConversationMode.CHAT.value
+            )
+        except Exception as e:
+            logger.warning(f"Could not retrieve conversation mode, defaulting to chat: {e}")
+            conversation_mode = ConversationMode.CHAT.value
+
+        # Get mode-aware base prompt
+        mode_prompt = get_system_prompt(conversation_mode)
+
+        # Start with mode-aware prompt
+        prompt_parts = [mode_prompt, ""]
+
+        # ============================================
+        # CRITICAL USER CONTEXT (Highest Priority)
+        # ============================================
+        memory_facts = context_parts.get("memory", [])
+
+        if memory_facts:
+            prompt_parts.append("=" * 60)
+            prompt_parts.append("⚠️  CRITICAL USER CONTEXT (MUST FOLLOW)")
+            prompt_parts.append("=" * 60)
+            prompt_parts.append("")
+
+            # Extract and highlight preferred_name and other preferences
+            preferred_name = None
+            other_preferences = []
+            other_facts = []
+
+            for fact in memory_facts:
+                content = fact.get("content", {})
+                fact_type = fact.get("type")
+
+                if fact_type == "preference" or fact_type == "user_preference":
+                    # Check if this is a preference item
+                    key = content.get("key")
+                    value = content.get("value")
+
+                    if key == "preferred_name":
+                        preferred_name = value
+                    elif key and value:
+                        other_preferences.append(f"  • {key}: {value}")
+                    else:
+                        # Preference without key/value structure, use summary
+                        summary = content.get("summary", "")
+                        if summary:
+                            other_preferences.append(f"  • {summary}")
+                else:
+                    # Other facts (contact, company, etc.)
+                    summary = content.get("summary", "")
+                    if summary:
+                        other_facts.append(f"  • {summary}")
+
+            # 1. Preferred Name (Most Critical)
+            if preferred_name:
+                prompt_parts.append("👤 USER IDENTITY:")
+                prompt_parts.append(f"   The user prefers to be called: \"{preferred_name}\"")
+                prompt_parts.append(f"   ⚠️  You MUST address the user as \"{preferred_name}\" in all responses.")
+                prompt_parts.append(f"   ⚠️  Do NOT use generic terms like \"user\" or \"you\" - use \"{preferred_name}\".")
+                prompt_parts.append("")
+
+            # 2. Other Preferences
+            if other_preferences:
+                prompt_parts.append("🎯 USER PREFERENCES:")
+                prompt_parts.extend(other_preferences)
+                prompt_parts.append("")
+
+            # 3. Other Facts
+            if other_facts:
+                prompt_parts.append("📋 USER INFORMATION:")
+                prompt_parts.extend(other_facts)
+                prompt_parts.append("")
+
+            prompt_parts.append("=" * 60)
+            prompt_parts.append("")
+
+        # Capabilities
+        prompt_parts.extend([
             "Your capabilities:",
             "- Answer questions about the codebase using RAG context",
             "- Access project memory for long-term facts",
             "- Execute slash commands (/summary, /extract, /task, etc.)",
             "- Maintain conversation context",
             "",
-        ]
+        ])
 
-        # Add memory facts if available
-        if context_parts["memory"]:
-            prompt_parts.append("Project Memory:")
-            for i, fact in enumerate(context_parts["memory"][:5], 1):
-                summary = fact.get("content", {}).get("summary", "")
-                prompt_parts.append(f"{i}. {summary}")
-            prompt_parts.append("")
-
-        # Add RAG context if available
+        # Add RAG context if available (less critical than Memory)
         if context_parts["rag"]:
             prompt_parts.append("Relevant Documentation:")
             for i, chunk in enumerate(context_parts["rag"][:3], 1):
@@ -849,8 +979,9 @@ class ContextBuilder:
             """, (session_id,))
             
             rows = cursor.fetchall()
+            # Do NOT close: conn from sqlite3.connect is a new connection, can be closed
             conn.close()
-            
+
             summaries = []
             for row in rows:
                 metadata = json.loads(row["metadata"]) if row["metadata"] else {}
@@ -909,6 +1040,57 @@ class ContextBuilder:
             tokens_policy=0  # Not implemented yet
         )
     
+    def _log_memory_injection_audit(
+        self,
+        session_id: str,
+        memory_facts: List[Dict[str, Any]],
+        usage: ContextUsage
+    ) -> None:
+        """Log audit event for memory context injection.
+
+        Args:
+            session_id: Session ID
+            memory_facts: Memory facts that were injected
+            usage: Usage statistics
+        """
+        from agentos.core.audit import log_audit_event, MEMORY_CONTEXT_INJECTED
+
+        # Extract memory types and check for preferred_name
+        memory_types = [m.get("type") for m in memory_facts]
+        has_preferred_name = any(
+            fact.get("content", {}).get("key") == "preferred_name"
+            for fact in memory_facts
+            if fact.get("type") in ("preference", "user_preference")
+        )
+
+        # Extract preferred_name value for logging
+        preferred_name_value = None
+        if has_preferred_name:
+            for fact in memory_facts:
+                if fact.get("type") in ("preference", "user_preference"):
+                    content = fact.get("content", {})
+                    if content.get("key") == "preferred_name":
+                        preferred_name_value = content.get("value")
+                        break
+
+        try:
+            log_audit_event(
+                event_type=MEMORY_CONTEXT_INJECTED,
+                task_id=None,  # Not associated with a specific task
+                level="info",
+                metadata={
+                    "session_id": session_id,
+                    "memory_count": len(memory_facts),
+                    "memory_types": memory_types,
+                    "has_preferred_name": has_preferred_name,
+                    "preferred_name": preferred_name_value,
+                    "tokens_memory": usage.tokens_memory,
+                    "memory_ids": [m.get("id") for m in memory_facts]
+                }
+            )
+        except Exception as e:
+            logger.warning(f"Failed to log memory injection audit event: {e}")
+
     def _save_snapshot(
         self,
         session_id: str,
@@ -930,7 +1112,7 @@ class ContextBuilder:
             Snapshot ID
         """
         snapshot_id = ulid()
-        created_at = int(datetime.now(timezone.utc).timestamp() * 1000)
+        created_at = utc_now_ms()
         
         try:
             conn = sqlite3.connect(self.db_path)
@@ -976,10 +1158,11 @@ class ContextBuilder:
                     """, (
                         snapshot_id, item_type_single, item_id, 0, rank, None
                     ))
-            
+
             conn.commit()
+            # Do NOT close: conn from sqlite3.connect is a new connection, can be closed
             conn.close()
-            
+
             logger.info(f"Saved context snapshot {snapshot_id}")
             return snapshot_id
         

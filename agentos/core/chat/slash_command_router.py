@@ -361,17 +361,33 @@ class SlashCommandRouter:
                     # Load commands.yaml for this capability
                     commands_config = self._load_commands_config(extension.id)
 
-                    if commands_config and 'slash_commands' in commands_config:
-                        for cmd_config in commands_config['slash_commands']:
-                            command_name = cmd_config.get('name')
-                            if command_name:
-                                self.command_cache[command_name] = (
-                                    extension.id,
-                                    cmd_config
-                                )
-                                logger.debug(
-                                    f"Cached command: {command_name} -> {extension.id}"
-                                )
+                    if commands_config:
+                        # Support both new format (slash_commands) and legacy format (commands)
+                        cmd_list = None
+                        format_type = None
+
+                        if 'slash_commands' in commands_config:
+                            cmd_list = commands_config['slash_commands']
+                            format_type = "new"
+                        elif 'commands' in commands_config:
+                            cmd_list = commands_config['commands']
+                            format_type = "legacy"
+
+                        if cmd_list:
+                            for cmd_config in cmd_list:
+                                command_name = cmd_config.get('name')
+                                if command_name:
+                                    # For legacy format, convert to new format structure
+                                    if format_type == "legacy":
+                                        cmd_config = self._convert_legacy_command_config(cmd_config)
+
+                                    self.command_cache[command_name] = (
+                                        extension.id,
+                                        cmd_config
+                                    )
+                                    logger.debug(
+                                        f"Cached command ({format_type} format): {command_name} -> {extension.id}"
+                                    )
 
         logger.info(f"Cached {len(self.command_cache)} slash commands")
 
@@ -435,6 +451,71 @@ class SlashCommandRouter:
                 return action
 
         return None
+
+    def _convert_legacy_command_config(self, legacy_config: Dict[str, Any]) -> Dict[str, Any]:
+        """Convert legacy command format to new format
+
+        Legacy format:
+        {
+            "name": "/postman",
+            "description": "...",
+            "entrypoint": "commands/postman.sh",
+            "args": [...],
+            "examples": [...]
+        }
+
+        New format:
+        {
+            "name": "/postman",
+            "summary": "...",
+            "runner": "builtin",
+            "actions": [
+                {"id": "run", "summary": "...", ...}
+            ]
+        }
+
+        Args:
+            legacy_config: Legacy command configuration
+
+        Returns:
+            Converted configuration in new format
+        """
+        # Basic conversion
+        new_config = {
+            'name': legacy_config.get('name'),
+            'summary': legacy_config.get('description', ''),
+            'runner': 'builtin',  # Default to builtin runner
+            'examples': legacy_config.get('examples', [])
+        }
+
+        # Convert args to actions
+        # In legacy format, args with choices become actions
+        args = legacy_config.get('args', [])
+        actions = []
+
+        # Check if first arg has choices (indicates multiple actions)
+        if args and len(args) > 0:
+            first_arg = args[0]
+            if isinstance(first_arg, dict) and 'choices' in first_arg:
+                # Create an action for each choice
+                for choice in first_arg.get('choices', []):
+                    actions.append({
+                        'id': choice,
+                        'summary': f"{choice.capitalize()} action",
+                        'runner': 'builtin'
+                    })
+
+        # If no actions created, create a default action
+        if not actions:
+            actions = [{
+                'id': 'default',
+                'summary': legacy_config.get('description', ''),
+                'runner': 'builtin'
+            }]
+
+        new_config['actions'] = actions
+
+        return new_config
 
     def _load_usage_doc(self, extension_id: str) -> Optional[str]:
         """Load usage documentation for an extension

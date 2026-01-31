@@ -21,6 +21,8 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from ..store import SQLiteStore
+from agentos.core.time import utc_now, utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -102,12 +104,12 @@ def compute_coverage(store: SQLiteStore) -> CoverageMetrics:
         CoverageMetrics object with computed metrics
 
     Examples:
-        >>> store = SQLiteStore("./brainos.db")
-        >>> store.connect()
+        >>> from agentos.core.db import registry_db
+        >>> conn = registry_db.get_db()
+        >>> store = SQLiteStore.from_connection(conn)
         >>> metrics = compute_coverage(store)
         >>> print(f"Code Coverage: {metrics.code_coverage:.1%}")
         >>> print(f"Uncovered files: {len(metrics.uncovered_files)}")
-        >>> store.close()
 
     Notes:
         - Returns empty metrics on error rather than crashing
@@ -115,7 +117,7 @@ def compute_coverage(store: SQLiteStore) -> CoverageMetrics:
         - Performance scales with number of entities and edges
     """
     logger.info("Computing BrainOS coverage metrics")
-    start_time = datetime.now(timezone.utc)
+    start_time = utc_now()
 
     try:
         conn = store.connect()
@@ -223,8 +225,8 @@ def compute_coverage(store: SQLiteStore) -> CoverageMetrics:
         doc_coverage = doc_covered / total_files if total_files > 0 else 0.0
         dependency_coverage = dep_covered / total_files if total_files > 0 else 0.0
 
-        computed_at = datetime.now(timezone.utc).isoformat()
-        duration_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
+        computed_at = utc_now_iso()
+        duration_ms = int((utc_now() - start_time).total_seconds() * 1000)
 
         logger.info(
             f"Coverage computation completed in {duration_ms}ms: "
@@ -352,5 +354,5 @@ def _empty_metrics(graph_version: str, start_time: datetime) -> CoverageMetrics:
             "3_evidence": 0
         },
         graph_version=graph_version,
-        computed_at=datetime.now(timezone.utc).isoformat()
+        computed_at=utc_now_iso()
     )

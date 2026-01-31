@@ -41,6 +41,43 @@ class LeadConfig:
     log_level: str = "INFO"
 
 
+def load_shadow_config(config_path: Optional[Path] = None) -> Dict[str, Any]:
+    """
+    Load shadow classifier configuration from YAML file.
+
+    Args:
+        config_path: Path to shadow config file (default: agentos/config/shadow_classifiers.yaml)
+
+    Returns:
+        Configuration dictionary
+    """
+    if config_path is None:
+        config_path = Path(__file__).parent / "shadow_classifiers.yaml"
+
+    if not config_path.exists():
+        raise FileNotFoundError(f"Shadow config not found: {config_path}")
+
+    with open(config_path, encoding="utf-8") as f:
+        config_data = yaml.safe_load(f)
+
+    return config_data or {}
+
+
+def save_shadow_config(config: Dict[str, Any], config_path: Optional[Path] = None) -> None:
+    """
+    Save shadow classifier configuration to YAML file.
+
+    Args:
+        config: Configuration dictionary to save
+        config_path: Path to shadow config file (default: agentos/config/shadow_classifiers.yaml)
+    """
+    if config_path is None:
+        config_path = Path(__file__).parent / "shadow_classifiers.yaml"
+
+    with open(config_path, "w", encoding="utf-8") as f:
+        yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+
+
 def load_lead_config(config_path: Optional[Path] = None) -> LeadConfig:
     """
     加载 Lead Agent 配置

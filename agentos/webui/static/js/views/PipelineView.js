@@ -451,9 +451,9 @@ class PipelineView {
         eventItem.innerHTML = `
             <span class="event-time">${this.formatTime(event.created_at)}</span>
             <span class="event-text">${event.payload?.explanation || 'Checkpoint committed'}</span>
-            <button class="btn-view-evidence" data-checkpoint-id="${checkpointId}" title="查看证据">
+            <button class="btn-view-evidence" data-checkpoint-id="${checkpointId}" title="View Evidence">
                 <span class="material-icons md-16">check_circle</span>
-                查看证据
+                View Evidence
             </button>
         `;
 

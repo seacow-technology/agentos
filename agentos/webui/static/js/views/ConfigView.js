@@ -16,8 +16,8 @@ class ConfigView {
         this.container = container;
         this.config = null;
         this.migrationsStatus = null;
-        this.envLimit = 20; // 默认显示前 20 条环境变量
-        this.envFilter = ''; // 搜索过滤器
+        this.envLimit = 20; // 默认Show前 20 items环境变量
+        this.envFilter = ''; // Search过滤器
 
         this.init();
     }
@@ -88,7 +88,7 @@ class ConfigView {
             refreshBtn.addEventListener('click', () => this.loadConfig(true));
         }
 
-        // View Raw JSON button (打开 Modal)
+        // View Raw JSON button (Open Modal)
         const viewRawBtn = this.container.querySelector('#config-view-raw');
         if (viewRawBtn) {
             viewRawBtn.addEventListener('click', () => this.showRawJsonModal());

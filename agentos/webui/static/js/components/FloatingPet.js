@@ -1,5 +1,5 @@
 /**
- * FloatingPet - 悬浮助手组件
+ * FloatingPet - 悬浮Assistant组件
  *
  * 功能特性:
  * - 可拖拽悬浮按钮 (FAB)
@@ -8,7 +8,7 @@
  * - 宠物动画面板
  * - 快捷入口: Chat / 创建任务 / RAG
  * - 完整的响应式设计
- * - FAB 和面板中同步显示 Lottie 动画
+ * - FAB 和面板中同步Show Lottie 动画
  * - 面板中支持鼠标跟随 3D 旋转效果
  *
  * v0.3.2.6 - WebUI FloatingPet Component
@@ -16,9 +16,9 @@
 
 class FloatingPet {
     constructor(options = {}) {
-        // 配置选项
+        // Configuration选项
         this.options = {
-            petType: options.petType || 'default',           // 宠物类型
+            petType: options.petType || 'default',           // 宠物Type
             enableShortcuts: options.enableShortcuts !== false, // 快捷入口开关
             initialPosition: options.initialPosition || 'bottom-right', // 初始位置
             dragThreshold: options.dragThreshold || 5,       // 拖拽阈值 (px)
@@ -28,15 +28,15 @@ class FloatingPet {
             ...options,
         };
 
-        // 状态管理
+        // Status管理
         this.state = {
-            isPanelOpen: false,        // 面板是否打开
-            isTaskModalOpen: false,    // 任务创建 Modal 是否打开
+            isPanelOpen: false,        // 面板是否Open
+            isTaskModalOpen: false,    // 任务创建 Modal 是否Open
             fabPosition: { x: 0, y: 0 }, // FAB 位置
             currentEdge: 'right',      // 当前吸边方向
         };
 
-        // 拖拽状态 (独立管理，符合用户要求)
+        // 拖拽Status (独立管理，符合User要求)
         this._drag = {
             active: false,             // 是否正在拖拽
             pointerId: null,           // 跟踪的指针 ID
@@ -80,10 +80,10 @@ class FloatingPet {
         // 渲染 DOM（先渲染，确保元素存在）
         this.render();
 
-        // 加载保存的位置（渲染后加载，确保能正确设置位置）
+        // 加载Save的位置（渲染后加载，确保能正确Settings位置）
         this.loadPosition();
 
-        // 设置初始位置（确保位置正确应用）
+        // Settings初始位置（确保位置正确应用）
         this.setFABPosition(this.state.fabPosition.x, this.state.fabPosition.y);
 
         // 绑定事件
@@ -111,7 +111,7 @@ class FloatingPet {
         // 4. 创建任务创建 Modal
         this.renderTaskModal();
 
-        // 注意：位置设置移到 init() 中，确保在 loadPosition() 之后执行
+        // 注意：位置Settings移到 init() 中，确保在 loadPosition() 之后执行
     }
 
     /**
@@ -238,7 +238,7 @@ class FloatingPet {
      */
     attachEventListeners() {
         // FAB 拖拽事件 (使用 Pointer Events 以支持触摸)
-        // 按照用户要求: pointerdown 只绑在 FAB 上
+        // 按照User要求: pointerdown 只绑在 FAB 上
         this.elements.fabButton.addEventListener('pointerdown', this._onFabPointerDown.bind(this));
 
         // move/up/cancel 绑在 document 上，但必须检查 active 和 pointerId
@@ -253,7 +253,7 @@ class FloatingPet {
         // 捕获阶段拦截 click，防止拖拽后触发
         this.elements.fabButton.addEventListener('click', this._onFabClick.bind(this), true);
 
-        // 背景遮罩点击关闭
+        // 背景遮罩点击Close
         this.elements.backdrop.addEventListener('click', () => {
             this.closePanel();
         });
@@ -276,7 +276,7 @@ class FloatingPet {
         cancelBtn.addEventListener('click', () => this.closeTaskModal());
         submitBtn.addEventListener('click', () => this.submitTask());
 
-        // Modal 背景点击关闭
+        // Modal 背景点击Close
         this.elements.taskModal.addEventListener('click', (e) => {
             if (e.target === this.elements.taskModal) {
                 this.closeTaskModal();
@@ -285,7 +285,7 @@ class FloatingPet {
 
         // 键盘事件
         document.addEventListener('keydown', (e) => {
-            // Esc 键关闭面板或 Modal
+            // Esc 键Close面板或 Modal
             if (e.key === 'Escape') {
                 if (this.state.isTaskModalOpen) {
                     this.closeTaskModal();
@@ -293,7 +293,7 @@ class FloatingPet {
                     this.closePanel();
                 }
             }
-            // Alt + P 打开面板
+            // Alt + P Open面板
             if (e.altKey && e.key === 'p') {
                 e.preventDefault();
                 this.togglePanel();
@@ -312,7 +312,7 @@ class FloatingPet {
 
     /**
      * FAB Pointer Down - 只在 FAB 上触发
-     * 按照用户要求: 只有 FAB 自己能开始拖拽
+     * 按照User要求: 只有 FAB 自己能Start拖拽
      */
     _onFabPointerDown(e) {
         // 只处理主按钮 (鼠标左键或触摸)
@@ -321,7 +321,7 @@ class FloatingPet {
         e.preventDefault();
         e.stopPropagation();
 
-        // 初始化拖拽状态
+        // 初始化拖拽Status
         this._drag.active = true;
         this._drag.pointerId = e.pointerId;
         this._drag.startX = e.clientX;
@@ -334,14 +334,14 @@ class FloatingPet {
         this._drag.originLeft = rect.left;
         this._drag.originTop = rect.top;
 
-        // 按照用户要求: 立即 capture 指针
+        // 按照User要求: 立即 capture 指针
         try {
             this.elements.fabButton.setPointerCapture(e.pointerId);
         } catch (err) {
             console.warn('FloatingPet: setPointerCapture failed', err);
         }
 
-        // 如果面板打开，立即关闭
+        // 如果面板Open，立即Close
         if (this._isPanelOpen()) {
             this.closePanel();
         }
@@ -349,7 +349,7 @@ class FloatingPet {
 
     /**
      * Document Pointer Move - 检查 active 和 pointerId
-     * 按照用户要求: 必须检查 this._drag.active 和 pointerId
+     * 按照User要求: 必须检查 this._drag.active 和 pointerId
      */
     _onDocPointerMove(e) {
         if (!this._drag.active) return;
@@ -363,7 +363,7 @@ class FloatingPet {
 
         this._drag.movedPx = dist;
 
-        // 按照用户要求: 拖拽阈值 6px
+        // 按照User要求: 拖拽阈值 6px
         if (!this._drag.moved && dist < this._DRAG_THRESHOLD) {
             return; // 未超过阈值，不移动
         }
@@ -385,7 +385,7 @@ class FloatingPet {
 
     /**
      * Document Pointer Up - 检查 active 和 pointerId
-     * 按照用户要求: 必须检查并 cleanup
+     * 按照User要求: 必须检查并 cleanup
      */
     _onDocPointerUp(e) {
         if (!this._drag.active) return;
@@ -395,7 +395,7 @@ class FloatingPet {
 
         const wasMoved = this._drag.moved;
 
-        // 清理拖拽状态
+        // 清理拖拽Status
         this._drag.active = false;
         this.elements.fabButton.classList.remove('is-dragging');
 
@@ -403,7 +403,7 @@ class FloatingPet {
         try {
             this.elements.fabButton.releasePointerCapture(e.pointerId);
         } catch (err) {
-            // 忽略错误 (可能已经释放)
+            // 忽略Error (可能已经释放)
         }
 
         if (wasMoved) {
@@ -411,33 +411,33 @@ class FloatingPet {
             this._snapToEdge();
             this._savePosition();
         } else {
-            // 点击: 打开/关闭面板
+            // 点击: Open/Close面板
             this.togglePanel();
         }
     }
 
     /**
-     * Document Pointer Cancel - 清理状态
-     * 按照用户要求: 必须处理 pointercancel
+     * Document Pointer Cancel - 清理Status
+     * 按照User要求: 必须处理 pointercancel
      */
     _onDocPointerCancel(e) {
         if (!this._drag.active) return;
         if (e.pointerId !== this._drag.pointerId) return;
 
-        // 清理拖拽状态
+        // 清理拖拽Status
         this._drag.active = false;
         this.elements.fabButton.classList.remove('is-dragging');
 
         try {
             this.elements.fabButton.releasePointerCapture(e.pointerId);
         } catch (err) {
-            // 忽略错误
+            // 忽略Error
         }
     }
 
     /**
      * FAB Click - 捕获阶段拦截
-     * 按照用户要求: 在捕获阶段拦截 click，防止拖拽后触发
+     * 按照User要求: 在捕获阶段拦截 click，防止拖拽后触发
      */
     _onFabClick(e) {
         if (this._drag.moved) {
@@ -449,7 +449,7 @@ class FloatingPet {
     }
 
     /**
-     * 检查面板是否打开
+     * 检查面板是否Open
      */
     _isPanelOpen() {
         return this.state.isPanelOpen;
@@ -467,7 +467,7 @@ class FloatingPet {
     }
 
     /**
-     * 保存位置 (包装方法)
+     * Save位置 (包装方法)
      */
     _savePosition() {
         this.savePosition();
@@ -549,7 +549,7 @@ class FloatingPet {
             if (progress < 1) {
                 requestAnimationFrame(animate);
             } else {
-                // 动画完成,保存最终位置
+                // 动画Complete,Save最终位置
                 this.state.fabPosition = { x: targetX, y: targetY };
             }
         };
@@ -558,7 +558,7 @@ class FloatingPet {
     }
 
     /**
-     * 设置 FAB 位置
+     * Settings FAB 位置
      */
     setFABPosition(x, y, updateState = true) {
         this.elements.fabButton.style.left = `${x}px`;
@@ -570,20 +570,20 @@ class FloatingPet {
     }
 
     /**
-     * 打开面板
+     * Open面板
      */
     openPanel() {
         if (this.state.isPanelOpen) return;
 
         this.state.isPanelOpen = true;
 
-        // 显示背景遮罩
+        // Show背景遮罩
         this.elements.backdrop.style.display = 'block';
         requestAnimationFrame(() => {
             this.elements.backdrop.classList.add('is-visible');
         });
 
-        // 显示面板
+        // Show面板
         this.elements.panel.style.display = 'flex';
 
         // 根据 FAB 位置调整面板位置
@@ -594,7 +594,7 @@ class FloatingPet {
             this.elements.panel.classList.add('is-visible');
         });
 
-        // FAB 添加激活状态
+        // FAB 添加激活Status
         this.elements.fabButton.classList.add('is-active');
 
         // 播放 Lottie 动画
@@ -604,36 +604,36 @@ class FloatingPet {
     }
 
     /**
-     * 关闭面板
+     * Close面板
      */
     closePanel() {
         if (!this.state.isPanelOpen) return;
 
         this.state.isPanelOpen = false;
 
-        // 隐藏背景遮罩
+        // Hide背景遮罩
         this.elements.backdrop.classList.remove('is-visible');
         setTimeout(() => {
             this.elements.backdrop.style.display = 'none';
         }, 300);
 
-        // 隐藏面板
+        // Hide面板
         this.elements.panel.classList.remove('is-visible');
         setTimeout(() => {
             this.elements.panel.style.display = 'none';
         }, 300);
 
-        // FAB 移除激活状态
+        // FAB 移除激活Status
         this.elements.fabButton.classList.remove('is-active');
 
-        // 暂停 Lottie 动画
+        // Pause Lottie 动画
         if (this._lottie && this._lottieReady) {
             this._lottie.pause();
         }
     }
 
     /**
-     * 切换面板状态
+     * 切换面板Status
      */
     togglePanel() {
         if (this.state.isPanelOpen) {
@@ -655,11 +655,11 @@ class FloatingPet {
 
         // 根据当前吸边方向决定面板位置
         if (this.state.currentEdge === 'right') {
-            // FAB 在右侧,面板显示在左侧
+            // FAB 在右侧,面板Show在左侧
             const panelLeft = fabRect.left - panelRect.width - panelGap;
             this.elements.panel.style.left = `${panelLeft}px`;
         } else {
-            // FAB 在左侧,面板显示在右侧
+            // FAB 在左侧,面板Show在右侧
             const panelLeft = fabRect.right + panelGap;
             this.elements.panel.style.left = `${panelLeft}px`;
         }
@@ -725,7 +725,7 @@ class FloatingPet {
     }
 
     /**
-     * 打开任务创建 Modal
+     * Open任务创建 Modal
      */
     openTaskModal() {
         this.state.isTaskModalOpen = true;
@@ -742,7 +742,7 @@ class FloatingPet {
     }
 
     /**
-     * 关闭任务创建 Modal
+     * Close任务创建 Modal
      */
     closeTaskModal() {
         this.state.isTaskModalOpen = false;
@@ -750,7 +750,7 @@ class FloatingPet {
 
         setTimeout(() => {
             this.elements.taskModal.style.display = 'none';
-            // 清空输入
+            // Clear输入
             const input = this.elements.taskModal.querySelector('.pet-task-input');
             input.value = '';
         }, 300);
@@ -768,7 +768,7 @@ class FloatingPet {
             return;
         }
 
-        // 禁用按钮,显示加载状态
+        // Disable按钮,Show加载Status
         const submitBtn = this.elements.taskModal.querySelector('.pet-task-btn-submit');
         submitBtn.disabled = true;
         submitBtn.textContent = 'Creating...';
@@ -785,7 +785,7 @@ class FloatingPet {
                 window.showToast('Task created successfully!', 'success');
                 this.closeTaskModal();
 
-                // 跳转到 Tasks 页面
+                // 跳转到 Tasks 面
                 setTimeout(() => {
                     if (typeof window.navigateToView === 'function') {
                         window.navigateToView('tasks', { task_id: result.data.id });
@@ -838,7 +838,7 @@ class FloatingPet {
                 container: this._lottieEl,
                 renderer: 'svg',
                 loop: true,
-                autoplay: false, // 手动控制：打开面板才播放
+                autoplay: false, // 手动控制：Open面板才播放
                 path: this.options.lottiePath,
                 rendererSettings: {
                     progressiveLoad: true,
@@ -846,12 +846,12 @@ class FloatingPet {
                 },
             });
 
-            // 动画加载完成
+            // 动画加载Complete
             this._lottie.addEventListener('DOMLoaded', () => {
                 this._lottieReady = true;
                 console.log('FloatingPet: Panel Lottie animation loaded');
 
-                // 如果面板当前是打开状态，直接播放
+                // 如果面板当前是OpenStatus，直接播放
                 if (this.state.isPanelOpen) {
                     this._lottie.play();
                 }
@@ -860,7 +860,7 @@ class FloatingPet {
                 this._bindPetHover();
             });
 
-            // 加载失败降级
+            // 加载Failed降级
             this._lottie.addEventListener('data_failed', () => {
                 console.warn('FloatingPet: Panel Lottie animation failed to load');
                 this._fallbackPet();
@@ -894,13 +894,13 @@ class FloatingPet {
                 },
             });
 
-            // 动画加载完成
+            // 动画加载Complete
             this._fabLottie.addEventListener('DOMLoaded', () => {
                 this._fabLottieReady = true;
                 console.log('FloatingPet: FAB Lottie animation loaded');
             });
 
-            // 加载失败降级
+            // 加载Failed降级
             this._fabLottie.addEventListener('data_failed', () => {
                 console.warn('FloatingPet: FAB Lottie animation failed to load');
                 this._fallbackFabPet();
@@ -912,7 +912,7 @@ class FloatingPet {
     }
 
     /**
-     * 降级方案：显示静态占位符（面板）
+     * 降级方案：Show静态占位符（面板）
      */
     _fallbackPet() {
         if (this._lottieEl) {
@@ -925,7 +925,7 @@ class FloatingPet {
     }
 
     /**
-     * 降级方案：显示静态占位符（FAB）
+     * 降级方案：Show静态占位符（FAB）
      */
     _fallbackFabPet() {
         if (this._fabLottieEl) {
@@ -989,7 +989,7 @@ class FloatingPet {
             cat: 'pets',                // 宠物图标
             fox: 'cruelty_free',        // 狐狸图标
             robot: 'smart_toy',         // 机器人图标
-            assistant: 'psychology',    // AI 助手图标
+            assistant: 'psychology',    // AI Assistant图标
             support: 'support_agent',   // 客服图标
         };
         return icons[this.options.petType] || icons.default;
@@ -1015,14 +1015,14 @@ class FloatingPet {
             this.savePosition();
         }
 
-        // 如果面板打开,更新面板位置
+        // 如果面板Open,更新面板位置
         if (this.state.isPanelOpen) {
             this.updatePanelPosition();
         }
     }
 
     /**
-     * 保存位置到 localStorage
+     * Save位置到 localStorage
      */
     savePosition() {
         const data = {
@@ -1079,7 +1079,7 @@ class FloatingPet {
     }
 
     /**
-     * 设置默认位置
+     * Settings默认位置
      */
     setDefaultPosition() {
         const viewportWidth = window.innerWidth;
@@ -1147,7 +1147,7 @@ class FloatingPet {
     }
 }
 
-// 导出
+// Export
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = FloatingPet;
 }

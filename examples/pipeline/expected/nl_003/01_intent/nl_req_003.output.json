@@ -1,0 +1,122 @@
+{
+  "id": "builder_out_9ed1ae87b1cd",
+  "schema_version": "0.9.4",
+  "nl_request_id": "nl_req_003",
+  "execution_intent": {
+    "id": "intent_090378008b53",
+    "type": "execution_intent",
+    "title": "添加 Builder 输出持久化到数据库：",
+    "version": "1.0.0",
+    "status": "draft",
+    "created_at": "2026-01-25T11:27:52.387616+00:00",
+    "lineage": {
+      "introduced_in": "0.9.4",
+      "derived_from": [],
+      "supersedes": []
+    },
+    "scope": {
+      "project_id": "agentos",
+      "repo_root": ".",
+      "targets": {
+        "files": [],
+        "modules": [],
+        "areas": [
+          "frontend"
+        ]
+      }
+    },
+    "objective": {
+      "goal": "添加 Builder 输出持久化到数据库：",
+      "success_criteria": [
+        "Complete: 添加 Builder 输出持久化到数据库：",
+        "Complete: 新增 builder_outputs 表（id, nl_request_id, output_json, created_at）",
+        "Complete: 新增 builder_selections 表（output_id, type, content_id, evidence）",
+        "Complete: 更新 Builder 类以保存输出到数据库"
+      ],
+      "non_goals": []
+    },
+    "selected_workflows": [
+      {
+        "workflow_id": "documentation",
+        "phases": [
+          "analysis",
+          "implementation",
+          "review"
+        ]
+      }
+    ],
+    "selected_agents": [
+      {
+        "agent_id": "technical_writer",
+        "role": "documentation",
+        "responsibilities": [
+          "Write and update documentation"
+        ]
+      }
+    ],
+    "planned_commands": [],
+    "interaction": {
+      "mode": "semi_auto",
+      "question_budget": 10,
+      "question_policy": "blockers_only"
+    },
+    "risk": {
+      "overall": "medium",
+      "drivers": [
+        "Risk level: medium"
+      ],
+      "requires_review": []
+    },
+    "budgets": {
+      "max_files": 50,
+      "max_commits": 10,
+      "max_tokens": 500000,
+      "max_cost_usd": 50.0
+    },
+    "evidence_refs": [
+      "nl_request:nl_req_003",
+      "nl_input:0:253",
+      "risk_assessment:medium"
+    ],
+    "constraints": {
+      "execution": "forbidden",
+      "no_fabrication": true,
+      "registry_only": true,
+      "lock_scope": {
+        "mode": "files",
+        "paths": []
+      }
+    },
+    "audit": {
+      "created_by": "intent_builder_v0.9.4",
+      "source": "agentos",
+      "checksum": "2057b2f869c922c1c7639000c13fe5e7598f3eafa0eff9f303d8cb0538ad85c0"
+    }
+  },
+  "question_pack": null,
+  "selection_evidence": {
+    "workflow_selections": [],
+    "agent_selections": [],
+    "command_selections": []
+  },
+  "builder_audit": {
+    "builder_version": "0.9.4",
+    "model_used": "rule_based",
+    "policy_applied": "semi_auto",
+    "adjudication_summary": {
+      "risk_level": "medium",
+      "ambiguities_detected": 0,
+      "registry_queries": 0,
+      "decisions_made": 0
+    },
+    "created_at": "2026-01-25T11:27:52.388070+00:00",
+    "checksum": "8e71b721e1c6650bf7c59b4a54e62a87f4ad5e2f6771d65305666c0bf3ef9ad1"
+  },
+  "lineage": {
+    "introduced_in": "0.9.4",
+    "derived_from": [
+      "nl_req_003"
+    ],
+    "supersedes": []
+  }
+}

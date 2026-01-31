@@ -1,0 +1,89 @@
+{
+  "run_id": "coord_run_intent_090378008b53_20260125222752",
+  "steps": [
+    {
+      "sequence": 1,
+      "from_state": "INIT",
+      "to_state": "RECEIVED",
+      "timestamp": "2026-01-25T22:27:52.498901",
+      "trigger": "Intent submitted",
+      "guards_evaluated": []
+    },
+    {
+      "sequence": 2,
+      "from_state": "RECEIVED",
+      "to_state": "PRECHECKED",
+      "timestamp": "2026-01-25T22:27:52.498907",
+      "trigger": "Starting precheck",
+      "guards_evaluated": [
+        {
+          "guard": "intent_schema_valid",
+          "passed": true,
+          "reason": "Schema valid"
+        }
+      ]
+    },
+    {
+      "sequence": 3,
+      "from_state": "PRECHECKED",
+      "to_state": "CONTEXT_BUILT",
+      "timestamp": "2026-01-25T22:27:52.498910",
+      "trigger": "Precheck passed",
+      "guards_evaluated": [
+        {
+          "guard": "memory_pack_available",
+          "passed": true,
+          "reason": "Memory available"
+        }
+      ]
+    },
+    {
+      "sequence": 4,
+      "from_state": "CONTEXT_BUILT",
+      "to_state": "RULES_EVALUATED",
+      "timestamp": "2026-01-25T22:27:52.498913",
+      "trigger": "Context ready",
+      "guards_evaluated": []
+    },
+    {
+      "sequence": 5,
+      "from_state": "RULES_EVALUATED",
+      "to_state": "GRAPH_DRAFTED",
+      "timestamp": "2026-01-25T22:27:52.498915",
+      "trigger": "Rules adjudicated",
+      "guards_evaluated": []
+    },
+    {
+      "sequence": 6,
+      "from_state": "GRAPH_DRAFTED",
+      "to_state": "GRAPH_FINALIZED",
+      "timestamp": "2026-01-25T22:27:52.498917",
+      "trigger": "No uncertainties",
+      "guards_evaluated": []
+    },
+    {
+      "sequence": 7,
+      "from_state": "GRAPH_FINALIZED",
+      "to_state": "REVIEW_PACK_BUILT",
+      "timestamp": "2026-01-25T22:27:52.498919",
+      "trigger": "Graph finalized",
+      "guards_evaluated": []
+    },
+    {
+      "sequence": 8,
+      "from_state": "REVIEW_PACK_BUILT",
+      "to_state": "FROZEN_OUTPUTS",
+      "timestamp": "2026-01-25T22:27:52.498921",
+      "trigger": "Review pack ready",
+      "guards_evaluated": []
+    },
+    {
+      "sequence": 9,
+      "from_state": "FROZEN_OUTPUTS",
+      "to_state": "DONE",
+      "timestamp": "2026-01-25T22:27:52.498923",
+      "trigger": "Outputs frozen",
+      "guards_evaluated": []
+    }
+  ]
+}

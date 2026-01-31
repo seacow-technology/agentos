@@ -513,7 +513,8 @@ class ModelsView {
      */
     async pullModel(modelName) {
         try {
-            const response = await fetch('/api/models/pull', {
+            // CSRF Fix: Use fetchWithCSRF for protected endpoint
+            const response = await window.fetchWithCSRF('/api/models/pull', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -685,7 +686,8 @@ class ModelsView {
             closeModal();
 
             try {
-                const response = await fetch(`/api/models/${provider}/${encodeURIComponent(modelName)}`, {
+                // CSRF Fix: Use fetchWithCSRF for protected endpoint
+                const response = await window.fetchWithCSRF(`/api/models/${provider}/${encodeURIComponent(modelName)}`, {
                     method: 'DELETE'
                 });
 

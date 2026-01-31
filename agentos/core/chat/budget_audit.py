@@ -127,7 +127,9 @@ class BudgetAuditAPI:
             """, (snapshot_id,))
 
             row = cursor.fetchone()
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection (unless db_path provided)
+            if self.db_path:
+                conn.close()
 
             if not row:
                 logger.warning(f"Snapshot {snapshot_id} not found")
@@ -161,13 +163,17 @@ class BudgetAuditAPI:
             row = cursor.fetchone()
             if not row:
                 logger.warning(f"Message {message_id} not found")
-                conn.close()
+                # Do NOT close: get_db() returns shared thread-local connection (unless db_path provided)
+                if self.db_path:
+                    conn.close()
                 return None
 
             metadata = json.loads(row["metadata"]) if row["metadata"] else {}
             snapshot_id = metadata.get("context_snapshot_id")
 
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection (unless db_path provided)
+            if self.db_path:
+                conn.close()
 
             if not snapshot_id:
                 logger.info(f"Message {message_id} has no linked snapshot (pre-P1-7)")
@@ -201,13 +207,14 @@ class BudgetAuditAPI:
             row = cursor.fetchone()
             if not row:
                 logger.warning(f"Task {task_id} not found")
-                conn.close()
+                # Do NOT close: get_db() returns shared thread-local connection
                 return None
 
             metadata = json.loads(row["metadata"]) if row["metadata"] else {}
             snapshot_id = metadata.get("context_snapshot_id")
 
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection
+            # conn.close()  # REMOVED
 
             if not snapshot_id:
                 logger.info(f"Task {task_id} has no linked snapshot (pre-P1-7)")

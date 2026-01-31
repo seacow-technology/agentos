@@ -1,0 +1,92 @@
+{
+  "id": "feature_implementation",
+  "type": "workflow",
+  "version": "0.6.0",
+  "status": "draft",
+  "metadata": {
+    "created_at": "2026-01-25T05:37:21.345725+00:00",
+    "checksum": "630306761e4dc0341009aba35d138c7f36a7d2eb4659189d23b92b96d7ddad42",
+    "is_root": true,
+    "tags": [
+      "implementation",
+      "coding",
+      "development"
+    ]
+  },
+  "spec": {
+    "id": "feature_implementation",
+    "version": "0.6.0",
+    "category": "implementation",
+    "description": "Implement a scoped feature.\nThis workflow focuses on the actual code creation and local validation for a well-defined feature with clear requirements and design.\n",
+    "phases": [
+      {
+        "id": "code_creation",
+        "description": "Create the implementation code",
+        "requires": [
+          "design",
+          "requirements"
+        ],
+        "produces": [
+          "code",
+          "tests"
+        ],
+        "allows_questions": false,
+        "risk_level": "medium"
+      },
+      {
+        "id": "local_validation",
+        "description": "Validate implementation locally",
+        "requires": [
+          "code",
+          "tests"
+        ],
+        "produces": [
+          "validation_results"
+        ],
+        "allows_questions": false,
+        "risk_level": "low"
+      }
+    ],
+    "interaction": {
+      "default_mode": "question_only",
+      "question_policy": {
+        "trigger_when": [
+          "blocker_detected",
+          "design_ambiguity_discovered"
+        ]
+      },
+      "allowed_phases": []
+    },
+    "constraints": {
+      "execution": "forbidden",
+      "side_effects": "forbidden",
+      "requires_approval": false
+    },
+    "lineage": {
+      "introduced_in": "v0.6",
+      "derived_from": null,
+      "change_reason": null
+    },
+    "metadata": {
+      "tags": [
+        "implementation",
+        "coding",
+        "development"
+      ],
+      "related_workflows": [
+        "implementation_planning",
+        "testing_strategy"
+      ],
+      "use_cases": [
+        "Design is complete and implementation is ready",
+        "Feature scope is well-defined",
+        "Requirements are clear"
+      ],
+      "anti_use_cases": [
+        "Requirements are unclear (use requirements_definition first)",
+        "Large refactoring (use refactoring workflow)",
+        "Exploratory or proof-of-concept work"
+      ]
+    }
+  }
+}

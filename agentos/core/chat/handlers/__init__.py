@@ -8,6 +8,7 @@ from agentos.core.chat.handlers.model_handler import register_model_command
 from agentos.core.chat.handlers.context_handler import register_context_command
 from agentos.core.chat.handlers.stream_handler import register_stream_command
 from agentos.core.chat.handlers.export_handler import register_export_command
+from agentos.core.chat.comm_commands import register_comm_command
 
 __all__ = [
     "register_help_command",
@@ -17,5 +18,6 @@ __all__ = [
     "register_model_command",
     "register_context_command",
     "register_stream_command",
-    "register_export_command"
+    "register_export_command",
+    "register_comm_command"
 ]

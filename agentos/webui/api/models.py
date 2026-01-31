@@ -26,6 +26,9 @@ from pydantic import BaseModel, Field
 
 from agentos.cli.provider_checker import ProviderChecker
 from agentos.webui.api.contracts import ReasonCode
+from agentos.webui.api.time_format import iso_z
+from agentos.core.time import utc_now
+
 
 logger = logging.getLogger(__name__)
 
@@ -217,7 +220,7 @@ async def list_models():
                             if modified_at.endswith('Z'):
                                 modified_at = modified_at[:-1] + '+00:00'
                             dt = datetime.fromisoformat(modified_at)
-                            modified_str = dt.isoformat()
+                            modified_str = iso_z(dt)
                         except:
                             # If parsing fails, use raw value
                             modified_str = modified_at
@@ -412,7 +415,7 @@ async def pull_model(request: PullModelRequest):
                 "error": None,
                 "total_bytes": None,
                 "downloaded_bytes": None,
-                "started_at": datetime.now(timezone.utc).isoformat()
+                "started_at": iso_z(utc_now())
             }
 
         # Start background thread to pull model
@@ -739,7 +742,7 @@ async def get_service_status():
 def cleanup_pull_progress():
     """Clean up old pull progress records (older than 1 hour)"""
     with _pull_progress_lock:
-        now = datetime.now(timezone.utc)
+        now = utc_now()
         to_remove = []
 
         for pull_id, data in _pull_progress.items():

@@ -7,6 +7,8 @@ from typing import Any, Optional
 
 from agentos.core.llm import OpenAIClient
 from agentos.core.verify import validate_agent_spec
+from agentos.core.time import utc_now_iso
+
 
 
 class AgentSpecBuilder:
@@ -41,7 +43,7 @@ class AgentSpecBuilder:
             agent_spec["metadata"] = {}
         
         agent_spec["schema_version"] = "1.0.0"
-        agent_spec["metadata"]["generated_at"] = datetime.now(timezone.utc).isoformat()
+        agent_spec["metadata"]["generated_at"] = utc_now_iso()
         agent_spec["metadata"]["agent_type"] = agent_type
         agent_spec["metadata"]["project_id"] = factpack.get("project_id")
         

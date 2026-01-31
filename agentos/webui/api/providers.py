@@ -22,6 +22,9 @@ from agentos.providers.cloud_config import CloudAuthConfig
 from agentos.core.status_store import StatusStore
 from agentos.webui.middleware import sanitize_response
 from agentos.webui.api import providers_errors
+from agentos.webui.api.time_format import iso_z
+from agentos.core.time import utc_now
+
 
 logger = logging.getLogger(__name__)
 
@@ -236,7 +239,7 @@ async def get_providers_status() -> ProvidersStatusResponse:
     ]
 
     response = ProvidersStatusResponse(
-        ts=datetime.now(timezone.utc).isoformat(),
+        ts=iso_z(utc_now()),
         providers=providers_status,
         cache_ttl_ms=cache_ttl_ms,
     )
@@ -376,7 +379,7 @@ async def detect_local_providers() -> LocalDetectResponse:
     results = await LocalProviderDetector.detect_all()
 
     return LocalDetectResponse(
-        ts=datetime.now(timezone.utc).isoformat(),
+        ts=iso_z(utc_now()),
         results=[
             LocalDetectResultResponse(
                 id=result.id,
@@ -527,7 +530,7 @@ async def save_cloud_config(request: CloudConfigRequest) -> CloudConfigResponse:
         if status.state == ProviderState.READY:
             config_manager.update_verified_at(
                 request.provider_id,
-                datetime.now(timezone.utc).isoformat(),
+                iso_z(utc_now()),
             )
 
         return CloudConfigResponse(

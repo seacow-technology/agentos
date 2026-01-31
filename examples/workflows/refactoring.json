@@ -1,0 +1,105 @@
+{
+  "id": "refactoring",
+  "type": "workflow",
+  "version": "0.6.0",
+  "status": "draft",
+  "metadata": {
+    "created_at": "2026-01-25T05:37:21.370161+00:00",
+    "checksum": "f1eb1bc3ddbeaa719c458f07140fb1143559c390114f3f4acdbbc03c2dc5a733",
+    "is_root": true,
+    "tags": [
+      "refactoring",
+      "code-quality",
+      "maintenance"
+    ]
+  },
+  "spec": {
+    "id": "refactoring",
+    "version": "0.6.0",
+    "category": "implementation",
+    "description": "Improve internal structure without changing behavior.\nThis workflow guides code quality improvements through intentional refactoring with regression protection. It maintains external behavior while improving internal structure.\n",
+    "phases": [
+      {
+        "id": "refactor_intent",
+        "description": "Define refactoring intent and scope",
+        "requires": [
+          "current_code",
+          "quality_issues"
+        ],
+        "produces": [
+          "refactor_plan"
+        ],
+        "allows_questions": true,
+        "risk_level": "medium"
+      },
+      {
+        "id": "refactor_execution",
+        "description": "Execute the refactoring",
+        "requires": [
+          "refactor_plan"
+        ],
+        "produces": [
+          "refactored_code"
+        ],
+        "allows_questions": false,
+        "risk_level": "high"
+      },
+      {
+        "id": "regression_check",
+        "description": "Verify no behavior changes",
+        "requires": [
+          "refactored_code",
+          "test_suite"
+        ],
+        "produces": [
+          "regression_report"
+        ],
+        "allows_questions": false,
+        "risk_level": "high"
+      }
+    ],
+    "interaction": {
+      "default_mode": "question_only",
+      "question_policy": {
+        "trigger_when": [
+          "scope_unclear",
+          "risk_assessment_needed"
+        ]
+      },
+      "allowed_phases": [
+        "refactor_intent"
+      ]
+    },
+    "constraints": {
+      "execution": "forbidden",
+      "side_effects": "forbidden",
+      "requires_approval": false
+    },
+    "lineage": {
+      "introduced_in": "v0.6",
+      "derived_from": null,
+      "change_reason": null
+    },
+    "metadata": {
+      "tags": [
+        "refactoring",
+        "code-quality",
+        "maintenance"
+      ],
+      "related_workflows": [
+        "feature_implementation",
+        "maintenance_planning"
+      ],
+      "use_cases": [
+        "Code quality degradation",
+        "Technical debt reduction",
+        "Preparing for new features"
+      ],
+      "anti_use_cases": [
+        "Adding new functionality (use feature_implementation)",
+        "Fixing bugs that change behavior",
+        "Architectural overhaul (use architectural_evolution)"
+      ]
+    }
+  }
+}

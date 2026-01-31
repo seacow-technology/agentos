@@ -1,0 +1,13 @@
+# Minimal multi-repo project configuration
+
+name: simple-app
+description: Simple two-repo project
+
+repos:
+  - name: backend
+    url: git@github.com:myorg/backend
+    path: ./be
+
+  - name: frontend
+    url: git@github.com:myorg/frontend
+    path: ./fe

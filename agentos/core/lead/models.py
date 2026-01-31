@@ -14,6 +14,8 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 import hashlib
 import json
+from agentos.core.time import utc_now_iso
+
 
 
 class WindowKind(str, Enum):
@@ -78,7 +80,7 @@ class LeadFinding:
     evidence: Dict[str, Any]                    # 证据数据（count/samples/metrics等）
     window: ScanWindow                          # 扫描窗口
     detected_at: str = field(                   # 检测时间
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+        default_factory=lambda: utc_now_iso()
     )
 
     @staticmethod
@@ -170,7 +172,7 @@ class LeadFinding:
             description=data["description"],
             evidence=data["evidence"],
             window=window,
-            detected_at=data.get("detected_at", datetime.now(timezone.utc).isoformat())
+            detected_at=data.get("detected_at", utc_now_iso())
         )
 
 

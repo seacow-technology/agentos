@@ -1,0 +1,163 @@
+{
+  "id": "intent_example_high_risk_interactive",
+  "type": "execution_intent",
+  "title": "Migrate database schema to add user roles table",
+  "description": "Add new user_roles table with foreign key to users table, including migration scripts and rollback procedures.",
+  "version": "0.9.1",
+  "status": "proposed",
+  "created_at": "2026-01-25T11:00:00Z",
+  "lineage": {
+    "introduced_in": "0.9.1",
+    "derived_from": [],
+    "supersedes": []
+  },
+  "scope": {
+    "project_id": "agentos",
+    "repo_root": "/Users/pangge/PycharmProjects/AgentOS",
+    "targets": {
+      "files": [
+        "migrations/add_user_roles_table.sql",
+        "agentos/models/user.py"
+      ],
+      "modules": [
+        "agentos.models",
+        "agentos.db"
+      ],
+      "areas": [
+        "backend",
+        "data"
+      ]
+    }
+  },
+  "objective": {
+    "goal": "Add user_roles table with proper foreign keys and indexes for role-based access control",
+    "success_criteria": [
+      "user_roles table created with correct schema",
+      "Foreign key constraint to users table",
+      "Migration script is idempotent",
+      "Rollback script tested",
+      "Zero downtime migration"
+    ],
+    "non_goals": [
+      "Implement RBAC logic in application layer",
+      "Migrate existing user data",
+      "Change authentication system"
+    ]
+  },
+  "selected_workflows": [
+    {
+      "workflow_id": "database_migration_workflow",
+      "phases": [
+        "design",
+        "implementation",
+        "validation",
+        "review"
+      ],
+      "reason": "High-risk database migration requires thorough design, validation, and review"
+    }
+  ],
+  "selected_agents": [
+    {
+      "agent_id": "database_architect",
+      "role": "schema_designer",
+      "responsibilities": [
+        "Design user_roles table schema",
+        "Define indexes and constraints",
+        "Plan migration strategy"
+      ]
+    },
+    {
+      "agent_id": "migration_specialist",
+      "role": "migration_executor",
+      "responsibilities": [
+        "Write migration SQL scripts",
+        "Create rollback procedures",
+        "Validate migration safety"
+      ]
+    }
+  ],
+  "planned_commands": [
+    {
+      "command_id": "scan_database_schema",
+      "intent": "Analyze current users table schema and constraints",
+      "effects": [
+        "read"
+      ],
+      "risk_level": "low",
+      "evidence_refs": [
+        "scan://database/users_table_schema"
+      ]
+    },
+    {
+      "command_id": "generate_migration_script",
+      "intent": "Create SQL migration script for user_roles table",
+      "effects": [
+        "write"
+      ],
+      "risk_level": "high",
+      "evidence_refs": [
+        "scan://database/users_table_schema",
+        "doc://database/migration_standards.md"
+      ]
+    },
+    {
+      "command_id": "validate_migration",
+      "intent": "Run migration validation tests on test database",
+      "effects": [
+        "read",
+        "data"
+      ],
+      "risk_level": "medium",
+      "evidence_refs": [
+        "scan://database/test_db_state"
+      ]
+    }
+  ],
+  "interaction": {
+    "mode": "interactive",
+    "question_budget": 10,
+    "question_policy": "conceptual_only"
+  },
+  "risk": {
+    "overall": "high",
+    "drivers": [
+      "Database schema changes affect production data",
+      "Potential for data loss if migration fails",
+      "Requires database downtime or careful coordination"
+    ],
+    "requires_review": [
+      "data",
+      "architecture",
+      "security"
+    ]
+  },
+  "budgets": {
+    "max_files": 5,
+    "max_commits": 2,
+    "max_tokens": 150000,
+    "max_cost_usd": 10.0
+  },
+  "evidence_refs": [
+    "scan://database/users_table_schema",
+    "scan://database/test_db_state",
+    "doc://database/migration_standards.md",
+    "fact://current_user_count"
+  ],
+  "constraints": {
+    "execution": "forbidden",
+    "no_fabrication": true,
+    "registry_only": true,
+    "lock_scope": {
+      "mode": "files",
+      "paths": [
+        "migrations/add_user_roles_table.sql",
+        "agentos/models/user.py"
+      ]
+    }
+  },
+  "audit": {
+    "created_by": "database_team",
+    "source": "human",
+    "checksum": "69f81aa445c2fc75a8a6338d97ac6c855a62b0673a6450e5b935772584847f6b"
+  }
+}

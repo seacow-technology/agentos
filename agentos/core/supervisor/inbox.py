@@ -11,7 +11,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Optional
 
+from agentos.core.db.registry_db import get_db
 from .models import SupervisorEvent, EventSource
+from agentos.core.time import utc_now, utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +54,8 @@ class InboxManager:
         """
         own_connection = cursor is None
         if own_connection:
-            conn = sqlite3.connect(str(self.db_path))
+            # 使用 get_db() 获取线程本地连接
+            conn = get_db()
             cursor = conn.cursor()
 
         try:
@@ -71,7 +75,7 @@ class InboxManager:
                     event.event_type,
                     event.source.value,
                     payload_json,
-                    datetime.now(timezone.utc).isoformat(),
+                    utc_now_iso(),
                 ),
             )
 
@@ -94,10 +98,7 @@ class InboxManager:
         except Exception as e:
             logger.error(f"Failed to insert event: {e}", exc_info=True)
             raise
-
-        finally:
-            if own_connection:
-                conn.close()
+        # 注意：不需要 finally 块来关闭连接，因为 get_db() 返回的是线程本地连接
 
     def get_pending_count(self) -> int:
         """
@@ -106,21 +107,18 @@ class InboxManager:
         Returns:
             待处理事件数量
         """
-        conn = sqlite3.connect(str(self.db_path))
+        # 使用 get_db() 获取线程本地连接，不需要关闭
+        conn = get_db()
         cursor = conn.cursor()
 
-        try:
-            cursor.execute(
-                """
-                SELECT COUNT(*) FROM supervisor_inbox
-                WHERE status = 'pending'
-                """
-            )
-            count = cursor.fetchone()[0]
-            return count
-
-        finally:
-            conn.close()
+        cursor.execute(
+            """
+            SELECT COUNT(*) FROM supervisor_inbox
+            WHERE status = 'pending'
+            """
+        )
+        count = cursor.fetchone()[0]
+        return count
 
     def get_backlog_metrics(self) -> Dict[str, any]:
         """
@@ -135,50 +133,46 @@ class InboxManager:
                 "oldest_pending_age_seconds": Optional[float]
             }
         """
-        conn = sqlite3.connect(str(self.db_path))
-        conn.row_factory = sqlite3.Row
+        # 使用 get_db() 获取线程本地连接，不需要关闭
+        conn = get_db()
         cursor = conn.cursor()
 
-        try:
-            # 统计各状态事件数量
-            cursor.execute(
-                """
-                SELECT status, COUNT(*) as count
-                FROM supervisor_inbox
-                GROUP BY status
-                """
-            )
-            counts = {row["status"]: row["count"] for row in cursor.fetchall()}
+        # 统计各状态事件数量
+        cursor.execute(
+            """
+            SELECT status, COUNT(*) as count
+            FROM supervisor_inbox
+            GROUP BY status
+            """
+        )
+        counts = {row["status"]: row["count"] for row in cursor.fetchall()}
 
-            # 获取最老的待处理事件年龄
-            cursor.execute(
-                """
-                SELECT MIN(received_at) as oldest
-                FROM supervisor_inbox
-                WHERE status = 'pending'
-                """
-            )
-            oldest_row = cursor.fetchone()
-            oldest_age_seconds = None
+        # 获取最老的待处理事件年龄
+        cursor.execute(
+            """
+            SELECT MIN(received_at) as oldest
+            FROM supervisor_inbox
+            WHERE status = 'pending'
+            """
+        )
+        oldest_row = cursor.fetchone()
+        oldest_age_seconds = None
 
-            if oldest_row and oldest_row["oldest"]:
-                try:
-                    oldest_ts = datetime.fromisoformat(oldest_row["oldest"])
-                    now_ts = datetime.now(timezone.utc)
-                    oldest_age_seconds = (now_ts - oldest_ts).total_seconds()
-                except Exception as e:
-                    logger.warning(f"Failed to parse oldest timestamp: {e}")
+        if oldest_row and oldest_row["oldest"]:
+            try:
+                oldest_ts = datetime.fromisoformat(oldest_row["oldest"])
+                now_ts = utc_now()
+                oldest_age_seconds = (now_ts - oldest_ts).total_seconds()
+            except Exception as e:
+                logger.warning(f"Failed to parse oldest timestamp: {e}")
 
-            return {
-                "pending_count": counts.get("pending", 0),
-                "processing_count": counts.get("processing", 0),
-                "failed_count": counts.get("failed", 0),
-                "completed_count": counts.get("completed", 0),
-                "oldest_pending_age_seconds": oldest_age_seconds,
-            }
-
-        finally:
-            conn.close()
+        return {
+            "pending_count": counts.get("pending", 0),
+            "processing_count": counts.get("processing", 0),
+            "failed_count": counts.get("failed", 0),
+            "completed_count": counts.get("completed", 0),
+            "oldest_pending_age_seconds": oldest_age_seconds,
+        }
 
     def cleanup_old_events(self, days: int = 7) -> int:
         """
@@ -190,26 +184,23 @@ class InboxManager:
         Returns:
             删除的事件数量
         """
-        conn = sqlite3.connect(str(self.db_path))
+        # 使用 get_db() 获取线程本地连接，不需要关闭
+        conn = get_db()
         cursor = conn.cursor()
 
-        try:
-            cursor.execute(
-                """
-                DELETE FROM supervisor_inbox
-                WHERE status = 'completed'
-                  AND processed_at < datetime('now', '-' || ? || ' days')
-                """,
-                (days,),
-            )
+        cursor.execute(
+            """
+            DELETE FROM supervisor_inbox
+            WHERE status = 'completed'
+              AND processed_at < datetime('now', '-' || ? || ' days')
+            """,
+            (days,),
+        )
 
-            deleted_count = cursor.rowcount
-            conn.commit()
+        deleted_count = cursor.rowcount
+        conn.commit()
 
-            if deleted_count > 0:
-                logger.info(f"Cleaned up {deleted_count} old events (>{days} days)")
+        if deleted_count > 0:
+            logger.info(f"Cleaned up {deleted_count} old events (>{days} days)")
 
-            return deleted_count
-
-        finally:
-            conn.close()
+        return deleted_count

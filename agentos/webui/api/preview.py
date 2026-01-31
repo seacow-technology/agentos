@@ -14,6 +14,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
+from agentos.core.time import utc_now
 from agentos.core.audit import (
     log_audit_event,
     PREVIEW_SESSION_CREATED,
@@ -178,7 +179,7 @@ def create_preview_session_internal(html: str, preset: str = "html-basic", snipp
         )
 
     # Create session with TTL (1 hour)
-    now = int(datetime.now(timezone.utc).timestamp())
+    now = int(utc_now().timestamp())
     session = PreviewSession(
         session_id=session_id,
         html=html,
@@ -257,7 +258,7 @@ async def get_preview(session_id: str):
         raise HTTPException(status_code=404, detail="Preview session not found")
 
     session = preview_sessions[session_id]
-    now = int(datetime.now(timezone.utc).timestamp())
+    now = int(utc_now().timestamp())
 
     # Check TTL expiration
     if now > session.expires_at:
@@ -297,7 +298,7 @@ async def get_preview_meta(session_id: str):
         raise HTTPException(status_code=404, detail="Preview session not found")
 
     session = preview_sessions[session_id]
-    now = int(datetime.now(timezone.utc).timestamp())
+    now = int(utc_now().timestamp())
 
     # Check TTL expiration
     if now > session.expires_at:

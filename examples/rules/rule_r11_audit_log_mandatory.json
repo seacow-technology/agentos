@@ -1,0 +1,84 @@
+{
+  "id": "rule_r11_audit_log_mandatory",
+  "type": "rule",
+  "version": "0.9.0",
+  "status": "draft",
+  "metadata": {
+    "created_at": "2026-01-25T08:29:46.673028+00:00",
+    "checksum": "92c6a2abfd8af2577b7c4a4297f91d8da4058e2876be7203777b142ef672844e",
+    "is_root": true,
+    "tags": [
+      "audit",
+      "logging",
+      "compliance"
+    ]
+  },
+  "spec": {
+    "id": "rule_r11_audit_log_mandatory",
+    "type": "rule",
+    "title": "Rule judgments must write to audit log",
+    "description": "All rule evaluation outcomes (allow/deny/warn) must be recorded in run_tape/audit log for compliance and debugging.",
+    "version": "0.9.0",
+    "status": "active",
+    "lineage": {
+      "introduced_in": "v0.9",
+      "derived_from": null,
+      "supersedes": []
+    },
+    "constraints": {
+      "execution": "forbidden"
+    },
+    "rule": {
+      "severity": "error",
+      "scope": {
+        "applies_to_types": [
+          "rule"
+        ],
+        "applies_to_risk": [
+          "low",
+          "medium",
+          "high",
+          "critical"
+        ],
+        "applies_to_phases": [
+          "validation",
+          "review",
+          "operations",
+          "postmortem"
+        ]
+      },
+      "when": {
+        "all_of": [
+          {
+            "rule_evaluated": true
+          },
+          {
+            "audit_log_not_written": true
+          }
+        ]
+      },
+      "then": {
+        "decision": "deny",
+        "reason": "Rule evaluations must be logged for auditability and compliance",
+        "required_changes": [
+          "Write rule_id, outcome, evidence to run_tape",
+          "Include timestamp and context metadata",
+          "Ensure audit log is tamper-evident"
+        ]
+      },
+      "evidence_required": [
+        "audit_log_entry",
+        "run_tape_reference",
+        "evaluation_metadata"
+      ]
+    },
+    "metadata": {
+      "tags": [
+        "audit",
+        "logging",
+        "compliance"
+      ],
+      "author": "AgentOS Team"
+    }
+  }
+}

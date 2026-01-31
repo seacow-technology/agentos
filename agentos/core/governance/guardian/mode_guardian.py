@@ -21,6 +21,8 @@ import logging
 from .base import Guardian
 from .models import GuardianVerdictSnapshot, VerdictStatus
 from agentos.core.mode import get_mode, check_mode_permission
+from agentos.core.time import utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +93,7 @@ class ModeGuardian(Guardian):
             # Add metadata to evidence
             evidence["task_id"] = task_id
             evidence["event_id"] = event_id
-            evidence["verified_at"] = datetime.now(timezone.utc).isoformat()
+            evidence["verified_at"] = utc_now_iso()
             evidence["guardian_code"] = self.code
 
         except Exception as e:

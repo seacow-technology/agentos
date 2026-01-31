@@ -1,0 +1,11 @@
+app_id: personal_assistant
+name: Personal Assistant
+version: 1.0.0
+description: Manage todos, notes, and reminders for personal productivity
+author: AgentOS Team
+category: productivity
+requires_capabilities:
+  - memory
+  - chat
+entry_module: agentos.core.appos.apps.personal_assistant.app
+entry_class: PersonalAssistantApp

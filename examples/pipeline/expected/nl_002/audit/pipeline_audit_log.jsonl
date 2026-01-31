@@ -1,0 +1,11 @@
+{"timestamp": "2026-01-25T11:31:49.976353+00:00", "event": "pipeline_start", "inputs": {"nl_request": "examples/pipeline/nl/nl_002_api_feature.txt", "db_path": null}}
+{"timestamp": "2026-01-25T11:31:49.977754+00:00", "event": "command_start", "description": "Intent Builder", "command": "/Users/pangge/PycharmProjects/AgentOS/.venv/bin/python3 -m agentos.cli.main builder run --input examples/pipeline/expected/nl_002/01_intent/nl_002_api_feature_nl_request.json --policy semi_auto --out examples/pipeline/expected/nl_002/01_intent"}
+{"timestamp": "2026-01-25T11:31:50.719208+00:00", "event": "command_end", "description": "Intent Builder", "exit_code": 1, "stdout_lines": 0, "stderr_lines": 8}
+{"timestamp": "2026-01-25T11:32:16.393436+00:00", "event": "pipeline_start", "inputs": {"nl_request": "examples/pipeline/nl/nl_002_api_feature.txt", "db_path": null}}
+{"timestamp": "2026-01-25T11:32:16.395256+00:00", "event": "command_start", "description": "Intent Builder", "command": "/Users/pangge/PycharmProjects/AgentOS/.venv/bin/python3 -m agentos.cli.main builder run --input examples/pipeline/expected/nl_002/01_intent/nl_002_api_feature_nl_request.json --policy semi_auto --out examples/pipeline/expected/nl_002/01_intent"}
+{"timestamp": "2026-01-25T11:32:17.192846+00:00", "event": "command_end", "description": "Intent Builder", "exit_code": 0, "stdout_lines": 17, "stderr_lines": 0}
+{"timestamp": "2026-01-25T11:32:17.240701+00:00", "event": "coordinator_start", "method": "direct_import"}
+{"timestamp": "2026-01-25T11:32:17.240870+00:00", "event": "coordinator_end", "final_state": "DONE"}
+{"timestamp": "2026-01-25T11:32:17.241424+00:00", "event": "command_start", "description": "Dry-Executor plan", "command": "/Users/pangge/PycharmProjects/AgentOS/.venv/bin/python3 -m agentos.cli.main dry-run plan --intent examples/pipeline/expected/nl_002/01_intent/intent.json --coordinator examples/pipeline/expected/nl_002/03_dry_executor/coordinator_merged.json --out examples/pipeline/expected/nl_002/03_dry_executor"}
+{"timestamp": "2026-01-25T11:32:17.722771+00:00", "event": "command_end", "description": "Dry-Executor plan", "exit_code": 0, "stdout_lines": 22, "stderr_lines": 0}
+{"timestamp": "2026-01-25T11:32:17.725435+00:00", "event": "pipeline_complete", "status": "success"}

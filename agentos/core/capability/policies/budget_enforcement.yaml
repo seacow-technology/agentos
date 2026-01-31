@@ -1,0 +1,55 @@
+# Budget Enforcement Policy
+#
+# Purpose: Prevent operations that exceed cost budgets
+# Domain: Global (applies to all capabilities)
+# Risk: MEDIUM
+
+policy:
+  id: "budget_enforcement"
+  version: "2.0.0"
+  domain: "global"
+  name: "Budget Enforcement Policy"
+  description: "Enforces cost budget limits to prevent runaway spending"
+
+  rules:
+    - condition: "estimated_cost > 10.0"
+      condition_type: "threshold"
+      action: "DENY"
+      rationale: "Cost exceeds maximum allowed ($10 per operation)"
+      priority: 10
+
+    - condition: "estimated_cost > 5.0"
+      condition_type: "threshold"
+      action: "ESCALATE"
+      rationale: "Cost requires approval (>$5)"
+      priority: 20
+
+    - condition: "estimated_tokens > 50000"
+      condition_type: "threshold"
+      action: "ESCALATE"
+      rationale: "High token usage requires review (>50k tokens)"
+      priority: 25
+
+    - condition: "estimated_cost > project_budget * 0.8"
+      condition_type: "expression"
+      action: "WARN"
+      rationale: "Approaching project budget limit (80%)"
+      priority: 30
+
+  evolution_history:
+    - version: "1.0.0"
+      changes: "Initial version with $10 hard limit"
+      reason: "Establish baseline budget controls"
+      changed_by: "system"
+      date: "2026-01-15"
+
+    - version: "2.0.0"
+      changes: "Added token threshold and project budget percentage check"
+      reason: "Previous version missed high-token operations without clear cost estimates"
+      changed_by: "user:admin"
+      date: "2026-02-01"
+
+  metadata:
+    owner: "finance_team"
+    enforcement_level: "strict"
+    review_interval_days: 30

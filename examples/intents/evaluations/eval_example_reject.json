@@ -1,0 +1,126 @@
+{
+  "id": "eval_result_deploy_reject",
+  "type": "intent_evaluation_result",
+  "schema_version": "0.9.3",
+  "created_at": "2026-01-25T11:25:00Z",
+  "input": {
+    "intent_set_id": "intent_set_deploy_reject",
+    "intent_checksums": {
+      "intent_deploy_service_v3_0": "f6a7b8c9d0e123456789abcdef0123456789abcdef0123456789abcdef345678",
+      "intent_deploy_service_v2_9": "a7b8c9d0e1f234567890abcdef0123456789abcdef0123456789abcdef456789"
+    }
+  },
+  "evaluation": {
+    "conflicts": [
+      {
+        "conflict_id": "conflict_000001",
+        "type": "resource_conflict",
+        "severity": "critical",
+        "intent_ids": [
+          "intent_deploy_service_v3_0",
+          "intent_deploy_service_v2_9"
+        ],
+        "resource_ref": "file:deployment/staging/api-service.yaml",
+        "description": "Both intents deploy different versions to the same environment",
+        "evidence_refs": [
+          "intent:intent_deploy_service_v3_0:scope",
+          "intent:intent_deploy_service_v2_9:scope"
+        ],
+        "resolutions": [
+          "override_by_priority",
+          "reject",
+          "manual_resolution"
+        ]
+      },
+      {
+        "conflict_id": "conflict_000002",
+        "type": "effect_conflict",
+        "severity": "high",
+        "intent_ids": [
+          "intent_deploy_service_v3_0",
+          "intent_deploy_service_v2_9"
+        ],
+        "description": "Conflicting deployment versions (v3.0 vs v2.9 hotfix)",
+        "evidence_refs": [
+          "intent:intent_deploy_service_v3_0:planned_commands",
+          "intent:intent_deploy_service_v2_9:planned_commands",
+          "registry://release/v3.0",
+          "registry://release/v2.9"
+        ],
+        "resolutions": [
+          "reject",
+          "manual_resolution"
+        ]
+      }
+    ],
+    "merge_plan": {
+      "strategy": "reject",
+      "operations": []
+    },
+    "risk_comparison": {
+      "matrix": [
+        {
+          "intent_id": "intent_deploy_service_v3_0",
+          "overall_risk": "medium",
+          "dimensions": {
+            "effects_risk": 70,
+            "scope_risk": 50,
+            "blast_radius": 10,
+            "unknowns": 60
+          }
+        },
+        {
+          "intent_id": "intent_deploy_service_v2_9",
+          "overall_risk": "medium",
+          "dimensions": {
+            "effects_risk": 70,
+            "scope_risk": 50,
+            "blast_radius": 10,
+            "unknowns": 30
+          }
+        }
+      ],
+      "dominance": [],
+      "incomparable": [
+        ["intent_deploy_service_v3_0", "intent_deploy_service_v2_9"]
+      ]
+    }
+  },
+  "requires_questions": [
+    {
+      "question_id": "question_001",
+      "condition": "merge_rejected_due_to_conflicts",
+      "reason": "Found 2 conflicts with no clear priority. Both intents deploy different versions to the same staging environment. Manual resolution required.",
+      "options": [
+        {
+          "option_id": "option_1",
+          "label": "Use intent intent_deploy_service_v3_0 (deploy v3.0)",
+          "implications": "Will deploy v3.0 with new features. Will supersede v2.9 hotfix deployment."
+        },
+        {
+          "option_id": "option_2",
+          "label": "Use intent intent_deploy_service_v2_9 (deploy v2.9 hotfix)",
+          "implications": "Will deploy v2.9 with security fixes. Will supersede v3.0 deployment."
+        },
+        {
+          "option_id": "option_manual",
+          "label": "Manual merge",
+          "implications": "Requires human review to decide deployment strategy (e.g., deploy v2.9 first, then v3.0 later)."
+        }
+      ]
+    }
+  ],
+  "constraints": {
+    "execution": "forbidden"
+  },
+  "lineage": {
+    "derived_from_intent_set": "intent_set_deploy_reject",
+    "intent_set_checksum": "f3e4d5c6b7a89012345678abcdef0123456789abcdef0123456789abcdef012",
+    "evaluator_version": "0.9.3"
+  },
+  "checksum": "e6f7a8b9c0d123456789abcdef0123456789abcdef0123456789abcdef567890",
+  "metadata": {
+    "evaluation_duration_ms": 180,
+    "evaluator_mode": "automatic"
+  }
+}

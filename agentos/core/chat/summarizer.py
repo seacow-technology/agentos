@@ -11,6 +11,8 @@ from agentos.core.chat.models import ChatMessage
 from agentos.core.chat.service import ChatService
 from agentos.core.chat.adapters import create_adapter
 from agentos.util.ulid import ulid
+from agentos.core.time import utc_now, utc_now_ms
+
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +106,7 @@ class ChatSummarizer:
         version = len(existing_summaries) + 1
         
         # 7. Store artifact in database
-        created_at = int(datetime.now(timezone.utc).timestamp() * 1000)
+        created_at = utc_now_ms()
         metadata = {
             "tokens_before": tokens_before,
             "tokens_after": tokens_after,

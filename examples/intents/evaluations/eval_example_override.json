@@ -1,0 +1,91 @@
+{
+  "id": "eval_result_refactor_override",
+  "type": "intent_evaluation_result",
+  "schema_version": "0.9.3",
+  "created_at": "2026-01-25T11:15:00Z",
+  "input": {
+    "intent_set_id": "intent_set_refactor_override",
+    "intent_checksums": {
+      "intent_refactor_api_v1": "d4e5f6a7b8c901234567890abcdef0123456789abcdef0123456789abcdef123",
+      "intent_refactor_api_v2": "e5f6a7b8c9d012345678900abcdef0123456789abcdef0123456789abcdef234"
+    }
+  },
+  "evaluation": {
+    "conflicts": [
+      {
+        "conflict_id": "conflict_000001",
+        "type": "resource_conflict",
+        "severity": "high",
+        "intent_ids": [
+          "intent_refactor_api_v1",
+          "intent_refactor_api_v2"
+        ],
+        "resource_ref": "file:agentos/api/routes.py",
+        "description": "Both intents write to the same file",
+        "evidence_refs": [
+          "intent:intent_refactor_api_v1:scope",
+          "intent:intent_refactor_api_v2:scope"
+        ],
+        "resolutions": [
+          "merge_union",
+          "override_by_priority"
+        ]
+      }
+    ],
+    "merge_plan": {
+      "strategy": "override_by_priority",
+      "operations": [
+        {
+          "op_id": "op_001",
+          "operation": "keep_field",
+          "source_intent_id": "intent_refactor_api_v2",
+          "target_field": "*",
+          "evidence": "Keeping all fields from highest priority intent intent_refactor_api_v2 (priority=10 > priority=5)"
+        }
+      ],
+      "result_intent_id": "intent_refactor_api_v2"
+    },
+    "risk_comparison": {
+      "matrix": [
+        {
+          "intent_id": "intent_refactor_api_v1",
+          "overall_risk": "medium",
+          "dimensions": {
+            "effects_risk": 30,
+            "scope_risk": 15,
+            "blast_radius": 10,
+            "unknowns": 90
+          }
+        },
+        {
+          "intent_id": "intent_refactor_api_v2",
+          "overall_risk": "medium",
+          "dimensions": {
+            "effects_risk": 30,
+            "scope_risk": 20,
+            "blast_radius": 10,
+            "unknowns": 30
+          }
+        }
+      ],
+      "dominance": [],
+      "incomparable": [
+        ["intent_refactor_api_v1", "intent_refactor_api_v2"]
+      ]
+    }
+  },
+  "requires_questions": [],
+  "constraints": {
+    "execution": "forbidden"
+  },
+  "lineage": {
+    "derived_from_intent_set": "intent_set_refactor_override",
+    "intent_set_checksum": "f2e3d4c5b6a798012345678abcdef0123456789abcdef0123456789abcdef01",
+    "evaluator_version": "0.9.3"
+  },
+  "checksum": "d5e6f7a8b9c012345678abcdef0123456789abcdef0123456789abcdef123456",
+  "metadata": {
+    "evaluation_duration_ms": 200,
+    "evaluator_mode": "automatic"
+  }
+}

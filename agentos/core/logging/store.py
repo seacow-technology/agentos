@@ -74,41 +74,33 @@ class LogStore:
             self._init_persistence()
 
     def _init_persistence(self) -> None:
-        """Initialize persistence components."""
+        """Initialize persistence components.
+
+        Note: task_audits table schema is managed by migration scripts.
+        See: agentos/store/migrations/schema_v06.sql (initial schema)
+              agentos/store/migrations/schema_v24.sql (updates)
+
+        The table must exist before this store is initialized.
+        Run migrations first if starting fresh.
+        """
         try:
             # Ensure database directory exists
             db_file = Path(self.db_path)
             db_file.parent.mkdir(parents=True, exist_ok=True)
 
-            # Create task_audits table if not exists (reuse existing schema)
+            # Verify schema exists (managed by migrations)
+            # If table doesn't exist, fail fast with clear error
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS task_audits (
-                    id TEXT PRIMARY KEY,
-                    level TEXT NOT NULL,
-                    timestamp TEXT NOT NULL,
-                    task_id TEXT,
-                    session_id TEXT,
-                    span_id TEXT,
-                    message TEXT NOT NULL,
-                    metadata TEXT,
-                    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            cursor.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='task_audits'"
+            )
+            if not cursor.fetchone():
+                conn.close()
+                raise RuntimeError(
+                    "Schema not initialized. task_audits table does not exist. "
+                    "Please run migrations first: python -m agentos.store.migrations.run_p0_migration"
                 )
-            """)
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_task_audits_timestamp
-                ON task_audits(timestamp DESC)
-            """)
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_task_audits_task_id
-                ON task_audits(task_id)
-            """)
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_task_audits_level
-                ON task_audits(level)
-            """)
-            conn.commit()
             conn.close()
 
             # Start background persistence worker

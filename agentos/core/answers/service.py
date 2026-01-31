@@ -17,6 +17,8 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from agentos.store.answers_store import AnswersRepo, AnswerPack, AnswerPackLink
+from agentos.core.time import utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -124,8 +126,8 @@ class AnswersService:
             status="draft",
             items_json=json.dumps(items),
             metadata_json=json.dumps(metadata) if metadata else None,
-            created_at=datetime.now(timezone.utc).isoformat() + "Z",
-            updated_at=datetime.now(timezone.utc).isoformat() + "Z"
+            created_at=utc_now_iso() + "Z",
+            updated_at=utc_now_iso() + "Z"
         )
 
         return self.repo.create(pack)

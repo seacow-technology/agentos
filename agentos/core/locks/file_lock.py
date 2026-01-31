@@ -15,6 +15,9 @@ from rich.console import Console
 
 from agentos.core.locks.exceptions import LockConflict
 from agentos.core.locks.lock_token import LockToken
+from agentos.core.storage.paths import component_db_path
+from agentos.core.time import utc_now
+
 
 console = Console()
 
@@ -36,7 +39,7 @@ class FileLockManager:
     def __init__(self, db_path: Optional[Path] = None):
         """Initialize file lock manager."""
         if db_path is None:
-            db_path = Path.home() / ".agentos" / "store.db"
+            db_path = component_db_path("agentos")
         self.db_path = db_path
 
     def _get_connection(self) -> sqlite3.Connection:
@@ -74,7 +77,7 @@ class FileLockManager:
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        now = datetime.now(timezone.utc)
+        now = utc_now()
         expires_at = now + timedelta(seconds=ttl_seconds)
         expires_ts = expires_at.timestamp()
 
@@ -184,7 +187,7 @@ class FileLockManager:
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        now = datetime.now(timezone.utc)
+        now = utc_now()
 
         try:
             cursor.execute(
@@ -266,7 +269,7 @@ class FileLock:
             )
 
         if db_path is None:
-            db_path = Path.home() / ".agentos" / "store.db"
+            db_path = component_db_path("agentos")
 
         self.db_path = db_path
         self.task_id = task_id
@@ -413,7 +416,7 @@ class FileLock:
         conn = self._mgr._get_connection()
         cursor = conn.cursor()
 
-        now = datetime.now(timezone.utc)
+        now = utc_now()
 
         try:
             cursor.execute(

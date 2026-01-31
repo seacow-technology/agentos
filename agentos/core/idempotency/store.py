@@ -205,7 +205,7 @@ class IdempotencyStore:
             conn = self._get_connection()
             _insert(conn)
             conn.commit()
-            conn.close()
+            conn.close()  # OK to close: custom db_path creates new connection
         else:
             writer = get_writer()
             writer.submit(_insert, timeout=5.0)
@@ -246,7 +246,7 @@ class IdempotencyStore:
             conn = self._get_connection()
             _update(conn)
             conn.commit()
-            conn.close()
+            conn.close()  # OK to close: custom db_path creates new connection
         else:
             writer = get_writer()
             writer.submit(_update, timeout=5.0)
@@ -284,7 +284,7 @@ class IdempotencyStore:
             conn = self._get_connection()
             _update(conn)
             conn.commit()
-            conn.close()
+            conn.close()  # OK to close: custom db_path creates new connection
         else:
             writer = get_writer()
             writer.submit(_update, timeout=5.0)

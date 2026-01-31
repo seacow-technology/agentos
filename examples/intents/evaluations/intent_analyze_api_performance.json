@@ -1,0 +1,114 @@
+{
+  "id": "intent_analyze_api_performance",
+  "type": "execution_intent",
+  "title": "Analyze API performance metrics",
+  "description": "Scan and analyze API endpoint performance to identify bottlenecks",
+  "version": "0.9.1",
+  "status": "proposed",
+  "created_at": "2026-01-25T10:00:00Z",
+  "lineage": {
+    "introduced_in": "0.9.1",
+    "derived_from": [],
+    "supersedes": []
+  },
+  "scope": {
+    "project_id": "agentos",
+    "repo_root": "/Users/pangge/PycharmProjects/AgentOS",
+    "targets": {
+      "files": [
+        "agentos/api/routes.py",
+        "agentos/api/handlers.py"
+      ],
+      "modules": [
+        "agentos.api"
+      ],
+      "areas": [
+        "backend"
+      ]
+    }
+  },
+  "objective": {
+    "goal": "Analyze API endpoint performance and identify slow queries",
+    "success_criteria": [
+      "Identify endpoints with >100ms response time",
+      "Generate performance report",
+      "Provide optimization recommendations"
+    ],
+    "non_goals": [
+      "Implement performance fixes",
+      "Change API contracts"
+    ]
+  },
+  "selected_workflows": [
+    {
+      "workflow_id": "analysis_workflow",
+      "phases": [
+        "analysis"
+      ],
+      "reason": "Performance analysis workflow"
+    }
+  ],
+  "selected_agents": [
+    {
+      "agent_id": "performance_analyzer",
+      "role": "analyzer",
+      "responsibilities": [
+        "Scan API endpoints",
+        "Measure response times",
+        "Generate performance report"
+      ]
+    }
+  ],
+  "planned_commands": [
+    {
+      "command_id": "scan_api_routes",
+      "intent": "Scan all API routes for performance metrics",
+      "effects": [
+        "read"
+      ],
+      "risk_level": "low",
+      "evidence_refs": [
+        "scan://api_routes/agentos.api"
+      ]
+    }
+  ],
+  "interaction": {
+    "mode": "full_auto",
+    "question_budget": 0,
+    "question_policy": "never"
+  },
+  "risk": {
+    "overall": "low",
+    "drivers": [
+      "Read-only analysis, no modifications"
+    ],
+    "requires_review": []
+  },
+  "budgets": {
+    "max_files": 10,
+    "max_commits": 0,
+    "max_tokens": 20000,
+    "max_cost_usd": 1.0
+  },
+  "evidence_refs": [
+    "scan://api_routes/agentos.api",
+    "doc://performance/analysis_guide.md"
+  ],
+  "constraints": {
+    "execution": "forbidden",
+    "no_fabrication": true,
+    "registry_only": true,
+    "lock_scope": {
+      "mode": "task",
+      "paths": []
+    }
+  },
+  "audit": {
+    "created_by": "human_operator",
+    "source": "human",
+    "checksum": "a1b2c3d4e5f6789012345678901234567890123456789012345678901234abcd"
+  },
+  "metadata": {
+    "priority": 5
+  }
+}

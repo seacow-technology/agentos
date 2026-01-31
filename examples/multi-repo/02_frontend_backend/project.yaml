@@ -1,0 +1,15 @@
+name: my-fullstack-app
+description: Full-stack application with FastAPI backend and React frontend
+
+repos:
+  - name: backend
+    path: ./backend
+    role: code
+    writable: true
+    branch: main
+
+  - name: frontend
+    path: ./frontend
+    role: code
+    writable: true
+    branch: main

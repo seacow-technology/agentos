@@ -15,6 +15,8 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 from .models import SupervisorEvent, Decision, DecisionType
+from agentos.core.time import utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -294,7 +296,7 @@ class SupervisorProcessor:
                 processed_at = ?
             WHERE event_id = ?
             """,
-            (datetime.now(timezone.utc).isoformat(), event_id),
+            (utc_now_iso(), event_id),
         )
 
     def _mark_event_failed(
@@ -310,7 +312,7 @@ class SupervisorProcessor:
                 processed_at = ?
             WHERE event_id = ?
             """,
-            (error_message, datetime.now(timezone.utc).isoformat(), event_id),
+            (error_message, utc_now_iso(), event_id),
         )
 
 

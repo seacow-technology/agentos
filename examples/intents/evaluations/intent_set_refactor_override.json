@@ -1,0 +1,24 @@
+{
+  "id": "intent_set_refactor_override",
+  "type": "intent_set",
+  "schema_version": "0.9.3",
+  "created_at": "2026-01-25T11:10:00Z",
+  "intent_ids": [
+    "intent_refactor_api_v1",
+    "intent_refactor_api_v2"
+  ],
+  "context": {
+    "project_id": "agentos",
+    "env": "local",
+    "tags": ["api", "refactor", "conflict"]
+  },
+  "lineage": {
+    "introduced_in": "0.9.3",
+    "derived_from": []
+  },
+  "checksum": "f2e3d4c5b6a798012345678abcdef0123456789abcdef0123456789abcdef01",
+  "metadata": {
+    "created_by": "human_operator",
+    "purpose": "Evaluate conflicting intents with clear priority (override strategy)"
+  }
+}

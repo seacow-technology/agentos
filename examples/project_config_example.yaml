@@ -1,0 +1,83 @@
+# AgentOS Multi-Repository Project Configuration
+# This file defines a project with multiple repository bindings
+
+name: my-application
+description: Example multi-repository application
+
+# List of repositories to import
+repos:
+  # Backend service repository
+  - name: backend
+    url: git@github.com:myorg/backend
+    path: ./services/backend
+    role: code
+    writable: true
+    branch: main
+    auth_profile: github-ssh  # Reference to auth profile created via 'agentos auth add'
+
+  # Frontend application repository
+  - name: frontend
+    url: git@github.com:myorg/frontend
+    path: ./apps/frontend
+    role: code
+    writable: true
+    branch: main
+    auth_profile: github-ssh
+
+  # Shared library repository (read-only)
+  - name: shared-lib
+    url: git@github.com:myorg/shared-lib
+    path: ./libs/shared
+    role: code
+    writable: false  # Read-only dependency
+    branch: stable
+    auth_profile: github-ssh
+
+  # Documentation repository
+  - name: docs
+    url: git@github.com:myorg/docs
+    path: ./documentation
+    role: docs
+    writable: true
+    branch: main
+    auth_profile: github-ssh
+
+  # Infrastructure repository (Terraform, K8s configs)
+  - name: infra
+    url: git@github.com:myorg/infrastructure
+    path: ./infrastructure
+    role: infra
+    writable: false
+    branch: main
+    auth_profile: github-ssh
+
+# Field descriptions:
+#
+# name: (required) Unique repository name within the project
+#
+# url: (optional) Remote repository URL
+#   - Supported formats: git@github.com:org/repo, https://github.com/org/repo
+#   - If omitted, repository is local-only
+#
+# path: (optional, default: .)
+#   - Relative path from project workspace
+#   - Can use parent directories: ../shared, ../monorepo/packages/core
+#   - Must be unique within project (no conflicts)
+#
+# role: (optional, default: code)
+#   - code: Code repository (default)
+#   - docs: Documentation repository
+#   - infra: Infrastructure repository (Terraform, K8s, etc.)
+#   - mono-subdir: Monorepo subdirectory
+#
+# writable: (optional, default: true)
+#   - true: Repository can be modified (commits, pushes)
+#   - false: Read-only repository (for dependencies, references)
+#
+# branch: (optional, default: main)
+#   - Default branch name
+#
+# auth_profile: (optional)
+#   - Name of authentication profile (created via 'agentos auth add')
+#   - Required for private repositories
+#   - Not needed for public repositories or local-only repos

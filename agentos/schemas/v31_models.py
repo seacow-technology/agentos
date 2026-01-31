@@ -11,6 +11,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, field_validator
+from agentos.core.time import parse_db_time, iso_z
 
 
 # ============================================================================
@@ -62,15 +63,19 @@ class Project(BaseModel):
 
     @classmethod
     def from_db_row(cls, row: Dict[str, Any]) -> "Project":
-        """Create from database row"""
+        """Create from database row with proper timezone handling"""
+        # Parse and format timestamps to ensure Z suffix
+        created_dt = parse_db_time(row["created_at"])
+        updated_dt = parse_db_time(row["updated_at"])
+
         return cls(
             project_id=row["project_id"],
             name=row["name"],
             description=row.get("description"),
             tags=row.get("tags", "[]"),
             default_repo_id=row.get("default_repo_id"),
-            created_at=row["created_at"],
-            updated_at=row["updated_at"],
+            created_at=iso_z(created_dt) or row["created_at"],
+            updated_at=iso_z(updated_dt) or row["updated_at"],
             metadata=row.get("metadata"),
         )
 
@@ -125,7 +130,11 @@ class Repo(BaseModel):
 
     @classmethod
     def from_db_row(cls, row: Dict[str, Any]) -> "Repo":
-        """Create from database row"""
+        """Create from database row with proper timezone handling"""
+        # Parse and format timestamps to ensure Z suffix
+        created_dt = parse_db_time(row["created_at"])
+        updated_dt = parse_db_time(row["updated_at"])
+
         return cls(
             repo_id=row["repo_id"],
             project_id=row["project_id"],
@@ -134,8 +143,8 @@ class Repo(BaseModel):
             vcs_type=row.get("vcs_type", "git"),
             remote_url=row.get("remote_url"),
             default_branch=row.get("default_branch"),
-            created_at=row["created_at"],
-            updated_at=row["updated_at"],
+            created_at=iso_z(created_dt) or row["created_at"],
+            updated_at=iso_z(updated_dt) or row["updated_at"],
             metadata=row.get("metadata"),
         )
 
@@ -207,7 +216,10 @@ class TaskSpec(BaseModel):
 
     @classmethod
     def from_db_row(cls, row: Dict[str, Any]) -> "TaskSpec":
-        """Create from database row"""
+        """Create from database row with proper timezone handling"""
+        # Parse and format timestamp to ensure Z suffix
+        created_dt = parse_db_time(row["created_at"])
+
         return cls(
             spec_id=row["spec_id"],
             task_id=row["task_id"],
@@ -217,7 +229,7 @@ class TaskSpec(BaseModel):
             constraints=row.get("constraints"),
             acceptance_criteria=row.get("acceptance_criteria", "[]"),
             inputs=row.get("inputs"),
-            created_at=row["created_at"],
+            created_at=iso_z(created_dt) or row["created_at"],
             metadata=row.get("metadata"),
         )
 
@@ -270,13 +282,16 @@ class TaskBinding(BaseModel):
 
     @classmethod
     def from_db_row(cls, row: Dict[str, Any]) -> "TaskBinding":
-        """Create from database row"""
+        """Create from database row with proper timezone handling"""
+        # Parse and format timestamp to ensure Z suffix
+        created_dt = parse_db_time(row["created_at"])
+
         return cls(
             task_id=row["task_id"],
             project_id=row["project_id"],
             repo_id=row.get("repo_id"),
             workdir=row.get("workdir"),
-            created_at=row["created_at"],
+            created_at=iso_z(created_dt) or row["created_at"],
             metadata=row.get("metadata"),
         )
 
@@ -329,7 +344,10 @@ class TaskArtifact(BaseModel):
 
     @classmethod
     def from_db_row(cls, row: Dict[str, Any]) -> "TaskArtifact":
-        """Create from database row"""
+        """Create from database row with proper timezone handling"""
+        # Parse and format timestamp to ensure Z suffix
+        created_dt = parse_db_time(row["created_at"])
+
         return cls(
             artifact_id=row["artifact_id"],
             task_id=row["task_id"],
@@ -338,7 +356,7 @@ class TaskArtifact(BaseModel):
             display_name=row.get("display_name"),
             hash=row.get("hash"),
             size_bytes=row.get("size_bytes"),
-            created_at=row["created_at"],
+            created_at=iso_z(created_dt) or row["created_at"],
             metadata=row.get("metadata"),
         )
 

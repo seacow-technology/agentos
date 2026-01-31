@@ -32,6 +32,8 @@ from agentos.core.task import TaskManager
 # Task #3: Planning Guard - v0.6 Soul
 from agentos.core.task.planning_guard import get_planning_guard
 from agentos.core.task.errors import PlanningSideEffectForbiddenError
+from agentos.core.time import utc_now_iso
+
 
 
 class DiffRejected(Exception):
@@ -267,7 +269,7 @@ class ExecutorEngine:
             "execution_request_id": exec_req_id,
             "task_id": task_id,  # Include task_id in audit
             "mode": mode_id,
-            "started_at": datetime.now(timezone.utc).isoformat()
+            "started_at": utc_now_iso()
         })
         
         # Task-Driven: Record execution_request to lineage
@@ -307,7 +309,7 @@ class ExecutorEngine:
                 )
         
         # 记录初始状态
-        started_at = datetime.now(timezone.utc).isoformat()
+        started_at = utc_now_iso()
         
         try:
             # 1. 检查是否需要审批
@@ -424,7 +426,7 @@ class ExecutorEngine:
                     policy  # 🔩 H3-2 收口2：传递 policy 用于 allowed_paths
                 )
             
-            completed_at = datetime.now(timezone.utc).isoformat()
+            completed_at = utc_now_iso()
             
             execution_result = {
                 "execution_result_id": f"exec_result_{exec_req_id}",
@@ -481,7 +483,7 @@ class ExecutorEngine:
             # P0-RT1: Policy 拒绝必须明确记录
             run_tape.audit_logger.log_error(f"Policy denied: {e.reason}")
 
-            completed_at = datetime.now(timezone.utc).isoformat()
+            completed_at = utc_now_iso()
 
             # P0-RT2: 生成 execution_summary.json（即使失败）
             self._generate_execution_summary(
@@ -523,7 +525,7 @@ class ExecutorEngine:
             if isinstance(e, SpecNotFrozenError):
                 run_tape.audit_logger.log_error(f"Spec not frozen: {e.reason}")
 
-                completed_at = datetime.now(timezone.utc).isoformat()
+                completed_at = utc_now_iso()
 
                 # Generate execution_summary.json
                 self._generate_execution_summary(
@@ -570,7 +572,7 @@ class ExecutorEngine:
                 run_tape.audit_logger.log_rollback("execution_failed", self.rollback_manager.rollback_points[-1])
                 self.rollback_manager.rollback_to_latest()
             
-            completed_at = datetime.now(timezone.utc).isoformat()
+            completed_at = utc_now_iso()
             
             # P0-RT2: 生成 execution_summary.json（即使失败）
             self._generate_execution_summary(
@@ -1139,7 +1141,7 @@ class ExecutorEngine:
                 "worktree_commits": worktree_commits,
                 "main_repo_commits_after_am": main_repo_commits_after_am,
                 "patch_sha256": patch_sha256,
-                "brought_back_at": datetime.now(timezone.utc).isoformat()
+                "brought_back_at": utc_now_iso()
             }
             
             proof_file = run_dir / "audit" / "sandbox_proof.json"
@@ -1174,7 +1176,7 @@ class ExecutorEngine:
         Returns:
             执行结果字典
         """
-        started_at = datetime.now(timezone.utc).isoformat()
+        started_at = utc_now_iso()
         completed_at = started_at
         
         # P0-RT2: 生成 execution_summary.json（即使失败）
@@ -1260,7 +1262,7 @@ class ExecutorEngine:
             run_tape: RunTape 实例
         """
         checksums = {
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": utc_now_iso(),
             "files": {}
         }
         

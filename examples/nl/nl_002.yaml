@@ -1,0 +1,29 @@
+id: nl_req_medium_risk_api
+schema_version: "0.9.4"
+project_id: "agentos"
+input_text: |
+  实现 Builder 历史记录查询 API：
+  - GET /api/builder/history - 查询所有 builder 输出
+  - GET /api/builder/history/:id - 获取特定输出
+  - 支持分页和过滤（按 policy、risk_level）
+  - 需要基本的输入验证
+  - 添加单元测试
+context_hints:
+  modules:
+    - "api"
+    - "builder_service"
+  areas:
+    - "backend"
+    - "tests"
+created_at: "2026-01-25T11:00:00Z"
+checksum: "0000000000000000000000000000000000000000000000000000000000000002"
+lineage:
+  introduced_in: "0.9.4"
+  derived_from: []
+  supersedes: []
+metadata:
+  user_id: "developer_002"
+  source: "web"
+  tags:
+    - "api"
+    - "medium_risk"

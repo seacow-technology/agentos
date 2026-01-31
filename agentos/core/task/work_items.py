@@ -21,6 +21,8 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime, timezone
 from enum import Enum
 import json
+from agentos.core.time import utc_now_iso
+
 
 
 class WorkItemStatus(str, Enum):
@@ -133,25 +135,25 @@ class WorkItem:
     def mark_running(self):
         """Mark work item as running"""
         self.status = WorkItemStatus.RUNNING
-        self.started_at = datetime.now(timezone.utc).isoformat()
+        self.started_at = utc_now_iso()
 
     def mark_completed(self, output: WorkItemOutput):
         """Mark work item as completed"""
         self.status = WorkItemStatus.COMPLETED
         self.output = output
-        self.completed_at = datetime.now(timezone.utc).isoformat()
+        self.completed_at = utc_now_iso()
 
     def mark_failed(self, error: str):
         """Mark work item as failed"""
         self.status = WorkItemStatus.FAILED
         self.error = error
-        self.completed_at = datetime.now(timezone.utc).isoformat()
+        self.completed_at = utc_now_iso()
 
     def mark_skipped(self, reason: str):
         """Mark work item as skipped"""
         self.status = WorkItemStatus.SKIPPED
         self.error = reason
-        self.completed_at = datetime.now(timezone.utc).isoformat()
+        self.completed_at = utc_now_iso()
 
 
 @dataclass

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardian Reviews Tab Test</title>
+
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- Guardian CSS -->
+    <link rel="stylesheet" href="agentos/webui/static/css/guardian.css">
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .test-section {
+            margin-top: 40px;
+        }
+
+        .test-section h2 {
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Guardian Reviews Tab - Component Test</h1>
+        <p>Task #3: WebUI Guardian Reviews Tab 组件测试</p>
+
+        <!-- Test Case 1: Normal Reviews -->
+        <div class="test-section">
+            <h2>Test Case 1: Task with Multiple Reviews</h2>
+            <div id="test-normal-reviews"></div>
+        </div>
+
+        <!-- Test Case 2: Empty State -->
+        <div class="test-section">
+            <h2>Test Case 2: Empty State (No Reviews)</h2>
+            <div id="test-empty-reviews"></div>
+        </div>
+
+        <!-- Test Case 3: Single Review -->
+        <div class="test-section">
+            <h2>Test Case 3: Single Review</h2>
+            <div id="test-single-review"></div>
+        </div>
+    </div>
+
+    <!-- Guardian Component -->
+    <script src="agentos/webui/static/js/components/GuardianReviewPanel.js"></script>
+
+    <script>
+        // Mock data for testing
+
+        // Test Case 1: Multiple reviews
+        const mockVerdictData = {
+            target_type: "task",
+            target_id: "task_abc123",
+            total_reviews: 3,
+            latest_verdict: "PASS",
+            latest_review_id: "review_003",
+            latest_guardian_id: "guardian.ruleset.v3",
+            all_verdicts: ["PASS", "NEEDS_REVIEW", "PASS"]
+        };
+
+        const mockReviews = [
+            {
+                review_id: "review_003",
+                target_type: "task",
+                target_id: "task_abc123",
+                guardian_id: "guardian.ruleset.v3",
+                review_type: "AUTO",
+                verdict: "PASS",
+                confidence: 0.95,
+                rule_snapshot_id: "ruleset:v3@sha256:def456",
+                evidence: {
+                    checks: ["state_machine_ok", "no_errors", "all_tests_passed"],
+                    metrics: {
+                        coverage: 0.92,
+                        complexity: 12
+                    },
+                    validations: {
+                        schema: "valid",
+                        dependencies: "resolved"
+                    }
+                },
+                created_at: "2026-01-28T15:30:00Z"
+            },
+            {
+                review_id: "review_002",
+                target_type: "task",
+                target_id: "task_abc123",
+                guardian_id: "guardian.manual.reviewer",
+                review_type: "MANUAL",
+                verdict: "NEEDS_REVIEW",
+                confidence: 0.65,
+                rule_snapshot_id: null,
+                evidence: {
+                    reviewer_notes: "Code looks good, but need more tests",
+                    concerns: ["test coverage is low", "edge cases not covered"]
+                },
+                created_at: "2026-01-28T14:15:00Z"
+            },
+            {
+                review_id: "review_001",
+                target_type: "task",
+                target_id: "task_abc123",
+                guardian_id: "guardian.ruleset.v2",
+                review_type: "AUTO",
+                verdict: "PASS",
+                confidence: 0.88,
+                rule_snapshot_id: "ruleset:v2@sha256:abc123",
+                evidence: {
+                    checks: ["basic_validation", "syntax_check"],
+                    metrics: {
+                        coverage: 0.75
+                    }
+                },
+                created_at: "2026-01-28T12:00:00Z"
+            }
+        ];
+
+        // Test Case 1: Render multiple reviews
+        const panel1 = new GuardianReviewPanel({
+            container: document.getElementById('test-normal-reviews'),
+            verdictData: mockVerdictData,
+            reviews: mockReviews
+        });
+        panel1.render();
+
+        // Test Case 2: Empty state
+        const panel2 = new GuardianReviewPanel({
+            container: document.getElementById('test-empty-reviews'),
+            verdictData: {
+                target_type: "task",
+                target_id: "task_xyz789",
+                total_reviews: 0,
+                latest_verdict: null,
+                all_verdicts: []
+            },
+            reviews: []
+        });
+        panel2.render();
+
+        // Test Case 3: Single review
+        const panel3 = new GuardianReviewPanel({
+            container: document.getElementById('test-single-review'),
+            verdictData: {
+                target_type: "task",
+                target_id: "task_single",
+                total_reviews: 1,
+                latest_verdict: "FAIL",
+                latest_review_id: "review_fail",
+                latest_guardian_id: "guardian.strict",
+                all_verdicts: ["FAIL"]
+            },
+            reviews: [
+                {
+                    review_id: "review_fail",
+                    target_type: "task",
+                    target_id: "task_single",
+                    guardian_id: "guardian.strict",
+                    review_type: "AUTO",
+                    verdict: "FAIL",
+                    confidence: 0.99,
+                    rule_snapshot_id: "ruleset:strict@sha256:xyz",
+                    evidence: {
+                        errors: ["Missing required field: description", "Invalid state transition"],
+                        checks: ["state_machine_check"],
+                        metrics: {
+                            error_count: 2
+                        }
+                    },
+                    created_at: "2026-01-28T16:45:00Z"
+                }
+            ]
+        });
+        panel3.render();
+    </script>
+</body>
+</html>

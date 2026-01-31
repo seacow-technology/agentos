@@ -12,6 +12,8 @@ Design Principles:
 
 Usage:
     from agentos.core.mode.gateway import ModeGatewayProtocol, ModeDecision
+from agentos.core.time import utc_now_iso
+
 
     # Implement a custom gateway
     class CustomGateway(ModeGatewayProtocol):
@@ -69,7 +71,7 @@ class ModeDecision:
     verdict: ModeDecisionVerdict
     reason: str
     metadata: Dict[str, Any] = field(default_factory=dict)
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: utc_now_iso())
     gateway_id: str = "default"
 
     def is_approved(self) -> bool:

@@ -6,8 +6,8 @@
  * 职责：
  * - 展示 Guardian Reviews Timeline
  * - 展示 Overall Verdict 和 Confidence
- * - 提供 Evidence 展开/折叠功能
- * - 优雅的空态和错误处理
+ * - 提供 Evidence Expand/Collapse功能
+ * - 优雅的空态和Error处理
  *
  * Usage:
  *   const panel = new GuardianReviewPanel({
@@ -22,7 +22,7 @@ class GuardianReviewPanel {
     /**
      * 构造 GuardianReviewPanel
      *
-     * @param {Object} options - 配置选项
+     * @param {Object} options - Configuration选项
      * @param {HTMLElement} options.container - 容器元素
      * @param {Object} options.verdictData - 验收摘要数据
      * @param {Array} options.reviews - 审查记录列表
@@ -52,12 +52,12 @@ class GuardianReviewPanel {
     }
 
     /**
-     * 渲染整体状态卡片
+     * 渲染整体Status卡片
      */
     renderOverallStatus() {
         const { latest_verdict, total_reviews } = this.verdictData;
 
-        // 计算整体置信度（基于最新的 review 或所有 reviews 平均）
+        // 计算整体Confidence（基于最新的 review 或所有 reviews 平均）
         let avgConfidence = 0;
         if (this.reviews.length > 0) {
             const sum = this.reviews.reduce((acc, r) => acc + (r.confidence || 0), 0);
@@ -108,7 +108,7 @@ class GuardianReviewPanel {
     }
 
     /**
-     * 渲染单个时间线条目
+     * 渲染单个时间线items目
      */
     renderTimelineItem(review) {
         const timestamp = this.formatTimestamp(review.created_at);
@@ -163,7 +163,7 @@ class GuardianReviewPanel {
     }
 
     /**
-     * 渲染空状态
+     * 渲染空Status
      */
     renderEmptyState() {
         this.container.innerHTML = `
@@ -200,7 +200,7 @@ class GuardianReviewPanel {
     }
 
     /**
-     * 格式化时间戳
+     * 格式化Timestamp
      */
     formatTimestamp(timestamp) {
         if (!timestamp) return 'N/A';

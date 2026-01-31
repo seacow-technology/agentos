@@ -1,0 +1,108 @@
+{
+  "id": "rule_r01_no_execution",
+  "type": "rule",
+  "version": "0.9.0",
+  "status": "draft",
+  "metadata": {
+    "created_at": "2026-01-25T08:29:46.643009+00:00",
+    "checksum": "d0b1c52d14dcf37c448e3723e18b6358a1ff8c43446b2169f4d2db45957b5024",
+    "is_root": true,
+    "tags": [
+      "execution",
+      "security",
+      "governance"
+    ]
+  },
+  "spec": {
+    "id": "rule_r01_no_execution",
+    "type": "rule",
+    "title": "No execution is allowed in content plane",
+    "description": "Rules/Workflows/Agents/Commands are governance content only. Any execution payload is forbidden.",
+    "version": "0.9.0",
+    "status": "active",
+    "lineage": {
+      "introduced_in": "v0.9",
+      "derived_from": null,
+      "supersedes": []
+    },
+    "constraints": {
+      "execution": "forbidden"
+    },
+    "rule": {
+      "severity": "block",
+      "scope": {
+        "applies_to_types": [
+          "workflow",
+          "agent",
+          "command",
+          "policy",
+          "memory",
+          "fact",
+          "rule"
+        ],
+        "applies_to_risk": [
+          "low",
+          "medium",
+          "high",
+          "critical"
+        ],
+        "applies_to_phases": [
+          "setup",
+          "analysis",
+          "design",
+          "implementation",
+          "validation",
+          "review",
+          "release",
+          "operations",
+          "postmortem"
+        ]
+      },
+      "when": {
+        "any_of": [
+          {
+            "field_exists": "execute"
+          },
+          {
+            "field_exists": "run"
+          },
+          {
+            "field_exists": "shell"
+          },
+          {
+            "field_contains_any": {
+              "field": "raw",
+              "tokens": [
+                "bash",
+                "python",
+                "powershell",
+                "subprocess",
+                "command_line",
+                "script"
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "decision": "deny",
+        "reason": "Execution payload is forbidden in governance content",
+        "required_changes": [
+          "Remove execution-related fields/tokens"
+        ]
+      },
+      "evidence_required": [
+        "content_source_yaml",
+        "schema_validation"
+      ]
+    },
+    "metadata": {
+      "tags": [
+        "execution",
+        "security",
+        "governance"
+      ],
+      "author": "AgentOS Team"
+    }
+  }
+}

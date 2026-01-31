@@ -185,7 +185,8 @@ class BudgetRecommender:
             """, (session_id, last_n))
 
             rows = cursor.fetchall()
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection
+            # conn.close()  # REMOVED
 
             if len(rows) < self.min_samples:
                 logger.info(f"Insufficient data for recommendation: {len(rows)} samples (need {self.min_samples})")

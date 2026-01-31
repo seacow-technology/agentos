@@ -15,12 +15,14 @@ Endpoints:
 - GET /api/brain/suggest - Autocomplete suggestions (deprecated, use /autocomplete)
 - GET /api/brain/resolve - Resolve entity reference to URL
 - POST /api/brain/build - Rebuild BrainOS index (admin only)
+- GET /api/brain/time/health - Get cognitive health report (P3-C Time)
 """
 
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
@@ -29,18 +31,65 @@ from agentos.core.brain.service import (
     query_why,
     query_impact,
     query_trace,
-    query_subgraph,
+    query_subgraph as query_subgraph_service,
     BrainIndexJob,
     QueryResult,
     compute_coverage,
     detect_blind_spots,
     autocomplete_suggest,
+    SubgraphResult,
 )
 from agentos.core.brain.store import SQLiteStore
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+# ============================================================================
+# Caching (Phase 3)
+# ============================================================================
+
+# Simple in-memory cache (production: use Redis)
+_subgraph_cache: Dict[str, Tuple[Dict, datetime]] = {}
+_cache_ttl = timedelta(minutes=15)
+
+
+def get_cached_subgraph(cache_key: str) -> Optional[Dict]:
+    """
+    Get cached subgraph result
+
+    Args:
+        cache_key: Cache key (seed + k_hop + min_evidence)
+
+    Returns:
+        Cached result or None if expired/not found
+    """
+    if cache_key in _subgraph_cache:
+        cached_data, cached_time = _subgraph_cache[cache_key]
+
+        # Check if expired
+        if datetime.now() - cached_time < _cache_ttl:
+            logger.debug(f"Cache hit: {cache_key}")
+            return cached_data
+        else:
+            # Expired, delete
+            del _subgraph_cache[cache_key]
+            logger.debug(f"Cache expired: {cache_key}")
+
+    return None
+
+
+def cache_subgraph(cache_key: str, data: Dict):
+    """
+    Cache subgraph result
+
+    Args:
+        cache_key: Cache key
+        data: Subgraph data to cache
+    """
+    _subgraph_cache[cache_key] = (data, datetime.now())
+    logger.debug(f"Cached: {cache_key}")
 
 
 # ============================================================================
@@ -63,23 +112,54 @@ class BuildRequest(BaseModel):
 # Helper Functions
 # ============================================================================
 
+def validate_seed_format(seed: str) -> Tuple[str, str]:
+    """
+    Validate seed format and parse type and key
+
+    Args:
+        seed: Seed entity string (e.g., "file:manager.py")
+
+    Returns:
+        (entity_type, entity_key)
+
+    Raises:
+        ValueError: If format is invalid
+    """
+    if ":" not in seed:
+        raise ValueError(f"Invalid seed format: '{seed}'. Expected 'type:key'.")
+
+    parts = seed.split(":", 1)
+    entity_type, entity_key = parts[0], parts[1]
+
+    # Validate type
+    valid_types = ["file", "capability", "term", "doc", "commit", "symbol"]
+    if entity_type not in valid_types:
+        raise ValueError(
+            f"Invalid entity type: '{entity_type}'. Must be one of {valid_types}."
+        )
+
+    # Validate key non-empty
+    if not entity_key.strip():
+        raise ValueError("Entity key cannot be empty.")
+
+    return entity_type, entity_key
+
+
 def get_brain_db_path() -> str:
     """
-    Get the BrainOS database path.
+    Get the BrainOS database path from environment variable or default location.
 
     Returns:
         Path to BrainOS database
     """
-    # Default: .brainos/v0.1_mvp.db in current directory
-    brain_dir = Path(".brainos")
-    db_path = brain_dir / "v0.1_mvp.db"
-
-    # Fallback to environment variable if set
+    # Use environment variable with fallback to default location
     env_path = os.getenv("BRAINOS_DB_PATH")
     if env_path:
-        db_path = Path(env_path)
+        return str(Path(env_path))
 
-    return str(db_path)
+    # Default: use component_db_path
+    from agentos.core.storage.paths import component_db_path
+    return str(component_db_path("brainos"))
 
 
 def check_entity_exists(store: SQLiteStore, seed: str) -> bool:
@@ -1000,6 +1080,259 @@ async def get_blind_spots(
         }
 
 
+@router.get(
+    "/subgraph",
+    summary="Query Subgraph",
+    description="Query a k-hop subgraph centered at a seed entity. Returns nodes, edges, and metadata with cognitive attributes.",
+    responses={
+        200: {
+            "description": "Successful query",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "ok": True,
+                        "data": {
+                            "nodes": [],
+                            "edges": [],
+                            "metadata": {}
+                        },
+                        "error": None,
+                        "cached": False
+                    }
+                }
+            }
+        },
+        400: {
+            "description": "Invalid parameters",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "ok": False,
+                        "data": None,
+                        "error": "Invalid seed format. Expected 'type:key', got '...'"
+                    }
+                }
+            }
+        },
+        404: {
+            "description": "Index or entity not found",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "ok": False,
+                        "data": None,
+                        "error": "BrainOS index not found. Run '/brain build' first."
+                    }
+                }
+            }
+        }
+    },
+    tags=["BrainOS"]
+)
+async def get_subgraph(
+    seed: str = Query(
+        ...,
+        description="Seed entity (e.g., 'file:manager.py', 'capability:api', 'term:auth')",
+        pattern=r"^(file|capability|term|doc|commit|symbol):.+"
+    ),
+    k_hop: int = Query(
+        2,
+        description="Number of hops from seed",
+        ge=1,
+        le=3
+    ),
+    min_evidence: int = Query(
+        1,
+        description="Minimum evidence count per edge",
+        ge=1,
+        le=10
+    ),
+    include_suspected: bool = Query(
+        False,
+        description="Include suspected edges (dashed lines)"
+    ),
+    project_id: Optional[str] = Query(
+        None,
+        description="Project ID filter"
+    )
+) -> Dict[str, Any]:
+    """
+    Query subgraph centered at a seed entity.
+
+    Returns a subgraph with nodes, edges, and metadata. All nodes and edges
+    include cognitive attributes (evidence count, coverage sources, blind spots).
+
+    Example:
+        GET /api/brain/subgraph?seed=file:manager.py&k_hop=2&min_evidence=1
+
+    Response:
+        {
+            "ok": true,
+            "data": {
+                "nodes": [
+                    {
+                        "id": "entity_123",
+                        "entity_type": "file",
+                        "entity_key": "manager.py",
+                        "entity_name": "Task Manager",
+                        "evidence_count": 15,
+                        "coverage_sources": ["git", "doc", "code"],
+                        "is_blind_spot": false,
+                        "visual": {
+                            "color": "#10b981",
+                            "size": 35,
+                            "border_color": "#374151",
+                            "label": "manager.py\\n✅ 100% | 15 evidence"
+                        },
+                        ...
+                    },
+                    ...
+                ],
+                "edges": [
+                    {
+                        "id": "edge_456",
+                        "source_id": "entity_123",
+                        "target_id": "entity_789",
+                        "edge_type": "imports",
+                        "evidence_count": 3,
+                        "evidence_types": ["git", "code"],
+                        "confidence": 0.7,
+                        "visual": {
+                            "width": 2,
+                            "color": "#3b82f6",
+                            "style": "solid",
+                            "label": "imports | 3"
+                        },
+                        ...
+                    },
+                    ...
+                ],
+                "metadata": {
+                    "seed_entity": "file:manager.py",
+                    "k_hop": 2,
+                    "total_nodes": 12,
+                    "total_edges": 18,
+                    "coverage_percentage": 0.83,
+                    "evidence_density": 8.5,
+                    "blind_spot_count": 2,
+                    "missing_connections_count": 3,
+                    "coverage_gaps": [],
+                    "graph_version": "main_abc123_2026-01-30",
+                    "computed_at": "2026-01-30T12:34:56Z"
+                }
+            },
+            "error": null,
+            "cached": false
+        }
+
+    Error Response (400):
+        {
+            "ok": false,
+            "data": null,
+            "error": "Invalid seed format. Expected 'type:key', got '...'"
+        }
+
+    Error Response (404):
+        {
+            "ok": false,
+            "data": null,
+            "error": "Seed entity not found: file:nonexistent.py"
+        }
+
+    Error Response (500):
+        {
+            "ok": false,
+            "data": null,
+            "error": "Internal server error: {details}"
+        }
+    """
+    try:
+        # 1. Validate seed format
+        try:
+            validate_seed_format(seed)
+        except ValueError as e:
+            return {
+                "ok": False,
+                "data": None,
+                "error": str(e)
+            }
+
+        # 2. Generate cache key
+        cache_key = f"subgraph:{seed}:{k_hop}:{min_evidence}:{include_suspected}"
+
+        # 3. Try to get from cache
+        cached_result = get_cached_subgraph(cache_key)
+        if cached_result:
+            return {
+                "ok": True,
+                "data": cached_result,
+                "error": None,
+                "cached": True
+            }
+
+        # 4. Get BrainOS database path
+        db_path = get_brain_db_path()
+
+        if not Path(db_path).exists():
+            return {
+                "ok": False,
+                "data": None,
+                "error": "BrainOS index not found. Run '/brain build' to create the index first."
+            }
+
+        # 5. Query subgraph
+        store = SQLiteStore(db_path)
+        store.connect()
+
+        try:
+            result: SubgraphResult = query_subgraph_service(
+                store,
+                seed=seed,
+                k_hop=k_hop,
+                min_evidence=min_evidence,
+                include_suspected=include_suspected
+            )
+        finally:
+            store.close()
+
+        # 6. Handle errors
+        if not result.ok:
+            if "not found" in result.error.lower():
+                return {
+                    "ok": False,
+                    "data": None,
+                    "error": f"Seed entity not found: '{seed}'. This entity may not be indexed yet."
+                }
+            else:
+                return {
+                    "ok": False,
+                    "data": None,
+                    "error": result.error
+                }
+
+        # 7. Cache successful result
+        if result.data:
+            cache_subgraph(cache_key, result.data)
+
+        # 8. Return response
+        return {
+            "ok": True,
+            "data": result.data,
+            "error": None,
+            "cached": False
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Unexpected error in get_subgraph")
+        return {
+            "ok": False,
+            "data": None,
+            "error": f"Internal server error. Please contact support. Details: {str(e)}"
+        }
+
+
 @router.post("/build")
 async def api_build(request: BuildRequest) -> Dict[str, Any]:
     """
@@ -1042,4 +1375,91 @@ async def api_build(request: BuildRequest) -> Dict[str, Any]:
             "data": None,
             "error": str(e),
             "hint": "Check logs for detailed error information"
+        }
+
+
+# ============================================================================
+# P3-C: Time API (Cognitive Health Monitoring)
+# ============================================================================
+
+@router.get("/time/health")
+async def get_health_report(
+    window_days: int = Query(30, description="Time window in days", ge=1, le=365),
+    granularity: str = Query("day", description="Granularity (day/week)")
+) -> Dict[str, Any]:
+    """
+    获取认知健康报告（P3-C Time）
+
+    核心：回答"我的理解是在变好，还是在变坏？"
+
+    Args:
+        window_days: 时间窗口（天）
+        granularity: 粒度（day/week）
+
+    Returns:
+        {
+            "ok": true,
+            "data": {
+                "window_start": "...",
+                "window_end": "...",
+                "current_health_level": "GOOD",
+                "current_health_score": 72.5,
+                "coverage_trend": {...},
+                "blind_spot_trend": {...},
+                "warnings": [...],
+                "recommendations": [...]
+            }
+        }
+    """
+    try:
+        db_path = get_brain_db_path()
+
+        # Check if database exists
+        if not Path(db_path).exists():
+            return {
+                "ok": False,
+                "data": None,
+                "error": "BrainOS database not found. Please run 'brain build' first."
+            }
+
+        # Connect to database
+        store = SQLiteStore(str(db_path))
+        store.connect()
+
+        try:
+            # Import here to avoid circular dependency
+            from agentos.core.brain.cognitive_time.trend_analyzer import analyze_trends
+
+            # Analyze trends
+            report = analyze_trends(store, window_days, granularity)
+
+            # Convert to dict
+            import dataclasses
+            report_dict = dataclasses.asdict(report)
+
+            # Convert enums to strings
+            report_dict["current_health_level"] = report.current_health_level.value
+            report_dict["coverage_trend"]["direction"] = report.coverage_trend.direction.value
+            report_dict["blind_spot_trend"]["direction"] = report.blind_spot_trend.direction.value
+            report_dict["evidence_density_trend"]["direction"] = report.evidence_density_trend.direction.value
+
+            # Convert source_migration enums
+            for key in report_dict["source_migration"]:
+                report_dict["source_migration"][key] = report.source_migration[key].value
+
+            return {
+                "ok": True,
+                "data": report_dict,
+                "error": None
+            }
+
+        finally:
+            store.close()
+
+    except Exception as e:
+        logger.exception("Error in get_health_report")
+        return {
+            "ok": False,
+            "data": None,
+            "error": f"Failed to generate health report: {str(e)}"
         }

@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from rich.console import Console
 from rich.table import Table
 
+from agentos.core.time import utc_now_iso
 from agentos.core.answers import (
     AnswerStore,
     AnswerValidator,
@@ -111,7 +112,7 @@ def create_cmd(
                     "answer_type": "text",
                     "answer_text": answer_text,
                     "evidence_refs": evidence_refs if evidence_refs else ["user_input"],
-                    "provided_at": datetime.now(timezone.utc).isoformat(),
+                    "provided_at": utc_now_iso(),
                     "provided_by": "human",
                     "rationale": f"Provided by user interactively"
                 })
@@ -124,7 +125,7 @@ def create_cmd(
                     "answer_type": "fallback",
                     "answer_text": question.get("default_strategy", "Proceed with default"),
                     "evidence_refs": ["fallback_strategy"],
-                    "provided_at": datetime.now(timezone.utc).isoformat(),
+                    "provided_at": utc_now_iso(),
                     "provided_by": "fallback"
                 })
 
@@ -135,7 +136,7 @@ def create_cmd(
             "question_pack_id": question_pack.get("pack_id"),
             "intent_id": question_pack.get("intent_id"),
             "answers": answers,
-            "provided_at": datetime.now(timezone.utc).isoformat(),
+            "provided_at": utc_now_iso(),
             "completeness": {
                 "total_questions": len(question_pack.get("questions", [])),
                 "answered": len(answers),
@@ -146,7 +147,7 @@ def create_cmd(
                 "nl_request_id": question_pack.get("intent_id", "unknown"),
                 "pipeline_run_id": str(Path(question_pack_path).parent.parent),
                 "created_by": "agentos-cli",
-                "created_at": datetime.now(timezone.utc).isoformat()
+                "created_at": utc_now_iso()
             }
         }
 

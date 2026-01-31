@@ -4,8 +4,10 @@ Utility functions for dry executor
 
 import hashlib
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
+from agentos.core.time import utc_now_iso
+
 
 
 def compute_checksum(data: Dict[str, Any], exclude_keys: list[str] = None) -> str:
@@ -49,7 +51,7 @@ def generate_id(prefix: str, source_data: str = None) -> str:
     else:
         # Random ID based on timestamp
         hash_part = hashlib.sha256(
-            f"{prefix}_{datetime.utcnow().isoformat()}".encode('utf-8')
+            f"{prefix}_{utc_now_iso()}".encode('utf-8')
         ).hexdigest()[:16]
     
     return f"{prefix}_{hash_part}"

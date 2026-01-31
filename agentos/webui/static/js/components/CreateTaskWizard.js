@@ -600,9 +600,16 @@ class CreateTaskWizard {
         this.options.onComplete(this.taskId);
     }
 
-    cancel() {
+    async cancel() {
         if (this.taskId) {
-            const confirmCancel = confirm('Task has been created. Do you want to cancel the wizard? The task will remain in draft state.');
+            const confirmCancel = await Dialog.confirm(
+                'Task has been created. Do you want to cancel the wizard?<br><br>The task will remain in draft state.',
+                {
+                    title: 'Cancel Wizard',
+                    confirmText: 'Cancel Wizard',
+                    cancelText: 'Continue Editing'
+                }
+            );
             if (!confirmCancel) {
                 return;
             }

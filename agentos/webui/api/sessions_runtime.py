@@ -5,28 +5,30 @@ Sprint B Task #7: Provider/Model Selection
 
 Allows updating runtime config (provider, model, temperature) for the current session.
 Changes only affect future messages, not historical ones.
+
+PR-2: Unified to use ChatService instead of SessionStore
 """
 
 import logging
 from typing import Optional
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
+from agentos.core.chat.service import ChatService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/sessions")
 
-# Import after router to avoid circular imports
-_session_store = None
+# ChatService instance (lazy initialization)
+_chat_service: Optional[ChatService] = None
 
 
-def get_session_store():
-    """Get SessionStore singleton (lazy import to avoid circular dependency)"""
-    global _session_store
-    if _session_store is None:
-        from agentos.webui.api.sessions import get_session_store as _get_store
-        _session_store = _get_store()
-    return _session_store
+def get_chat_service() -> ChatService:
+    """Get ChatService singleton (lazy initialization)"""
+    global _chat_service
+    if _chat_service is None:
+        _chat_service = ChatService()
+    return _chat_service
 
 
 # Request/Response Models
@@ -71,11 +73,12 @@ async def update_session_runtime(
     logger.info(f"Updating runtime config for session {session_id}: provider={config.provider}")
 
     try:
-        store = get_session_store()
+        chat_service = get_chat_service()
 
         # Get session
-        session = store.get_session(session_id)
-        if not session:
+        try:
+            session = chat_service.get_session(session_id)
+        except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Session not found: {session_id}"
@@ -111,14 +114,9 @@ async def update_session_runtime(
         if config.temperature is not None:
             runtime_config["temperature"] = config.temperature
 
-        # Update session metadata
-        if not session.metadata:
-            session.metadata = {}
-
-        session.metadata["runtime"] = runtime_config
-
-        # Save session
-        store.update_session(session_id, session.metadata)
+        # Update session metadata using ChatService
+        metadata_update = {"runtime": runtime_config}
+        chat_service.update_session_metadata(session_id, metadata_update)
 
         logger.info(f"Runtime config updated for session {session_id}: {runtime_config}")
 
@@ -152,11 +150,12 @@ async def get_session_runtime(session_id: str):
         404: Session not found
     """
     try:
-        store = get_session_store()
+        chat_service = get_chat_service()
 
         # Get session
-        session = store.get_session(session_id)
-        if not session:
+        try:
+            session = chat_service.get_session(session_id)
+        except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Session not found: {session_id}"

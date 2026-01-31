@@ -28,6 +28,11 @@ class InstallSource(str, Enum):
     URL = "url"
 
 
+class RuntimeType(str, Enum):
+    """Runtime types for extensions"""
+    PYTHON = "python"
+
+
 class CapabilityType(str, Enum):
     """Types of capabilities an extension can provide"""
     SLASH_COMMAND = "slash_command"
@@ -55,6 +60,21 @@ class ExtensionDocs(BaseModel):
     usage: str = Field(description="Path to usage documentation")
 
 
+class PythonConfig(BaseModel):
+    """Python runtime configuration"""
+    version: str = Field(description="Python version (e.g., '3.11')")
+    dependencies: List[str] = Field(default_factory=list, description="List of Python dependencies (e.g., ['requests>=2.28.0'])")
+
+    @field_validator('version')
+    @classmethod
+    def validate_version(cls, v: str) -> str:
+        """Validate Python version format"""
+        import re
+        if not re.match(r'^\d+\.\d+$', v):
+            raise ValueError("Python version must be in format 'X.Y' (e.g., '3.11')")
+        return v
+
+
 class ExtensionManifest(BaseModel):
     """Extension manifest.json schema"""
     id: str = Field(description="Unique extension identifier (e.g., 'tools.postman')")
@@ -63,6 +83,9 @@ class ExtensionManifest(BaseModel):
     description: str = Field(description="Brief description of the extension")
     author: str = Field(description="Extension author")
     license: str = Field(description="License identifier (e.g., 'Apache-2.0')")
+    runtime: RuntimeType = Field(description="Extension runtime type. Currently only 'python' is supported.")
+    python: PythonConfig = Field(description="Python runtime configuration")
+    external_bins: List[str] = Field(default_factory=list, description="List of external binaries required. Must be empty for Python-only extensions.")
     entrypoint: Optional[str] = Field(default=None, description="Entrypoint script (legacy)")
     icon: Optional[str] = Field(default=None, description="Path to icon file")
     capabilities: List[ExtensionCapability] = Field(description="List of capabilities")
@@ -101,6 +124,16 @@ class ExtensionManifest(BaseModel):
             if platform not in valid_platforms:
                 raise ValueError(f"Invalid platform '{platform}'. Must be one of: {valid_platforms}")
         return v
+
+    def model_post_init(self, __context):
+        """Validate Python-only policy after model initialization"""
+        # Enforce Python-only policy: no external binaries allowed
+        if self.runtime == RuntimeType.PYTHON and self.external_bins:
+            raise ValueError(
+                "Python-only extensions cannot have external_bins. "
+                "Found external_bins: " + ", ".join(self.external_bins) + ". "
+                "See ADR-EXT-002 for Python-only policy."
+            )
 
 
 class ExtensionRecord(BaseModel):

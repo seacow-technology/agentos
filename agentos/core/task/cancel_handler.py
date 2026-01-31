@@ -13,6 +13,8 @@ Key Features:
 import logging
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timezone
+from agentos.core.time import utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -215,7 +217,7 @@ class CancelHandler:
             "actor": actor,
             "reason": reason,
             "cleanup_results": cleanup_results,
-            "canceled_at": datetime.now(timezone.utc).isoformat(),
+            "canceled_at": utc_now_iso(),
         }
 
         # Add cleanup summary to payload
@@ -289,7 +291,7 @@ class CancelHandler:
             "canceled_by": actor,
             "reason": reason,
             "cleanup_results": cleanup_results,
-            "canceled_at": datetime.now(timezone.utc).isoformat(),
+            "canceled_at": utc_now_iso(),
         }
 
         logger.info(f"Graceful cancellation completed for task {task_id}")

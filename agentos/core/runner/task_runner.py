@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 from agentos.core.task import TaskManager, Task, RunMode
 from agentos.core.task.run_mode import TaskMetadata
 from agentos.core.task.project_settings_inheritance import ProjectSettingsInheritance
+from agentos.core.time import utc_now_iso
 from agentos.core.gates.pause_gate import (
     can_pause_at,
     PauseCheckpoint,
@@ -654,7 +655,7 @@ class TaskRunner:
 
                     # Update task metadata with gate failure context
                     task.metadata["gate_failure_context"] = {
-                        "failed_at": datetime.now(timezone.utc).isoformat(),
+                        "failed_at": utc_now_iso(),
                         "failure_summary": failure_summary,
                         "gate_results": gate_results.to_dict(),
                     }
@@ -701,7 +702,7 @@ class TaskRunner:
             metadata: New metadata dict
         """
         try:
-            conn = self.task_manager._get_conn()
+            conn, should_close = self.task_manager._get_conn()
             try:
                 cursor = conn.cursor()
                 cursor.execute(
@@ -711,7 +712,8 @@ class TaskRunner:
                 conn.commit()
                 logger.debug(f"Updated metadata for task {task_id}")
             finally:
-                conn.close()
+                if should_close:
+                    conn.close()
         except Exception as e:
             logger.error(f"Failed to update task metadata: {e}")
     
@@ -732,7 +734,7 @@ class TaskRunner:
             # Prepare artifact data
             artifact_data = {
                 "task_id": task_id,
-                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "generated_at": utc_now_iso(),
                 "pipeline_status": pipeline_result.overall_status,
                 "pipeline_summary": pipeline_result.summary,
                 "stages": []
@@ -771,7 +773,7 @@ class TaskRunner:
                     "artifact_kind": "open_plan",
                     "artifact_path": str(artifact_path),
                     "file_size": artifact_path.stat().st_size,
-                    "generated_at": datetime.now(timezone.utc).isoformat()
+                    "generated_at": utc_now_iso()
                 }
             )
             
@@ -837,7 +839,7 @@ class TaskRunner:
                         "artifact_kind": "execution_result",
                         "artifact_path": str(result_path),
                         "file_size": file_path.stat().st_size if file_path.exists() else 0,
-                        "generated_at": datetime.now(timezone.utc).isoformat()
+                        "generated_at": utc_now_iso()
                     }
                 )
             
@@ -1460,7 +1462,7 @@ class TaskRunner:
                     {
                         "item_id": item_id,
                         "output": output.to_dict(),
-                        "saved_at": datetime.now(timezone.utc).isoformat(),
+                        "saved_at": utc_now_iso(),
                     },
                     f,
                     indent=2,
@@ -1563,7 +1565,7 @@ class TaskRunner:
             task.metadata["route_plan"] = route_plan.to_dict()
 
             # Save to database
-            conn = self.task_manager._get_conn()
+            conn, should_close = self.task_manager._get_conn()
             try:
                 cursor = conn.cursor()
                 cursor.execute(
@@ -1573,7 +1575,8 @@ class TaskRunner:
                 conn.commit()
                 logger.debug(f"Saved route plan for task {task_id}")
             finally:
-                conn.close()
+                if should_close:
+                    conn.close()
 
         except Exception as e:
             logger.error(f"Failed to save route plan for task {task_id}: {e}")
@@ -1769,7 +1772,7 @@ class TaskRunner:
                 "where": {"work_item_id": work_item.item_id},
                 "values": {"status": "completed"}
             },
-            metadata={"db_path": "store/registry.sqlite"}
+            metadata={"db_path": "registry"}  # Use registry_db.get_db() in verification
         ))
 
         return EvidencePack(evidence_list=evidence_list, require_all=False, min_verified=1)

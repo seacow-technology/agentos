@@ -16,6 +16,8 @@ This guarantees that:
 
 Example:
     from agentos.core.utils.atomic_write import atomic_write, verify_atomic_write
+from agentos.core.time import utc_now_iso
+
 
     # Write file atomically
     metadata = atomic_write("/path/to/file.json", "content")
@@ -113,7 +115,7 @@ def atomic_write(
     metadata = {
         "sha256": file_hash,
         "size": file_size,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": utc_now_iso(),
         "path": str(file_path)
     }
 

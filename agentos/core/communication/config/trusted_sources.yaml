@@ -1,0 +1,83 @@
+# Trusted Sources Configuration
+#
+# This file defines whitelists for official policy sources and recognized NGOs
+# used in the priority scoring system for search results.
+#
+# IMPORTANT: These lists are used for METADATA-BASED SCORING only.
+# They do not imply that content from these sources is automatically true,
+# but rather that these sources have institutional authority.
+#
+# Scoring impact:
+# - OFFICIAL_POLICY_SOURCES: +30 points in source_type_score
+# - RECOGNIZED_NGO: +20 points in source_type_score
+
+# Official Government Policy Sources
+# These are government domains known for publishing official policy documents
+OFFICIAL_POLICY_SOURCES:
+  # Australian Government
+  - aph.gov.au                    # Australian Parliament House
+  - agriculture.gov.au            # Department of Agriculture
+  - environment.gov.au            # Department of Environment
+  - treasury.gov.au               # Treasury
+  - dfat.gov.au                   # Foreign Affairs and Trade
+  - pm.gov.au                     # Prime Minister's office
+  - health.gov.au                 # Department of Health
+  - education.gov.au              # Department of Education
+
+  # US Government
+  - whitehouse.gov                # White House
+  - state.gov                     # Department of State
+  - defense.gov                   # Department of Defense
+  - justice.gov                   # Department of Justice
+  - epa.gov                       # Environmental Protection Agency
+  - energy.gov                    # Department of Energy
+  - hhs.gov                       # Health and Human Services
+
+  # UK Government
+  - gov.uk                        # UK Government portal
+  - parliament.uk                 # UK Parliament
+  - nhs.uk                        # National Health Service
+
+  # International Organizations (Government-affiliated)
+  - who.int                       # World Health Organization
+  - un.org                        # United Nations
+  - europa.eu                     # European Union
+  - oecd.org                      # OECD
+
+# Recognized Non-Governmental Organizations
+# These are well-established NGOs with recognized authority in their domains
+RECOGNIZED_NGO:
+  # Environmental Organizations
+  - greenpeace.org                # Greenpeace International
+  - wwf.org                       # World Wildlife Fund
+  - nature.org                    # The Nature Conservancy
+  - conservation.org              # Conservation International
+  - climatecouncil.org.au         # Climate Council (Australia)
+
+  # Human Rights Organizations
+  - amnesty.org                   # Amnesty International
+  - hrw.org                       # Human Rights Watch
+  - icj.org                       # International Commission of Jurists
+  - refugeecouncil.org.au         # Refugee Council of Australia
+
+  # Health Organizations
+  - redcross.org                  # Red Cross
+  - msf.org                       # Doctors Without Borders
+  - healthcarereform.gov.au       # Healthcare reform advocacy
+
+  # Research and Think Tanks
+  - brookings.edu                 # Brookings Institution
+  - chathamhouse.org              # Chatham House
+  - cfr.org                       # Council on Foreign Relations
+  - rand.org                      # RAND Corporation
+  - grattan.edu.au                # Grattan Institute (Australia)
+
+  # Standards Organizations
+  - iso.org                       # International Standards Organization
+  - ietf.org                      # Internet Engineering Task Force
+  - w3.org                        # World Wide Web Consortium
+
+  # Scientific Organizations
+  - aaas.org                      # American Association for the Advancement of Science
+  - royalsociety.org              # Royal Society
+  - nationalacademies.org         # National Academies

@@ -1,0 +1,118 @@
+{
+  "id": "intent_analyze_api_security",
+  "type": "execution_intent",
+  "title": "Analyze API security vulnerabilities",
+  "description": "Scan API endpoints for common security vulnerabilities",
+  "version": "0.9.1",
+  "status": "proposed",
+  "created_at": "2026-01-25T10:05:00Z",
+  "lineage": {
+    "introduced_in": "0.9.1",
+    "derived_from": [],
+    "supersedes": []
+  },
+  "scope": {
+    "project_id": "agentos",
+    "repo_root": "/Users/pangge/PycharmProjects/AgentOS",
+    "targets": {
+      "files": [
+        "agentos/api/routes.py",
+        "agentos/api/auth.py"
+      ],
+      "modules": [
+        "agentos.api"
+      ],
+      "areas": [
+        "backend",
+        "security"
+      ]
+    }
+  },
+  "objective": {
+    "goal": "Identify security vulnerabilities in API endpoints",
+    "success_criteria": [
+      "Scan for SQL injection risks",
+      "Check authentication/authorization",
+      "Generate security report"
+    ],
+    "non_goals": [
+      "Fix vulnerabilities",
+      "Implement new auth mechanisms"
+    ]
+  },
+  "selected_workflows": [
+    {
+      "workflow_id": "security_audit_workflow",
+      "phases": [
+        "analysis"
+      ],
+      "reason": "Security analysis workflow"
+    }
+  ],
+  "selected_agents": [
+    {
+      "agent_id": "security_auditor",
+      "role": "auditor",
+      "responsibilities": [
+        "Scan for security vulnerabilities",
+        "Check authentication patterns",
+        "Generate security report"
+      ]
+    }
+  ],
+  "planned_commands": [
+    {
+      "command_id": "scan_api_security",
+      "intent": "Scan API endpoints for security issues",
+      "effects": [
+        "read"
+      ],
+      "risk_level": "low",
+      "evidence_refs": [
+        "scan://api_routes/agentos.api",
+        "scan://file/agentos/api/auth.py"
+      ]
+    }
+  ],
+  "interaction": {
+    "mode": "full_auto",
+    "question_budget": 0,
+    "question_policy": "never"
+  },
+  "risk": {
+    "overall": "low",
+    "drivers": [
+      "Read-only security scan, no changes"
+    ],
+    "requires_review": [
+      "security"
+    ]
+  },
+  "budgets": {
+    "max_files": 15,
+    "max_commits": 0,
+    "max_tokens": 30000,
+    "max_cost_usd": 1.5
+  },
+  "evidence_refs": [
+    "scan://api_routes/agentos.api",
+    "doc://security/audit_checklist.md"
+  ],
+  "constraints": {
+    "execution": "forbidden",
+    "no_fabrication": true,
+    "registry_only": true,
+    "lock_scope": {
+      "mode": "task",
+      "paths": []
+    }
+  },
+  "audit": {
+    "created_by": "human_operator",
+    "source": "human",
+    "checksum": "b2c3d4e5f67890123456789012345678901234567890123456789012345bcde"
+  },
+  "metadata": {
+    "priority": 5
+  }
+}

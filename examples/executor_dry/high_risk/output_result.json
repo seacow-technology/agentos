@@ -1,0 +1,620 @@
+{
+  "result_id": "dryexec_37a2a7dce5a8a47d",
+  "schema_version": "0.10.0",
+  "intent_ref": {
+    "intent_id": "intent_example_high_risk",
+    "checksum": "c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2",
+    "version": "0.9.1"
+  },
+  "created_at": "2026-01-25T10:21:41.567711Z",
+  "graph": {
+    "graph_id": "graph_37a2a7dce5a8a47d",
+    "schema_version": "0.10.0",
+    "intent_id": "intent_example_high_risk",
+    "created_at": "2026-01-25T10:21:41.567418Z",
+    "nodes": [
+      {
+        "node_id": "node_0001",
+        "node_type": "phase",
+        "label": "database_migration_workflow: design",
+        "description": "Phase 'design' from workflow 'database_migration_workflow'",
+        "phase_ref": "database_migration_workflow.design",
+        "evidence_refs": [
+          "intent://intent_example_high_risk/selected_workflows/database_migration_workflow",
+          "Critical database change requires full migration workflow"
+        ]
+      },
+      {
+        "node_id": "node_0002",
+        "node_type": "phase",
+        "label": "database_migration_workflow: implementation",
+        "description": "Phase 'implementation' from workflow 'database_migration_workflow'",
+        "phase_ref": "database_migration_workflow.implementation",
+        "evidence_refs": [
+          "intent://intent_example_high_risk/selected_workflows/database_migration_workflow",
+          "Critical database change requires full migration workflow"
+        ]
+      },
+      {
+        "node_id": "node_0003",
+        "node_type": "phase",
+        "label": "database_migration_workflow: validation",
+        "description": "Phase 'validation' from workflow 'database_migration_workflow'",
+        "phase_ref": "database_migration_workflow.validation",
+        "evidence_refs": [
+          "intent://intent_example_high_risk/selected_workflows/database_migration_workflow",
+          "Critical database change requires full migration workflow"
+        ]
+      },
+      {
+        "node_id": "node_0004",
+        "node_type": "phase",
+        "label": "database_migration_workflow: review",
+        "description": "Phase 'review' from workflow 'database_migration_workflow'",
+        "phase_ref": "database_migration_workflow.review",
+        "evidence_refs": [
+          "intent://intent_example_high_risk/selected_workflows/database_migration_workflow",
+          "Critical database change requires full migration workflow"
+        ]
+      },
+      {
+        "node_id": "node_0005",
+        "node_type": "phase",
+        "label": "database_migration_workflow: release",
+        "description": "Phase 'release' from workflow 'database_migration_workflow'",
+        "phase_ref": "database_migration_workflow.release",
+        "evidence_refs": [
+          "intent://intent_example_high_risk/selected_workflows/database_migration_workflow",
+          "Critical database change requires full migration workflow"
+        ]
+      },
+      {
+        "node_id": "node_0006",
+        "node_type": "action_plan",
+        "label": "Plan: create_migration_script",
+        "description": "Create forward migration SQL script",
+        "command_ref": "create_migration_script",
+        "effects": [
+          "write",
+          "data"
+        ],
+        "risk_level": "high",
+        "evidence_refs": [
+          "scan://file/agentos/store/migrations/v010_add_user_credentials_table.sql",
+          "doc://db_schema/credentials_table_spec"
+        ]
+      },
+      {
+        "node_id": "node_0007",
+        "node_type": "action_plan",
+        "label": "Plan: create_rollback_script",
+        "description": "Create rollback migration SQL script",
+        "command_ref": "create_rollback_script",
+        "effects": [
+          "write",
+          "data"
+        ],
+        "risk_level": "critical",
+        "evidence_refs": [
+          "scan://file/agentos/store/migrations/v010_rollback.sql",
+          "doc://operations/rollback_procedures"
+        ]
+      },
+      {
+        "node_id": "node_0008",
+        "node_type": "action_plan",
+        "label": "Plan: implement_model",
+        "description": "Create ORM model for credentials table",
+        "command_ref": "implement_model",
+        "effects": [
+          "write"
+        ],
+        "risk_level": "medium",
+        "evidence_refs": [
+          "scan://file/agentos/models/user_credentials.py"
+        ]
+      },
+      {
+        "node_id": "node_0009",
+        "node_type": "action_plan",
+        "label": "Plan: implement_service",
+        "description": "Implement credentials service with encryption",
+        "command_ref": "implement_service",
+        "effects": [
+          "write",
+          "security"
+        ],
+        "risk_level": "high",
+        "evidence_refs": [
+          "scan://file/agentos/services/credentials_service.py",
+          "doc://security/encryption_standards"
+        ]
+      },
+      {
+        "node_id": "node_0010",
+        "node_type": "action_plan",
+        "label": "Plan: write_migration_tests",
+        "description": "Write integration tests for migration",
+        "command_ref": "write_migration_tests",
+        "effects": [
+          "write"
+        ],
+        "risk_level": "medium",
+        "evidence_refs": [
+          "scan://file/tests/integration/test_credentials_migration.py"
+        ]
+      },
+      {
+        "node_id": "node_0011",
+        "node_type": "review_checkpoint",
+        "label": "Pre-execution Review",
+        "description": "Review checkpoint before execution",
+        "review_criteria": [
+          "security",
+          "data",
+          "architecture",
+          "release",
+          "compliance"
+        ],
+        "evidence_refs": [
+          "intent://intent_example_high_risk/risk/requires_review"
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "edge_id": "edge_0001",
+        "from_node": "node_0001",
+        "to_node": "node_0002",
+        "edge_type": "sequential"
+      },
+      {
+        "edge_id": "edge_0002",
+        "from_node": "node_0002",
+        "to_node": "node_0003",
+        "edge_type": "sequential"
+      },
+      {
+        "edge_id": "edge_0003",
+        "from_node": "node_0003",
+        "to_node": "node_0004",
+        "edge_type": "sequential"
+      },
+      {
+        "edge_id": "edge_0004",
+        "from_node": "node_0004",
+        "to_node": "node_0005",
+        "edge_type": "sequential"
+      },
+      {
+        "edge_id": "edge_0005",
+        "from_node": "node_0005",
+        "to_node": "node_0006",
+        "edge_type": "parallel"
+      },
+      {
+        "edge_id": "edge_0006",
+        "from_node": "node_0005",
+        "to_node": "node_0007",
+        "edge_type": "parallel"
+      },
+      {
+        "edge_id": "edge_0007",
+        "from_node": "node_0005",
+        "to_node": "node_0008",
+        "edge_type": "parallel"
+      },
+      {
+        "edge_id": "edge_0008",
+        "from_node": "node_0005",
+        "to_node": "node_0009",
+        "edge_type": "parallel"
+      },
+      {
+        "edge_id": "edge_0009",
+        "from_node": "node_0005",
+        "to_node": "node_0010",
+        "edge_type": "parallel"
+      },
+      {
+        "edge_id": "edge_0010",
+        "from_node": "node_0006",
+        "to_node": "node_0011",
+        "edge_type": "sequential"
+      },
+      {
+        "edge_id": "edge_0011",
+        "from_node": "node_0007",
+        "to_node": "node_0011",
+        "edge_type": "sequential"
+      },
+      {
+        "edge_id": "edge_0012",
+        "from_node": "node_0008",
+        "to_node": "node_0011",
+        "edge_type": "sequential"
+      },
+      {
+        "edge_id": "edge_0013",
+        "from_node": "node_0009",
+        "to_node": "node_0011",
+        "edge_type": "sequential"
+      },
+      {
+        "edge_id": "edge_0014",
+        "from_node": "node_0010",
+        "to_node": "node_0011",
+        "edge_type": "sequential"
+      }
+    ],
+    "swimlanes": [
+      {
+        "swimlane_id": "swimlane_database_engineer",
+        "agent_id": "database_engineer",
+        "role": "implementer",
+        "node_refs": [
+          "node_0006",
+          "node_0007",
+          "node_0008",
+          "node_0009",
+          "node_0010"
+        ]
+      },
+      {
+        "swimlane_id": "swimlane_security_engineer",
+        "agent_id": "security_engineer",
+        "role": "reviewer",
+        "node_refs": [
+          "node_0006",
+          "node_0007",
+          "node_0008",
+          "node_0009",
+          "node_0010"
+        ]
+      },
+      {
+        "swimlane_id": "swimlane_sre_engineer",
+        "agent_id": "sre_engineer",
+        "role": "validator",
+        "node_refs": [
+          "node_0006",
+          "node_0007",
+          "node_0008",
+          "node_0009",
+          "node_0010"
+        ]
+      }
+    ],
+    "lineage": {
+      "derived_from_intent": "intent_example_high_risk",
+      "intent_checksum": "c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2",
+      "dry_executor_version": "0.10.0"
+    },
+    "checksum": "8eae56c0b2cb32ac162a2b101cb6fcd912b9c7a3f4722d69a6538a21123d35ca"
+  },
+  "patch_plan": {
+    "plan_id": "patchplan_37a2a7dce5a8a47d",
+    "schema_version": "0.10.0",
+    "intent_id": "intent_example_high_risk",
+    "created_at": "2026-01-25T10:21:41.567570Z",
+    "files": [
+      {
+        "path": "agentos/store/migrations/v010_add_user_credentials_table.sql",
+        "action": "modify",
+        "rationale": "Modify agentos/store/migrations/v010_add_user_credentials_table.sql to: Add secure user credentials storage with proper encryption and migration",
+        "risk": "critical",
+        "evidence_refs": [
+          "doc://db_schema/credentials_table_spec",
+          "intent://intent_example_high_risk/scope/targets/files/agentos/store/migrations/v010_add_user_credentials_table.sql",
+          "scan://file/agentos/store/migrations/v010_add_user_credentials_table.sql"
+        ],
+        "lock_intent": {
+          "mode": "exclusive",
+          "scope": "file",
+          "reason": "Exclusive lock needed for modification"
+        },
+        "estimated_impact": "critical"
+      },
+      {
+        "path": "agentos/store/migrations/v010_rollback.sql",
+        "action": "modify",
+        "rationale": "Modify agentos/store/migrations/v010_rollback.sql to: Add secure user credentials storage with proper encryption and migration",
+        "risk": "critical",
+        "evidence_refs": [
+          "scan://file/agentos/store/migrations/v010_rollback.sql",
+          "intent://intent_example_high_risk/scope/targets/files/agentos/store/migrations/v010_rollback.sql",
+          "doc://operations/rollback_procedures"
+        ],
+        "lock_intent": {
+          "mode": "exclusive",
+          "scope": "file",
+          "reason": "Exclusive lock needed for modification"
+        },
+        "estimated_impact": "critical"
+      },
+      {
+        "path": "agentos/models/user_credentials.py",
+        "action": "modify",
+        "rationale": "Modify agentos/models/user_credentials.py to: Add secure user credentials storage with proper encryption and migration",
+        "risk": "critical",
+        "evidence_refs": [
+          "scan://file/agentos/models/user_credentials.py",
+          "intent://intent_example_high_risk/scope/targets/files/agentos/models/user_credentials.py"
+        ],
+        "lock_intent": {
+          "mode": "exclusive",
+          "scope": "file",
+          "reason": "Exclusive lock needed for modification"
+        },
+        "estimated_impact": "critical"
+      },
+      {
+        "path": "agentos/services/credentials_service.py",
+        "action": "modify",
+        "rationale": "Modify agentos/services/credentials_service.py to: Add secure user credentials storage with proper encryption and migration",
+        "risk": "critical",
+        "evidence_refs": [
+          "doc://security/encryption_standards",
+          "scan://file/agentos/services/credentials_service.py",
+          "intent://intent_example_high_risk/scope/targets/files/agentos/services/credentials_service.py"
+        ],
+        "lock_intent": {
+          "mode": "exclusive",
+          "scope": "file",
+          "reason": "Exclusive lock needed for modification"
+        },
+        "estimated_impact": "critical"
+      },
+      {
+        "path": "tests/integration/test_credentials_migration.py",
+        "action": "modify",
+        "rationale": "Modify tests/integration/test_credentials_migration.py to: Add secure user credentials storage with proper encryption and migration",
+        "risk": "critical",
+        "evidence_refs": [
+          "intent://intent_example_high_risk/scope/targets/files/tests/integration/test_credentials_migration.py",
+          "scan://file/tests/integration/test_credentials_migration.py"
+        ],
+        "lock_intent": {
+          "mode": "exclusive",
+          "scope": "file",
+          "reason": "Exclusive lock needed for modification"
+        },
+        "estimated_impact": "critical"
+      }
+    ],
+    "estimated_diffs": [
+      {
+        "file_path": "agentos/store/migrations/v010_add_user_credentials_table.sql",
+        "diff_hash_placeholder": "placeholder_9443fd45defeb107",
+        "intent_summary": "Changes to agentos/store/migrations/v010_add_user_credentials_table.sql for: Add secure user credentials storage with proper encryption and migration",
+        "estimated_lines_changed": {
+          "added": 10,
+          "removed": 5,
+          "modified": 20
+        }
+      },
+      {
+        "file_path": "agentos/store/migrations/v010_rollback.sql",
+        "diff_hash_placeholder": "placeholder_917d8c1c2f12cb53",
+        "intent_summary": "Changes to agentos/store/migrations/v010_rollback.sql for: Add secure user credentials storage with proper encryption and migration",
+        "estimated_lines_changed": {
+          "added": 10,
+          "removed": 5,
+          "modified": 20
+        }
+      },
+      {
+        "file_path": "agentos/models/user_credentials.py",
+        "diff_hash_placeholder": "placeholder_9a1e9f77d8b0da56",
+        "intent_summary": "Changes to agentos/models/user_credentials.py for: Add secure user credentials storage with proper encryption and migration",
+        "estimated_lines_changed": {
+          "added": 10,
+          "removed": 5,
+          "modified": 20
+        }
+      },
+      {
+        "file_path": "agentos/services/credentials_service.py",
+        "diff_hash_placeholder": "placeholder_79fddd3f12454927",
+        "intent_summary": "Changes to agentos/services/credentials_service.py for: Add secure user credentials storage with proper encryption and migration",
+        "estimated_lines_changed": {
+          "added": 10,
+          "removed": 5,
+          "modified": 20
+        }
+      },
+      {
+        "file_path": "tests/integration/test_credentials_migration.py",
+        "diff_hash_placeholder": "placeholder_c79914adeb4b763d",
+        "intent_summary": "Changes to tests/integration/test_credentials_migration.py for: Add secure user credentials storage with proper encryption and migration",
+        "estimated_lines_changed": {
+          "added": 10,
+          "removed": 5,
+          "modified": 20
+        }
+      }
+    ],
+    "constraints": {
+      "no_exec": true,
+      "no_fs_write": true,
+      "no_fabrication": true
+    },
+    "unknowns": [],
+    "checksum": "d0502bbf629c1ffe39ac36b2897d657204bc8cb4debe2bdab2a5149769597be0"
+  },
+  "commit_plan": {
+    "plan_id": "commitplan_37a2a7dce5a8a47d",
+    "schema_version": "0.10.0",
+    "intent_id": "intent_example_high_risk",
+    "created_at": "2026-01-25T10:21:41.567652Z",
+    "commits": [
+      {
+        "commit_id": "commit_0001",
+        "title": "feat(agentos): update 4 file(s)",
+        "scope": "agentos",
+        "files": [
+          "agentos/store/migrations/v010_add_user_credentials_table.sql",
+          "agentos/store/migrations/v010_rollback.sql",
+          "agentos/models/user_credentials.py",
+          "agentos/services/credentials_service.py"
+        ],
+        "rationale": "Grouped 4 files from agentos directory",
+        "depends_on": [],
+        "risk": "critical",
+        "evidence_refs": [
+          "doc://db_schema/credentials_table_spec",
+          "scan://file/agentos/services/credentials_service.py",
+          "doc://security/encryption_standards",
+          "intent://intent_example_high_risk/scope/targets/files/agentos/store/migrations/v010_rollback.sql",
+          "intent://intent_example_high_risk/scope/targets/files/agentos/store/migrations/v010_add_user_credentials_table.sql",
+          "scan://file/agentos/store/migrations/v010_add_user_credentials_table.sql",
+          "scan://file/agentos/models/user_credentials.py",
+          "scan://file/agentos/store/migrations/v010_rollback.sql",
+          "doc://operations/rollback_procedures",
+          "intent://intent_example_high_risk/scope/targets/files/agentos/models/user_credentials.py",
+          "intent://intent_example_high_risk/scope/targets/files/agentos/services/credentials_service.py"
+        ],
+        "rollback_strategy": "requires_manual",
+        "estimated_review_time": "extended",
+        "tags": [
+          "security",
+          "data"
+        ]
+      },
+      {
+        "commit_id": "commit_0002",
+        "title": "feat(tests): update 1 file(s)",
+        "scope": "tests",
+        "files": [
+          "tests/integration/test_credentials_migration.py"
+        ],
+        "rationale": "Grouped 1 files from tests directory",
+        "depends_on": [
+          "commit_0001"
+        ],
+        "risk": "critical",
+        "evidence_refs": [
+          "intent://intent_example_high_risk/scope/targets/files/tests/integration/test_credentials_migration.py",
+          "scan://file/tests/integration/test_credentials_migration.py"
+        ],
+        "rollback_strategy": "requires_manual",
+        "estimated_review_time": "extended",
+        "tags": [
+          "security",
+          "tests",
+          "data"
+        ]
+      }
+    ],
+    "rules_applied": [],
+    "metadata": {
+      "total_files": 5,
+      "max_files_per_commit": 4,
+      "respects_max_commits_budget": true,
+      "commit_dag_depth": 2
+    },
+    "freeze_checksum": "a8c09dda485dde71124d613dfd856c40f08f8d9a4ef86536332414db65574ad1"
+  },
+  "review_pack_stub": {
+    "risk_summary": {
+      "dominant_risk": "critical",
+      "risk_factors": [
+        "Database schema change (irreversible without proper rollback)",
+        "Sensitive user credentials storage",
+        "Encryption key management required",
+        "Production data at risk if migration fails"
+      ],
+      "mitigation_notes": [
+        "Require multiple reviewers for approval",
+        "Conduct thorough testing in staging environment",
+        "Prepare rollback plan before deployment",
+        "Monitor system closely after deployment"
+      ]
+    },
+    "requires_review": [
+      "architecture",
+      "compliance",
+      "data",
+      "release",
+      "security"
+    ],
+    "evidence_coverage": {
+      "total_nodes": 11,
+      "nodes_with_evidence": 11,
+      "coverage_percentage": 100.0,
+      "gaps": []
+    },
+    "estimated_review_time": "extended"
+  },
+  "audit_log": [
+    {
+      "timestamp": "2026-01-25T10:21:41.567349Z",
+      "decision_type": "graph_structure",
+      "decision": "Starting dry execution planning",
+      "rationale": "Processing intent intent_example_high_risk with risk level high"
+    },
+    {
+      "timestamp": "2026-01-25T10:21:41.567504Z",
+      "decision_type": "graph_structure",
+      "decision": "Built execution graph with 11 nodes",
+      "rationale": "Graph structure derived from intent workflows and commands"
+    },
+    {
+      "timestamp": "2026-01-25T10:21:41.567619Z",
+      "decision_type": "file_inclusion",
+      "decision": "Planned changes for 5 files",
+      "rationale": "Files from intent scope.targets.files",
+      "evidence_refs": [
+        "scan://file/agentos/services/credentials_service.py",
+        "doc://security/encryption_standards",
+        "scan://file/agentos/store/migrations/v010_add_user_credentials_table.sql",
+        "doc://operations/migration_playbook",
+        "threat_model://credentials_storage",
+        "scan://file/tests/integration/test_credentials_migration.py",
+        "doc://db_schema/credentials_table_spec",
+        "scan://file/agentos/models/user_credentials.py",
+        "scan://file/agentos/store/migrations/v010_rollback.sql",
+        "doc://operations/rollback_procedures"
+      ]
+    },
+    {
+      "timestamp": "2026-01-25T10:21:41.567682Z",
+      "decision_type": "commit_grouping",
+      "decision": "Grouped into 2 commits",
+      "rationale": "Respects max_commits budget: True"
+    },
+    {
+      "timestamp": "2026-01-25T10:21:41.567708Z",
+      "decision_type": "risk_assessment",
+      "decision": "Dominant risk: critical",
+      "rationale": "Risk determined from intent and planned changes"
+    }
+  ],
+  "metadata": {
+    "dry_executor_version": "0.10.0",
+    "execution_mode": "dry_run",
+    "constraints_enforced": [
+      "DE1_no_exec",
+      "DE2_no_fs_write",
+      "DE3_no_fabrication",
+      "DE4_evidence_required",
+      "DE5_high_risk_review",
+      "DE6_freezable"
+    ],
+    "warnings": [],
+    "processing_time_ms": 0
+  },
+  "lineage": {
+    "derived_from": [
+      {
+        "type": "intent",
+        "id": "intent_example_high_risk",
+        "checksum": "c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2"
+      }
+    ],
+    "generation_context": {
+      "environment": "dry_executor_v0.10"
+    }
+  },
+  "checksum": "2a5a0b361ce5e39687d5f7a7b9bdb36d655c1904a430c7c19283bf05fb155dc8"
+}

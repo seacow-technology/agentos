@@ -1,0 +1,186 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://agentos.dev/schemas/extensions/manifest.schema.json",
+  "title": "AgentOS Extension Manifest",
+  "description": "Schema for AgentOS extension manifest.json files",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "version",
+    "description",
+    "author",
+    "license",
+    "runtime",
+    "python",
+    "capabilities",
+    "platforms",
+    "install",
+    "docs"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique extension identifier (e.g., 'tools.postman')",
+      "pattern": "^[a-zA-Z0-9._-]+$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable extension name"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version (e.g., '0.1.0')",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the extension"
+    },
+    "author": {
+      "type": "string",
+      "description": "Extension author"
+    },
+    "license": {
+      "type": "string",
+      "description": "License identifier (e.g., 'Apache-2.0')"
+    },
+    "runtime": {
+      "type": "string",
+      "enum": ["python"],
+      "description": "Extension runtime type. Currently only 'python' is supported."
+    },
+    "python": {
+      "type": "object",
+      "description": "Python runtime configuration",
+      "required": ["version"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "Python version (e.g., '3.11')",
+          "pattern": "^\\d+\\.\\d+$"
+        },
+        "dependencies": {
+          "type": "array",
+          "description": "List of Python dependencies (e.g., ['requests>=2.28.0'])",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      }
+    },
+    "external_bins": {
+      "type": "array",
+      "description": "List of external binaries required. Must be empty for Python-only extensions.",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "entrypoint": {
+      "type": ["string", "null"],
+      "description": "Entrypoint script (legacy). Must be null for Python-only extensions.",
+      "default": null
+    },
+    "icon": {
+      "type": ["string", "null"],
+      "description": "Path to icon file",
+      "default": null
+    },
+    "capabilities": {
+      "type": "array",
+      "description": "List of capabilities provided by the extension",
+      "items": {
+        "type": "object",
+        "required": ["type", "name", "description"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["slash_command", "tool", "agent", "workflow"],
+            "description": "Type of capability"
+          },
+          "name": {
+            "type": "string",
+            "description": "Capability name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Capability description"
+          },
+          "config": {
+            "type": "object",
+            "description": "Optional capability configuration"
+          }
+        }
+      }
+    },
+    "permissions_required": {
+      "type": "array",
+      "description": "List of required permissions",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "platforms": {
+      "type": "array",
+      "description": "Supported platforms",
+      "items": {
+        "type": "string",
+        "enum": ["linux", "darwin", "win32", "all"]
+      },
+      "minItems": 1
+    },
+    "install": {
+      "type": "object",
+      "description": "Installation configuration",
+      "required": ["plan"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "description": "Installation mode",
+          "default": "agentos_managed"
+        },
+        "plan": {
+          "type": "string",
+          "description": "Path to install plan YAML"
+        }
+      }
+    },
+    "docs": {
+      "type": "object",
+      "description": "Documentation references",
+      "required": ["usage"],
+      "properties": {
+        "usage": {
+          "type": "string",
+          "description": "Path to usage documentation"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "runtime": {
+            "const": "python"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "external_bins": {
+            "maxItems": 0,
+            "description": "Python-only extensions cannot have external_bins. See ADR-EXT-002."
+          },
+          "entrypoint": {
+            "const": null,
+            "description": "Python-only extensions cannot have an entrypoint. See ADR-EXT-002."
+          }
+        }
+      }
+    }
+  ]
+}

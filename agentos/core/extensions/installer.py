@@ -60,7 +60,7 @@ class ZipInstaller:
         Args:
             zip_path: Path to zip file
             target_dir: Target directory for extraction
-            root_dir: Root directory inside zip to strip
+            root_dir: Root directory inside zip to strip (empty string if files are in zip root)
 
         Raises:
             InstallationError: If extraction fails
@@ -164,14 +164,20 @@ class ZipInstaller:
             logger.error(f"Validation failed: {e}")
             raise
 
-        # Check if already installed
+        # Check if installation directory exists
         install_dir = self._get_extension_dir(manifest.id)
         if install_dir.exists():
-            logger.warning(f"Extension already installed: {manifest.id}")
-            raise InstallationError(
-                f"Extension '{manifest.id}' is already installed. "
-                f"Please uninstall it first."
-            )
+            logger.warning(f"Extension directory already exists: {manifest.id}, will overwrite")
+            # Clean up existing directory (might be from failed installation)
+            try:
+                shutil.rmtree(install_dir)
+                logger.info(f"Cleaned up existing directory: {install_dir}")
+            except Exception as e:
+                logger.error(f"Failed to clean up existing directory: {e}")
+                raise InstallationError(
+                    f"Extension directory '{install_dir}' already exists and cannot be cleaned up. "
+                    f"Please manually remove it first."
+                )
 
         # Extract to installation directory
         try:

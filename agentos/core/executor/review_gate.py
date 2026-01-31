@@ -8,6 +8,8 @@ import json
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
+from agentos.core.time import utc_now_iso
+
 
 
 class ReviewGate:
@@ -53,7 +55,7 @@ class ReviewGate:
             "reason": reason,
             "details": details,
             "status": "pending",
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": utc_now_iso(),
             "approved_at": None,
             "approved_by": None
         }
@@ -116,7 +118,7 @@ class ReviewGate:
             approval_request = json.load(f)
         
         approval_request["status"] = "approved"
-        approval_request["approved_at"] = datetime.now(timezone.utc).isoformat()
+        approval_request["approved_at"] = utc_now_iso()
         approval_request["approved_by"] = approved_by
         if notes:
             approval_request["notes"] = notes
@@ -153,7 +155,7 @@ class ReviewGate:
             approval_request = json.load(f)
         
         approval_request["status"] = "rejected"
-        approval_request["rejected_at"] = datetime.now(timezone.utc).isoformat()
+        approval_request["rejected_at"] = utc_now_iso()
         approval_request["rejected_by"] = rejected_by
         approval_request["rejection_reason"] = reason
         

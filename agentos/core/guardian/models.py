@@ -14,6 +14,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Dict, Literal
 import uuid
+from agentos.core.time import utc_now_iso
+
 
 
 @dataclass
@@ -40,7 +42,7 @@ class GuardianReview:
     rule_snapshot_id: str | None                            # 规则快照 ID（用于审计）
     evidence: Dict[str, Any]                                # 验收证据（JSON 结构）
     created_at: str = field(                                # 创建时间（ISO8601）
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+        default_factory=lambda: utc_now_iso()
     )
 
     def __post_init__(self):
@@ -176,5 +178,5 @@ class GuardianReview:
             confidence=data["confidence"],
             rule_snapshot_id=data.get("rule_snapshot_id"),
             evidence=data.get("evidence", {}),
-            created_at=data.get("created_at", datetime.now(timezone.utc).isoformat())
+            created_at=data.get("created_at", utc_now_iso())
         )

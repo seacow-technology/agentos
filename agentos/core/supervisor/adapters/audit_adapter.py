@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ..models import Decision, Finding
+from agentos.core.time import utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +118,7 @@ class AuditAdapter:
         payload = {
             "error": error_message,
             "context": context or {},
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": utc_now_iso(),
         }
 
         return self.write_audit_event(
@@ -169,7 +171,7 @@ class AuditAdapter:
                     level,
                     event_type,
                     payload_json,
-                    datetime.now(timezone.utc).isoformat(),
+                    utc_now_iso(),
                 ),
             )
 

@@ -1,0 +1,15 @@
+name: minimal-demo
+description: Minimal multi-repo example with two local repositories
+
+repos:
+  - name: repoA
+    path: ./repoA
+    role: code
+    writable: true
+    branch: main
+
+  - name: repoB
+    path: ./repoB
+    role: code
+    writable: true
+    branch: main

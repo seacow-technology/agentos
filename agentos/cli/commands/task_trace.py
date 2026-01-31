@@ -32,6 +32,8 @@ from agentos.core.task.artifact_service import TaskArtifactService, ArtifactRefT
 from agentos.core.task.dependency_service import TaskDependencyService
 from agentos.core.project.repository import ProjectRepository
 from agentos.store import get_db, get_db_path
+from agentos.core.time import utc_now
+
 
 console = Console()
 
@@ -43,7 +45,7 @@ def _format_relative_time(iso_timestamp: Optional[str]) -> str:
 
     try:
         ts = datetime.fromisoformat(iso_timestamp.replace('Z', '+00:00'))
-        now = datetime.now(timezone.utc)
+        now = utc_now()
 
         if ts.tzinfo is None:
             ts = ts.replace(tzinfo=timezone.utc)

@@ -24,7 +24,7 @@ class ContentLineageTracker:
 
         Args:
             registry: ContentRegistry instance (creates new if None)
-            db_path: Path to database file (defaults to store/registry.sqlite)
+            db_path: Path to database file (defaults to component_db_path("agentos"))
         """
         self.registry = registry or ContentRegistry()
         self.db_path = db_path or get_db_path()

@@ -1,0 +1,105 @@
+{
+  "id": "code_review",
+  "type": "workflow",
+  "version": "0.6.0",
+  "status": "draft",
+  "metadata": {
+    "created_at": "2026-01-25T05:37:21.334609+00:00",
+    "checksum": "a0b0c1390b01f5896acedda5a192cc4940d5383558696a3ae83aff04a5eb1fce",
+    "is_root": true,
+    "tags": [
+      "code-review",
+      "quality-gate",
+      "governance"
+    ]
+  },
+  "spec": {
+    "id": "code_review",
+    "version": "0.6.0",
+    "category": "governance",
+    "description": "Review code changes for quality and risk.\nThis workflow provides a structured approach to code review, focusing on change analysis, risk assessment, and actionable improvement suggestions.\n",
+    "phases": [
+      {
+        "id": "diff_analysis",
+        "description": "Analyze code differences and changes",
+        "requires": [
+          "diff",
+          "context"
+        ],
+        "produces": [
+          "change_summary"
+        ],
+        "allows_questions": false,
+        "risk_level": "low"
+      },
+      {
+        "id": "risk_assessment",
+        "description": "Assess risks of the changes",
+        "requires": [
+          "change_summary"
+        ],
+        "produces": [
+          "risk_report"
+        ],
+        "allows_questions": true,
+        "risk_level": "high"
+      },
+      {
+        "id": "improvement_suggestions",
+        "description": "Provide actionable improvement suggestions",
+        "requires": [
+          "risk_report"
+        ],
+        "produces": [
+          "suggestions"
+        ],
+        "allows_questions": false,
+        "risk_level": "medium"
+      }
+    ],
+    "interaction": {
+      "default_mode": "question_only",
+      "question_policy": {
+        "trigger_when": [
+          "risk_level == \"critical\"",
+          "confidence < 0.6",
+          "breaking_change_detected"
+        ]
+      },
+      "allowed_phases": [
+        "risk_assessment"
+      ]
+    },
+    "constraints": {
+      "execution": "forbidden",
+      "side_effects": "forbidden",
+      "requires_approval": false
+    },
+    "lineage": {
+      "introduced_in": "v0.6",
+      "derived_from": null,
+      "change_reason": null
+    },
+    "metadata": {
+      "tags": [
+        "code-review",
+        "quality-gate",
+        "governance"
+      ],
+      "related_workflows": [
+        "security_review",
+        "performance_analysis"
+      ],
+      "use_cases": [
+        "Pull request / merge request review",
+        "Quality gate enforcement",
+        "Pre-deployment validation"
+      ],
+      "anti_use_cases": [
+        "Security-specific review (use security_review)",
+        "Performance analysis (use performance_analysis)",
+        "Initial code creation"
+      ]
+    }
+  }
+}

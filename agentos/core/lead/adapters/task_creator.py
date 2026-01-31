@@ -15,6 +15,8 @@ import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
+from agentos.core.time import utc_now
+
 
 try:
     from ulid import ULID
@@ -106,7 +108,7 @@ class LeadTaskCreator:
 
         # 5. dry_run: 模拟创建
         if dry_run:
-            task_id = f"DRY_RUN_{ULID.from_datetime(datetime.now(timezone.utc))}"
+            task_id = f"DRY_RUN_{ULID.from_datetime(utc_now())}"
             logger.info(
                 f"[DRY_RUN] Would create task for finding {finding.fingerprint}: "
                 f"title='{title}', state={initial_state}"

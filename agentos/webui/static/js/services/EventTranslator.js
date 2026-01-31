@@ -1,21 +1,21 @@
 /**
- * EventTranslator - 将技术事件转换为用户友好的叙事文本
+ * EventTranslator - 将技术Event转换为User友好的叙事文本
  *
- * PR-V5: Timeline View - 叙事时间线
+ * PR-V5: Timeline View - Narrative timeline
  *
- * 功能:
- * - 将19种Runner事件类型翻译为人话
- * - 提供图标、文本和级别（info/warning/error/success）
- * - 支持特殊情况和异常解释
+ * Features:
+ * - 将19种RunnerEventType翻译为人话
+ * - Provide icons, text, and levels（info/warning/error/success）
+ * - Support special cases and exception explanations
  *
  * Usage:
  * ```javascript
  * const friendlyEvent = EventTranslator.translate(rawEvent);
- * // { icon: 'rocket_launch', text: '启动任务执行器', level: 'info', ... }
+ * // { icon: 'rocket_launch', text: 'Start task executor', level: 'info', ... }
  * ```
  */
 
-// 阶段图标映射
+// phase图标映射
 const PHASE_ICONS = {
     'planning': 'assignment',
     'executing': 'settings',
@@ -25,25 +25,25 @@ const PHASE_ICONS = {
     'blocked': 'construction'
 };
 
-// 阶段中文名称映射
+// phase中文Name映射
 const PHASE_NAMES = {
-    'planning': '规划',
-    'executing': '执行',
-    'verifying': '验证',
-    'done': '完成',
-    'failed': '失败',
-    'blocked': '阻塞'
+    'planning': 'Planning',
+    'executing': 'Executing',
+    'verifying': 'Verifying',
+    'done': 'Complete',
+    'failed': 'Failed',
+    'blocked': 'Blocked'
 };
 
-// 事件类型模板映射（19种核心事件类型）
+// EventType模板映射（19种核心EventType）
 const EVENT_TEMPLATES = {
-    // ========== Runner 生命周期 ==========
+    // ========== Runner Lifecycle ==========
     'runner_spawn': {
         icon: 'rocket_launch',
         text: (payload) => {
             const pid = payload?.runner_pid || 'unknown';
             const version = payload?.runner_version || 'v1';
-            return `启动任务执行器（PID: ${pid}, Version: ${version}）`;
+            return `Start task executor（PID: ${pid}, Version: ${version}）`;
         },
         level: 'info'
     },
@@ -52,21 +52,21 @@ const EVENT_TEMPLATES = {
         icon: 'flag',
         text: (payload) => {
             const exitCode = payload?.exit_code ?? 0;
-            const reason = payload?.reason || payload?.explanation || '正常退出';
+            const reason = payload?.reason || payload?.explanation || 'Normal exit';
             return exitCode === 0
-                ? `执行器正常退出（${reason}）`
-                : `执行器异常退出（退出码: ${exitCode}, ${reason}）`;
+                ? `执行器Normal exit（${reason}）`
+                : `Executor exited abnormally（Exit code: ${exitCode}, ${reason}）`;
         },
         level: (payload) => (payload?.exit_code === 0 ? 'success' : 'error')
     },
 
-    // ========== 阶段转换 ==========
+    // ========== phase转换 ==========
     'phase_enter': {
         icon: (payload) => PHASE_ICONS[payload?.phase] || 'place',
         text: (payload) => {
             const phase = payload?.phase || 'unknown';
             const phaseName = PHASE_NAMES[phase] || phase;
-            return `进入 ${phaseName} 阶段`;
+            return `Enter ${phaseName} phase`;
         },
         level: 'info'
     },
@@ -81,7 +81,7 @@ const EVENT_TEMPLATES = {
         text: (payload) => {
             const phase = payload?.phase || 'unknown';
             const phaseName = PHASE_NAMES[phase] || phase;
-            return `完成 ${phaseName} 阶段`;
+            return `Complete ${phaseName} phase`;
         },
         level: (payload) => {
             const phase = payload?.phase;
@@ -91,12 +91,12 @@ const EVENT_TEMPLATES = {
         }
     },
 
-    // ========== Work Items（子任务派发） ==========
+    // ========== Work Items（Subtask派发） ==========
     'WORK_ITEMS_EXTRACTED': {
         icon: 'inventory_2',
         text: (payload) => {
             const count = payload?.count || payload?.total_items || 0;
-            return `提取到 ${count} 个子任务待执行`;
+            return `Extracted ${count} subtasks pending`;
         },
         level: 'info'
     },
@@ -105,8 +105,8 @@ const EVENT_TEMPLATES = {
         icon: 'outbox',
         text: (payload) => {
             const itemId = payload?.work_item_id || payload?.span_id || 'unknown';
-            const workType = payload?.work_type || '子任务';
-            return `派发子任务 #${itemId}（类型: ${workType}）`;
+            const workType = payload?.work_type || 'Subtask';
+            return `Dispatch subtask #${itemId}（Type: ${workType}）`;
         },
         level: 'info'
     },
@@ -115,8 +115,8 @@ const EVENT_TEMPLATES = {
         icon: 'play_arrow',
         text: (payload) => {
             const itemId = payload?.work_item_id || 'unknown';
-            const workType = payload?.work_type || '任务';
-            return `开始执行子任务 #${itemId}（${workType}）`;
+            const workType = payload?.work_type || 'Task';
+            return `Start executing subtask #${itemId}（${workType}）`;
         },
         level: 'info'
     },
@@ -125,7 +125,7 @@ const EVENT_TEMPLATES = {
         icon: 'play_arrow',
         text: (payload) => {
             const itemId = payload?.work_item_id || payload?.span_id || 'unknown';
-            return `子任务 #${itemId} 已启动`;
+            return `Subtask #${itemId} started`;
         },
         level: 'info'
     },
@@ -134,8 +134,8 @@ const EVENT_TEMPLATES = {
         icon: 'check_circle',
         text: (payload) => {
             const itemId = payload?.work_item_id || 'unknown';
-            const workType = payload?.work_type || '任务';
-            return `子任务 #${itemId} 完成（${workType}）`;
+            const workType = payload?.work_type || 'Task';
+            return `Subtask #${itemId} Complete（${workType}）`;
         },
         level: 'success'
     },
@@ -144,7 +144,7 @@ const EVENT_TEMPLATES = {
         icon: 'check_circle',
         text: (payload) => {
             const itemId = payload?.work_item_id || 'unknown';
-            return `子任务 #${itemId} 执行成功`;
+            return `Subtask #${itemId} executed successfully`;
         },
         level: 'success'
     },
@@ -153,7 +153,7 @@ const EVENT_TEMPLATES = {
         icon: 'check_circle',
         text: (payload) => {
             const itemId = payload?.work_item_id || payload?.span_id || 'unknown';
-            return `子任务 #${itemId} 已完成`;
+            return `Subtask #${itemId} Completed`;
         },
         level: 'success'
     },
@@ -162,8 +162,8 @@ const EVENT_TEMPLATES = {
         icon: 'cancel',
         text: (payload) => {
             const itemId = payload?.work_item_id || 'unknown';
-            const reason = payload?.reason || payload?.error || '执行失败';
-            return `子任务 #${itemId} 失败（${reason}）`;
+            const reason = payload?.reason || payload?.error || 'Execution failed';
+            return `Subtask #${itemId} Failed（${reason}）`;
         },
         level: 'error'
     },
@@ -172,18 +172,18 @@ const EVENT_TEMPLATES = {
         icon: 'cancel',
         text: (payload) => {
             const itemId = payload?.work_item_id || payload?.span_id || 'unknown';
-            const error = payload?.error || '未知错误';
-            return `子任务 #${itemId} 执行失败（${error}）`;
+            const error = payload?.error || 'Unknown error';
+            return `Subtask #${itemId} Execution failed（${error}）`;
         },
         level: 'error'
     },
 
-    // ========== Checkpoints（进度点） ==========
+    // ========== Checkpoints（Checkpoints） ==========
     'checkpoint_begin': {
         icon: 'save',
         text: (payload) => {
             const checkpointType = payload?.checkpoint_type || 'checkpoint';
-            return `开始创建进度点（${checkpointType}）`;
+            return `Start creating checkpoint（${checkpointType}）`;
         },
         level: 'info'
     },
@@ -196,8 +196,8 @@ const EVENT_TEMPLATES = {
                 ? Object.keys(payload.evidence_refs).length
                 : 0;
             return evidenceCount > 0
-                ? `保存进度点 ${checkpointId}（已验证 ${evidenceCount} 项证据）`
-                : `保存进度点 ${checkpointId}`;
+                ? `Save checkpoint ${checkpointId}（verified ${evidenceCount} evidence items）`
+                : `Save checkpoint ${checkpointId}`;
         },
         level: 'success'
     },
@@ -206,7 +206,7 @@ const EVENT_TEMPLATES = {
         icon: 'check_circle',
         text: (payload) => {
             const checkpointId = payload?.checkpoint_id || 'unknown';
-            return `进度点 ${checkpointId} 验证通过`;
+            return `Checkpoints ${checkpointId} verification passed`;
         },
         level: 'success'
     },
@@ -215,29 +215,29 @@ const EVENT_TEMPLATES = {
         icon: 'warning',
         text: (payload) => {
             const checkpointId = payload?.checkpoint_id || 'unknown';
-            const reason = payload?.reason || '数据不一致';
-            return `进度点 ${checkpointId} 验证失败（${reason}）`;
+            const reason = payload?.reason || 'Data inconsistency';
+            return `Checkpoints ${checkpointId} verification failed（${reason}）`;
         },
         level: 'warning'
     },
 
-    // ========== Evidence（证据收集） ==========
+    // ========== Evidence（Evidence collection） ==========
     'evidence_collected': {
         icon: 'attach_file',
         text: (payload) => {
             const evidenceType = payload?.evidence_type || 'evidence';
             const evidenceId = payload?.evidence_id || 'unknown';
-            return `收集证据：${evidenceType} (ID: ${evidenceId})`;
+            return `Collect evidence：${evidenceType} (ID: ${evidenceId})`;
         },
         level: 'info'
     },
 
-    // ========== Gates（检查点） ==========
+    // ========== Gates（Gates） ==========
     'gate_start': {
         icon: 'traffic',
         text: (payload) => {
             const gateType = payload?.gate_type || 'gate';
-            return `开始运行检查点：${gateType}`;
+            return `Start running gate：${gateType}`;
         },
         level: 'info'
     },
@@ -249,13 +249,13 @@ const EVENT_TEMPLATES = {
             const passed = payload?.passed;
 
             if (passed) {
-                return `检查点通过：${gateType}`;
+                return `Gate passed：${gateType}`;
             } else {
-                const reasonCode = payload?.reason_code || '未知原因';
+                const reasonCode = payload?.reason_code || 'Unknown reason';
                 const hint = payload?.hint || '';
                 return hint
-                    ? `检查点失败：${gateType}（${reasonCode} - ${hint}）`
-                    : `检查点失败：${gateType}（${reasonCode}）`;
+                    ? `Gate failed：${gateType}（${reasonCode} - ${hint}）`
+                    : `Gate failed：${gateType}（${reasonCode}）`;
             }
         },
         level: (payload) => payload?.passed ? 'success' : 'error'
@@ -268,22 +268,22 @@ const EVENT_TEMPLATES = {
             const passed = payload?.passed || payload?.success;
 
             if (passed) {
-                return `检查点验证通过：${gateType}`;
+                return `Gatesverification passed：${gateType}`;
             } else {
-                const reason = payload?.reason || payload?.error || '验证失败';
-                return `检查点验证失败：${gateType}（${reason}）`;
+                const reason = payload?.reason || payload?.error || 'verification failed';
+                return `Gatesverification failed：${gateType}（${reason}）`;
             }
         },
         level: (payload) => (payload?.passed || payload?.success) ? 'success' : 'error'
     },
 
-    // ========== Recovery（恢复） ==========
+    // ========== Recovery（Recovery） ==========
     'recovery_detected': {
         icon: 'refresh',
         text: (payload) => {
             const taskId = payload?.task_id || 'unknown';
-            const reason = payload?.reason || '检测到中断';
-            return `检测到任务中断（${reason}）`;
+            const reason = payload?.reason || 'Interruption detected';
+            return `检测到Task中断（${reason}）`;
         },
         level: 'warning'
     },
@@ -293,7 +293,7 @@ const EVENT_TEMPLATES = {
         text: (payload) => {
             const checkpointId = payload?.checkpoint_id || 'unknown';
             const phase = payload?.phase || 'unknown';
-            return `从进度点 ${checkpointId} 恢复继续（阶段: ${PHASE_NAMES[phase] || phase}）`;
+            return `从Checkpoints ${checkpointId} resumed（phase: ${PHASE_NAMES[phase] || phase}）`;
         },
         level: 'info'
     },
@@ -302,7 +302,7 @@ const EVENT_TEMPLATES = {
         icon: 'refresh',
         text: (payload) => {
             const taskId = payload?.task_id || 'unknown';
-            return `任务 ${taskId} 已重新加入队列`;
+            return `Task ${taskId} requeued`;
         },
         level: 'info'
     }
@@ -310,23 +310,23 @@ const EVENT_TEMPLATES = {
 
 export class EventTranslator {
     /**
-     * 将原始事件转换为用户友好的叙事事件
+     * 将原始Event转换为User友好的叙事Event
      *
-     * @param {Object} event - 原始事件对象
-     * @param {string} event.event_type - 事件类型
-     * @param {Object} event.payload - 事件载荷
-     * @param {string} event.created_at - 创建时间
-     * @param {number} event.seq - 事件序列号
-     * @returns {Object} 友好事件对象
+     * @param {Object} event - 原始Event对象
+     * @param {string} event.event_type - EventType
+     * @param {Object} event.payload - Event载荷
+     * @param {string} event.created_at - Created at
+     * @param {number} event.seq - Event序列号
+     * @returns {Object} 友好Event对象
      */
     static translate(event) {
         const template = EVENT_TEMPLATES[event.event_type];
 
         if (!template) {
-            // 未知事件类型，返回默认格式
+            // 未知EventType，返回默认格式
             return {
                 icon: 'assignment',
-                text: `事件: ${event.event_type}`,
+                text: `Event: ${event.event_type}`,
                 level: 'info',
                 timestamp: event.created_at,
                 seq: event.seq,
@@ -335,20 +335,20 @@ export class EventTranslator {
             };
         }
 
-        // 解析图标（可能是函数）
+        // Parse icon (may be function)
         const icon = typeof template.icon === 'function'
             ? template.icon(event.payload)
             : template.icon;
 
-        // 解析文本（必须是函数）
+        // Parse text (must be function)
         const text = template.text(event.payload);
 
-        // 解析级别（可能是函数）
+        // Parse level (may be function)
         const level = typeof template.level === 'function'
             ? template.level(event.payload)
             : template.level;
 
-        // 提取解释/提示
+        // Extract explanation/Tip
         const explanation = event.payload?.explanation
             || event.payload?.hint
             || event.payload?.reason
@@ -368,23 +368,23 @@ export class EventTranslator {
     }
 
     /**
-     * 批量翻译事件
+     * 批量翻译Event
      *
-     * @param {Array} events - 事件数组
-     * @returns {Array} 友好事件数组
+     * @param {Array} events - Event数组
+     * @returns {Array} 友好Event数组
      */
     static translateBatch(events) {
         return events.map(event => this.translate(event));
     }
 
     /**
-     * 检查事件是否应该节流（用于聚合）
+     * 检查EventShould throttle（用于聚合）
      *
-     * @param {string} eventType - 事件类型
-     * @returns {boolean} 是否应该节流
+     * @param {string} eventType - EventType
+     * @returns {boolean} Should throttle
      */
     static shouldThrottle(eventType) {
-        // Progress 类事件需要节流
+        // Progress 类Event需要节流
         const throttlePatterns = [
             /progress$/i,
             /heartbeat$/i,
@@ -395,10 +395,10 @@ export class EventTranslator {
     }
 
     /**
-     * 获取事件的显示优先级（用于排序）
+     * 获取Event的Show优先级（用于Sort）
      *
-     * @param {Object} event - 友好事件对象
-     * @returns {number} 优先级（数字越大优先级越高）
+     * @param {Object} event - 友好Event对象
+     * @returns {number} Priority (higher number = higher priority)
      */
     static getPriority(event) {
         const priorityMap = {
@@ -412,10 +412,10 @@ export class EventTranslator {
     }
 
     /**
-     * 判断是否为关键事件（不应被过滤）
+     * 判断是否为关键Event（不应被过滤）
      *
-     * @param {Object} event - 友好事件对象
-     * @returns {boolean} 是否为关键事件
+     * @param {Object} event - 友好Event对象
+     * @returns {boolean} 是否为关键Event
      */
     static isCritical(event) {
         const criticalLevels = ['error', 'warning'];
@@ -423,8 +423,8 @@ export class EventTranslator {
     }
 }
 
-// 导出常量供外部使用
+// Export constants for external use
 export { PHASE_ICONS, PHASE_NAMES, EVENT_TEMPLATES };
 
-// 默认导出
+// Default export
 export default EventTranslator;

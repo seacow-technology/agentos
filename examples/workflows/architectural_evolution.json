@@ -1,0 +1,111 @@
+{
+  "id": "architectural_evolution",
+  "type": "workflow",
+  "version": "0.6.0",
+  "status": "draft",
+  "metadata": {
+    "created_at": "2026-01-25T05:37:21.330141+00:00",
+    "checksum": "78093cd7fca75f04a470fbec0fd7f476d90faaf5dc49eec7e719498676e4e410",
+    "is_root": true,
+    "tags": [
+      "architecture",
+      "evolution",
+      "transformation"
+    ]
+  },
+  "spec": {
+    "id": "architectural_evolution",
+    "version": "0.6.0",
+    "category": "operations",
+    "description": "Guide large-scale architectural change.\nThis workflow manages major architectural transformations including driver analysis, target state definition, and migration strategy.\n",
+    "phases": [
+      {
+        "id": "evolution_drivers",
+        "description": "Identify and validate drivers for architectural change",
+        "requires": [
+          "current_architecture",
+          "pain_points"
+        ],
+        "produces": [
+          "drivers",
+          "justification"
+        ],
+        "allows_questions": true,
+        "risk_level": "high"
+      },
+      {
+        "id": "target_state",
+        "description": "Define target architecture state",
+        "requires": [
+          "drivers"
+        ],
+        "produces": [
+          "target_architecture"
+        ],
+        "allows_questions": true,
+        "risk_level": "high"
+      },
+      {
+        "id": "migration_strategy",
+        "description": "Create phased migration strategy",
+        "requires": [
+          "current_architecture",
+          "target_architecture"
+        ],
+        "produces": [
+          "migration_plan",
+          "risk_mitigation"
+        ],
+        "allows_questions": false,
+        "risk_level": "high"
+      }
+    ],
+    "interaction": {
+      "default_mode": "question_only",
+      "question_policy": {
+        "trigger_when": [
+          "drivers_unclear",
+          "multiple_target_options",
+          "high_business_impact"
+        ]
+      },
+      "allowed_phases": [
+        "evolution_drivers",
+        "target_state"
+      ]
+    },
+    "constraints": {
+      "execution": "forbidden",
+      "side_effects": "forbidden",
+      "requires_approval": false,
+      "max_duration_minutes": 480
+    },
+    "lineage": {
+      "introduced_in": "v0.6",
+      "derived_from": null,
+      "change_reason": null
+    },
+    "metadata": {
+      "tags": [
+        "architecture",
+        "evolution",
+        "transformation"
+      ],
+      "related_workflows": [
+        "system_design",
+        "maintenance_planning"
+      ],
+      "use_cases": [
+        "Technology stack migration",
+        "Monolith to microservices",
+        "Database migration",
+        "Cloud migration"
+      ],
+      "anti_use_cases": [
+        "Small refactorings (use refactoring)",
+        "Single feature implementation",
+        "Bug fixes"
+      ]
+    }
+  }
+}

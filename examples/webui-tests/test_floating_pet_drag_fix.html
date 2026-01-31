@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FloatingPet Drag Fix Test</title>
+
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- Lottie Web -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+
+    <!-- FloatingPet CSS -->
+    <link rel="stylesheet" href="/static/css/floating-pet.css?v=4">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f0f9ff;
+            border-left: 4px solid #3b82f6;
+            border-radius: 4px;
+        }
+
+        .status-item {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .status-item strong {
+            color: #1e40af;
+        }
+
+        .checklist {
+            margin: 20px 0;
+        }
+
+        .checklist h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .checklist-item {
+            padding: 10px;
+            margin: 8px 0;
+            background: #f9fafb;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+        }
+
+        .checklist-item::before {
+            content: "✓";
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background: #10b981;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            margin-right: 12px;
+            font-weight: bold;
+        }
+
+        .instructions {
+            margin: 20px 0;
+            padding: 20px;
+            background: #fef3c7;
+            border-radius: 8px;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .instructions h3 {
+            margin-top: 0;
+            color: #92400e;
+        }
+
+        .instructions ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin: 8px 0;
+            color: #78350f;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🐾 FloatingPet Drag Fix Verification</h1>
+        <p>Test page to verify all drag issues have been fixed.</p>
+
+        <div class="status">
+            <div class="status-item">
+                <strong>Version:</strong> v0.3.2 - Drag Fix Applied
+            </div>
+            <div class="status-item">
+                <strong>Fixes Applied:</strong> Pointer capture, threshold-based dragging, click separation
+            </div>
+            <div class="status-item">
+                <strong>Status:</strong> <span style="color: #10b981;">✓ Ready for testing</span>
+            </div>
+        </div>
+
+        <div class="checklist">
+            <h3>Fixed Issues:</h3>
+            <div class="checklist-item">Only FAB can start drag (pointerdown on FAB only)</div>
+            <div class="checklist-item">Pointer ID tracking (prevents multi-touch conflicts)</div>
+            <div class="checklist-item">Pointer capture/release properly handled</div>
+            <div class="checklist-item">6px drag threshold (prevents accidental drags)</div>
+            <div class="checklist-item">Click event blocked after drag in capture phase</div>
+            <div class="checklist-item">pointercancel handler added for cleanup</div>
+            <div class="checklist-item">CSS: user-select: none, touch-action: none</div>
+            <div class="checklist-item">Visual feedback: cursor grab/grabbing</div>
+        </div>
+
+        <div class="instructions">
+            <h3>📋 Testing Instructions:</h3>
+            <ol>
+                <li><strong>Look for the FAB:</strong> The floating pet button should appear in the bottom-right corner</li>
+                <li><strong>Check Lottie Animation:</strong> Click the FAB to open the panel - verify the cartoon animation displays</li>
+                <li><strong>Test Click:</strong> Click the FAB - panel should open/close (no dragging)</li>
+                <li><strong>Test Drag:</strong> Press and drag the FAB - it should move smoothly without triggering the panel</li>
+                <li><strong>Test Threshold:</strong> Click and move less than 6px - should register as click, not drag</li>
+                <li><strong>Test Snap:</strong> Drag and release - FAB should snap to the nearest edge</li>
+                <li><strong>Test Click Outside:</strong> Click anywhere else on the page - FAB should NOT move</li>
+                <li><strong>Test Menu After Drag:</strong> Drag the FAB, then release - panel should NOT open</li>
+                <li><strong>Test Touch:</strong> On mobile/tablet, test touch drag - should work smoothly</li>
+            </ol>
+        </div>
+
+        <div class="status">
+            <h3 style="margin-top: 0;">Expected Behavior:</h3>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>✓ Lottie animation visible in panel</li>
+                <li>✓ Drag only starts from FAB</li>
+                <li>✓ No flash/jump when dragging</li>
+                <li>✓ Click vs drag properly distinguished</li>
+                <li>✓ Menu doesn't open after drag</li>
+                <li>✓ Smooth snap to edge</li>
+                <li>✓ Position persists after reload</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- FloatingPet Component -->
+    <script src="/static/js/components/FloatingPet.js?v=4"></script>
+
+    <!-- Initialize FloatingPet -->
+    <script>
+        // Mock API client for standalone testing
+        window.apiClient = {
+            async post(url, data) {
+                console.log('Mock API call:', url, data);
+                return {
+                    ok: true,
+                    data: { id: 'test-task-' + Date.now() }
+                };
+            }
+        };
+
+        // Mock navigation function
+        window.navigateToView = function(view, params) {
+            console.log('Navigate to:', view, params);
+            window.showToast(`Would navigate to: ${view}`, 'info');
+        };
+
+        // Mock toast function
+        window.showToast = function(message, type = 'info', duration = 3000) {
+            console.log(`[${type.toUpperCase()}] ${message}`);
+
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 12px 24px;
+                background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+                color: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                z-index: 100000;
+                font-size: 14px;
+                font-weight: 500;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.transition = 'opacity 0.3s';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        };
+
+        // Initialize FloatingPet when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Initializing FloatingPet with drag fixes...');
+
+            window.floatingPet = new FloatingPet({
+                petType: 'default',
+                enableShortcuts: true,
+                initialPosition: 'bottom-right',
+                snapToEdge: true,
+                lottiePath: '/static/assets/lottie/pet-cute.json'
+            });
+
+            console.log('✓ FloatingPet initialized');
+            console.log('✓ Drag threshold:', window.floatingPet._DRAG_THRESHOLD, 'px');
+            console.log('✓ All fixes applied - ready for testing');
+
+            // Show success toast
+            setTimeout(() => {
+                window.showToast('FloatingPet loaded with drag fixes! Test the FAB in the bottom-right corner.', 'success', 5000);
+            }, 500);
+        });
+    </script>
+</body>
+</html>

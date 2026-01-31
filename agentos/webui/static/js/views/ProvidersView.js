@@ -1135,9 +1135,13 @@ class ProvidersView {
 
     async stopInstance(providerId, instanceId) {
         // Task #21: P1.8 - Confirmation dialog for destructive operation
-        const confirmed = confirm(
-            `Are you sure you want to stop ${providerId} instance?\n\n` +
-            `This will terminate the running process.`
+        const confirmed = await Dialog.confirm(
+            `Are you sure you want to stop ${providerId} instance?<br><br>This will terminate the running process.`,
+            {
+                title: 'Stop Instance',
+                confirmText: 'Stop',
+                danger: true
+            }
         );
 
         if (!confirmed) {
@@ -1178,9 +1182,13 @@ class ProvidersView {
 
     async restartInstance(providerId, instanceId) {
         // Task #21: P1.8 - Confirmation dialog for destructive operation
-        const confirmed = confirm(
-            `Are you sure you want to restart ${providerId} instance?\n\n` +
-            `This will stop and restart the running process.`
+        const confirmed = await Dialog.confirm(
+            `Are you sure you want to restart ${providerId} instance?<br><br>This will stop and restart the running process.`,
+            {
+                title: 'Restart Instance',
+                confirmText: 'Restart',
+                danger: true
+            }
         );
 
         if (!confirmed) {
@@ -1244,9 +1252,14 @@ class ProvidersView {
         }
 
         // Confirmation dialog
-        const confirmed = confirm(
-            `Are you sure you want to stop ${runningInstances.length} running instance(s)?\n\n` +
-            runningInstances.map(i => `• ${i.providerId}:${i.instanceId}`).join('\n')
+        const confirmed = await Dialog.confirm(
+            `Are you sure you want to stop ${runningInstances.length} running instance(s)?<br><br>` +
+            runningInstances.map(i => `• ${i.providerId}:${i.instanceId}`).join('<br>'),
+            {
+                title: 'Stop All Instances',
+                confirmText: 'Stop All',
+                danger: true
+            }
         );
 
         if (!confirmed) {
@@ -1306,9 +1319,14 @@ class ProvidersView {
         }
 
         // Confirmation dialog
-        const confirmed = confirm(
-            `Are you sure you want to restart ${runningInstances.length} running instance(s)?\n\n` +
-            runningInstances.map(i => `• ${i.providerId}:${i.instanceId}`).join('\n')
+        const confirmed = await Dialog.confirm(
+            `Are you sure you want to restart ${runningInstances.length} running instance(s)?<br><br>` +
+            runningInstances.map(i => `• ${i.providerId}:${i.instanceId}`).join('<br>'),
+            {
+                title: 'Restart All Instances',
+                confirmText: 'Restart All',
+                danger: true
+            }
         );
 
         if (!confirmed) {
@@ -2008,10 +2026,10 @@ class ProvidersView {
      */
     async refreshStatus() {
         try {
-            // 触发后端刷新（清除缓存）
+            // 触发后端Refresh（清除缓存）
             await this.apiClient.post('/api/providers/refresh');
 
-            // 1秒后重新获取状态（让后端有时间重新探测）
+            // 1seconds后重新获取Status（让后端有Time重新探测）
             setTimeout(async () => {
                 await this.loadInstances();
             }, 1000);
@@ -2432,34 +2450,34 @@ class ProvidersView {
      */
     getErrorTitle(errorCode) {
         const titles = {
-            'EXECUTABLE_NOT_FOUND': '可执行文件未找到',
-            'PORT_IN_USE': '端口被占用',
-            'PROCESS_START_FAILED': '启动失败',
-            'PROCESS_STOP_FAILED': '停止失败',
-            'INVALID_PATH': '路径无效',
-            'MODEL_FILE_NOT_FOUND': '模型文件未找到',
-            'PERMISSION_DENIED': '权限不足',
-            'TIMEOUT_ERROR': '操作超时',
-            'STARTUP_TIMEOUT': '启动超时',
-            'SHUTDOWN_TIMEOUT': '停止超时',
-            'DIRECTORY_NOT_FOUND': '目录未找到',
-            'NOT_A_DIRECTORY': '不是有效目录',
-            'DIRECTORY_NOT_READABLE': '目录不可读',
-            'NOT_EXECUTABLE': '文件不可执行',
-            'FILE_NOT_FOUND': '文件未找到',
-            'PROCESS_NOT_RUNNING': '进程Not Running',
-            'PROCESS_ALREADY_RUNNING': '进程已在运行',
-            'PORT_NOT_AVAILABLE': '端口不Available',
-            'INVALID_MODEL_FILE': '模型文件无效',
-            'CONFIG_ERROR': '配置错误',
-            'INVALID_CONFIG': '配置无效',
-            'UNSUPPORTED_PLATFORM': '平台不支持',
-            'PLATFORM_SPECIFIC_ERROR': '平台特定错误',
-            'INTERNAL_ERROR': '内部错误',
-            'LAUNCH_FAILED': '启动失败',
-            'VALIDATION_ERROR': '验证失败'
+            'EXECUTABLE_NOT_FOUND': 'Executable not found',
+            'PORT_IN_USE': 'Port in use',
+            'PROCESS_START_FAILED': 'Start failed',
+            'PROCESS_STOP_FAILED': 'Stop failed',
+            'INVALID_PATH': 'Invalid path',
+            'MODEL_FILE_NOT_FOUND': 'Model file not found',
+            'PERMISSION_DENIED': 'Permission denied',
+            'TIMEOUT_ERROR': 'Operation timeout',
+            'STARTUP_TIMEOUT': 'Startup timeout',
+            'SHUTDOWN_TIMEOUT': 'Shutdown timeout',
+            'DIRECTORY_NOT_FOUND': 'Directory not found',
+            'NOT_A_DIRECTORY': 'Not a valid directory',
+            'DIRECTORY_NOT_READABLE': 'Directory not readable',
+            'NOT_EXECUTABLE': 'File not executable',
+            'FILE_NOT_FOUND': 'File not found',
+            'PROCESS_NOT_RUNNING': 'Process not running',
+            'PROCESS_ALREADY_RUNNING': 'Process already running',
+            'PORT_NOT_AVAILABLE': 'Port not available',
+            'INVALID_MODEL_FILE': 'Invalid model file',
+            'CONFIG_ERROR': 'Configuration error',
+            'INVALID_CONFIG': 'Invalid configuration',
+            'UNSUPPORTED_PLATFORM': 'Platform not supported',
+            'PLATFORM_SPECIFIC_ERROR': 'Platform-specific error',
+            'INTERNAL_ERROR': 'Internal error',
+            'LAUNCH_FAILED': 'Launch failed',
+            'VALIDATION_ERROR': 'Validation failed'
         };
-        return titles[errorCode] || '操作失败';
+        return titles[errorCode] || 'Actionsfailed';
     }
 
     /**
@@ -2473,7 +2491,7 @@ class ProvidersView {
         // Searched paths
         if (details.searched_paths && details.searched_paths.length > 0) {
             html += '<div class="detail-section">';
-            html += '<strong>搜索路径：</strong>';
+            html += '<strong>Search paths:</strong>';
             html += '<ul>';
             details.searched_paths.forEach(path => {
                 html += `<li><code>${this.escapeHtml(path)}</code></li>`;
@@ -2484,22 +2502,22 @@ class ProvidersView {
 
         // Platform
         if (details.platform) {
-            html += `<div class="detail-section"><strong>平台：</strong> ${this.escapeHtml(details.platform)}</div>`;
+            html += `<div class="detail-section"><strong>Platform:</strong> ${this.escapeHtml(details.platform)}</div>`;
         }
 
         // Port
         if (details.port) {
-            html += `<div class="detail-section"><strong>端口：</strong> ${details.port}</div>`;
+            html += `<div class="detail-section"><strong>Port:</strong> ${details.port}</div>`;
         }
 
         // Occupant (for port conflicts)
         if (details.occupant) {
-            html += `<div class="detail-section"><strong>占用者：</strong> ${this.escapeHtml(details.occupant)}</div>`;
+            html += `<div class="detail-section"><strong>Occupant:</strong> ${this.escapeHtml(details.occupant)}</div>`;
         }
 
         // Timeout
         if (details.timeout_seconds) {
-            html += `<div class="detail-section"><strong>超时时间：</strong> ${details.timeout_seconds}秒</div>`;
+            html += `<div class="detail-section"><strong>超时Time：</strong> ${details.timeout_seconds}seconds</div>`;
         }
 
         // Provider ID
@@ -2509,7 +2527,7 @@ class ProvidersView {
 
         // Instance key
         if (details.instance_key) {
-            html += `<div class="detail-section"><strong>实例：</strong> ${this.escapeHtml(details.instance_key)}</div>`;
+            html += `<div class="detail-section"><strong>Instance:</strong> ${this.escapeHtml(details.instance_key)}</div>`;
         }
 
         html += '</div>';
@@ -2530,20 +2548,20 @@ class ProvidersView {
         // Add action links based on error type
         if (code === 'EXECUTABLE_NOT_FOUND') {
             html += `<br><br><a href="#" class="error-action-link" onclick="window.providersView.navigateToExecutableConfig('${providerId}'); return false;">
-                点击配置路径 →
+                Click to configure path →
             </a>`;
             html += ` | `;
             html += this.getProviderHelpLink(providerId);
         } else if (code === 'PORT_IN_USE' && details.port) {
-            html += `<br><br>请检查是否有其他 ${providerId} 实例正在运行，或更改端口配置。`;
+            html += `<br><br>Please check if other ${providerId} instances are running, or change port configuration。`;
         } else if (code === 'MODEL_FILE_NOT_FOUND') {
             html += `<br><br><a href="#" class="error-action-link" onclick="window.providersView.showModelBrowser('${providerId}'); return false;">
-                浏览Available模型 →
+                Browse available models →
             </a>`;
         } else if (code === 'PERMISSION_DENIED' && details.platform === 'windows') {
-            html += '<br><br>请尝试以管理员权限运行 AgentOS。';
+            html += '<br><br>Please try running AgentOS with administrator privileges。';
         } else if (code === 'PERMISSION_DENIED' && details.platform !== 'windows') {
-            html += '<br><br>请检查文件权限或使用 sudo 运行。';
+            html += '<br><br>Please check file permissions or run with sudo。';
         }
 
         html += '</div>';
@@ -2564,7 +2582,7 @@ class ProvidersView {
 
         const url = links[providerId];
         if (url) {
-            return `<a href="${url}" target="_blank" class="error-action-link">访问官网 →</a>`;
+            return `<a href="${url}" target="_blank" class="error-action-link">Visit official website →</a>`;
         }
         return '';
     }
@@ -2602,7 +2620,7 @@ class ProvidersView {
         // Check if Dialog component is available
         if (typeof Dialog !== 'undefined' && Dialog.alert) {
             Dialog.alert(htmlContent, {
-                title: 'Provider 错误',
+                title: 'Provider Error',
                 html: true,
                 width: '600px'
             });
@@ -2613,14 +2631,14 @@ class ProvidersView {
             modal.innerHTML = `
                 <div class="error-modal-content">
                     <div class="error-modal-header">
-                        <h3>Provider 错误</h3>
+                        <h3>Provider Error</h3>
                         <button class="error-modal-close" onclick="this.closest('.error-modal-overlay').remove()">×</button>
                     </div>
                     <div class="error-modal-body">
                         ${htmlContent}
                     </div>
                     <div class="error-modal-footer">
-                        <button class="btn-secondary" onclick="this.closest('.error-modal-overlay').remove()">关闭</button>
+                        <button class="btn-secondary" onclick="this.closest('.error-modal-overlay').remove()">Close</button>
                     </div>
                 </div>
             `;

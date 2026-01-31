@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Three.js FontLoader Test</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h3>Three.js FontLoader + TextGeometry Test</h3>
+        <div id="status">Initializing...</div>
+    </div>
+
+    <script>
+        // This script requires:
+        // - THREE (core)
+        // - THREE.FontLoader
+        // - THREE.TextGeometry
+        // - THREE.OrbitControls
+
+        const statusDiv = document.getElementById('status');
+
+        function updateStatus(message, isError = false) {
+            statusDiv.textContent = message;
+            statusDiv.style.color = isError ? '#ff4444' : '#4caf50';
+            console.log(message);
+        }
+
+        try {
+            // Check if THREE is loaded
+            if (typeof THREE === 'undefined') {
+                throw new Error('THREE is not defined');
+            }
+            updateStatus('THREE core loaded ✓');
+
+            // Check if FontLoader is available
+            if (typeof THREE.FontLoader === 'undefined') {
+                throw new Error('THREE.FontLoader is not defined');
+            }
+            updateStatus('FontLoader available ✓');
+
+            // Check if TextGeometry is available
+            if (typeof THREE.TextGeometry === 'undefined') {
+                throw new Error('THREE.TextGeometry is not defined');
+            }
+            updateStatus('TextGeometry available ✓');
+
+            // Check if OrbitControls is available
+            if (typeof THREE.OrbitControls === 'undefined') {
+                throw new Error('THREE.OrbitControls is not defined');
+            }
+            updateStatus('OrbitControls available ✓');
+
+            // Create scene
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a2e);
+
+            const camera = new THREE.PerspectiveCamera(
+                75,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            camera.position.z = 5;
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const pointLight = new THREE.PointLight(0xffffff, 1);
+            pointLight.position.set(10, 10, 10);
+            scene.add(pointLight);
+
+            // Add OrbitControls
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+
+            updateStatus('Scene setup complete ✓');
+
+            // Load font and create 3D text
+            const loader = new THREE.FontLoader();
+            updateStatus('Loading font...');
+
+            loader.load(
+                'https://threejs.org/examples/fonts/helvetiker_regular.typeface.json',
+                function(font) {
+                    updateStatus('Font loaded ✓ Creating 3D text...');
+
+                    const textGeometry = new THREE.TextGeometry('Hello\nThree.js!', {
+                        font: font,
+                        size: 0.5,
+                        height: 0.2,
+                        curveSegments: 12,
+                        bevelEnabled: true,
+                        bevelThickness: 0.03,
+                        bevelSize: 0.02,
+                        bevelSegments: 5
+                    });
+
+                    textGeometry.center();
+
+                    const textMaterial = new THREE.MeshPhongMaterial({
+                        color: 0x00d4ff,
+                        specular: 0xffffff,
+                        shininess: 100
+                    });
+
+                    const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+                    scene.add(textMesh);
+
+                    updateStatus('✓ ALL TESTS PASSED! FontLoader working correctly.');
+
+                    // Animation loop
+                    function animate() {
+                        requestAnimationFrame(animate);
+                        textMesh.rotation.y += 0.005;
+                        controls.update();
+                        renderer.render(scene, camera);
+                    }
+                    animate();
+                },
+                function(xhr) {
+                    const progress = (xhr.loaded / xhr.total * 100).toFixed(0);
+                    updateStatus(`Loading font... ${progress}%`);
+                },
+                function(err) {
+                    updateStatus('Error loading font: ' + err.message, true);
+                    console.error(err);
+                }
+            );
+
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+        } catch (error) {
+            updateStatus('ERROR: ' + error.message, true);
+            console.error(error);
+        }
+    </script>
+</body>
+</html>

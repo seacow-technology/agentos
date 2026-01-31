@@ -5,10 +5,12 @@ Plans file changes based on intent without generating actual patches.
 Strictly enforces DE3: no path fabrication.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 from .utils import compute_checksum, generate_id, validate_path_in_intent
+from agentos.core.time import utc_now_iso
+
 
 
 class PatchPlanner:
@@ -55,7 +57,7 @@ class PatchPlanner:
             "plan_id": generate_id("patchplan", self.intent["id"]),
             "schema_version": "0.10.0",
             "intent_id": self.intent["id"],
-            "created_at": datetime.utcnow().isoformat() + "Z",
+            "created_at": utc_now_iso() + "Z",
             "files": self.files,
             "estimated_diffs": self.estimated_diffs,
             "constraints": {

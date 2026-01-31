@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+from agentos.core.time import utc_now, utc_now_iso
+
 
 
 class PromotionEngine:
@@ -40,7 +42,7 @@ class PromotionEngine:
             (eligible, target_scope, reason)
         """
         if now is None:
-            now = datetime.now(timezone.utc)
+            now = utc_now()
         
         current_scope = memory_item.get("scope")
         use_count = memory_item.get("use_count", 0)
@@ -132,7 +134,7 @@ class PromotionEngine:
             promoted.pop("project_id", None)
         
         # Update timestamp
-        promoted["updated_at"] = datetime.now(timezone.utc).isoformat()
+        promoted["updated_at"] = utc_now_iso()
         
         return promoted, None
     

@@ -35,6 +35,8 @@ class ExecutionPolicy:
     max_retries: int = 3
     question_rules: dict = None
     constraints: dict = None
+    # PR-0131-2026-1: Token Budget & Cost Governance
+    token_budget: dict = None  # {"max_total_tokens": int, "max_prompt_tokens": int, "max_completion_tokens": int}
 
     def __post_init__(self):
         """Initialize computed fields."""
@@ -43,9 +45,11 @@ class ExecutionPolicy:
             object.__setattr__(self, 'question_rules', {})
         if self.constraints is None:
             object.__setattr__(self, 'constraints', {})
-        
+        if self.token_budget is None:
+            object.__setattr__(self, 'token_budget', {})
+
         # Compute derived fields
-        object.__setattr__(self, 'allowed_question_types', 
+        object.__setattr__(self, 'allowed_question_types',
                           self.question_rules.get('allowed_types', self._get_default_allowed_types()))
         object.__setattr__(self, 'require_evidence',
                           self.question_rules.get('require_evidence', True))
@@ -90,7 +94,8 @@ class ExecutionPolicy:
             require_verification=self.require_verification,
             max_retries=self.max_retries,
             question_rules=self.question_rules,
-            constraints=self.constraints
+            constraints=self.constraints,
+            token_budget=self.token_budget
         )
 
     def __init__(self, mode: str, config: Optional[dict] = None):
@@ -120,7 +125,8 @@ class ExecutionPolicy:
         object.__setattr__(self, 'max_retries', config.get("max_retries", 3))
         object.__setattr__(self, 'question_rules', config.get("question_rules", {}))
         object.__setattr__(self, 'constraints', config.get("constraints", {}))
-        
+        object.__setattr__(self, 'token_budget', config.get("token_budget", {}))
+
         # Call post_init manually
         self.__post_init__()
 
@@ -234,6 +240,7 @@ class ExecutionPolicy:
                 "min_evidence_count": self.min_evidence_count,
             },
             "constraints": self.constraints,
+            "token_budget": self.token_budget,
         }
 
     @classmethod

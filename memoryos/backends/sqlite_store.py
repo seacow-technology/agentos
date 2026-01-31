@@ -15,7 +15,8 @@ class SqliteMemoryStore(MemoryStore):
     
     def __init__(self, db_path: Optional[Path] = None):
         if db_path is None:
-            db_path = Path.home() / ".memoryos" / "memory.db"
+            from agentos.core.storage.paths import component_db_path
+            db_path = component_db_path("memoryos")
         self.db_path = db_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init_db()

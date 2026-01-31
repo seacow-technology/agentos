@@ -23,6 +23,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 import json
+from agentos.core.time import utc_now, utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -211,7 +213,7 @@ class RecoverySweep:
                 conn = self._provided_conn
 
         start_time = time.time()
-        stats = RecoveryStats(scan_time=datetime.now(timezone.utc))
+        stats = RecoveryStats(scan_time=utc_now())
 
         try:
             # Find expired leases
@@ -430,7 +432,7 @@ class RecoverySweep:
                 "expires_at": item['lease_expires_at'],
                 "last_heartbeat": item['heartbeat_at'],
             },
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": utc_now_iso(),
         }
 
         conn.execute("""

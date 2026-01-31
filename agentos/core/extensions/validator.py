@@ -11,6 +11,7 @@ import yaml
 
 from agentos.core.extensions.exceptions import ValidationError
 from agentos.core.extensions.models import ExtensionManifest
+from agentos.core.extensions.policy import PolicyChecker
 
 logger = logging.getLogger(__name__)
 
@@ -189,6 +190,19 @@ class ExtensionValidator:
                 "Use declarative install/plan.yaml instead. "
                 "See ADR-EXT-001 for details."
             )
+
+        # ADR-EXT-002: Preflight Policy Check - Python-only runtime enforcement
+        logger.info("Performing preflight policy check...")
+        policy_result = PolicyChecker.check_runtime_policy(manifest_dict)
+        if not policy_result.allowed:
+            error_msg = (
+                f"Policy violation: {policy_result.reason}\n"
+                f"Reason code: {policy_result.reason_code}\n"
+                f"Hint: {policy_result.hint}"
+            )
+            logger.error(f"Policy check failed: {policy_result.reason_code}")
+            raise ValidationError(error_msg)
+        logger.info(f"Policy check passed: {policy_result.reason}")
 
         # PR-E3: Validate capabilities schema including permissions
         try:

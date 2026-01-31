@@ -17,6 +17,8 @@ from .lock import ExecutionLock
 from .review_gate import ReviewGate
 from .audit_logger import AuditLogger
 from .dag_scheduler import DAGScheduler, Operation, OperationStatus
+from agentos.core.time import utc_now_iso
+
 
 
 class AsyncExecutorEngine:
@@ -137,8 +139,8 @@ class AsyncExecutorEngine:
                     "schema_version": "0.12.0",
                     "execution_request_id": exec_req_id,
                     "status": "completed" if success else "failed",
-                    "started_at": datetime.now(timezone.utc).isoformat(),
-                    "completed_at": datetime.now(timezone.utc).isoformat(),
+                    "started_at": utc_now_iso(),
+                    "completed_at": utc_now_iso(),
                     "worktree_path": str(worktree_path),
                     "rollback_id": rollback_id,
                     "operation_results": operation_results,
@@ -278,8 +280,8 @@ class AsyncExecutorEngine:
             "execution_request_id": exec_req_id,
             "status": "failed",
             "error": error,
-            "started_at": datetime.now(timezone.utc).isoformat(),
-            "completed_at": datetime.now(timezone.utc).isoformat()
+            "started_at": utc_now_iso(),
+            "completed_at": utc_now_iso()
         }
 
 

@@ -1,0 +1,106 @@
+{
+  "id": "deployment_planning",
+  "type": "workflow",
+  "version": "0.6.0",
+  "status": "draft",
+  "metadata": {
+    "created_at": "2026-01-25T05:37:21.338362+00:00",
+    "checksum": "e9ae759fff4d24de403f69a6075aea6ada853f873158e7f5e48ae171d9d24a2f",
+    "is_root": true,
+    "tags": [
+      "deployment",
+      "release",
+      "operations"
+    ]
+  },
+  "spec": {
+    "id": "deployment_planning",
+    "version": "0.6.0",
+    "category": "deployment",
+    "description": "Plan deployment and rollout.\nThis workflow structures deployment planning including rollout strategy, rollback planning, and readiness validation.\n",
+    "phases": [
+      {
+        "id": "rollout_strategy",
+        "description": "Define rollout strategy (blue-green, canary, rolling, etc.)",
+        "requires": [
+          "feature",
+          "environment"
+        ],
+        "produces": [
+          "rollout_plan"
+        ],
+        "allows_questions": true,
+        "risk_level": "high"
+      },
+      {
+        "id": "rollback_plan",
+        "description": "Create rollback plan and procedures",
+        "requires": [
+          "rollout_plan"
+        ],
+        "produces": [
+          "rollback_procedures"
+        ],
+        "allows_questions": false,
+        "risk_level": "high"
+      },
+      {
+        "id": "readiness_check",
+        "description": "Validate deployment readiness",
+        "requires": [
+          "rollout_plan",
+          "rollback_procedures"
+        ],
+        "produces": [
+          "readiness_report"
+        ],
+        "allows_questions": false,
+        "risk_level": "medium"
+      }
+    ],
+    "interaction": {
+      "default_mode": "question_only",
+      "question_policy": {
+        "trigger_when": [
+          "high_risk_deployment",
+          "unclear_rollout_strategy",
+          "dependencies_unclear"
+        ]
+      },
+      "allowed_phases": [
+        "rollout_strategy"
+      ]
+    },
+    "constraints": {
+      "execution": "forbidden",
+      "side_effects": "forbidden",
+      "requires_approval": false
+    },
+    "lineage": {
+      "introduced_in": "v0.6",
+      "derived_from": null,
+      "change_reason": null
+    },
+    "metadata": {
+      "tags": [
+        "deployment",
+        "release",
+        "operations"
+      ],
+      "related_workflows": [
+        "release_management",
+        "incident_response"
+      ],
+      "use_cases": [
+        "Production deployments",
+        "High-risk feature releases",
+        "Multi-stage rollout requirements"
+      ],
+      "anti_use_cases": [
+        "Development environment deployments",
+        "Simple code commits",
+        "Hotfixes (may need expedited process)"
+      ]
+    }
+  }
+}

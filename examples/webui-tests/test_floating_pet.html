@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FloatingPet 测试页面</title>
+    <link rel="stylesheet" href="http://localhost:8080/static/css/floating-pet.css?v=1">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #111827;
+            margin-bottom: 24px;
+        }
+        .test-section {
+            margin-bottom: 32px;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+        .test-section h2 {
+            color: #374151;
+            margin-top: 0;
+            font-size: 18px;
+        }
+        .test-list {
+            list-style: none;
+            padding: 0;
+        }
+        .test-list li {
+            padding: 8px 0;
+            color: #6B7280;
+        }
+        .test-list li:before {
+            content: "✓ ";
+            color: #10B981;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-success {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+        .status-warning {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🤖 FloatingPet 组件测试</h1>
+
+        <div class="test-section">
+            <h2>Phase 1: 核心结构 <span class="status-badge status-success">已完成</span></h2>
+            <ul class="test-list">
+                <li>FAB 按钮已渲染</li>
+                <li>背景遮罩已创建</li>
+                <li>面板已创建</li>
+                <li>任务 Modal 已创建</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>Phase 2: 拖拽功能 <span class="status-badge status-warning">测试中</span></h2>
+            <ul class="test-list">
+                <li>测试拖拽 FAB 按钮 (右下角)</li>
+                <li>验证拖拽阈值 (5px)</li>
+                <li>验证自动吸边</li>
+                <li>验证位置持久化 (刷新页面)</li>
+                <li>验证边界约束</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>Phase 3: 面板交互 <span class="status-badge status-warning">测试中</span></h2>
+            <ul class="test-list">
+                <li>点击 FAB 打开面板</li>
+                <li>点击背景遮罩关闭面板</li>
+                <li>验证面板位置 (跟随 FAB)</li>
+                <li>验证打开/关闭动画</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>Phase 4: 快捷入口 <span class="status-badge status-warning">测试中</span></h2>
+            <ul class="test-list">
+                <li>测试 Chat 按钮跳转</li>
+                <li>测试 Task 按钮 (打开 Modal)</li>
+                <li>测试任务创建功能</li>
+                <li>测试 RAG 按钮跳转</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>Phase 5: 动画效果 <span class="status-badge status-success">已完成</span></h2>
+            <ul class="test-list">
+                <li>宠物 Idle 动画 (呼吸效果)</li>
+                <li>宠物 Hover 动画 (加速跳动)</li>
+                <li>面板打开/关闭动画</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>Phase 6: 响应式设计 <span class="status-badge status-warning">测试中</span></h2>
+            <ul class="test-list">
+                <li>移动端适配 (< 768px)</li>
+                <li>窗口 Resize 处理</li>
+                <li>键盘支持 (Esc / Alt+P)</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>测试指南</h2>
+            <ol style="color: #374151; padding-left: 20px;">
+                <li><strong>拖拽测试</strong>: 长按 FAB 按钮并拖动,松手后应自动吸边</li>
+                <li><strong>面板测试</strong>: 轻点 FAB 按钮打开面板,验证宠物动画</li>
+                <li><strong>快捷入口测试</strong>: 点击 Chat/Task/RAG 按钮</li>
+                <li><strong>键盘测试</strong>: 按 Esc 关闭面板,按 Alt+P 打开面板</li>
+                <li><strong>持久化测试</strong>: 拖动 FAB 后刷新页面,验证位置保持</li>
+                <li><strong>响应式测试</strong>: 缩放浏览器窗口,验证布局适配</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h2>控制台日志</h2>
+            <p style="color: #6B7280;">打开浏览器开发者工具查看控制台日志:</p>
+            <ul style="color: #6B7280; padding-left: 20px;">
+                <li><code>FloatingPet: Initializing...</code></li>
+                <li><code>FloatingPet: Initialized successfully</code></li>
+                <li><code>FloatingPet: Loaded saved position: {...}</code></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Mock API Client for testing -->
+    <script>
+        // Mock Toast Manager
+        window.showToast = function(message, type, duration) {
+            console.log(`[Toast] ${type.toUpperCase()}: ${message}`);
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 24px;
+                background: ${type === 'success' ? '#10B981' : type === 'error' ? '#EF4444' : '#3B82F6'};
+                color: white;
+                border-radius: 8px;
+                z-index: 99999;
+                animation: slideIn 0.3s;
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), duration || 3000);
+        };
+
+        // Mock Navigation
+        window.navigateToView = function(view, filters) {
+            console.log(`[Navigation] Navigating to: ${view}`, filters);
+            window.showToast(`Navigating to ${view}...`, 'info', 2000);
+        };
+
+        // Mock API Client
+        window.apiClient = {
+            post: async function(url, data) {
+                console.log(`[API] POST ${url}`, data);
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        resolve({
+                            ok: true,
+                            data: {
+                                id: 'task_' + Date.now(),
+                                description: data.description,
+                                status: 'pending',
+                            }
+                        });
+                    }, 1000);
+                });
+            }
+        };
+    </script>
+
+    <!-- FloatingPet Component -->
+    <script src="http://localhost:8080/static/js/components/FloatingPet.js?v=1"></script>
+
+    <!-- Initialize FloatingPet -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Initializing FloatingPet...');
+            window.floatingPet = new FloatingPet({
+                petType: 'default',
+                enableShortcuts: true,
+                initialPosition: 'bottom-right',
+                dragThreshold: 5,
+                snapToEdge: true
+            });
+            console.log('FloatingPet initialized:', window.floatingPet);
+        });
+    </script>
+</body>
+</html>

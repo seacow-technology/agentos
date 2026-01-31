@@ -11,6 +11,8 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from agentos.core.time import utc_now, utc_now_iso
+
 
 try:
     from ulid import ULID
@@ -106,8 +108,8 @@ class RepoService:
             raise PathNotFoundError(local_path)
 
         # Generate repo ID
-        repo_id = str(ULID.from_datetime(datetime.now(timezone.utc)))
-        now = datetime.now(timezone.utc).isoformat()
+        repo_id = str(ULID.from_datetime(utc_now()))
+        now = utc_now_iso()
 
         # Define write function
         def _write_repo(conn):
@@ -196,7 +198,9 @@ class RepoService:
 
             return Repo.from_db_row(dict(row))
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection (unless db_path provided)
+            if self.db_path:
+                conn.close()
 
     def list_repos(
         self,
@@ -241,7 +245,9 @@ class RepoService:
             rows = cursor.fetchall()
             return [Repo.from_db_row(dict(row)) for row in rows]
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection (unless db_path provided)
+            if self.db_path:
+                conn.close()
 
     def update_repo(
         self,
@@ -279,7 +285,7 @@ class RepoService:
             if not exists:
                 raise PathNotFoundError(local_path)
 
-        now = datetime.now(timezone.utc).isoformat()
+        now = utc_now_iso()
 
         # Define write function
         def _write_update(conn):

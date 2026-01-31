@@ -1,0 +1,1140 @@
+/**
+ * Capability Views Styles - AgentOS v3 Task #29
+ *
+ * Combined styles for:
+ * - Decision Timeline View
+ * - Action Execution Log View
+ * - Evidence Chain View
+ * - Governance Audit View
+ * - Agent Capability Matrix View
+ */
+
+/* ============================================================================
+   Common View Layout
+   ============================================================================ */
+
+.decision-timeline-view,
+.action-log-view,
+.evidence-chain-view,
+.governance-audit-view,
+.agent-capability-matrix-view {
+    padding: 20px;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f3f4f6;
+}
+
+.view-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-refresh,
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+}
+
+.btn-refresh {
+    background: white;
+    color: #6b7280;
+    border: 1px solid #e5e7eb;
+}
+
+.btn-refresh:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.btn-primary {
+    background: #6366f1;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #4f46e5;
+}
+
+.btn-secondary {
+    background: white;
+    color: #6b7280;
+    border: 1px solid #e5e7eb;
+}
+
+.btn-secondary:hover {
+    background: #f9fafb;
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.btn-icon {
+    padding: 6px;
+    border-radius: 6px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.btn-icon:hover:not([disabled]) {
+    background: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.btn-icon[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ============================================================================
+   Filters Bar
+   ============================================================================ */
+
+.filters-bar {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-group label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.filter-select,
+.filter-input {
+    padding: 6px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+    min-width: 150px;
+}
+
+.filter-select:focus,
+.filter-input:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* ============================================================================
+   Decision Timeline Styles
+   ============================================================================ */
+
+.timeline-container {
+    position: relative;
+    padding-left: 40px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+    display: flex;
+    gap: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -28px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: 3px solid #e5e7eb;
+    z-index: 1;
+}
+
+.timeline-marker.status-draft {
+    border-color: #9ca3af;
+}
+
+.timeline-marker.status-frozen {
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.timeline-marker.status-archived {
+    border-color: #6b7280;
+}
+
+.timeline-marker.status-rolled-back {
+    border-color: #f59e0b;
+}
+
+.timeline-marker .material-icons {
+    font-size: 18px;
+    color: inherit;
+}
+
+.timeline-content {
+    flex: 1;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.timeline-meta {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.status-draft {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.status-badge.status-frozen {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-badge.status-archived {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.status-badge.status-rolled_back {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.timeline-time {
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.timeline-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.plan-id,
+.task-id,
+.created-by {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.freeze-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #1e40af;
+    background: #eff6ff;
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+.plan-hash {
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    background: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.rationale {
+    background: #f9fafb;
+    padding: 12px;
+    border-radius: 6px;
+    border-left: 3px solid #6366f1;
+}
+
+.rationale strong {
+    display: block;
+    margin-bottom: 6px;
+    color: #1f2937;
+}
+
+.rationale p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.steps-list {
+    margin: 8px 0 0 0;
+    padding-left: 20px;
+}
+
+.steps-list li {
+    color: #6b7280;
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+
+.more-steps {
+    font-style: italic;
+    color: #9ca3af;
+}
+
+.related-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fef3c7;
+    padding: 8px 12px;
+    border-radius: 6px;
+    color: #92400e;
+    font-size: 14px;
+}
+
+/* ============================================================================
+   Action Log Styles
+   ============================================================================ */
+
+.table-container {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.action-log-table,
+.audit-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.action-log-table thead,
+.audit-table thead {
+    background: #f9fafb;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.action-log-table th,
+.audit-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.action-log-table td,
+.audit-table td {
+    padding: 16px;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 14px;
+    color: #1f2937;
+}
+
+.action-row.status-success {
+    border-left: 4px solid #10b981;
+}
+
+.action-row.status-failure {
+    border-left: 4px solid #ef4444;
+}
+
+.action-row.status-rolled-back {
+    border-left: 4px solid #f59e0b;
+}
+
+.execution-id,
+.capability-id {
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    background: #f9fafb;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.action-type,
+.agent-id,
+.operation {
+    font-weight: 500;
+}
+
+.execution-time {
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.side-effects-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.side-effect-badge {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.side-effect-badge.severity-low {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.side-effect-badge.severity-medium {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.side-effect-badge.severity-high {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.side-effect-badge.severity-critical {
+    background: #b91c1c;
+    color: white;
+}
+
+.error-row {
+    background: #fef2f2;
+}
+
+.error-row .error-message {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #991b1b;
+    font-size: 13px;
+}
+
+.rollback-row {
+    background: #fffbeb;
+}
+
+.rollback-row .rollback-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #92400e;
+    font-size: 13px;
+}
+
+/* ============================================================================
+   Evidence Chain Styles
+   ============================================================================ */
+
+.search-bar {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.search-input-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.search-input-group .material-icons {
+    color: #9ca3af;
+}
+
+.search-input {
+    flex: 1;
+    padding: 10px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.search-help {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.graph-container {
+    position: relative;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    height: 600px;
+    margin-bottom: 20px;
+}
+
+.evidence-graph {
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+}
+
+.graph-controls {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 8px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.control-btn {
+    padding: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.control-btn:hover {
+    background: #f9fafb;
+    border-color: #6366f1;
+}
+
+.control-btn .material-icons {
+    color: #6b7280;
+}
+
+.info-panel {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    min-height: 200px;
+}
+
+.info-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #9ca3af;
+    padding: 40px 20px;
+}
+
+.chain-info,
+.node-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.chain-info h3,
+.node-details h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 12px 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f3f4f6;
+}
+
+.info-row {
+    display: flex;
+    gap: 12px;
+    font-size: 14px;
+}
+
+.info-row strong {
+    min-width: 100px;
+    color: #6b7280;
+}
+
+.chain-type,
+.node-type {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.node-type.type-decision {
+    background: #ddd6fe;
+    color: #6d28d9;
+}
+
+.node-type.type-action {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.node-type.type-memory {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.node-type.type-state_change {
+    background: #cffafe;
+    color: #155e75;
+}
+
+.legend {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.legend h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 12px 0;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 2px solid #e5e7eb;
+}
+
+/* ============================================================================
+   Governance Audit Styles
+   ============================================================================ */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-card.stat-blue .stat-icon {
+    background: #eff6ff;
+    color: #1e40af;
+}
+
+.stat-card.stat-green .stat-icon {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.stat-card.stat-red .stat-icon {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.stat-card.stat-purple .stat-icon {
+    background: #f3e8ff;
+    color: #6d28d9;
+}
+
+.audit-row.result-allowed {
+    border-left: 3px solid #10b981;
+}
+
+.audit-row.result-denied {
+    border-left: 3px solid #ef4444;
+}
+
+.result-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.result-badge.result-allowed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.result-badge.result-denied {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* ============================================================================
+   Agent Capability Matrix Styles
+   ============================================================================ */
+
+.matrix-legend {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    gap: 24px;
+    margin-bottom: 20px;
+}
+
+.cell-preview {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.cell-preview.cell-allowed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.cell-preview.cell-denied {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.cell-preview.cell-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.matrix-scroll-container {
+    overflow-x: auto;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1200px;
+}
+
+.matrix-table thead {
+    background: #f9fafb;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.agent-header {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    border-bottom: 2px solid #e5e7eb;
+    position: sticky;
+    left: 0;
+    background: #f9fafb;
+    z-index: 11;
+}
+
+.domain-header {
+    padding: 8px 12px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.domain-header.domain-state {
+    background: #eff6ff;
+    color: #1e40af;
+}
+
+.domain-header.domain-decision {
+    background: #f3e8ff;
+    color: #6d28d9;
+}
+
+.domain-header.domain-action {
+    background: #fff7ed;
+    color: #92400e;
+}
+
+.domain-header.domain-governance {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.domain-header.domain-evidence {
+    background: #cffafe;
+    color: #155e75;
+}
+
+.capability-header {
+    padding: 8px 6px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 500;
+    color: #6b7280;
+    border-bottom: 2px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+.cap-label {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    height: 100px;
+}
+
+.agent-cell {
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1f2937;
+    border-right: 2px solid #e5e7eb;
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 9;
+}
+
+.matrix-cell {
+    padding: 8px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    border: 1px solid #f3f4f6;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.matrix-cell:hover {
+    background: #f9fafb;
+    transform: scale(1.1);
+    box-shadow: 0 0 0 2px #6366f1;
+}
+
+.matrix-cell.cell-allowed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.matrix-cell.cell-denied {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.matrix-cell.cell-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.details-panel {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+    min-height: 300px;
+}
+
+.grant-form,
+.revoke-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.grant-form h3,
+.revoke-form h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 12px 0;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.form-input,
+.form-textarea {
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.form-textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.warning-box {
+    background: #fffbeb;
+    border: 1px solid #fbbf24;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.warning-box .material-icons {
+    color: #f59e0b;
+}
+
+.grant-details {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.detail-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.detail-row strong {
+    min-width: 120px;
+    color: #6b7280;
+}
+
+/* ============================================================================
+   Pagination
+   ============================================================================ */
+
+.pagination-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.pagination-info {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.page-info {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1f2937;
+}
+
+/* ============================================================================
+   Empty and Error States
+   ============================================================================ */
+
+.empty-state,
+.error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 60px 20px;
+    color: #9ca3af;
+}
+
+.empty-state .material-icons,
+.error-state .material-icons {
+    opacity: 0.5;
+}
+
+.empty-state p,
+.error-state p {
+    font-size: 16px;
+    margin: 0;
+}
+
+.success-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 40px;
+    color: #065f46;
+}
+
+.success-message .material-icons {
+    color: #10b981;
+}
+
+/* ============================================================================
+   Responsive Design
+   ============================================================================ */
+
+@media (max-width: 1024px) {
+    .charts-row {
+        grid-template-columns: 1fr;
+    }
+
+    .matrix-scroll-container {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    .view-header {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .header-actions button {
+        flex: 1;
+    }
+
+    .filters-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .action-log-table,
+    .audit-table {
+        min-width: 800px;
+    }
+}

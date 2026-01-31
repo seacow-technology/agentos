@@ -1,0 +1,85 @@
+{
+  "pack_id": "qpack_high_risk_interactive",
+  "schema_version": "0.9.2",
+  "coordinator_run_id": "coord_run_example_high_risk",
+  "intent_id": "intent_example_high_risk_interactive",
+  "questions": [
+    {
+      "question_id": "q_migration_strategy",
+      "type": "blocker",
+      "blocking_level": "critical",
+      "question_text": "Should the database migration be performed online (zero downtime) or offline (maintenance window)? Online migration is more complex but avoids downtime. Offline migration is simpler but requires a maintenance window.",
+      "context": "The intent specifies 'zero downtime migration' as a success criterion, but the current user table analysis shows potential locking issues with existing foreign keys. An online migration would require additional complexity with table rewrites and careful lock management.",
+      "evidence_refs": [
+        "scan://database/users_table_schema",
+        "fact://current_user_count",
+        "doc://database/migration_standards.md"
+      ],
+      "default_strategy": "If not answered, assume offline migration with a planned maintenance window. This is safer but violates the zero-downtime requirement.",
+      "impact": {
+        "scope": "entire_plan",
+        "description": "Choice between online and offline migration affects the entire migration strategy, required tooling, testing approach, and rollback procedures.",
+        "affected_nodes": [
+          "node_action_002",
+          "node_action_003",
+          "node_review_001"
+        ]
+      },
+      "suggested_answers": [
+        {
+          "answer_text": "Online migration with zero downtime",
+          "rationale": "Meets the zero-downtime requirement but adds complexity and requires careful lock management",
+          "risk_change": "increase"
+        },
+        {
+          "answer_text": "Offline migration with maintenance window",
+          "rationale": "Simpler and safer approach but requires scheduled downtime",
+          "risk_change": "decrease"
+        }
+      ]
+    },
+    {
+      "question_id": "q_indexing_strategy",
+      "type": "optimization",
+      "blocking_level": "medium",
+      "question_text": "Should we create a compound index on (user_id, role_id) in the user_roles table, or separate indexes on each column? The compound index is more efficient for typical queries but less flexible.",
+      "context": "The migration script will create the user_roles table with a foreign key to users. Based on the expected query patterns (looking up roles for a specific user), a compound index would be optimal. However, if there are queries that filter only by role_id, separate indexes might be better.",
+      "evidence_refs": [
+        "scan://database/users_table_schema",
+        "doc://database/migration_standards.md"
+      ],
+      "default_strategy": "If not answered, create a compound index (user_id, role_id) as this is the most common query pattern for role-based access control.",
+      "impact": {
+        "scope": "single_action",
+        "description": "Indexing strategy affects query performance and storage space but does not impact the core migration logic.",
+        "affected_nodes": [
+          "node_action_002"
+        ]
+      },
+      "suggested_answers": [
+        {
+          "answer_text": "Compound index on (user_id, role_id)",
+          "rationale": "Optimal for the most common query pattern (get roles for a user)",
+          "risk_change": "no_change"
+        },
+        {
+          "answer_text": "Separate indexes on user_id and role_id",
+          "rationale": "More flexible but potentially less efficient for compound queries",
+          "risk_change": "no_change"
+        }
+      ]
+    }
+  ],
+  "policy_constraints": {
+    "execution_mode": "interactive",
+    "question_budget": 10,
+    "question_policy": "conceptual_only",
+    "budget_consumed": 2,
+    "budget_remaining": 8
+  },
+  "created_at": "2026-01-25T11:10:00Z",
+  "metadata": {
+    "emitted_from_state": "GRAPH_DRAFTED",
+    "total_questions": 2
+  }
+}

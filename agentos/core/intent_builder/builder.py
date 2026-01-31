@@ -18,6 +18,8 @@ from agentos.core.intent_builder.nl_parser import NLParser
 from agentos.core.intent_builder.registry_query import RegistryQueryService
 from agentos.core.intent_builder.evidence import EvidenceBuilder
 from agentos.core.intent_builder.questions import QuestionGenerator
+from agentos.core.time import utc_now_iso
+
 
 
 # 知识查询关键词
@@ -281,7 +283,7 @@ class IntentBuilder:
             "title": parsed_nl["goal"][:160],
             "version": "1.0.0",
             "status": "draft",
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": utc_now_iso(),
             "lineage": {
                 "introduced_in": "0.9.4",
                 "derived_from": [],
@@ -520,7 +522,7 @@ class IntentBuilder:
                 "registry_queries": len(workflows) + len(agents) + len(commands),
                 "decisions_made": len(workflows) + len(agents) + len(commands)
             },
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": utc_now_iso(),
             "checksum": "placeholder"  # Will be calculated
         }
     

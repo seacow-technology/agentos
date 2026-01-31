@@ -14,6 +14,8 @@ from typing import Any, Optional
 from agentos.core.content.schema_loader import ContentSchemaLoader
 from agentos.core.content.types import ContentTypeRegistry
 from agentos.store import get_db_path
+from agentos.core.time import utc_now_iso
+
 
 
 class ContentRegistry:
@@ -33,7 +35,7 @@ class ContentRegistry:
         """Initialize content registry.
 
         Args:
-            db_path: Path to database file (defaults to store/registry.sqlite)
+            db_path: Path to database file (defaults to component_db_path("agentos"))
         """
         self.db_path = db_path or get_db_path()
         self.schema_loader = ContentSchemaLoader()
@@ -323,7 +325,7 @@ class ContentRegistry:
         old_status = row["status"]
 
         # Update status and timestamp
-        now = datetime.now(timezone.utc).isoformat()
+        now = utc_now_iso()
         timestamp_field = None
 
         if new_status == "active":

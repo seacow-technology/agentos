@@ -1,0 +1,113 @@
+{
+  "id": "intent_refactor_api_v1",
+  "type": "execution_intent",
+  "title": "Refactor API routes (v1 approach)",
+  "description": "Refactor API routes using basic restructuring",
+  "version": "0.9.1",
+  "status": "proposed",
+  "created_at": "2026-01-25T09:00:00Z",
+  "lineage": {
+    "introduced_in": "0.9.1",
+    "derived_from": [],
+    "supersedes": []
+  },
+  "scope": {
+    "project_id": "agentos",
+    "repo_root": "/Users/pangge/PycharmProjects/AgentOS",
+    "targets": {
+      "files": [
+        "agentos/api/routes.py"
+      ],
+      "modules": [
+        "agentos.api"
+      ],
+      "areas": [
+        "backend"
+      ]
+    }
+  },
+  "objective": {
+    "goal": "Refactor API routes for better organization",
+    "success_criteria": [
+      "Routes grouped by resource type",
+      "Consistent naming conventions"
+    ],
+    "non_goals": [
+      "Change API contracts"
+    ]
+  },
+  "selected_workflows": [
+    {
+      "workflow_id": "refactoring_workflow",
+      "phases": [
+        "analysis",
+        "implementation"
+      ],
+      "reason": "Basic refactoring workflow"
+    }
+  ],
+  "selected_agents": [
+    {
+      "agent_id": "refactoring_agent",
+      "role": "refactorer",
+      "responsibilities": [
+        "Restructure API routes"
+      ]
+    }
+  ],
+  "planned_commands": [
+    {
+      "command_id": "modify_routes_file",
+      "intent": "Refactor routes.py structure",
+      "effects": [
+        "write"
+      ],
+      "risk_level": "medium",
+      "evidence_refs": [
+        "scan://file/agentos/api/routes.py"
+      ]
+    }
+  ],
+  "interaction": {
+    "mode": "semi_auto",
+    "question_budget": 3,
+    "question_policy": "blockers_only"
+  },
+  "risk": {
+    "overall": "medium",
+    "drivers": [
+      "Modifies core API routes"
+    ],
+    "requires_review": [
+      "architecture"
+    ]
+  },
+  "budgets": {
+    "max_files": 5,
+    "max_commits": 1,
+    "max_tokens": 40000,
+    "max_cost_usd": 3.0
+  },
+  "evidence_refs": [
+    "scan://file/agentos/api/routes.py"
+  ],
+  "constraints": {
+    "execution": "forbidden",
+    "no_fabrication": true,
+    "registry_only": true,
+    "lock_scope": {
+      "mode": "files",
+      "paths": [
+        "agentos/api/routes.py"
+      ]
+    }
+  },
+  "audit": {
+    "created_by": "human_operator",
+    "source": "human",
+    "checksum": "d4e5f6a7b8c901234567890abcdef0123456789abcdef0123456789abcdef123"
+  },
+  "metadata": {
+    "priority": 5
+  }
+}

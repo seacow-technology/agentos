@@ -17,7 +17,7 @@ import json
 import time
 import logging
 import threading
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
@@ -27,11 +27,15 @@ from pydantic import BaseModel, Field
 from agentos.core.project_kb.service import ProjectKBService
 from agentos.core.project_kb.types import ChunkResult
 from agentos.core.events import Event, get_event_bus
+from agentos.core.time import utc_now
+
 
 if TYPE_CHECKING:
     from agentos.core.task import TaskManager
     from agentos.core.events import EventBus
 
+
+from agentos.webui.api.time_format import iso_z
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -280,7 +284,7 @@ async def create_data_source(request: CreateDataSourceRequest) -> DataSourcesRes
         import uuid
 
         source_id = str(uuid.uuid4())
-        now = datetime.utcnow().isoformat() + "Z"
+        now = iso_z(utc_now()) + "Z"
 
         source = DataSourceItem(
             source_id=source_id,
@@ -330,7 +334,7 @@ async def update_data_source(source_id: str, request: UpdateDataSourceRequest) -
             raise HTTPException(status_code=404, detail="Data source not found")
 
         source = _data_sources_store[source_id]
-        now = datetime.utcnow().isoformat() + "Z"
+        now = iso_z(utc_now()) + "Z"
 
         # Update fields
         if request.path is not None:
@@ -679,7 +683,7 @@ async def retry_failed_jobs(request: RetryFailedJobsRequest = None) -> RetryFail
         task_manager = TaskManager()
 
         # Calculate cutoff time for lookback window
-        cutoff = datetime.now(timezone.utc) - timedelta(hours=request.hours_lookback)
+        cutoff = utc_now() - timedelta(hours=request.hours_lookback)
 
         # Get all KB index tasks
         all_tasks = task_manager.list_tasks(limit=1000)
@@ -752,7 +756,7 @@ async def retry_failed_jobs(request: RetryFailedJobsRequest = None) -> RetryFail
 
                 # Mark original task as retried
                 task.metadata["retried"] = True
-                task.metadata["retried_at"] = datetime.now(timezone.utc).isoformat()
+                task.metadata["retried_at"] = iso_z(utc_now())
                 task.metadata["retry_task_id"] = new_task_id
                 task_manager.update_task(task)
 
@@ -815,7 +819,7 @@ async def cleanup_stale_jobs(request: CleanupJobsRequest) -> CleanupJobsResponse
         task_manager = TaskManager()
 
         # Calculate cutoff time
-        cutoff = datetime.now(timezone.utc) - timedelta(hours=request.older_than_hours)
+        cutoff = utc_now() - timedelta(hours=request.older_than_hours)
 
         # Get all tasks (not just KB index tasks, to avoid filtering issues)
         all_tasks = task_manager.list_tasks(limit=1000)
@@ -843,7 +847,7 @@ async def cleanup_stale_jobs(request: CleanupJobsRequest) -> CleanupJobsResponse
                         # Mark as failed
                         task.status = "failed"
                         task.metadata["message"] = f"Stale job (inactive for {request.older_than_hours}+ hours)"
-                        task.metadata["cleaned_at"] = datetime.now(timezone.utc).isoformat()
+                        task.metadata["cleaned_at"] = iso_z(utc_now())
                         task_manager.update_task(task)
                         cleaned_count += 1
                         logger.info(f"Cleaned stale job: {task.task_id}")

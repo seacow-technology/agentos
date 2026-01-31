@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Optional
+from agentos.core.time import utc_now
+
 
 
 class DecayEngine:
@@ -54,7 +56,7 @@ class DecayEngine:
             Decayed confidence score (clamped to 0.0-1.0)
         """
         if now is None:
-            now = datetime.now(timezone.utc)
+            now = utc_now()
         
         # Parse last_used_at if string
         if isinstance(last_used_at, str):
@@ -97,7 +99,7 @@ class DecayEngine:
             (should_cleanup, reason)
         """
         if now is None:
-            now = datetime.now(timezone.utc)
+            now = utc_now()
         
         # Extract fields
         retention_policy = memory_item.get("retention_policy", {})
@@ -152,7 +154,7 @@ class DecayEngine:
             List of (memory_id, old_confidence, new_confidence) tuples
         """
         if now is None:
-            now = datetime.now(timezone.utc)
+            now = utc_now()
         
         results = []
         for item in memory_items:
@@ -187,7 +189,7 @@ class DecayEngine:
             List of (memory_id, reason) tuples
         """
         if now is None:
-            now = datetime.now(timezone.utc)
+            now = utc_now()
         
         candidates = []
         for item in memory_items:

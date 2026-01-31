@@ -1,6 +1,20 @@
 """
 Session Store Abstractions
 
+⚠️ DEPRECATED (PR-2):
+This module is deprecated as of PR-2. All session management has been
+unified to use ChatService (agentos.core.chat.service.ChatService).
+
+New sessions are stored in chat_sessions table, not webui_sessions.
+This module is kept for backward compatibility during migration (PR-3).
+
+Use ChatService instead:
+    from agentos.core.chat.service import ChatService
+    chat_service = ChatService()
+    session = chat_service.create_session(title="My Session")
+
+---
+
 Provides pluggable storage backends for WebUI sessions and messages.
 
 Architecture Decision:
@@ -10,7 +24,7 @@ Architecture Decision:
 """
 
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 import sqlite3
 import json
@@ -149,7 +163,7 @@ class MemorySessionStore(SessionStore):
             return False
 
         self._sessions[session_id].metadata.update(metadata)
-        self._sessions[session_id].updated_at = datetime.utcnow()
+        self._sessions[session_id].updated_at = datetime.now(timezone.utc)
         return True
 
     def delete_session(self, session_id: str) -> bool:
@@ -187,7 +201,7 @@ class MemorySessionStore(SessionStore):
         self._messages[session_id].append(message)
 
         # Update session timestamp
-        self._sessions[session_id].updated_at = datetime.utcnow()
+        self._sessions[session_id].updated_at = datetime.now(timezone.utc)
 
         return message
 
@@ -278,7 +292,7 @@ class SQLiteSessionStore(SessionStore):
     ) -> Session:
         if session_id is None:
             session_id = str(ulid.ULID())
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
 
         session = Session(
             session_id=session_id,
@@ -351,7 +365,7 @@ class SQLiteSessionStore(SessionStore):
             return [Session.from_db_row(row) for row in rows]
 
     def update_session(self, session_id: str, metadata: dict) -> bool:
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
 
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
@@ -400,7 +414,7 @@ class SQLiteSessionStore(SessionStore):
         metadata: Optional[dict] = None
     ) -> Message:
         message_id = str(ulid.ULID())
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
 
         message = Message(
             message_id=message_id,

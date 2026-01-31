@@ -383,7 +383,8 @@ class KnowledgeHealthView {
         }
 
         try {
-            const response = await fetch('/api/knowledge/jobs', {
+            // CSRF Fix: Use fetchWithCSRF for protected endpoint
+            const response = await window.fetchWithCSRF('/api/knowledge/jobs', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -420,7 +421,8 @@ class KnowledgeHealthView {
         }
 
         try {
-            const response = await fetch('/api/knowledge/jobs', {
+            // CSRF Fix: Use fetchWithCSRF for protected endpoint
+            const response = await window.fetchWithCSRF('/api/knowledge/jobs', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

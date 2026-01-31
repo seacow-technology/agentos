@@ -1,0 +1,187 @@
+{
+  "id": "intent_example_medium_risk",
+  "type": "execution_intent",
+  "title": "Implement user notification API with tests",
+  "description": "Add new REST API endpoint for sending user notifications, including unit tests and integration tests.",
+  "version": "0.9.1",
+  "status": "draft",
+  "created_at": "2026-01-25T11:00:00Z",
+  "lineage": {
+    "introduced_in": "0.9.1",
+    "derived_from": [],
+    "supersedes": []
+  },
+  "scope": {
+    "project_id": "agentos",
+    "repo_root": "/Users/pangge/PycharmProjects/AgentOS",
+    "targets": {
+      "files": [
+        "agentos/api/routes/notifications.py",
+        "agentos/services/notification_service.py",
+        "agentos/models/notification.py",
+        "tests/unit/test_notification_service.py",
+        "tests/integration/test_notifications_api.py"
+      ],
+      "modules": [
+        "agentos.api",
+        "agentos.services"
+      ],
+      "areas": [
+        "backend",
+        "tests"
+      ]
+    }
+  },
+  "objective": {
+    "goal": "Implement user notification API with proper testing coverage",
+    "success_criteria": [
+      "POST /api/notifications endpoint accepts notification data",
+      "Notification service validates and stores notifications",
+      "Unit tests cover service logic",
+      "Integration tests verify API behavior",
+      "API documentation updated"
+    ],
+    "non_goals": [
+      "Email/SMS delivery integration",
+      "Real-time push notifications",
+      "Notification preferences UI"
+    ]
+  },
+  "selected_workflows": [
+    {
+      "workflow_id": "feature_development_workflow",
+      "phases": [
+        "design",
+        "implementation",
+        "validation",
+        "review"
+      ],
+      "reason": "Standard feature development workflow for new API endpoints"
+    }
+  ],
+  "selected_agents": [
+    {
+      "agent_id": "backend_engineer",
+      "role": "implementer",
+      "responsibilities": [
+        "Implement API routes and service logic",
+        "Write unit and integration tests",
+        "Update API documentation"
+      ]
+    },
+    {
+      "agent_id": "qa_engineer",
+      "role": "validator",
+      "responsibilities": [
+        "Review test coverage",
+        "Validate API behavior",
+        "Test error handling"
+      ]
+    }
+  ],
+  "planned_commands": [
+    {
+      "command_id": "implement_api_route",
+      "intent": "Create new API route for notifications",
+      "effects": [
+        "write"
+      ],
+      "risk_level": "medium",
+      "evidence_refs": [
+        "scan://file/agentos/api/routes/notifications.py",
+        "api_spec://notifications_endpoint"
+      ]
+    },
+    {
+      "command_id": "implement_service",
+      "intent": "Implement notification service logic",
+      "effects": [
+        "write"
+      ],
+      "risk_level": "medium",
+      "evidence_refs": [
+        "scan://file/agentos/services/notification_service.py",
+        "design://notification_service_spec"
+      ]
+    },
+    {
+      "command_id": "create_model",
+      "intent": "Define notification data model",
+      "effects": [
+        "write"
+      ],
+      "risk_level": "low",
+      "evidence_refs": [
+        "scan://file/agentos/models/notification.py"
+      ]
+    },
+    {
+      "command_id": "write_unit_tests",
+      "intent": "Write unit tests for notification service",
+      "effects": [
+        "write"
+      ],
+      "risk_level": "low",
+      "evidence_refs": [
+        "scan://file/tests/unit/test_notification_service.py"
+      ]
+    },
+    {
+      "command_id": "write_integration_tests",
+      "intent": "Write integration tests for notifications API",
+      "effects": [
+        "write"
+      ],
+      "risk_level": "medium",
+      "evidence_refs": [
+        "scan://file/tests/integration/test_notifications_api.py"
+      ]
+    }
+  ],
+  "interaction": {
+    "mode": "semi_auto",
+    "question_budget": 5,
+    "question_policy": "blockers_only"
+  },
+  "risk": {
+    "overall": "medium",
+    "drivers": [
+      "New API endpoint exposed to users",
+      "Database schema changes possible",
+      "Integration with existing systems"
+    ],
+    "requires_review": [
+      "architecture",
+      "release"
+    ]
+  },
+  "budgets": {
+    "max_files": 30,
+    "max_commits": 5,
+    "max_tokens": 200000,
+    "max_cost_usd": 10.0
+  },
+  "evidence_refs": [
+    "doc://api/notifications_spec.md",
+    "doc://architecture/api_patterns.md",
+    "test://coverage_requirements"
+  ],
+  "constraints": {
+    "execution": "forbidden",
+    "no_fabrication": true,
+    "registry_only": true,
+    "lock_scope": {
+      "mode": "files",
+      "paths": [
+        "agentos/api/routes/notifications.py",
+        "agentos/services/notification_service.py",
+        "agentos/models/notification.py"
+      ]
+    }
+  },
+  "audit": {
+    "created_by": "human_operator",
+    "source": "human",
+    "checksum": "b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2"
+  }
+}

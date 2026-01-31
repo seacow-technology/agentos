@@ -1,0 +1,63 @@
+# Shadow Classifier Configuration
+#
+# This file configures the shadow classifier system for parallel evaluation
+# of classification decisions. Shadow classifiers run alongside the active
+# classifier but never affect production behavior.
+
+shadow_classifiers:
+  # Shadow evaluation global switch
+  enabled: true
+
+  # List of shadow versions to activate for parallel evaluation
+  # These will run alongside the active classifier for comparison
+  active_versions:
+    - v2-shadow-expand-keywords  # Most conservative: expanded keyword coverage
+
+  # Maximum number of shadow classifiers to run in parallel per question
+  # Higher values provide more data but increase latency
+  max_concurrent_shadows: 2
+
+  # Shadow evaluation timeout in milliseconds
+  # If a shadow classifier exceeds this timeout, it will be skipped
+  evaluation_timeout_ms: 500
+
+  # Version-specific configuration
+  versions:
+    # Shadow v2.a: Expanded keyword lists (lowest risk)
+    v2-shadow-expand-keywords:
+      enabled: true
+      priority: 1  # Higher priority = activated first when multiple shadows available
+      description: "Expands keyword coverage for external fact and ambient state detection"
+      risk_level: "low"
+
+    # Shadow v2.b: Adjusted confidence thresholds (medium risk)
+    v2-shadow-adjust-threshold:
+      enabled: false  # Disabled by default until v2.a proves successful
+      priority: 2
+      description: "Lowers EXTERNAL_FACT confidence threshold from 0.6 to 0.5"
+      risk_level: "medium"
+
+# Audit and logging configuration
+audit:
+  # Log all shadow evaluations for analysis
+  log_shadow_evaluations: true
+
+  # Store shadow decisions to database for comparison
+  store_shadow_decisions: true
+
+  # Sample rate for detailed logging (0.0 to 1.0)
+  # 1.0 = log every shadow evaluation in detail
+  # 0.1 = log 10% of evaluations in detail
+  detailed_log_sample_rate: 1.0
+
+# Alert configuration
+alerts:
+  # Alert when shadow and active decisions diverge
+  alert_on_divergence: true
+
+  # Minimum divergence threshold to trigger alert
+  # (e.g., different decision_action)
+  divergence_threshold: "decision_action"
+
+  # Alert when shadow evaluation times out
+  alert_on_timeout: true

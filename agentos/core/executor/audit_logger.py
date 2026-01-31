@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 import hashlib
+from agentos.core.time import utc_now_iso
+
 
 
 class AuditLogger:
@@ -47,7 +49,7 @@ class AuditLogger:
         
         event = {
             "event_id": f"event_{self.event_counter:06d}",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": utc_now_iso(),
             "event_type": event_type
         }
         

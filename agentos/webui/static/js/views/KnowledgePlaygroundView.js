@@ -66,7 +66,9 @@ class KnowledgePlaygroundView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Result Details</h3>
-                            <button class="btn-close" id="kb-drawer-close">close</button>
+                            <button class="btn-close" id="kb-drawer-close">
+                                <span class="material-icons">close</span>
+                            </button>
                         </div>
                         <div class="drawer-body" id="kb-drawer-body">
                             <!-- Result details will be rendered here -->
@@ -215,7 +217,8 @@ class KnowledgePlaygroundView {
             };
 
             // Call API
-            const response = await fetch('/api/knowledge/search', {
+            // CSRF Fix: Use fetchWithCSRF for protected endpoint
+            const response = await window.fetchWithCSRF('/api/knowledge/search', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

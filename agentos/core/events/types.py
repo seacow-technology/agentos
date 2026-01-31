@@ -23,6 +23,8 @@ from dataclasses import dataclass, field, asdict
 from typing import Dict, Any, Literal
 from datetime import datetime, timezone
 from enum import Enum
+from agentos.core.time import utc_now_iso
+
 
 
 class EventType(str, Enum):
@@ -77,7 +79,7 @@ class Event:
     source: Literal["core", "webui"] = "core"
     entity: EventEntity = None
     payload: Dict[str, Any] = field(default_factory=dict)
-    ts: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    ts: str = field(default_factory=lambda: utc_now_iso())
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dict for JSON serialization"""

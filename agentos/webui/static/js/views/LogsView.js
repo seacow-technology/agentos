@@ -61,7 +61,9 @@ class LogsView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Log Details</h3>
-                            <button class="btn-close" id="logs-drawer-close">close</button>
+                            <button class="btn-close" id="logs-drawer-close">
+                                <span class="material-icons">close</span>
+                            </button>
                         </div>
                         <div class="drawer-body" id="logs-drawer-body">
                             <!-- Log details will be rendered here -->
@@ -530,7 +532,26 @@ class LogsView {
         if (!timestamp) return 'N/A';
 
         try {
+            // Task #14: Defensive check for timezone
+            if (typeof timestamp === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(timestamp)) {
+                const isDev = (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') ||
+                              window.location.hostname === 'localhost' ||
+                              window.location.hostname === '127.0.0.1';
+
+                if (isDev) {
+                    console.warn(`[LogsView] Received timestamp without timezone: ${timestamp}. Assuming UTC.`);
+                }
+
+                timestamp = timestamp + 'Z';
+            }
+
             const date = new Date(timestamp);
+
+            if (isNaN(date.getTime())) {
+                console.error(`[LogsView] Invalid timestamp: ${timestamp}`);
+                return 'Invalid Date';
+            }
+
             return date.toLocaleString('en-US', {
                 year: 'numeric',
                 month: '2-digit',
@@ -542,7 +563,8 @@ class LogsView {
                 hour12: false
             });
         } catch (e) {
-            return timestamp;
+            console.error(`[LogsView] Error formatting timestamp: ${timestamp}`, e);
+            return 'N/A';
         }
     }
 

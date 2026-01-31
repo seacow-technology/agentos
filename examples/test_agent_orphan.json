@@ -1,0 +1,17 @@
+{
+  "id": "orphan-agent",
+  "type": "agent",
+  "version": "1.0.0",
+  "status": "draft",
+  "metadata": {
+    "created_at": "2026-01-25T12:00:00Z",
+    "checksum": "",
+    "is_root": false,
+    "author": "test-user"
+  },
+  "spec": {
+    "name": "Orphan Agent",
+    "description": "This should FAIL (no parent, not root)"
+  }
+}
+}

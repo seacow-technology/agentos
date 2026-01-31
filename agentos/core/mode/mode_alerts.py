@@ -6,6 +6,8 @@ multiple output channels (console, file, webhook) and severity levels.
 
 Usage:
     from agentos.core.mode.mode_alerts import get_alert_aggregator, alert_mode_violation
+from agentos.core.time import utc_now_iso
+
 
     # Quick violation alert
     alert_mode_violation(
@@ -249,7 +251,7 @@ class ModeAlertAggregator:
             context: Additional context data (optional).
         """
         # Create alert with current timestamp
-        timestamp = datetime.now(timezone.utc).isoformat()
+        timestamp = utc_now_iso()
         alert = ModeAlert(
             timestamp=timestamp,
             severity=severity,

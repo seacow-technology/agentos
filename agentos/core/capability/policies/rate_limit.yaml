@@ -1,0 +1,43 @@
+# API Rate Limit Policy
+#
+# Purpose: Prevent API abuse through rate limiting
+# Domain: Action
+# Risk: MEDIUM
+
+policy:
+  id: "external_api_rate_limit"
+  version: "1.0.0"
+  domain: "action"
+  name: "External API Rate Limit Policy"
+  description: "Enforces rate limits on external API calls to prevent abuse"
+
+  rules:
+    - condition: "daily_api_calls > 1000"
+      condition_type: "threshold"
+      action: "ESCALATE"
+      rationale: "Abnormally high API usage (>1000/day) requires investigation"
+      priority: 10
+
+    - condition: "hourly_api_calls > 100"
+      condition_type: "threshold"
+      action: "WARN"
+      rationale: "High burst of API calls (>100/hour) - monitoring needed"
+      priority: 20
+
+    - condition: "api_error_rate > 0.3"
+      condition_type: "threshold"
+      action: "DENY"
+      rationale: "High API error rate (>30%) indicates potential issue"
+      priority: 5
+
+  evolution_history:
+    - version: "1.0.0"
+      changes: "Initial rate limit policy"
+      reason: "Protect against API abuse and quota exhaustion"
+      changed_by: "system"
+      date: "2026-02-01"
+
+  metadata:
+    owner: "platform_team"
+    enforcement_level: "moderate"
+    alert_channel: "ops-alerts"

@@ -1,0 +1,89 @@
+{
+  "id": "intent_130ab4442995",
+  "type": "execution_intent",
+  "title": "实现 Builder 历史记录查询 API：",
+  "version": "1.0.0",
+  "status": "draft",
+  "created_at": "2026-01-25T11:32:17.116363+00:00",
+  "lineage": {
+    "introduced_in": "0.9.4",
+    "derived_from": [],
+    "supersedes": []
+  },
+  "scope": {
+    "project_id": "agentos",
+    "repo_root": ".",
+    "targets": {
+      "files": [],
+      "modules": [],
+      "areas": [
+        "frontend",
+        "backend"
+      ]
+    }
+  },
+  "objective": {
+    "goal": "实现 Builder 历史记录查询 API：",
+    "success_criteria": [
+      "Complete: 实现 Builder 历史记录查询 API："
+    ],
+    "non_goals": []
+  },
+  "selected_workflows": [
+    {
+      "workflow_id": "documentation",
+      "phases": [
+        "analysis",
+        "implementation",
+        "review"
+      ]
+    }
+  ],
+  "selected_agents": [
+    {
+      "agent_id": "technical_writer",
+      "role": "documentation",
+      "responsibilities": [
+        "Write and update documentation"
+      ]
+    }
+  ],
+  "planned_commands": [],
+  "interaction": {
+    "mode": "semi_auto",
+    "question_budget": 10,
+    "question_policy": "blockers_only"
+  },
+  "risk": {
+    "overall": "medium",
+    "drivers": [
+      "Risk level: medium"
+    ],
+    "requires_review": []
+  },
+  "budgets": {
+    "max_files": 50,
+    "max_commits": 10,
+    "max_tokens": 500000,
+    "max_cost_usd": 50.0
+  },
+  "evidence_refs": [
+    "nl_request:nl_req_002",
+    "nl_input:0:159",
+    "risk_assessment:medium"
+  ],
+  "constraints": {
+    "execution": "forbidden",
+    "no_fabrication": true,
+    "registry_only": true,
+    "lock_scope": {
+      "mode": "files",
+      "paths": []
+    }
+  },
+  "audit": {
+    "created_by": "intent_builder_v0.9.4",
+    "source": "agentos",
+    "checksum": "2a74080b6ed63121926963dbbf09bf7dafc56407db6dc455b635aa8f225bcd9d"
+  }
+}

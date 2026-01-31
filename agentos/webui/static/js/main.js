@@ -56,7 +56,7 @@
 // Global state
 const state = {
     currentView: 'chat',
-    currentSession: 'main',
+    currentSession: null,  // Will be set when sessions are loaded
     websocket: null,
     healthCheckInterval: null,
     allSessions: [],
@@ -66,6 +66,49 @@ const state = {
     currentViewInstance: null, // PR-2: Track current view instance for cleanup
     projectSelector: null, // Task #18: Project selector component
 };
+
+// ============================================================================
+// CSRF Protection Helper Functions
+// ============================================================================
+
+/**
+ * Get CSRF token from cookie.
+ * The token is set by the server in the csrf_token cookie.
+ * @returns {string|null} CSRF token or null if not found
+ */
+function getCsrfToken() {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'csrf_token') {
+            return decodeURIComponent(value);
+        }
+    }
+    return null;
+}
+
+/**
+ * Create fetch options with CSRF token for state-changing requests.
+ * Automatically adds X-CSRF-Token header for POST/PUT/PATCH/DELETE requests.
+ * @param {Object} options - Original fetch options
+ * @returns {Object} Options with CSRF token header added
+ */
+function withCsrfToken(options = {}) {
+    const method = (options.method || 'GET').toUpperCase();
+    const needsCsrf = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+
+    if (needsCsrf) {
+        const token = getCsrfToken();
+        if (token) {
+            options.headers = options.headers || {};
+            options.headers['X-CSRF-Token'] = token;
+        } else {
+            console.warn('[CSRF] No CSRF token found in cookies for', method, 'request');
+        }
+    }
+
+    return options;
+}
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', () => {
@@ -83,6 +126,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start health check
     startHealthCheck();
 
+    // Start governance badge updates
+    startGovernanceBadgeUpdates();
+
     // Setup WebSocket lifecycle hooks (Safari bfcache, visibility, focus)
     setupWebSocketLifecycle();
 
@@ -92,6 +138,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update navigation active state
     updateNavigationActive(lastView);
+
+    // Auto-clear console every 2 minutes
+    setInterval(() => {
+        console.clear();
+        console.log('Console auto-cleared at', new Date().toLocaleTimeString());
+    }, 120000);
 
     console.log('AgentOS WebUI initialized');
 });
@@ -168,6 +220,7 @@ function setupRefreshButton() {
 
 // Load view
 function loadView(viewName) {
+    const previousView = state.currentView;
     state.currentView = viewName;
 
     // Save current view to localStorage for page refresh persistence
@@ -177,6 +230,12 @@ function loadView(viewName) {
     if (state.currentViewInstance && typeof state.currentViewInstance.destroy === 'function') {
         state.currentViewInstance.destroy();
         state.currentViewInstance = null;
+    }
+
+    // Disconnect WebSocket when leaving chat view
+    if (previousView === 'chat' && viewName !== 'chat') {
+        console.log('[View] Leaving chat view, disconnecting WebSocket');
+        WS.close();
     }
 
     // Update title
@@ -220,6 +279,15 @@ function loadView(viewName) {
         case 'memory':
             renderMemoryView(container);
             break;
+        case 'memory-proposals':
+            renderMemoryProposalsView(container);
+            break;
+        case 'memory-timeline':
+            renderMemoryTimelineView(container);
+            break;
+        case 'voice':
+            renderVoiceView(container);
+            break;
         case 'config':
             renderConfigView(container);
             break;
@@ -256,6 +324,18 @@ function loadView(viewName) {
         case 'governance-findings':
             renderGovernanceFindingsView(container);
             break;
+        case 'governance':
+            renderGovernanceView(container);
+            break;
+        case 'governance-quotas':
+            renderQuotaView(container);
+            break;
+        case 'governance-trust-tiers':
+            renderTrustTierView(container);
+            break;
+        case 'governance-provenance':
+            renderProvenanceView(container);
+            break;
         case 'lead-scan-history':
             renderLeadScanHistoryView(container);
             break;
@@ -282,6 +362,12 @@ function loadView(viewName) {
         case 'extensions':
             renderExtensionsView(container);
             break;
+        case 'marketplace':
+            renderMarketplaceView(container);
+            break;
+        case 'mcp-package-detail':
+            renderMCPPackageDetailView(container);
+            break;
         case 'models':
             renderModelsView(container);
             break;
@@ -291,6 +377,39 @@ function loadView(viewName) {
             break;
         case 'brain-query':
             renderBrainQueryConsoleView(container);
+            break;
+        case 'channels':
+            renderChannelsView(container);
+            break;
+        case 'communication':
+            renderCommunicationView(container);
+            break;
+        case 'subgraph':
+            renderSubgraphView(container);
+            break;
+        case 'info-need-metrics':
+            renderInfoNeedMetricsView(container);
+            break;
+        case 'decision-review':
+            renderDecisionReviewView(container);
+            break;
+        case 'capability-dashboard':
+            renderCapabilityDashboardView(container);
+            break;
+        case 'decision-timeline':
+            renderDecisionTimelineView(container);
+            break;
+        case 'action-log':
+            renderActionLogView(container);
+            break;
+        case 'evidence-chain':
+            renderEvidenceChainView(container);
+            break;
+        case 'governance-audit':
+            renderGovernanceAuditView(container);
+            break;
+        case 'agent-matrix':
+            renderAgentMatrixView(container);
             break;
         default:
             container.innerHTML = '<div class="p-6 text-gray-500">View not implemented</div>';
@@ -332,6 +451,32 @@ function renderChatView(container) {
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
                             Clear All
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Batch Conversations Toolbar -->
+                <div id="batch-conversations-toolbar" class="border-b border-gray-200 bg-amber-50 px-4 py-2 flex items-center justify-between" style="display: none;">
+                    <div class="flex items-center gap-3">
+                        <span id="selected-conversations-count" class="text-sm font-medium text-gray-700">0 selected</span>
+                        <button
+                            id="select-all-conversations-btn"
+                            class="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                            onclick="toggleSelectAllConversations()"
+                        >
+                            Select All
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button
+                            id="delete-selected-conversations-btn"
+                            class="px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-1"
+                            onclick="deleteSelectedConversations()"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Delete Selected
                         </button>
                     </div>
                 </div>
@@ -438,6 +583,11 @@ function renderChatView(container) {
                             View Session
                         </button>
                     </div>
+
+                    <!-- Row 3: Phase Selector (Task #3) -->
+                    <div class="mode-phase-selectors-container pt-2 border-t border-gray-100">
+                        <div id="phase-selector-container"></div>
+                    </div>
                 </div>
 
                 <!-- Messages -->
@@ -449,19 +599,63 @@ function renderChatView(container) {
 
                 <!-- Input Area -->
                 <div class="border-t border-gray-200 bg-white p-4">
-                    <div class="flex gap-2">
-                        <textarea
-                            id="chat-input"
-                            placeholder="Type your message... (Shift+Enter for new line)"
-                            class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                            rows="2"
-                        ></textarea>
-                        <button
-                            id="send-btn"
-                            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                        >
-                            Send
-                        </button>
+                    <div class="relative">
+                        <!-- Voice Transcript Preview -->
+                        <div id="voice-transcript-preview" class="voice-transcript-preview" style="display: none;">
+                            <div class="flex items-center gap-2">
+                                <span class="material-icons md-18 text-blue-600">mic</span>
+                                <span class="transcript-text text-sm text-gray-700"></span>
+                            </div>
+                        </div>
+
+                        <!-- Autocomplete Dropdown -->
+                        <div id="slash-command-autocomplete" class="slash-command-autocomplete" style="display: none;">
+                            <div class="autocomplete-header">Slash Commands</div>
+                            <div id="autocomplete-list" class="autocomplete-list">
+                                <!-- Command suggestions will be populated here -->
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2 items-center">
+                            <!-- Mode Selector (120px) -->
+                            <div id="input-mode-selector-container"></div>
+
+                            <!-- File Upload Button (38px) -->
+                            <button
+                                id="file-upload-btn"
+                                class="chat-input-icon-btn"
+                                title="File Upload (Coming Soon)"
+                            >
+                                <span class="material-icons">attach_file</span>
+                            </button>
+
+                            <!-- Voice Input Button (38px) -->
+                            <button
+                                id="voice-input-btn"
+                                class="chat-input-icon-btn"
+                                title="Voice Input (Coming Soon)"
+                            >
+                                <span class="material-icons">mic</span>
+                            </button>
+
+                            <!-- Text Input (flex-grow) -->
+                            <textarea
+                                id="chat-input"
+                                placeholder="Type your message... (Shift+Enter for new line, / for commands)"
+                                class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                rows="1"
+                                style="height: 38px; min-height: 38px; line-height: 22px;"
+                            ></textarea>
+
+                            <!-- Send Button (70px) -->
+                            <button
+                                id="send-btn"
+                                class="bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                                style="width: 70px; height: 38px; flex-shrink: 0;"
+                            >
+                                Send
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -475,11 +669,19 @@ function renderChatView(container) {
     sendBtn.addEventListener('click', () => sendMessage());
 
     input.addEventListener('keydown', (e) => {
+        // Handle autocomplete navigation
+        if (handleAutocompleteKeydown(e)) {
+            return; // Autocomplete handled the event
+        }
+
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             sendMessage();
         }
     });
+
+    // Setup autocomplete
+    setupSlashCommandAutocomplete(input);
 
     // Setup new chat button
     document.getElementById('new-chat-btn').addEventListener('click', createNewChat);
@@ -492,14 +694,100 @@ function renderChatView(container) {
         filterConversations(e.target.value);
     });
 
+    // Setup file upload button (placeholder)
+    document.getElementById('file-upload-btn').addEventListener('click', () => {
+        Dialog.alert('File upload feature is coming soon!', { title: 'Coming Soon' });
+    });
+
+    // Setup voice input button (real voice interaction)
+    initializeChatVoice();
+
     // Setup toolbar event handlers
     setupModelToolbar();
+
+    // Task #3: Initialize Mode & Phase Selectors
+    initializeModePhaseSelectors();
 
     // Setup code block actions (Preview, Copy)
     setupCodeBlockActions();
 
     // Initialize chat (load sessions and messages)
     initializeChatView();
+}
+
+// Task #3: Mode & Phase Selectors instances
+let modeSelectorInstance = null;
+let phaseSelectorInstance = null;
+
+// Task #3: Initialize Mode & Phase Selectors
+function initializeModePhaseSelectors() {
+    const modeContainer = document.getElementById('mode-selector-container');
+    const phaseContainer = document.getElementById('phase-selector-container');
+    const inputModeContainer = document.getElementById('input-mode-selector-container');
+
+    if (!phaseContainer) {
+        console.warn('Phase selector container not found');
+        return;
+    }
+
+    // Use input area container for mode selector (new design)
+    const targetModeContainer = inputModeContainer || modeContainer;
+
+    if (!targetModeContainer) {
+        console.warn('Mode selector container not found');
+        return;
+    }
+
+    // Initialize Mode Selector (in input area)
+    // Don't pass sessionId yet - it will be set when sessions are loaded
+    modeSelectorInstance = new ModeSelector({
+        container: targetModeContainer,
+        currentMode: 'chat',  // Default mode
+        sessionId: null,  // Will be set by updateModePhaseSelectorsForSession
+        onChange: (mode, data) => {
+            console.log('Conversation mode changed:', mode, data);
+
+            // Update phase selector when mode changes
+            if (phaseSelectorInstance) {
+                phaseSelectorInstance.setConversationMode(mode);
+            }
+        }
+    });
+
+    // Initialize Phase Selector (in toolbar)
+    // Don't pass sessionId yet - it will be set when sessions are loaded
+    phaseSelectorInstance = new PhaseSelector({
+        container: phaseContainer,
+        currentPhase: 'planning',  // Default phase
+        sessionId: null,  // Will be set by updateModePhaseSelectorsForSession
+        conversationMode: 'chat',  // Default mode
+        onChange: (phase, data) => {
+            console.log('Execution phase changed:', phase, data);
+        }
+    });
+
+    // Task #5: Expose phase selector to global scope for external info warnings
+    window.phaseSelectorInstance = phaseSelectorInstance;
+}
+
+// Task #3: Update Mode & Phase Selectors when session changes
+function updateModePhaseSelectorsForSession(sessionId, sessionData) {
+    if (!modeSelectorInstance || !phaseSelectorInstance) {
+        return;
+    }
+
+    // Extract mode and phase from session metadata
+    const mode = sessionData?.conversation_mode || sessionData?.metadata?.conversation_mode || 'chat';
+    const phase = sessionData?.execution_phase || sessionData?.metadata?.execution_phase || 'planning';
+
+    // Update session ID
+    modeSelectorInstance.setSessionId(sessionId);
+    phaseSelectorInstance.setSessionId(sessionId);
+
+    // Update current values
+    modeSelectorInstance.setMode(mode);
+    phaseSelectorInstance.setPhase(phase);
+    phaseSelectorInstance.setConversationMode(mode);
 }
 
 // Initialize chat view - load sessions first, then select one
@@ -550,6 +838,18 @@ async function initializeChatView() {
 
         // Update session display
         updateChatSessionDisplay(firstSession.id);
+
+        // Task #3: Update mode/phase selectors for initial session
+        updateModePhaseSelectorsForSession(firstSession.id, firstSession);
+
+        // Restore provider/model from session runtime (or sync from UI if not set)
+        await restoreProviderFromSession(firstSession.id);
+
+        // If session has no runtime, sync current UI selection to session
+        if (!firstSession.metadata?.runtime || Object.keys(firstSession.metadata.runtime).length === 0) {
+            console.log('[Initialization] Session has no runtime, syncing from UI...');
+            await updateSessionRuntime();
+        }
 
         // Setup WebSocket for this session
         setupWebSocket();
@@ -1132,13 +1432,13 @@ window.submitSaveSnippet = async function() {
         submitBtn.textContent = 'Saving...';
 
         // Call API
-        const response = await fetch('/api/snippets', {
+        const response = await fetch('/api/snippets', withCsrfToken({
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(payload)
-        });
+        }));
 
         if (!response.ok) {
             const error = await response.json();
@@ -1185,8 +1485,14 @@ async function ensureSnippetIdForCodeblock(codeblockEl) {
 
     const code = codeEl.textContent;  // Raw code
     const language = codeblockEl.dataset.lang || '';
-    const sessionId = codeblockEl.dataset.sessionId || state.currentSession || 'main';
+    const sessionId = codeblockEl.dataset.sessionId || state.currentSession;
     const messageId = codeblockEl.dataset.messageId || null;
+
+    // Validate sessionId
+    if (!sessionId) {
+        console.error('No valid session ID for code block operations');
+        return;
+    }
 
     // Get current model
     const modelEl = document.getElementById('model-name');
@@ -1197,7 +1503,7 @@ async function ensureSnippetIdForCodeblock(codeblockEl) {
     const defaultTitle = `${language || 'code'} snippet ${now.toISOString().split('T')[0]}`;
 
     try {
-        const response = await fetch('/api/snippets', {
+        const response = await fetch('/api/snippets', withCsrfToken({
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1212,7 +1518,7 @@ async function ensureSnippetIdForCodeblock(codeblockEl) {
                     model: model
                 }
             })
-        });
+        }));
 
         if (!response.ok) {
             throw new Error('Failed to save snippet');
@@ -1264,11 +1570,11 @@ async function handlePreviewSnippet(button) {
 
     try {
         // Call preview API
-        const response = await fetch(`/api/snippets/${snippetId}/preview`, {
+        const response = await fetch(`/api/snippets/${snippetId}/preview`, withCsrfToken({
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ preset })
-        });
+        }));
 
         if (!response.ok) {
             throw new Error('Failed to create preview');
@@ -1321,14 +1627,14 @@ async function handleMakeTask(button) {
 
     try {
         // Call materialize API
-        const response = await fetch(`/api/snippets/${snippetId}/materialize`, {
+        const response = await fetch(`/api/snippets/${snippetId}/materialize`, withCsrfToken({
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 target_path: targetPath,
                 description: `Write snippet to ${targetPath}`
             })
-        });
+        }));
 
         if (!response.ok) {
             const error = await response.json();
@@ -1956,16 +2262,16 @@ ${htmlCode}
 
     // Use server endpoint instead of Blob URL to support external CDN
     // This allows iframe to have real origin and load Three.js, D3.js, etc.
-    fetch('/api/preview', {
+    fetch('/api/preview', withCsrfToken({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ html: wrapped })
-    })
+    }))
     .then(res => res.json())
     .then(data => {
         // Delete previous session if exists
         if (refs.frame._previewSession) {
-            fetch(`/api/preview/${refs.frame._previewSession}`, { method: 'DELETE' });
+            fetch(`/api/preview/${refs.frame._previewSession}`, withCsrfToken({ method: 'DELETE' }));
         }
 
         // Load preview via server endpoint
@@ -2067,12 +2373,12 @@ function applyPrismTheme(theme) {
     if (!themeLink) return;
 
     const themeUrls = {
-        'tomorrow': 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css',
-        'okaidia': 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css',
-        'dracula': 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-dracula.min.css',
-        'one-dark': 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-one-dark.min.css',
-        'solarized-dark': 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-solarizedlight.min.css',
-        'monokai': 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css' // Using Okaidia as Monokai alternative
+        'tomorrow': '/static/vendor/prismjs/themes/prism-tomorrow.min.css',
+        'okaidia': '/static/vendor/prismjs/themes/prism-okaidia.min.css',
+        'dracula': '/static/vendor/prismjs/themes/prism-dracula.min.css',
+        'one-dark': '/static/vendor/prismjs/themes/prism-one-dark.min.css',
+        'solarized-dark': '/static/vendor/prismjs/themes/prism-solarizedlight.min.css',
+        'monokai': '/static/vendor/prismjs/themes/prism-okaidia.min.css' // Using Okaidia as Monokai alternative
     };
 
     themeLink.href = themeUrls[theme] || themeUrls['tomorrow'];
@@ -2198,16 +2504,16 @@ ${js}
         refs.dlg._currentHtmlCode = combined;
 
         // Use server endpoint to support external CDN
-        fetch('/api/preview', {
+        fetch('/api/preview', withCsrfToken({
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ html: combined })
-        })
+        }))
         .then(res => res.json())
         .then(data => {
             // Delete previous session if exists
             if (refs.frame._previewSession) {
-                fetch(`/api/preview/${refs.frame._previewSession}`, { method: 'DELETE' });
+                fetch(`/api/preview/${refs.frame._previewSession}`, withCsrfToken({ method: 'DELETE' }));
             }
 
             // Load updated preview
@@ -2416,13 +2722,13 @@ async function sharePreview() {
     const code = dlg._currentHtmlCode;
 
     try {
-        const response = await fetch('/api/share', {
+        const response = await fetch('/api/share', withCsrfToken({
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ code })
-        });
+        }));
 
         if (!response.ok) {
             throw new Error('Failed to create share link');
@@ -2459,6 +2765,190 @@ function highlightCodeBlocks(element) {
 }
 
 // ============================================================================
+// ============================================================================
+// Message Queue - Prevents concurrent message processing (H-8 Fix)
+// ============================================================================
+class MessageQueue {
+  constructor() {
+    this.queue = [];
+    this.processing = false;
+  }
+
+  /**
+   * Add message to queue and process
+   * @param {Object} message - Message to send
+   * @returns {Promise<boolean>} Success status
+   */
+  async enqueue(message) {
+    console.log('[MessageQueue] Enqueuing message, queue length:', this.queue.length);
+
+    return new Promise((resolve) => {
+      this.queue.push({ message, resolve });
+
+      // Start processing if not already processing
+      if (!this.processing) {
+        this.processQueue();
+      }
+    });
+  }
+
+  /**
+   * Process messages in queue sequentially
+   */
+  async processQueue() {
+    if (this.processing) {
+      console.log('[MessageQueue] Already processing');
+      return;
+    }
+
+    this.processing = true;
+    this.updateUIState(true);
+
+    console.log('[MessageQueue] Starting queue processing, items:', this.queue.length);
+
+    while (this.queue.length > 0) {
+      const { message, resolve } = this.queue.shift();
+
+      console.log('[MessageQueue] Processing message, remaining:', this.queue.length);
+
+      try {
+        // Send message via WebSocket
+        const success = await this.sendAndWait(message);
+        resolve(success);
+      } catch (err) {
+        console.error('[MessageQueue] Error processing message:', err);
+        resolve(false);
+      }
+    }
+
+    this.processing = false;
+    this.updateUIState(false);
+
+    console.log('[MessageQueue] Queue processing complete');
+  }
+
+  /**
+   * Send message and wait for response
+   * @param {Object} message - Message to send
+   * @returns {Promise<boolean>} Success status
+   */
+  async sendAndWait(message) {
+    return new Promise((resolve) => {
+      // Set up one-time listener for message.end or error
+      const messageId = Date.now().toString();
+      let responseReceived = false;
+
+      const timeout = setTimeout(() => {
+        if (!responseReceived) {
+          console.warn('[MessageQueue] Response timeout for message');
+          cleanup();
+          resolve(false);
+        }
+      }, 60000); // 60 second timeout
+
+      const cleanup = () => {
+        clearTimeout(timeout);
+        window.removeEventListener('ws:message:end', onMessageEnd);
+        window.removeEventListener('ws:message:error', onMessageError);
+      };
+
+      const onMessageEnd = (event) => {
+        responseReceived = true;
+        cleanup();
+        console.log('[MessageQueue] Message completed successfully');
+        resolve(true);
+      };
+
+      const onMessageError = (event) => {
+        responseReceived = true;
+        cleanup();
+        console.warn('[MessageQueue] Message completed with error');
+        resolve(true); // Still resolve to process next message
+      };
+
+      // Listen for completion events
+      window.addEventListener('ws:message:end', onMessageEnd, { once: true });
+      window.addEventListener('ws:message:error', onMessageError, { once: true });
+
+      // Send the message
+      const sent = WS.send(message);
+
+      if (!sent) {
+        cleanup();
+        resolve(false);
+      }
+    });
+  }
+
+  /**
+   * Update UI state (disable/enable send button, show indicator)
+   * @param {boolean} processing - Whether processing is active
+   */
+  updateUIState(processing) {
+    const sendBtn = document.getElementById('send-btn');
+    const input = document.getElementById('chat-input');
+
+    if (sendBtn) {
+      sendBtn.disabled = processing;
+
+      if (processing) {
+        sendBtn.classList.add('processing');
+        sendBtn.title = 'Processing message...';
+      } else {
+        sendBtn.classList.remove('processing');
+        sendBtn.title = 'Send message';
+      }
+    }
+
+    if (input) {
+      input.disabled = processing;
+    }
+
+    // Show/hide processing indicator
+    this.updateProcessingIndicator(processing);
+  }
+
+  /**
+   * Show/hide processing indicator in chat
+   * @param {boolean} show - Whether to show indicator
+   */
+  updateProcessingIndicator(show) {
+    let indicator = document.getElementById('chat-processing-indicator');
+
+    if (show && !indicator) {
+      // Create indicator
+      indicator = document.createElement('div');
+      indicator.id = 'chat-processing-indicator';
+      indicator.className = 'chat-processing-indicator';
+      indicator.innerHTML = `
+        <div class="processing-spinner"></div>
+        <span>Processing message...</span>
+      `;
+
+      const messagesDiv = document.getElementById('messages');
+      if (messagesDiv) {
+        messagesDiv.parentNode.insertBefore(indicator, messagesDiv.nextSibling);
+      }
+    } else if (!show && indicator) {
+      // Remove indicator
+      indicator.remove();
+    }
+  }
+
+  /**
+   * Clear queue (for session change or reset)
+   */
+  clear() {
+    console.log('[MessageQueue] Clearing queue, items:', this.queue.length);
+    this.queue = [];
+    this.processing = false;
+    this.updateUIState(false);
+  }
+}
+
+// Global message queue instance
+const messageQueue = new MessageQueue();
+
 // WebSocket Manager - Singleton with reconnection, heartbeat, lifecycle
 // ============================================================================
 const WS = {
@@ -2550,6 +3040,10 @@ const WS = {
         this.ws = null;
         this._clearTimers();
         updateChatWSStatus('disconnected', 'Disconnected');
+
+        // Task #7: Clear message states on disconnect to prevent stale state on reconnect
+        console.log('[WS] Clearing message states on disconnect:', messageStates.size, 'entries');
+        messageStates.clear();
 
         // Auto-reconnect unless manually closed
         if (!this.manualClose) {
@@ -2668,14 +3162,26 @@ function handleIncomingChatMessage(data) {
 }
 
 // Lifecycle hooks for Safari bfcache and visibility
+let lifecycleHooksInstalled = false;
+
 function setupWebSocketLifecycle() {
+  // Prevent duplicate event listener registration
+  if (lifecycleHooksInstalled) {
+    console.log('[Lifecycle] Hooks already installed, skipping');
+    return;
+  }
+
   console.log('[Lifecycle] Setting up WebSocket lifecycle hooks');
+  lifecycleHooksInstalled = true;
 
   // Safari bfcache: restore connection on pageshow.persisted
   window.addEventListener('pageshow', (event) => {
     if (event.persisted) {
       console.log('[Lifecycle] Page restored from bfcache, reconnecting WebSocket');
-      WS.connect();
+      // Only reconnect if on chat view
+      if (state.currentView === 'chat') {
+        WS.connect();
+      }
     }
   });
 
@@ -2684,7 +3190,8 @@ function setupWebSocketLifecycle() {
     if (document.visibilityState === 'visible') {
       console.log('[Lifecycle] Page visible, checking WebSocket');
 
-      if (!WS.ws || WS.ws.readyState !== WebSocket.OPEN) {
+      // Only reconnect if on chat view
+      if (state.currentView === 'chat' && (!WS.ws || WS.ws.readyState !== WebSocket.OPEN)) {
         console.log('[Lifecycle] WebSocket not open, reconnecting');
         WS.connect();
       }
@@ -2695,7 +3202,8 @@ function setupWebSocketLifecycle() {
   window.addEventListener('focus', () => {
     console.log('[Lifecycle] Window focused, checking WebSocket');
 
-    if (!WS.ws || WS.ws.readyState !== WebSocket.OPEN) {
+    // Only reconnect if on chat view
+    if (state.currentView === 'chat' && (!WS.ws || WS.ws.readyState !== WebSocket.OPEN)) {
       console.log('[Lifecycle] WebSocket not open, reconnecting');
       WS.connect();
     }
@@ -2712,7 +3220,10 @@ window.wsDebug = () => {
     manualClose: WS.manualClose,
     connecting: WS.connecting,
     lastActivity: new Date(WS.lastActivity).toISOString(),
-    idleTime: Date.now() - WS.lastActivity
+    idleTime: Date.now() - WS.lastActivity,
+    lifecycleHooksInstalled: lifecycleHooksInstalled,
+    currentView: state.currentView,
+    messagesProcessed: processedMessages.size
   });
 };
 
@@ -2721,10 +3232,45 @@ window.wsReconnect = () => {
   WS.connect();
 };
 
+// Clear processed messages tracking (useful for debugging)
+window.wsClearTracking = () => {
+  const count = processedMessages.size;
+  processedMessages.clear();
+  console.log(`[WS] Cleared ${count} tracked messages`);
+};
+
 // Setup WebSocket
 function setupWebSocket() {
     console.log('[WS] setupWebSocket() called, delegating to WS.connect()');
     WS.connect(state.currentSession);
+}
+
+// Task #7: Enhanced message state tracking for deduplication
+// Track full message lifecycle: start -> deltas -> end
+const messageStates = new Map();  // message_id -> {state, seq, lastUpdateTime}
+const MESSAGE_TRACKING_LIMIT = 100; // Keep last 100 message IDs
+
+// Clean up old message states periodically
+function cleanupMessageStates() {
+    if (messageStates.size > MESSAGE_TRACKING_LIMIT) {
+        const now = Date.now();
+        const staleThreshold = 5 * 60 * 1000; // 5 minutes
+
+        // Remove stale entries
+        for (const [msgId, state] of messageStates.entries()) {
+            if (now - state.lastUpdateTime > staleThreshold) {
+                messageStates.delete(msgId);
+            }
+        }
+
+        // If still over limit, remove oldest entries
+        if (messageStates.size > MESSAGE_TRACKING_LIMIT) {
+            const sorted = Array.from(messageStates.entries())
+                .sort((a, b) => a[1].lastUpdateTime - b[1].lastUpdateTime);
+            const toRemove = sorted.slice(0, messageStates.size - MESSAGE_TRACKING_LIMIT);
+            toRemove.forEach(([msgId]) => messageStates.delete(msgId));
+        }
+    }
 }
 
 // Handle WebSocket message
@@ -2737,16 +3283,62 @@ function handleWebSocketMessage(message) {
         return;
     }
 
+    // Task #7: Enhanced message deduplication with full lifecycle tracking
     if (message.type === 'message.start') {
+        // Check for duplicate message.start
+        if (message.message_id && messageStates.has(message.message_id)) {
+            const state = messageStates.get(message.message_id);
+            if (state.state !== 'ended') {
+                console.warn('[WS] Duplicate message.start detected, skipping:', message.message_id, 'current state:', state.state);
+                return;
+            }
+            // If message was ended, allow reuse of message_id (rare case)
+            console.log('[WS] Reusing message_id after previous completion:', message.message_id);
+        }
+
         // Create new assistant message element (empty, will be filled by deltas)
         // Pass metadata for extension detection (Task #11)
         const assistantMsg = createMessageElement('assistant', '', message.metadata || {});
         assistantMsg.dataset.messageId = message.message_id;
         messagesDiv.appendChild(assistantMsg);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        console.log('Started receiving message:', message.message_id);
+        console.log('[WS] Started receiving message:', message.message_id, 'seq:', message.seq || 0);
+
+        // Track this message with full state
+        if (message.message_id) {
+            messageStates.set(message.message_id, {
+                state: 'streaming',
+                seq: message.seq || 0,
+                lastUpdateTime: Date.now(),
+                chunkCount: 0
+            });
+            cleanupMessageStates();
+        }
 
     } else if (message.type === 'message.delta') {
+        // Task #7: Deduplicate deltas using sequence numbers
+        const state = messageStates.get(message.message_id);
+        if (!state) {
+            console.warn('[WS] Received delta without start, skipping:', message.message_id);
+            return;
+        }
+
+        // Check sequence number if provided by backend
+        if (message.seq !== undefined && message.seq !== null) {
+            if (message.seq <= state.seq) {
+                console.warn('[WS] Duplicate or out-of-order delta detected, skipping:',
+                    'msg_id:', message.message_id, 'received seq:', message.seq, 'current seq:', state.seq);
+                return;
+            }
+            state.seq = message.seq;
+        } else {
+            // Backend doesn't provide seq, increment locally
+            state.seq += 1;
+        }
+
+        state.lastUpdateTime = Date.now();
+        state.chunkCount += 1;
+
         // Append content to the last assistant message
         let lastMsg = messagesDiv.lastElementChild;
         if (lastMsg && lastMsg.classList.contains('assistant')) {
@@ -2754,11 +3346,28 @@ function handleWebSocketMessage(message) {
             contentDiv.textContent += message.content;
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         } else {
-            console.warn('Received delta but no assistant message element found');
+            console.warn('[WS] Received delta but no assistant message element found');
         }
 
     } else if (message.type === 'message.end') {
-        console.log('Finished receiving message:', message.message_id, message.metadata);
+        // Task #7: Deduplicate message.end
+        const state = messageStates.get(message.message_id);
+        if (!state) {
+            console.warn('[WS] Received end without start, skipping:', message.message_id);
+            return;
+        }
+
+        if (state.state === 'ended') {
+            console.warn('[WS] Duplicate message.end detected, skipping:', message.message_id);
+            return;
+        }
+
+        // Mark as ended
+        state.state = 'ended';
+        state.lastUpdateTime = Date.now();
+
+        console.log('[WS] Finished receiving message:', message.message_id,
+            'chunks:', state.chunkCount, 'metadata:', message.metadata);
 
         // Find the message element and rerender with code block parsing
         const msgEl = messagesDiv.querySelector(`[data-message-id="${message.message_id}"]`);
@@ -2775,7 +3384,16 @@ function handleWebSocketMessage(message) {
                     highlightCodeBlocks(contentDiv);
                 }
             }
+
+            // Task #5: Check for external_info declarations
+            if (message.external_info && Array.isArray(message.external_info) && message.external_info.length > 0) {
+                console.log('External info declarations detected:', message.external_info);
+                displayExternalInfoWarning(msgEl, message.external_info);
+            }
         }
+
+        // H-8 Fix: Dispatch event to notify MessageQueue
+        window.dispatchEvent(new CustomEvent('ws:message:end', { detail: message }));
 
     } else if (message.type === 'message.error') {
         // Show error message
@@ -2784,6 +3402,9 @@ function handleWebSocketMessage(message) {
         messagesDiv.appendChild(errorMsg);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
         console.error('Message error:', message.content);
+
+        // H-8 Fix: Dispatch event to notify MessageQueue
+        window.dispatchEvent(new CustomEvent('ws:message:error', { detail: message }));
 
     } else if (message.type === 'completion_info') {
         // P1-8: Handle completion truncation info
@@ -2896,20 +3517,24 @@ async function sendMessage() {
     messagesDiv.appendChild(userMsg);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-    // Send via WS Manager (with auto-reconnect)
-    const sent = WS.send({
+    // Clear input immediately for better UX
+    input.value = '';
+
+    // Send via message queue (H-8 Fix: prevents concurrent processing)
+    const sent = await messageQueue.enqueue({
         type: 'user_message',
         content: content,
         metadata: metadata,
     });
 
     if (!sent) {
-        console.error('[WS] Failed to send message, connection lost');
-        // WS.send() already handles reconnection attempt
-    }
+        console.error('[MessageQueue] Failed to send message');
 
-    // Clear input
-    input.value = '';
+        // Show error message in chat
+        const errorMsg = createMessageElement('assistant', '⚠️ Failed to send message. Please try again.');
+        messagesDiv.appendChild(errorMsg);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
 }
 
 // Create message element
@@ -3056,26 +3681,193 @@ function openSettingsForTokenLimit() {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// Create session if it doesn't exist
-async function createSession(sessionId) {
+/**
+ * Display external information warning block (Task #5)
+ *
+ * Shows a clear warning when the LLM declares external info needs.
+ * Provides buttons to populate /comm commands (no auto-execution).
+ * Offers option to switch to execution phase.
+ *
+ * @param {HTMLElement} messageElement - The assistant message element
+ * @param {Array} externalInfoDeclarations - Array of external info declarations
+ */
+function displayExternalInfoWarning(messageElement, externalInfoDeclarations) {
+    console.log('[ExternalInfo] Displaying warning for', externalInfoDeclarations.length, 'declarations');
+
+    // Don't add duplicate warnings
+    const existingWarning = messageElement.querySelector('.external-info-warning');
+    if (existingWarning) {
+        console.log('[ExternalInfo] Warning already exists, skipping');
+        return;
+    }
+
+    // Filter only required declarations (required === true)
+    const requiredDeclarations = externalInfoDeclarations.filter(decl => decl.required === true);
+
+    if (requiredDeclarations.length === 0) {
+        console.log('[ExternalInfo] No required declarations, skipping warning');
+        return;
+    }
+
+    // Create warning element
+    const warningEl = document.createElement('div');
+    warningEl.className = 'external-info-warning';
+
+    // Build action buttons from suggested_actions
+    let actionButtonsHtml = '';
+    requiredDeclarations.forEach((decl, index) => {
+        if (decl.suggested_actions && Array.isArray(decl.suggested_actions)) {
+            decl.suggested_actions.forEach((action, actionIndex) => {
+                const command = action.command || '';
+                const label = action.label || command;
+                const buttonId = `external-info-action-${index}-${actionIndex}`;
+
+                actionButtonsHtml += `
+                    <button class="external-info-action-btn"
+                            data-command="${escapeHtml(command)}"
+                            id="${buttonId}">
+                        <span class="action-icon">arrow_forward</span>
+                        <span>${escapeHtml(label)}</span>
+                    </button>
+                `;
+            });
+        }
+    });
+
+    // Build warning HTML
+    warningEl.innerHTML = `
+        <div class="external-info-warning-header">
+            <span class="external-info-warning-icon">warning</span>
+            <span class="external-info-warning-title">External Information Required</span>
+        </div>
+
+        <div class="external-info-warning-message">
+            This response requires verified external information sources.
+            <strong>No external access has been performed.</strong>
+        </div>
+
+        <div class="external-info-warning-notice">
+            The assistant has identified ${requiredDeclarations.length} external information need(s)
+            that cannot be fulfilled in the current planning phase.
+        </div>
+
+        ${actionButtonsHtml ? `
+            <div class="external-info-actions">
+                <div class="external-info-action-label">Suggested Actions:</div>
+                <div class="external-info-action-buttons">
+                    ${actionButtonsHtml}
+                </div>
+            </div>
+        ` : ''}
+
+        <div class="external-info-phase-switch">
+            <button class="external-info-phase-switch-btn" id="external-info-switch-phase">
+                <span class="switch-icon">power_settings_new</span>
+                <span>Switch to Execution Phase</span>
+            </button>
+        </div>
+    `;
+
+    // Insert warning after the message content
+    const contentDiv = messageElement.querySelector('.content');
+    if (contentDiv) {
+        contentDiv.after(warningEl);
+    } else {
+        messageElement.appendChild(warningEl);
+    }
+
+    // Attach event listeners to action buttons
+    requiredDeclarations.forEach((decl, index) => {
+        if (decl.suggested_actions && Array.isArray(decl.suggested_actions)) {
+            decl.suggested_actions.forEach((action, actionIndex) => {
+                const buttonId = `external-info-action-${index}-${actionIndex}`;
+                const button = document.getElementById(buttonId);
+                if (button) {
+                    button.addEventListener('click', () => {
+                        populateCommandInInput(action.command);
+                    });
+                }
+            });
+        }
+    });
+
+    // Attach event listener to phase switch button
+    const switchPhaseBtn = document.getElementById('external-info-switch-phase');
+    if (switchPhaseBtn) {
+        switchPhaseBtn.addEventListener('click', () => {
+            triggerPhaseSwitchToExecution();
+        });
+    }
+
+    console.log('[ExternalInfo] Warning displayed successfully');
+}
+
+/**
+ * Populate a command in the chat input (Task #5)
+ * Does not auto-execute - requires user confirmation
+ *
+ * @param {string} command - The command to populate
+ */
+function populateCommandInInput(command) {
+    const input = document.getElementById('chat-input');
+    if (!input) {
+        console.error('[ExternalInfo] Chat input not found');
+        return;
+    }
+
+    input.value = command;
+    input.focus();
+
+    console.log('[ExternalInfo] Populated command:', command);
+
+    // Show a toast to inform the user
+    showToast('Command populated. Press Enter to execute.', 'info', 2000);
+}
+
+/**
+ * Trigger phase switch to execution (Task #5)
+ * Uses the PhaseSelector component if available
+ */
+function triggerPhaseSwitchToExecution() {
+    console.log('[ExternalInfo] Triggering phase switch to execution');
+
+    // Check if PhaseSelector is available in global scope
+    if (window.phaseSelectorInstance && typeof window.phaseSelectorInstance.selectPhase === 'function') {
+        window.phaseSelectorInstance.selectPhase('execution');
+        showToast('Switching to execution phase...', 'info', 2000);
+    } else {
+        // Fallback: Try to click the execution phase button directly
+        const executionPhaseBtn = document.querySelector('[data-phase="execution"]');
+        if (executionPhaseBtn) {
+            executionPhaseBtn.click();
+        } else {
+            console.error('[ExternalInfo] Phase selector not found');
+            showToast('Phase selector not available. Please switch manually.', 'error', 3000);
+        }
+    }
+}
+
+// Create a new session (backend will generate ULID)
+async function createSession(title = 'New Chat') {
     try {
-        const response = await fetch('/api/sessions', {
+        const response = await fetch('/api/sessions', withCsrfToken({
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                session_id: sessionId,
-                title: sessionId === 'main' ? 'Main Session' : `Session ${sessionId}`
+                title: title
+                // Do not pass session_id - let backend generate ULID
             })
-        });
+        }));
 
         if (!response.ok) {
             throw new Error(`Failed to create session: ${response.statusText}`);
         }
 
-        console.log(`Session ${sessionId} created successfully`);
-        return await response.json();
+        const session = await response.json();
+        console.log(`Session created successfully: ${session.id}`);
+        return session;
     } catch (err) {
         console.error('Failed to create session:', err);
         throw err;
@@ -3195,6 +3987,16 @@ function renderConversationsList(sessions) {
                 class="conversation-item ${activeClass} p-4 border-b border-gray-200 transition-colors relative group"
                 data-session-id="${session.id}"
             >
+                <!-- Checkbox for batch selection -->
+                <div class="conversation-checkbox-wrapper" onclick="event.stopPropagation();">
+                    <input
+                        type="checkbox"
+                        class="conversation-checkbox"
+                        data-session-id="${session.id}"
+                        onchange="toggleConversationSelection()"
+                    />
+                </div>
+
                 <div class="cursor-pointer" onclick="switchSession('${session.id}')">
                     <div class="flex items-start justify-between mb-2">
                         <h4 class="font-semibold text-sm text-gray-900 truncate flex-1 pr-8">
@@ -3226,6 +4028,9 @@ function renderConversationsList(sessions) {
     }).join('');
 
     listContainer.innerHTML = html;
+
+    // Update batch toolbar state
+    updateBatchConversationsToolbar();
 }
 
 // Filter conversations by search term
@@ -3244,10 +4049,24 @@ function filterConversations(searchTerm) {
 async function switchSession(sessionId) {
     if (sessionId === state.currentSession) return;
 
+    // H-8 Fix: Clear message queue on session switch
+    messageQueue.clear();
+
     state.currentSession = sessionId;
 
     // PR-3: Update session display in toolbar
     updateChatSessionDisplay(sessionId);
+
+    // Task #3: Fetch session data and update mode/phase selectors
+    try {
+        const response = await fetch(`/api/sessions/${sessionId}`);
+        if (response.ok) {
+            const sessionData = await response.json();
+            updateModePhaseSelectorsForSession(sessionId, sessionData);
+        }
+    } catch (err) {
+        console.error('Failed to fetch session data for selectors:', err);
+    }
 
     // Reload messages
     await loadMessages();
@@ -3257,6 +4076,12 @@ async function switchSession(sessionId) {
 
     // Update context status (Task #8)
     loadContextStatus();
+
+    // Update Memory Badge (Task #9)
+    updateMemoryBadge(sessionId);
+
+    // Restore provider/model from session runtime
+    await restoreProviderFromSession(sessionId);
 
     // Update active state in list
     document.querySelectorAll('.conversation-item').forEach(item => {
@@ -3286,7 +4111,7 @@ function updateChatSessionDisplay(sessionId) {
         sessionCopyBtn.style.display = 'inline-block';
         viewSessionBtn.style.display = 'inline-block';
 
-        // Enable input (PR-3 护栏规则)
+        // Enable input (PR-3 护栏Rule)
         if (chatInput) {
             chatInput.disabled = false;
             chatInput.placeholder = 'Type your message... (Shift+Enter for new line)';
@@ -3306,7 +4131,7 @@ function updateChatSessionDisplay(sessionId) {
             window.navigateToView('sessions', { session_id: sessionId });
         };
     } else {
-        // No session - disable input (PR-3 护栏规则)
+        // No session - disable input (PR-3 护栏Rule)
         sessionIdDisplay.textContent = 'No session';
         sessionCopyBtn.style.display = 'none';
         viewSessionBtn.style.display = 'none';
@@ -3351,14 +4176,14 @@ function updateChatWSStatus(status, message) {
 // Create new chat
 async function createNewChat() {
     try {
-        const response = await fetch('/api/sessions', {
+        const response = await fetch('/api/sessions', withCsrfToken({
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 title: `Chat ${new Date().toLocaleString()}`,
                 tags: ['user-created'],
             }),
-        });
+        }));
 
         const newSession = await response.json();
 
@@ -3385,9 +4210,9 @@ async function deleteSession(sessionId) {
     }
 
     try {
-        const response = await fetch(`/api/sessions/${sessionId}`, {
+        const response = await fetch(`/api/sessions/${sessionId}`, withCsrfToken({
             method: 'DELETE',
-        });
+        }));
 
         if (!response.ok) {
             throw new Error('Failed to delete session');
@@ -3439,9 +4264,9 @@ async function clearAllSessions() {
     }
 
     try {
-        const response = await fetch('/api/sessions', {
+        const response = await fetch('/api/sessions', withCsrfToken({
             method: 'DELETE',
-        });
+        }));
 
         if (!response.ok) {
             throw new Error('Failed to clear all sessions');
@@ -3480,18 +4305,317 @@ async function clearAllSessions() {
     }
 }
 
+// ============================================================================
+// Batch Delete Conversations (Sessions)
+// ============================================================================
+
+// Toggle conversation selection
+function toggleConversationSelection() {
+    updateBatchConversationsToolbar();
+}
+
+// Toggle select all conversations
+function toggleSelectAllConversations() {
+    const checkboxes = document.querySelectorAll('.conversation-checkbox');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+
+    checkboxes.forEach(cb => {
+        cb.checked = !allChecked;
+    });
+
+    updateBatchConversationsToolbar();
+}
+
+// Update batch conversations toolbar state
+function updateBatchConversationsToolbar() {
+    const toolbar = document.getElementById('batch-conversations-toolbar');
+    const selectedCheckboxes = document.querySelectorAll('.conversation-checkbox:checked');
+    const selectedCount = selectedCheckboxes.length;
+    const countDisplay = document.getElementById('selected-conversations-count');
+    const selectAllBtn = document.getElementById('select-all-conversations-btn');
+
+    if (!toolbar) return;
+
+    if (selectedCount > 0) {
+        toolbar.style.display = 'flex';
+        if (countDisplay) {
+            countDisplay.textContent = `${selectedCount} selected`;
+        }
+        if (selectAllBtn) {
+            const allCheckboxes = document.querySelectorAll('.conversation-checkbox');
+            const allChecked = selectedCount === allCheckboxes.length;
+            selectAllBtn.textContent = allChecked ? 'Deselect All' : 'Select All';
+        }
+
+        // Add highlight to selected items
+        selectedCheckboxes.forEach(cb => {
+            const item = cb.closest('.conversation-item');
+            if (item) {
+                item.classList.add('conversation-selected');
+            }
+        });
+
+        // Remove highlight from unselected items
+        const allCheckboxes = document.querySelectorAll('.conversation-checkbox:not(:checked)');
+        allCheckboxes.forEach(cb => {
+            const item = cb.closest('.conversation-item');
+            if (item) {
+                item.classList.remove('conversation-selected');
+            }
+        });
+    } else {
+        toolbar.style.display = 'none';
+
+        // Remove all highlights
+        const allItems = document.querySelectorAll('.conversation-item');
+        allItems.forEach(item => {
+            item.classList.remove('conversation-selected');
+        });
+    }
+}
+
+// Delete selected conversations
+async function deleteSelectedConversations() {
+    const selectedCheckboxes = document.querySelectorAll('.conversation-checkbox:checked');
+    const sessionIds = Array.from(selectedCheckboxes).map(cb => cb.dataset.sessionId);
+
+    if (sessionIds.length === 0) {
+        Dialog.alert('No conversations selected', { title: 'Delete Conversations' });
+        return;
+    }
+
+    const confirmed = await Dialog.confirm(
+        `Delete ${sessionIds.length} selected conversation(s)? This action cannot be undone.`,
+        {
+            title: 'Delete Conversations',
+            confirmText: 'Delete',
+            danger: true
+        }
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        let deletedCount = 0;
+        let failedCount = 0;
+
+        // Delete each session
+        for (const sessionId of sessionIds) {
+            try {
+                const response = await fetch(`/api/sessions/${sessionId}`, withCsrfToken({
+                    method: 'DELETE'
+                }));
+
+                if (response.ok) {
+                    deletedCount++;
+
+                    // If deleting current session, switch to another
+                    if (sessionId === state.currentSession) {
+                        const remainingSessions = state.allSessions.filter(s => !sessionIds.includes(s.id));
+                        if (remainingSessions.length > 0) {
+                            await switchSession(remainingSessions[0].id);
+                        } else {
+                            // No sessions left, create a new one
+                            await createNewChat();
+                        }
+                    }
+                } else {
+                    failedCount++;
+                }
+            } catch (err) {
+                console.error(`Failed to delete session ${sessionId}:`, err);
+                failedCount++;
+            }
+        }
+
+        // Reload conversations list
+        await loadConversationsList();
+
+        // Show success message
+        if (deletedCount > 0) {
+            showToast(
+                `Successfully deleted ${deletedCount} conversation(s)`,
+                'success',
+                2000
+            );
+        }
+
+        // Show warning if any failed
+        if (failedCount > 0) {
+            showToast(
+                `Warning: ${failedCount} conversation(s) failed to delete`,
+                'warning',
+                3000
+            );
+        }
+
+        // Reset toolbar
+        updateBatchConversationsToolbar();
+    } catch (err) {
+        console.error('Failed to delete conversations:', err);
+        Dialog.alert('Failed to delete selected conversations', { title: 'Error' });
+    }
+}
+
 // Format time ago (helper function)
+// Task #14: Added defensive timezone validation
 function formatTimeAgo(timestamp) {
-    const now = new Date();
-    const then = new Date(timestamp);
-    const seconds = Math.floor((now - then) / 1000);
+    if (!timestamp) return 'Unknown';
 
-    if (seconds < 60) return 'Just now';
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+    // Defensive check: same as formatTimestamp
+    if (typeof timestamp === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(timestamp)) {
+        const isDev = (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') ||
+                      window.location.hostname === 'localhost' ||
+                      window.location.hostname === '127.0.0.1';
 
-    return then.toLocaleDateString();
+        if (isDev) {
+            console.warn(`[formatTimeAgo] Timestamp without timezone: ${timestamp}. Assuming UTC.`);
+        }
+
+        timestamp = timestamp + 'Z';
+    }
+
+    try {
+        const now = new Date();
+        const then = new Date(timestamp);
+
+        if (isNaN(then.getTime())) {
+            console.error(`[formatTimeAgo] Invalid timestamp: ${timestamp}`);
+            return 'Unknown';
+        }
+
+        const seconds = Math.floor((now - then) / 1000);
+
+        if (seconds < 60) return 'Just now';
+        if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+        if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+        if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+
+        return then.toLocaleDateString();
+    } catch (e) {
+        console.error(`[formatTimeAgo] Error parsing timestamp: ${timestamp}`, e);
+        return 'Unknown';
+    }
+}
+
+// Restore provider/model from session runtime to UI
+async function restoreProviderFromSession(sessionId) {
+    try {
+        const response = await fetch(`/api/sessions/${sessionId}/runtime`);
+        if (!response.ok) {
+            console.log('[Restore Provider] Session has no runtime, skipping');
+            return;
+        }
+
+        const data = await response.json();
+        if (!data.runtime) {
+            console.log('[Restore Provider] Session runtime is empty, skipping');
+            return;
+        }
+
+        const { provider, model } = data.runtime;
+        console.log('[Restore Provider] Restoring from session:', { provider, model });
+
+        // Update UI selects
+        const providerEl = document.getElementById('model-provider');
+        const modelEl = document.getElementById('model-name');
+
+        if (providerEl && provider) {
+            // Extract provider type from instance ID (e.g., 'llamacpp:qwen3-coder-30b' → 'llamacpp')
+            const providerType = provider.includes(':') ? provider.split(':')[0] : provider;
+            console.log('[Restore Provider] Extracted provider type:', providerType);
+
+            providerEl.value = providerType;
+            state.currentProvider = providerType;
+            // Reload models for this provider
+            await loadAvailableModels();
+            console.log('[Restore Provider] Models loaded, options count:', modelEl?.options.length);
+        }
+
+        if (modelEl && model) {
+            console.log('[Restore Provider] Setting model to:', model);
+            modelEl.value = model;
+            console.log('[Restore Provider] Model value after setting:', modelEl.value);
+            // Check if the value was actually set (if not, the option doesn't exist)
+            if (modelEl.value !== model) {
+                console.warn('[Restore Provider] ⚠️  Model not found in dropdown:', model);
+                console.log('[Restore Provider] Available models:',
+                    Array.from(modelEl.options).map(opt => opt.value));
+            }
+        }
+
+        // Update status display
+        refreshProviderStatus();
+
+        console.log('[Restore Provider] Provider/model restored successfully');
+    } catch (err) {
+        console.error('[Restore Provider] Error restoring provider from session:', err);
+    }
+}
+
+// Update session runtime when provider/model changes
+async function updateSessionRuntime() {
+    if (!state.currentSession) {
+        console.log('[Update Session Runtime] No active session, skipping');
+        return;
+    }
+
+    const providerEl = document.getElementById('model-provider');
+    const modelEl = document.getElementById('model-name');
+
+    let provider = providerEl ? providerEl.value : null;
+    const model = modelEl ? modelEl.value : null;
+
+    if (!provider) {
+        console.log('[Update Session Runtime] No provider selected, skipping');
+        return;
+    }
+
+    try {
+        // For multi-instance providers (like llamacpp), need to match the full instance ID
+        // Backend expects: "llamacpp:qwen3-coder-30b", not just "llamacpp"
+        if (provider === 'llamacpp' && model) {
+            // Get provider status to find matching instance
+            const statusResp = await fetch('/api/providers/status');
+            if (statusResp.ok) {
+                const statusData = await statusResp.json();
+
+                // Find llamacpp instance that matches the model
+                const modelNormalized = model.toLowerCase().replace('.gguf', '').replace(/_/g, '-');
+                const matchingInstance = statusData.providers.find(p => {
+                    if (!p.id.startsWith('llamacpp:')) return false;
+                    const instanceId = p.id.split(':')[1] || '';
+                    return instanceId.includes(modelNormalized) || modelNormalized.includes(instanceId);
+                });
+
+                if (matchingInstance) {
+                    provider = matchingInstance.id;
+                    console.log('[Update Session Runtime] Matched llamacpp instance:', provider);
+                } else {
+                    console.warn('[Update Session Runtime] No matching llamacpp instance found for model:', model);
+                    // Still try with provider type, backend might handle it
+                }
+            }
+        }
+
+        console.log('[Update Session Runtime] Updating session runtime:', { provider, model });
+        const response = await fetch(`/api/sessions/${state.currentSession}/runtime`, withCsrfToken({
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ provider, model }),
+        }));
+
+        if (response.ok) {
+            console.log('[Update Session Runtime] Session runtime updated successfully');
+        } else {
+            const errorText = await response.text();
+            console.warn('[Update Session Runtime] Failed to update session runtime:', errorText);
+        }
+    } catch (err) {
+        console.error('[Update Session Runtime] Error updating session runtime:', err);
+    }
 }
 
 // Setup Model Toolbar
@@ -3509,22 +4633,29 @@ function setupModelToolbar() {
     });
 
     // Provider change handler
-    modelProviderSelect.addEventListener('change', () => {
+    modelProviderSelect.addEventListener('change', async () => {
         state.currentProvider = modelProviderSelect.value;
+        console.log('[Provider Selection] Provider changed to:', state.currentProvider);
         // Save to localStorage
         localStorage.setItem('agentos_model_provider', modelProviderSelect.value);
         loadAvailableModels();
         refreshProviderStatus();
+
+        // Sync to session runtime
+        await updateSessionRuntime();
     });
 
     // Model change handler
-    modelNameSelect.addEventListener('change', () => {
+    modelNameSelect.addEventListener('change', async () => {
         // Model selected - status will be reflected in next status poll
         console.log('Model selected:', modelNameSelect.value);
         // Save to localStorage
         if (modelNameSelect.value) {
             localStorage.setItem('agentos_model_name', modelNameSelect.value);
         }
+
+        // Sync to session runtime
+        await updateSessionRuntime();
     });
 
     // Self-check button
@@ -3545,8 +4676,10 @@ function setupModelToolbar() {
     if (savedProvider && modelProviderSelect) {
         modelProviderSelect.value = savedProvider;
         state.currentProvider = savedProvider;
+        console.log('[Initialization] Restored provider from localStorage:', savedProvider);
     } else {
         state.currentProvider = 'ollama';
+        console.log('[Initialization] Using default provider: ollama');
     }
 
     // Load models for selected provider
@@ -3636,9 +4769,12 @@ async function loadAvailableModels() {
 
 // Update model link status
 function updateModelLinkStatus(status, statusData = null) {
+    console.log('[Model Link Status] Updating status to:', status, 'with data:', statusData);
+
     const statusEl = document.getElementById('model-link-status');
     if (!statusEl) {
         // Element doesn't exist in current view
+        console.log('[Model Link Status] Status element not found in DOM');
         return;
     }
     const dot = statusEl.querySelector('.w-2');
@@ -3667,12 +4803,14 @@ function updateModelLinkStatus(status, statusData = null) {
             dot.classList.add('bg-gray-400');
             text.textContent = 'Disconnected';
             text.className = 'text-sm font-medium text-gray-600';
+            console.log('[Model Link Status] ✅ Display updated to: DISCONNECTED (gray)');
             break;
         case 'CONNECTING':
             statusEl.classList.add('bg-blue-50');
             dot.classList.add('bg-blue-500', 'animate-pulse');
             text.textContent = 'Connecting...';
             text.className = 'text-sm font-medium text-blue-700';
+            console.log('[Model Link Status] ✅ Display updated to: CONNECTING (blue)');
             break;
         case 'READY':
             statusEl.classList.add('bg-green-50');
@@ -3680,19 +4818,31 @@ function updateModelLinkStatus(status, statusData = null) {
             const latencyText = statusData?.latency_ms ? ` (${Math.round(statusData.latency_ms)}ms)` : '';
             text.textContent = `Ready${latencyText}`;
             text.className = 'text-sm font-medium text-green-700';
+            console.log('[Model Link Status] ✅ Display updated to: READY (green)');
+            break;
+        case 'RUNNING':
+            statusEl.classList.add('bg-green-50');
+            dot.classList.add('bg-green-500');
+            text.textContent = 'Running';
+            text.className = 'text-sm font-medium text-green-700';
+            console.log('[Model Link Status] ✅ Display updated to: RUNNING (green)');
             break;
         case 'DEGRADED':
             statusEl.classList.add('bg-yellow-50');
             dot.classList.add('bg-yellow-500');
             text.textContent = 'Degraded';
             text.className = 'text-sm font-medium text-yellow-700';
+            console.log('[Model Link Status] ✅ Display updated to: DEGRADED (yellow)');
             break;
         case 'ERROR':
             statusEl.classList.add('bg-red-50');
             dot.classList.add('bg-red-500');
             text.textContent = 'Error';
             text.className = 'text-sm font-medium text-red-700';
+            console.log('[Model Link Status] ✅ Display updated to: ERROR (red)');
             break;
+        default:
+            console.log('[Model Link Status] ⚠️  Unknown status received:', status);
     }
 }
 
@@ -3761,46 +4911,114 @@ function startProviderStatusPolling() {
 
 // Refresh provider status
 async function refreshProviderStatus() {
+    console.log('[Provider Status Poll] === START (v2-session-aware) ===');
     try {
         const response = await fetch('/api/providers/status');
         const data = await response.json();
 
-        // Find current provider status
-        const providerEl = document.getElementById('model-provider');
-        const modelEl = document.getElementById('model-name');
-        const currentProvider = state.currentProvider || (providerEl ? providerEl.value : null);
-        const currentModel = modelEl ? modelEl.value : null;
+        // IMPORTANT: Get provider from current session's runtime config (consistent with self-check)
+        let currentProvider = null;
+        let currentModel = null;
+        console.log('[Provider Status Poll] state.currentSession:', state.currentSession);
+
+        if (state.currentSession) {
+            try {
+                const sessionResp = await fetch(`/api/sessions/${state.currentSession}/runtime`);
+                if (sessionResp.ok) {
+                    const sessionData = await sessionResp.json();
+                    if (sessionData.runtime) {
+                        currentProvider = sessionData.runtime.provider;
+                        currentModel = sessionData.runtime.model;
+                        console.log('[Provider Status Poll] Using session runtime:', { provider: currentProvider, model: currentModel });
+                    }
+                }
+            } catch (err) {
+                console.warn('[Provider Status Poll] Failed to get session runtime, falling back to UI:', err);
+            }
+        }
+
+        // Fallback to UI selection if session runtime not available
+        if (!currentProvider) {
+            const providerEl = document.getElementById('model-provider');
+            const modelEl = document.getElementById('model-name');
+            currentProvider = state.currentProvider || (providerEl ? providerEl.value : null);
+            currentModel = modelEl ? modelEl.value : null;
+            console.log('[Provider Status Poll] Fallback to UI selection:', { provider: currentProvider, model: currentModel });
+        }
+
+        // Debug: Log current selection
+        console.log('[Provider Status Poll] Final provider:', currentProvider);
+        console.log('[Provider Status Poll] Final model:', currentModel);
+        console.log('[Provider Status Poll] All providers from API:', data.providers.map(p => ({ id: p.id, state: p.state })));
 
         if (!currentProvider) {
             // No provider selected or element doesn't exist
+            console.log('[Provider Status Poll] No provider selected, skipping update');
             return;
         }
 
-        // Try exact match first
+        // Try exact match first (e.g., "ollama", "llamacpp:qwen3-coder-30b")
         let providerStatus = data.providers.find(p => p.id === currentProvider);
+        if (providerStatus) {
+            console.log('[Provider Status Poll] ✅ Found exact match for provider:', providerStatus.id, '| state:', providerStatus.state);
+        }
 
         // If no exact match, try to find instances with prefix match
         if (!providerStatus) {
             const prefix = `${currentProvider}:`;
             const matchingProviders = data.providers.filter(p => p.id.startsWith(prefix));
+            console.log('[Provider Status Poll] ⚠️  No exact match, trying prefix match with:', prefix);
+            console.log('[Provider Status Poll] Matching providers:', matchingProviders.map(p => ({ id: p.id, state: p.state })));
 
             if (matchingProviders.length > 0) {
-                // If a model is selected, try to find the specific instance for that model
+                // If a model is selected, try to find the specific instance by matching model name
                 if (currentModel) {
-                    // Try to match instance by checking if model comes from this instance
-                    // For now, just pick the first READY instance
-                    providerStatus = matchingProviders.find(p => p.state === 'READY') || matchingProviders[0];
+                    // Normalize model name for matching (lowercase, remove .gguf, replace _ with -)
+                    const modelNormalized = currentModel.toLowerCase().replace('.gguf', '').replace(/_/g, '-');
+                    console.log('[Provider Status Poll] Trying to match by model name:', modelNormalized);
+
+                    // Try to find instance whose ID contains the model name
+                    providerStatus = matchingProviders.find(p => {
+                        const instanceId = p.id.split(':')[1] || ''; // Extract instance ID after ":"
+                        const matches = instanceId.includes(modelNormalized) || modelNormalized.includes(instanceId);
+                        if (matches) {
+                            console.log('[Provider Status Poll]   ✓ Match found:', p.id, '(instanceId:', instanceId, ')');
+                        }
+                        return matches;
+                    });
+
+                    if (providerStatus) {
+                        console.log('[Provider Status Poll] ✅ Matched by model name:', providerStatus.id, '| state:', providerStatus.state);
+                    } else {
+                        console.log('[Provider Status Poll] ⚠️  No model-based match, falling back to first READY or first instance');
+                        // Fallback: pick first READY instance
+                        providerStatus = matchingProviders.find(p => p.state === 'READY') || matchingProviders[0];
+                        console.log('[Provider Status Poll] Selected fallback:', providerStatus.id, '| state:', providerStatus.state);
+                    }
                 } else {
+                    console.log('[Provider Status Poll] No model specified, selecting first READY or first instance');
                     // No model selected, pick first READY instance or first instance
                     providerStatus = matchingProviders.find(p => p.state === 'READY') || matchingProviders[0];
+                    console.log('[Provider Status Poll] Selected:', providerStatus.id, '| state:', providerStatus.state);
                 }
+            } else {
+                console.log('[Provider Status Poll] ❌ No matching providers found for prefix:', prefix);
             }
         }
 
         if (providerStatus) {
+            console.log('[Provider Status Poll] 🎯 FINAL RESULT:', {
+                id: providerStatus.id,
+                state: providerStatus.state,
+                endpoint: providerStatus.endpoint,
+                error: providerStatus.last_error
+            });
+            console.log('[Provider Status Poll] 📤 Calling updateModelLinkStatus with state:', providerStatus.state);
             updateModelLinkStatus(providerStatus.state, providerStatus);
         } else {
             // Provider not found, show disconnected
+            console.log('[Provider Status Poll] ❌ Provider not found in status response');
+            console.log('[Provider Status Poll] 📤 Calling updateModelLinkStatus with state: DISCONNECTED');
             updateModelLinkStatus('DISCONNECTED');
         }
     } catch (err) {
@@ -4258,14 +5476,14 @@ async function refreshLocalDetect() {
 // Instance control functions (match Providers page)
 window.startInstance = async function(providerId, instanceId) {
     try {
-        const response = await fetch(`/api/providers/${providerId}/instances/start`, {
+        const response = await fetch(`/api/providers/${providerId}/instances/start`, withCsrfToken({
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${localStorage.getItem('admin_token') || ''}`
             },
             body: JSON.stringify({ instance_id: instanceId })
-        });
+        }));
         const data = await response.json();
 
         if (data.ok || data.status === 'started' || data.status === 'running') {
@@ -4282,14 +5500,14 @@ window.startInstance = async function(providerId, instanceId) {
 
 window.stopInstance = async function(providerId, instanceId) {
     try {
-        const response = await fetch(`/api/providers/${providerId}/instances/stop`, {
+        const response = await fetch(`/api/providers/${providerId}/instances/stop`, withCsrfToken({
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${localStorage.getItem('admin_token') || ''}`
             },
             body: JSON.stringify({ instance_id: instanceId })
-        });
+        }));
         const data = await response.json();
 
         if (data.ok || data.status === 'stopped' || data.status === 'not_running') {
@@ -4326,7 +5544,7 @@ async function runSelfCheck() {
 
     try {
         // Call self-check API
-        const response = await fetch('/api/selfcheck', {
+        const response = await fetch('/api/selfcheck', withCsrfToken({
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -4334,7 +5552,7 @@ async function runSelfCheck() {
                 include_network: true,  // Actively probe all providers for accurate status
                 include_context: true,
             }),
-        });
+        }));
 
         const result = await response.json();
 
@@ -4367,6 +5585,9 @@ function openSelfCheckDrawer(result) {
         summaryBadge = '<span class="badge error"><span class="material-icons md-18">cancel</span> FAILURES</span>';
     }
 
+    // Add version badge if available
+    const versionBadge = result.version ? `<span class="badge" style="background: #6366f1; color: white; margin-left: 8px;">${result.version}</span>` : '';
+
     const drawerHTML = `
         <div id="selfcheck-drawer" class="fixed inset-0 z-50">
             <!-- Backdrop -->
@@ -4390,6 +5611,7 @@ function openSelfCheckDrawer(result) {
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             ${summaryBadge}
+                            ${versionBadge}
                             <span class="text-xs text-gray-500">${new Date(result.ts).toLocaleTimeString()}</span>
                         </div>
                         <button
@@ -4606,6 +5828,47 @@ async function loadOverview() {
         const response = await fetch('/api/health');
         const health = await response.json();
 
+        // Fetch governance data (optional, graceful degradation)
+        let governanceHtml = '';
+        try {
+            const govResponse = await fetch('/api/governance/dashboard?timeframe=7d');
+            if (govResponse.ok) {
+                const govData = await govResponse.json();
+                const metrics = govData.metrics || {};
+                const riskLevel = metrics.risk_level || 'UNKNOWN';
+                const openFindings = metrics.open_findings || 0;
+                const riskColor = riskLevel === 'HIGH' || riskLevel === 'CRITICAL' ? 'error' :
+                                 riskLevel === 'MEDIUM' ? 'warning' : 'success';
+
+                governanceHtml = `
+                    <div class="bg-white border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-semibold mb-2">Governance Status</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Risk Level:</span>
+                                <span class="badge ${riskColor}">${riskLevel}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Open Findings:</span>
+                                <span class="${openFindings > 0 ? 'text-orange-600 font-semibold' : ''}">${openFindings}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Blocked Rate:</span>
+                                <span>${((metrics.blocked_rate || 0) * 100).toFixed(1)}%</span>
+                            </div>
+                            <div class="mt-3">
+                                <a href="#" data-view="governance-dashboard" class="text-sm text-blue-600 hover:text-blue-800 nav-link-inline">
+                                    View Governance Dashboard →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        } catch (govErr) {
+            console.warn('Governance data not available:', govErr.message);
+        }
+
         const content = document.getElementById('overview-content');
         content.innerHTML = `
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -4666,8 +5929,22 @@ async function loadOverview() {
                         </div>
                     </div>
                 </div>
+
+                ${governanceHtml}
             </div>
         `;
+
+        // Attach click handlers to inline nav links
+        document.querySelectorAll('.nav-link-inline').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const view = link.dataset.view;
+                if (view) {
+                    updateNavigationActive(view);
+                    loadView(view);
+                }
+            });
+        });
     } catch (err) {
         document.getElementById('overview-content').innerHTML = `<div class="text-red-600">Error: ${err.message}</div>`;
     }
@@ -4883,15 +6160,17 @@ async function loadLogs() {
     }
 }
 
-// PR-4: Skills View
+// PR-4: Skills View (Updated for PR-0201-2026-6: Marketplace UX)
 function renderSkillsView(container) {
     // Clear previous view
     if (state.currentViewInstance && state.currentViewInstance.destroy) {
         state.currentViewInstance.destroy();
     }
 
-    // Create new view instance
-    state.currentViewInstance = new SkillsView(container);
+    // Create new marketplace view instance
+    // Use SkillsMarketplaceView if available, otherwise fall back to SkillsView
+    const ViewClass = window.SkillsMarketplaceView || window.SkillsView;
+    state.currentViewInstance = new ViewClass(container);
 }
 
 // PR-4: Memory View
@@ -4903,6 +6182,40 @@ function renderMemoryView(container) {
 
     // Create new view instance
     state.currentViewInstance = new MemoryView(container);
+}
+
+// Task #18: Memory Proposals View
+function renderMemoryProposalsView(container) {
+    // Clear previous view
+    if (state.currentViewInstance && state.currentViewInstance.destroy) {
+        state.currentViewInstance.destroy();
+    }
+
+    // Create new view instance
+    state.currentViewInstance = new MemoryProposalsView(container);
+    state.currentViewInstance.render();
+}
+
+// Task #13: Memory Timeline View (audit trail)
+function renderMemoryTimelineView(container) {
+    // Clear previous view
+    if (state.currentViewInstance && state.currentViewInstance.destroy) {
+        state.currentViewInstance.destroy();
+    }
+
+    // Create new view instance
+    state.currentViewInstance = new MemoryTimelineView(container);
+}
+
+// Render Voice View
+function renderVoiceView(container) {
+    // Clear previous view
+    if (state.currentViewInstance && state.currentViewInstance.destroy) {
+        state.currentViewInstance.destroy();
+    }
+
+    // Create new view instance
+    state.currentViewInstance = new VoiceView(container);
 }
 
 // Global navigation helper (PR-2: Cross-view navigation + PR-3: Chat session binding)
@@ -5075,6 +6388,54 @@ function renderLeadScanHistoryView(container) {
     state.currentViewInstance = new LeadScanHistoryView(container);
 }
 
+// Governance View (PR-2: WebUI Views - Task 1)
+function renderGovernanceView(container) {
+    // Clear previous view
+    if (state.currentViewInstance && state.currentViewInstance.destroy) {
+        state.currentViewInstance.destroy();
+    }
+
+    // Create new view instance
+    state.currentViewInstance = new GovernanceView();
+    state.currentViewInstance.render(container);
+}
+
+// Quota View (PR-2: WebUI Views - Task 2)
+function renderQuotaView(container) {
+    // Clear previous view
+    if (state.currentViewInstance && state.currentViewInstance.destroy) {
+        state.currentViewInstance.destroy();
+    }
+
+    // Create new view instance
+    state.currentViewInstance = new QuotaView();
+    state.currentViewInstance.render(container);
+}
+
+// Trust Tier View (PR-2: WebUI Views - Task 3)
+function renderTrustTierView(container, highlightTier = null) {
+    // Clear previous view
+    if (state.currentViewInstance && state.currentViewInstance.destroy) {
+        state.currentViewInstance.destroy();
+    }
+
+    // Create new view instance
+    state.currentViewInstance = new TrustTierView();
+    state.currentViewInstance.render(container, highlightTier);
+}
+
+// Provenance View (PR-2: WebUI Views - Task 4)
+function renderProvenanceView(container, invocationId = null) {
+    // Clear previous view
+    if (state.currentViewInstance && state.currentViewInstance.destroy) {
+        state.currentViewInstance.destroy();
+    }
+
+    // Create new view instance
+    state.currentViewInstance = new ProvenanceView();
+    state.currentViewInstance.render(container, invocationId);
+}
+
 // Snippets View
 function renderSnippetsView(container) {
     // Clear previous view
@@ -5123,6 +6484,81 @@ async function updateHealth() {
 
         const text = badge.querySelector('span');
         text.textContent = 'DOWN';
+    }
+}
+
+// Governance badge updates
+function startGovernanceBadgeUpdates() {
+    updateGovernanceBadge();
+
+    // Update every 5 minutes
+    setInterval(() => {
+        updateGovernanceBadge();
+    }, 5 * 60 * 1000);
+
+    // Also start proposals badge updates (Task #18)
+    updateProposalsBadge();
+    setInterval(() => {
+        updateProposalsBadge();
+    }, 30 * 1000); // Update every 30 seconds
+}
+
+async function updateGovernanceBadge() {
+    try {
+        const response = await fetch('/api/governance/dashboard?timeframe=7d');
+        if (!response.ok) return; // Silently fail if governance not available
+
+        const data = await response.json();
+        const metrics = data.metrics || {};
+        const openFindings = metrics.open_findings || 0;
+
+        const badge = document.getElementById('governance-badge');
+        if (!badge) return; // Element not in current view
+
+        if (openFindings > 0) {
+            badge.textContent = openFindings;
+            badge.style.display = 'inline-block';
+
+            // Change badge color based on risk level
+            const riskLevel = metrics.risk_level || 'LOW';
+            badge.classList.remove('badge-warning', 'badge-error', 'badge-success');
+            if (riskLevel === 'HIGH' || riskLevel === 'CRITICAL') {
+                badge.classList.add('badge-error');
+            } else if (riskLevel === 'MEDIUM') {
+                badge.classList.add('badge-warning');
+            } else {
+                badge.classList.add('badge-success');
+            }
+        } else {
+            badge.style.display = 'none';
+        }
+    } catch (err) {
+        // Silently fail - governance is optional
+        console.debug('Governance badge update failed:', err.message);
+    }
+}
+
+// Task #18: Memory Proposals badge updates
+async function updateProposalsBadge() {
+    try {
+        const response = await fetch('/api/memory/proposals/stats?agent_id=user:current');
+        if (!response.ok) return; // Silently fail if proposals not available
+
+        const stats = await response.json();
+        const pending = stats.pending || 0;
+
+        const badge = document.getElementById('proposals-badge');
+        if (!badge) return; // Element not in current view
+
+        if (pending > 0) {
+            badge.textContent = pending;
+            badge.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+        }
+    } catch (err) {
+        // Silently fail - proposals is optional
+        console.debug('Proposals badge update failed:', err.message);
     }
 }
 
@@ -5281,7 +6717,7 @@ async function saveAndTestCloudProvider(providerId) {
 
     try {
         // Save configuration
-        const response = await fetch('/api/providers/cloud/config', {
+        const response = await fetch('/api/providers/cloud/config', withCsrfToken({
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -5292,7 +6728,7 @@ async function saveAndTestCloudProvider(providerId) {
                 },
                 base_url: baseUrlInput.value.trim() || null,
             }),
-        });
+        }));
 
         const data = await response.json();
 
@@ -5401,25 +6837,48 @@ function updateCloudProviderStatusUI(providerId, status) {
 }
 
 // Format timestamp for display (Phase C3)
+// Task #14: Added defensive timezone validation
 function formatTimestamp(isoString) {
     if (!isoString) return 'Unknown';
 
     try {
+        // Defensive check: warn if ISO format lacks timezone marker
+        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(isoString)) {
+            const hasTimezone = isoString.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(isoString);
+
+            if (!hasTimezone) {
+                // Development environment warning
+                if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') {
+                    console.warn(`[formatTimestamp] Timestamp without timezone: ${isoString}. Assuming UTC.`);
+                } else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    // Simple local environment detection
+                    console.warn(`[formatTimestamp] Timestamp without timezone: ${isoString}. Assuming UTC.`);
+                }
+
+                // Force add Z (treat as UTC)
+                isoString = isoString + 'Z';
+            }
+        }
+
         const date = new Date(isoString);
+
+        // Validate timestamp
+        if (isNaN(date.getTime())) {
+            console.error(`[formatTimestamp] Invalid timestamp: ${isoString}`);
+            return 'Invalid Date';
+        }
+
         const now = new Date();
         const diffMs = now - date;
         const diffSec = Math.floor(diffMs / 1000);
 
-        if (diffSec < 60) {
-            return `${diffSec}s ago`;
-        } else if (diffSec < 3600) {
-            return `${Math.floor(diffSec / 60)}m ago`;
-        } else if (diffSec < 86400) {
-            return `${Math.floor(diffSec / 3600)}h ago`;
-        } else {
-            return date.toLocaleDateString();
-        }
+        // Relative time display (seconds, minutes, hours)
+        if (diffSec < 60) return `${diffSec}s ago`;
+        else if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+        else if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+        else return date.toLocaleDateString();
     } catch (e) {
+        console.error(`[formatTimestamp] Error parsing timestamp: ${isoString}`, e);
         return 'Unknown';
     }
 }
@@ -5440,9 +6899,9 @@ async function clearCloudProvider(providerId) {
     resultDiv.classList.remove('hidden');
 
     try {
-        const response = await fetch(`/api/providers/cloud/config/${providerId}`, {
+        const response = await fetch(`/api/providers/cloud/config/${providerId}`, withCsrfToken({
             method: 'DELETE',
-        });
+        }));
 
         const data = await response.json();
 
@@ -5475,7 +6934,13 @@ async function clearCloudProvider(providerId) {
 
 // Load context status for current session
 async function loadContextStatus() {
-    const sessionId = state.currentSession || 'main';
+    const sessionId = state.currentSession;
+
+    // Skip if no valid session
+    if (!sessionId) {
+        console.warn('Cannot load context status: No active session');
+        return;
+    }
 
     try {
         const response = await fetch(`/api/context/status?session_id=${sessionId}`);
@@ -5614,7 +7079,16 @@ function updateRagStatusDetail(rag) {
 
 // Attach context
 async function attachContext() {
-    const sessionId = state.currentSession || 'main';
+    const sessionId = state.currentSession;
+
+    // Validate session
+    if (!sessionId) {
+        Dialog.alert('Cannot attach context: No active session. Please start or select a conversation first.', {
+            title: 'No Active Session'
+        });
+        return;
+    }
+
     const memoryEnabled = document.getElementById('memory-enabled').checked;
     const ragEnabled = document.getElementById('rag-enabled').checked;
     const memoryNamespace = document.getElementById('memory-namespace').value.trim();
@@ -5626,7 +7100,7 @@ async function attachContext() {
     }
 
     try {
-        const response = await fetch('/api/context/attach', {
+        const response = await fetch('/api/context/attach', withCsrfToken({
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -5640,7 +7114,7 @@ async function attachContext() {
                     index: ragIndex,
                 } : { enabled: false, index: null },
             }),
-        });
+        }));
 
         const data = await response.json();
 
@@ -5660,7 +7134,15 @@ async function attachContext() {
 
 // Detach context
 async function detachContext() {
-    const sessionId = state.currentSession || 'main';
+    const sessionId = state.currentSession;
+
+    // Validate session
+    if (!sessionId) {
+        Dialog.alert('Cannot detach context: No active session. Please start or select a conversation first.', {
+            title: 'No Active Session'
+        });
+        return;
+    }
 
     const confirmed = await Dialog.confirm('Detach all context from this session?', {
         title: 'Detach Context',
@@ -5672,9 +7154,9 @@ async function detachContext() {
     }
 
     try {
-        const response = await fetch(`/api/context/detach?session_id=${sessionId}`, {
+        const response = await fetch(`/api/context/detach?session_id=${sessionId}`, withCsrfToken({
             method: 'POST',
-        });
+        }));
 
         const data = await response.json();
 
@@ -5694,16 +7176,22 @@ async function detachContext() {
 
 // Refresh context
 async function refreshContext() {
-    const sessionId = state.currentSession || 'main';
+    const sessionId = state.currentSession;
+
+    // Validate session
+    if (!sessionId) {
+        console.warn('Cannot refresh context: No active session');
+        return;
+    }
 
     try {
-        const response = await fetch('/api/context/refresh', {
+        const response = await fetch('/api/context/refresh', withCsrfToken({
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 session_id: sessionId,
             }),
-        });
+        }));
 
         const data = await response.json();
 
@@ -5760,25 +7248,25 @@ async function renderProvidersView(container) {
                 return response.json();
             },
             post: async (url, data) => {
-                const response = await fetch(url, {
+                const response = await fetch(url, withCsrfToken({
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(data)
-                });
+                }));
                 if (!response.ok) throw new Error(response.statusText);
                 return response.json();
             },
             put: async (url, data) => {
-                const response = await fetch(url, {
+                const response = await fetch(url, withCsrfToken({
                     method: 'PUT',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(data)
-                });
+                }));
                 if (!response.ok) throw new Error(response.statusText);
                 return response.json();
             },
             delete: async (url) => {
-                const response = await fetch(url, {method: 'DELETE'});
+                const response = await fetch(url, withCsrfToken({method: 'DELETE'}));
                 if (!response.ok) throw new Error(response.statusText);
                 return response.json();
             }
@@ -6026,6 +7514,7 @@ async function renderExtensionsView(container) {
         // Create and render the view
         const view = new window.ExtensionsView();
         state.currentViewInstance = view;
+        window.extensionsView = view; // Global reference for onclick handlers
 
         await view.render(container);
 
@@ -6089,6 +7578,96 @@ async function renderModelsView(container) {
     }
 }
 
+// Render Marketplace View (MCP Marketplace - PR-C)
+async function renderMarketplaceView(container) {
+    try {
+        console.log('Rendering Marketplace View...');
+
+        // Check if MarketplaceView class is available
+        if (typeof window.MarketplaceView === 'undefined') {
+            console.error('MarketplaceView class not found');
+            container.innerHTML = `
+                <div class="p-6 text-center">
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                        <h2 class="text-xl font-bold text-yellow-900 mb-2">Marketplace View Not Available</h2>
+                        <p class="text-yellow-700">The Marketplace View component is not loaded. Please refresh the page.</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        // Cleanup previous view instance
+        if (state.currentViewInstance && typeof state.currentViewInstance.destroy === 'function') {
+            state.currentViewInstance.destroy();
+        }
+
+        // Create and render the view
+        const view = new window.MarketplaceView();
+        state.currentViewInstance = view;
+
+        await view.render(container);
+
+        console.log('Marketplace View rendered successfully');
+    } catch (error) {
+        console.error('Failed to render Marketplace View:', error);
+        container.innerHTML = `
+            <div class="p-6 text-center">
+                <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+                    <h2 class="text-xl font-bold text-red-900 mb-2">Rendering Error</h2>
+                    <p class="text-red-700 mb-2">Failed to load Marketplace view.</p>
+                    <p class="text-sm text-red-600">Error: ${error.message}</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Render MCP Package Detail View (MCP Marketplace - PR-C)
+async function renderMCPPackageDetailView(container) {
+    try {
+        console.log('Rendering MCP Package Detail View...');
+
+        // Check if MCPPackageDetailView class is available
+        if (typeof window.MCPPackageDetailView === 'undefined') {
+            console.error('MCPPackageDetailView class not found');
+            container.innerHTML = `
+                <div class="p-6 text-center">
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                        <h2 class="text-xl font-bold text-yellow-900 mb-2">Package Detail View Not Available</h2>
+                        <p class="text-yellow-700">The Package Detail View component is not loaded. Please refresh the page.</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        // Cleanup previous view instance
+        if (state.currentViewInstance && typeof state.currentViewInstance.destroy === 'function') {
+            state.currentViewInstance.destroy();
+        }
+
+        // Create and render the view
+        const view = new window.MCPPackageDetailView();
+        state.currentViewInstance = view;
+
+        await view.render(container);
+
+        console.log('MCP Package Detail View rendered successfully');
+    } catch (error) {
+        console.error('Failed to render MCP Package Detail View:', error);
+        container.innerHTML = `
+            <div class="p-6 text-center">
+                <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+                    <h2 class="text-xl font-bold text-red-900 mb-2">Rendering Error</h2>
+                    <p class="text-red-700 mb-2">Failed to load Package Detail view.</p>
+                    <p class="text-sm text-red-600">Error: ${error.message}</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
 
 // ============================================================================
 // Budget Indicator Functions (Task 5: Runtime Visualization)
@@ -6116,7 +7695,10 @@ function updateBudgetIndicator(budgetData) {
 
         const budgetHtml = `
             <div class="budget-indicator" id="budget-indicator" style="display: none;">
-                <span class="budget-usage" id="budget-usage">bar_chart --</span>
+                <span class="budget-usage" id="budget-usage">
+                    <span class="material-icons md-18" style="vertical-align: middle;">bar_chart</span>
+                    <span id="budget-text">--</span>
+                </span>
                 <span class="budget-status" id="budget-status"></span>
             </div>
         `;
@@ -6146,32 +7728,39 @@ function updateBudgetIndicator(budgetData) {
     const usedK = (budgetData.total_tokens / 1000).toFixed(1);
     const totalK = (budgetData.budget_tokens / 1000).toFixed(1);
 
-    usageEl.textContent = `bar_chart Budget: ` + usedK + `k/` + totalK + `k (` + percent + `%)`;
+    // Update budget text (preserve icon structure)
+    const budgetTextEl = document.getElementById('budget-text');
+    if (budgetTextEl) {
+        budgetTextEl.textContent = ` Budget: ` + usedK + `k/` + totalK + `k (` + percent + `%)`;
+    } else {
+        // Fallback for old HTML structure
+        usageEl.innerHTML = `<span class="material-icons md-18" style="vertical-align: middle;">bar_chart</span> Budget: ` + usedK + `k/` + totalK + `k (` + percent + `%)`;
+    }
 
-    // Status configuration
+    // Status configuration with Material Icons
     const statusConfig = {
         safe: {
             class: 'badge-safe',
-            icon: 'circle',
+            icon: 'check_circle',
             text: 'Safe'
         },
         warning: {
             class: 'badge-warning',
-            icon: 'circle',
+            icon: 'warning',
             text: 'Warning',
             hint: 'Context nearing limit. Consider /summary.'
         },
         critical: {
             class: 'badge-critical',
-            icon: 'circle',
+            icon: 'error',
             text: 'Critical',
-            hint: 'Context full! Oldest messages truncated.'
+            hint: percent >= 100 ? 'Context full! Oldest messages truncated.' : 'Context nearly full. Messages may be truncated soon.'
         }
     };
 
     const status = statusConfig[budgetData.watermark] || statusConfig.safe;
     statusEl.className = `budget-status ` + status.class;
-    statusEl.innerHTML = status.icon + ` ` + status.text + (status.hint ? `<br><small>` + status.hint + `</small>` : '');
+    statusEl.innerHTML = `<span class="material-icons md-18" style="vertical-align: middle;">` + status.icon + `</span> ` + status.text + (status.hint ? `<br><small>` + status.hint + `</small>` : '');
 
     indicator.style.display = 'flex';
 
@@ -6184,29 +7773,41 @@ function updateBudgetIndicator(budgetData) {
  */
 function showBudgetDetails(budgetData) {
     const breakdown = budgetData.breakdown;
-    const total = budgetData.budget_tokens;
+    const totalUsed = budgetData.total_tokens;  // 实际使用量（作为分母）
+    const budget = budgetData.budget_tokens;    // 预算（仅用于顶部展示）
+
+    // UI 保护：如果实际使用量为 0 或缺失，退化为只显示 tokens
+    const showPercentages = totalUsed && totalUsed > 0;
 
     const bars = [
-        renderBudgetBar('System Prompt', breakdown.system, total),
-        renderBudgetBar('Conversation', breakdown.window, total),
-        renderBudgetBar('RAG Context', breakdown.rag, total),
-        renderBudgetBar('Memory Facts', breakdown.memory, total)
+        renderBudgetBar('System Prompt', breakdown.system, totalUsed, showPercentages),
+        renderBudgetBar('Conversation', breakdown.window, totalUsed, showPercentages),
+        renderBudgetBar('RAG Context', breakdown.rag, totalUsed, showPercentages),
+        renderBudgetBar('Memory Facts', breakdown.memory, totalUsed, showPercentages)
     ].join('');
 
-    const html = `<div class="budget-detail-modal"><h3>Token Budget Breakdown</h3><div class="budget-bars">` + bars + `</div><p class="budget-tip">lightbulb Tip: Use /context to see detailed breakdown</p></div>`;
+    // 预算信息（独立展示，不作为 breakdown 的分母）
+    const budgetPercent = budget > 0 ? ((totalUsed / budget) * 100).toFixed(1) : 'N/A';
+    const budgetInfo = `<div style="margin-bottom: 16px; padding: 12px; background: #f3f4f6; border-radius: 6px; font-size: 13px;">
+        <strong>Total Used:</strong> ${totalUsed.toLocaleString()} tokens<br>
+        <strong>Budget:</strong> ${budget.toLocaleString()} tokens ${budget > 0 ? `(${budgetPercent}% used)` : '(No budget configured)'}
+    </div>`;
+
+    const html = `<div class="budget-detail-modal"><h3>Token Usage Breakdown</h3>` + budgetInfo + `<div class="budget-bars">` + bars + `</div><p class="budget-tip"><span class="material-icons md-18" style="vertical-align: middle;">lightbulb</span> Tip: Percentages show each component's share of actual usage</p></div>`;
 
     // Use existing modal system if available, otherwise create simple modal
     if (window.Dialog && window.Dialog.alert) {
         window.Dialog.alert(html, { title: 'Token Budget Details', isHtml: true });
     } else {
         // Fallback: simple alert
-        const pct = (x, t) => ((x / t) * 100).toFixed(1);
+        const pct = (x) => showPercentages ? ` (${((x / totalUsed) * 100).toFixed(1)}%)` : '';
         const msg = 'Token Budget Details\n\n' +
-            'System: ' + breakdown.system.toLocaleString() + ' (' + pct(breakdown.system, total) + '%)\n' +
-            'Window: ' + breakdown.window.toLocaleString() + ' (' + pct(breakdown.window, total) + '%)\n' +
-            'RAG: ' + breakdown.rag.toLocaleString() + ' (' + pct(breakdown.rag, total) + '%)\n' +
-            'Memory: ' + breakdown.memory.toLocaleString() + ' (' + pct(breakdown.memory, total) + '%)';
-        alert(msg);
+            'Total Used: ' + totalUsed.toLocaleString() + ' / ' + budget.toLocaleString() + '\n\n' +
+            'System: ' + breakdown.system.toLocaleString() + pct(breakdown.system) + '\n' +
+            'Window: ' + breakdown.window.toLocaleString() + pct(breakdown.window) + '\n' +
+            'RAG: ' + breakdown.rag.toLocaleString() + pct(breakdown.rag) + '\n' +
+            'Memory: ' + breakdown.memory.toLocaleString() + pct(breakdown.memory);
+        Dialog.alert(msg.replace(/\n/g, '<br>'), { title: 'Token Budget Breakdown' });
     }
 }
 
@@ -6214,14 +7815,17 @@ function showBudgetDetails(budgetData) {
  * Render a single budget bar
  * @param {string} label - Component label
  * @param {number} tokens - Token count
- * @param {number} total - Total budget
+ * @param {number} totalUsed - Total tokens used (for percentage calculation)
+ * @param {boolean} showPercentages - Whether to show percentages
  * @returns {string} HTML string
  */
-function renderBudgetBar(label, tokens, total) {
-    const percent = ((tokens / total) * 100).toFixed(1);
+function renderBudgetBar(label, tokens, totalUsed, showPercentages = true) {
+    // 百分比计算：占实际使用量的比例
+    const percent = showPercentages && totalUsed > 0 ? ((tokens / totalUsed) * 100).toFixed(1) : 0;
     const width = Math.min(percent, 100);
 
-    // Determine fill class based on percentage
+    // Determine fill class based on percentage of total usage
+    // 注意：这里的颜色阈值是相对于"该组件占总使用量的比例"
     let fillClass = '';
     if (percent >= 80) {
         fillClass = 'critical';
@@ -6238,7 +7842,276 @@ function renderBudgetBar(label, tokens, total) {
         "'": '&#39;'
     }[m]));
 
-    return `<div class="budget-bar-item"><label>` + safeLabel + `: ` + tokens.toLocaleString() + ` (` + percent + `%)</label><div class="progress-bar"><div class="progress-fill ` + fillClass + `" style="width: ` + width + `%"></div></div></div>`;
+    // 显示格式：如果有百分比就显示，否则只显示 tokens
+    const labelText = showPercentages
+        ? `${safeLabel}: ${tokens.toLocaleString()} (${percent}% of total used)`
+        : `${safeLabel}: ${tokens.toLocaleString()} tokens`;
+
+    return `<div class="budget-bar-item"><label>${labelText}</label><div class="progress-bar"><div class="progress-fill ${fillClass}" style="width: ${width}%"></div></div></div>`;
+}
+
+// ============================================================================
+// Memory Badge Component (Task #9: Memory Observability UI Badge)
+// ============================================================================
+
+/**
+ * Memory Badge - Shows memory context status in the top bar
+ */
+const MemoryBadge = {
+    element: null,
+    tooltip: null,
+    currentSessionId: null,
+    updateInterval: null,
+
+    /**
+     * Initialize Memory Badge component
+     */
+    init: function() {
+        console.log('[MemoryBadge] Initializing...');
+
+        const container = document.getElementById('top-bar-indicators');
+        if (!container) {
+            console.warn('[MemoryBadge] Top bar indicators container not found');
+            return;
+        }
+
+        // Create badge HTML
+        const badgeHTML = `
+            <div class="memory-badge-container">
+                <div class="memory-badge no-memories" id="memory-badge">
+                    <span class="memory-badge-icon">🧠</span>
+                    <span class="memory-badge-count">Memory: 0</span>
+                </div>
+                <div class="memory-tooltip" id="memory-tooltip">
+                    <div class="memory-tooltip-item">
+                        <span class="memory-tooltip-label">Total:</span>
+                        <span class="memory-tooltip-value" id="memory-total">0</span>
+                    </div>
+                    <div class="memory-tooltip-item highlight" id="memory-preferred-name-row" style="display:none;">
+                        <span class="memory-tooltip-label">Name:</span>
+                        <span class="memory-tooltip-value" id="memory-preferred-name"></span>
+                    </div>
+                    <div class="memory-tooltip-divider" id="memory-types-divider" style="display:none;"></div>
+                    <div class="memory-tooltip-item" id="memory-types-row">
+                        <span class="memory-tooltip-label">Types:</span>
+                        <span class="memory-tooltip-value" id="memory-types">-</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Insert before refresh button
+        const refreshBtn = document.getElementById('refresh-btn');
+        if (refreshBtn) {
+            refreshBtn.insertAdjacentHTML('beforebegin', badgeHTML);
+        } else {
+            container.insertAdjacentHTML('beforeend', badgeHTML);
+        }
+
+        this.element = document.getElementById('memory-badge');
+        this.tooltip = document.getElementById('memory-tooltip');
+
+        if (!this.element || !this.tooltip) {
+            console.error('[MemoryBadge] Failed to create badge elements');
+            return;
+        }
+
+        // Add hover listeners
+        this.element.addEventListener('mouseenter', () => this.showTooltip());
+        this.element.addEventListener('mouseleave', () => this.hideTooltip());
+
+        // Click to navigate to Memory page
+        this.element.addEventListener('click', () => {
+            console.log('[MemoryBadge] Clicked - navigating to Memory view');
+            loadView('memory');
+        });
+
+        console.log('[MemoryBadge] Initialized successfully');
+    },
+
+    /**
+     * Update badge with session data
+     * @param {string} sessionId - Session ID to fetch memory status for
+     */
+    update: async function(sessionId) {
+        if (!sessionId) {
+            console.log('[MemoryBadge] No session ID provided');
+            return;
+        }
+
+        if (!this.element) {
+            console.warn('[MemoryBadge] Badge not initialized, initializing now...');
+            this.init();
+            if (!this.element) return;
+        }
+
+        this.currentSessionId = sessionId;
+
+        try {
+            console.log(`[MemoryBadge] Fetching memory status for session: ${sessionId}`);
+            const response = await fetch(`/api/chat/sessions/${sessionId}/memory-status`);
+
+            if (!response.ok) {
+                console.error(`[MemoryBadge] API error: ${response.status}`);
+                this.renderError();
+                return;
+            }
+
+            const data = await response.json();
+            console.log('[MemoryBadge] Memory status:', data);
+            this.render(data);
+        } catch (error) {
+            console.error('[MemoryBadge] Failed to fetch status:', error);
+            this.renderError();
+        }
+    },
+
+    /**
+     * Render badge with memory data
+     * @param {Object} data - Memory status data
+     */
+    render: function(data) {
+        if (!this.element) return;
+
+        const count = data.memory_count || 0;
+        const hasMemories = count > 0;
+
+        // Update badge
+        this.element.className = hasMemories ? 'memory-badge has-memories' : 'memory-badge no-memories';
+        this.element.querySelector('.memory-badge-count').textContent = `Memory: ${count}`;
+
+        // Update tooltip
+        const totalEl = document.getElementById('memory-total');
+        if (totalEl) totalEl.textContent = count;
+
+        // Preferred name
+        const nameRow = document.getElementById('memory-preferred-name-row');
+        const nameValue = document.getElementById('memory-preferred-name');
+        const namesDivider = document.getElementById('memory-types-divider');
+
+        if (data.has_preferred_name && data.preferred_name) {
+            if (nameRow) nameRow.style.display = 'flex';
+            if (nameValue) nameValue.textContent = data.preferred_name;
+            if (namesDivider) namesDivider.style.display = 'block';
+        } else {
+            if (nameRow) nameRow.style.display = 'none';
+            if (namesDivider) namesDivider.style.display = 'none';
+        }
+
+        // Memory types
+        const typesRow = document.getElementById('memory-types-row');
+        const typesValue = document.getElementById('memory-types');
+        const types = data.memory_types || {};
+
+        if (Object.keys(types).length > 0) {
+            const typesText = Object.entries(types)
+                .map(([type, count]) => `${type}: ${count}`)
+                .join(', ');
+            if (typesValue) typesValue.textContent = typesText;
+            if (typesRow) typesRow.style.display = 'flex';
+        } else {
+            if (typesValue) typesValue.textContent = '-';
+            if (typesRow) typesRow.style.display = 'flex';
+        }
+
+        console.log(`[MemoryBadge] Rendered: ${count} memories (${hasMemories ? 'has memories' : 'no memories'})`);
+    },
+
+    /**
+     * Render error state
+     */
+    renderError: function() {
+        if (!this.element) return;
+
+        this.element.className = 'memory-badge no-memories';
+        this.element.querySelector('.memory-badge-count').textContent = 'Memory: Error';
+        console.error('[MemoryBadge] Error state rendered');
+    },
+
+    /**
+     * Show tooltip
+     */
+    showTooltip: function() {
+        if (this.tooltip) {
+            this.tooltip.classList.add('visible');
+        }
+    },
+
+    /**
+     * Hide tooltip
+     */
+    hideTooltip: function() {
+        if (this.tooltip) {
+            this.tooltip.classList.remove('visible');
+        }
+    },
+
+    /**
+     * Start auto-update interval
+     * @param {number} intervalMs - Update interval in milliseconds (default: 30s)
+     */
+    startAutoUpdate: function(intervalMs = 30000) {
+        this.stopAutoUpdate();
+
+        this.updateInterval = setInterval(() => {
+            if (this.currentSessionId) {
+                console.log('[MemoryBadge] Auto-updating...');
+                this.update(this.currentSessionId);
+            }
+        }, intervalMs);
+
+        console.log(`[MemoryBadge] Auto-update started (interval: ${intervalMs}ms)`);
+    },
+
+    /**
+     * Stop auto-update interval
+     */
+    stopAutoUpdate: function() {
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
+            this.updateInterval = null;
+            console.log('[MemoryBadge] Auto-update stopped');
+        }
+    },
+
+    /**
+     * Cleanup
+     */
+    destroy: function() {
+        this.stopAutoUpdate();
+
+        if (this.element) {
+            this.element.remove();
+            this.element = null;
+        }
+
+        if (this.tooltip) {
+            this.tooltip.remove();
+            this.tooltip = null;
+        }
+
+        this.currentSessionId = null;
+        console.log('[MemoryBadge] Destroyed');
+    }
+};
+
+// Initialize Memory Badge on page load
+document.addEventListener('DOMContentLoaded', () => {
+    // Wait a bit for other components to initialize
+    setTimeout(() => {
+        MemoryBadge.init();
+
+        // Start auto-update with 30-second interval
+        MemoryBadge.startAutoUpdate(30000);
+    }, 500);
+});
+
+// Update Memory Badge when session changes
+// This will be called by the chat view when a session is loaded
+function updateMemoryBadge(sessionId) {
+    if (sessionId && MemoryBadge) {
+        MemoryBadge.update(sessionId);
+    }
 }
 
 // ============================================================================
@@ -6255,4 +8128,777 @@ function renderBrainDashboardView(container) {
 
 function renderBrainQueryConsoleView(container) {
     state.currentViewInstance = new BrainQueryConsoleView(container);
+}
+
+// ============================================================================
+// CommunicationOS Views
+// ============================================================================
+
+function renderChannelsView(container) {
+    state.currentViewInstance = new ChannelsView(container);
+}
+
+function renderCommunicationView(container) {
+    state.currentViewInstance = new CommunicationView(container);
+}
+
+function renderSubgraphView(container) {
+    if (!window.SubgraphView) {
+        container.innerHTML = '<div class="p-6 text-red-500">SubgraphView not loaded. Please check if SubgraphView.js is included.</div>';
+        return;
+    }
+    state.currentViewInstance = new window.SubgraphView();
+    state.currentViewInstance.init();
+}
+
+// Render Decision Review View (P4-C2)
+function renderDecisionReviewView(container) {
+    if (!window.DecisionReviewView) {
+        container.innerHTML = '<div class="p-6 text-red-500">DecisionReviewView not loaded. Please check if DecisionReviewView.js is included.</div>';
+        return;
+    }
+    state.currentViewInstance = new window.DecisionReviewView();
+    state.currentViewInstance.render(container);
+}
+
+// Render InfoNeed Metrics View (Task #21)
+function renderInfoNeedMetricsView(container) {
+    if (!window.InfoNeedMetricsView) {
+        container.innerHTML = '<div class="p-6 text-red-500">InfoNeedMetricsView not loaded. Please check if InfoNeedMetricsView.js is included.</div>';
+        return;
+    }
+    state.currentViewInstance = new window.InfoNeedMetricsView(container);
+}
+
+// ============================================================================
+// Slash Command Autocomplete
+// ============================================================================
+
+// State for autocomplete
+const autocompleteState = {
+    commands: [],
+    filteredCommands: [],
+    selectedIndex: -1,
+    isVisible: false,
+    currentLevel: 'main', // 'main' or 'sub'
+    currentMainCommand: null // Store current main command when showing subcommands
+};
+
+// Load available slash commands
+async function loadSlashCommands() {
+    try {
+        const response = await fetch('/api/chat/slash-commands');
+        if (!response.ok) {
+            throw new Error('Failed to load slash commands');
+        }
+        const data = await response.json();
+
+        // Build command structure with subcommands
+        autocompleteState.commands = data.commands.map(cmd => {
+            const command = {
+                name: cmd.name,
+                summary: cmd.summary,
+                description: cmd.description,
+                source: cmd.source,
+                examples: cmd.examples,
+                subcommands: []
+            };
+
+            // Parse subcommands from examples and description
+            // For commands like /context, /comm that have subcommands
+            if (cmd.name === '/context') {
+                command.subcommands = [
+                    { name: 'show', description: 'Show current context info' },
+                    { name: 'show --full', description: 'Show assembled messages summary' },
+                    { name: 'pin', description: 'Pin last message to memory' },
+                    { name: 'diff', description: 'Diff last two context snapshots' },
+                    { name: 'diff --last N', description: 'Diff last N snapshots' }
+                ];
+            } else if (cmd.name === '/comm') {
+                command.subcommands = [
+                    { name: 'search <query>', description: 'Execute web search' },
+                    { name: 'fetch <url>', description: 'Fetch URL content' },
+                    { name: 'brief <topic>', description: 'Generate topic brief' },
+                    { name: 'brief <topic> --today', description: 'Generate today\'s brief' }
+                ];
+            } else if (cmd.name === '/model') {
+                command.subcommands = [
+                    { name: 'local', description: 'Switch to local model' },
+                    { name: 'cloud', description: 'Switch to cloud model' }
+                ];
+            }
+
+            return command;
+        });
+
+        console.log(`Loaded ${autocompleteState.commands.length} slash commands`);
+    } catch (err) {
+        console.error('Failed to load slash commands:', err);
+        autocompleteState.commands = [];
+    }
+}
+
+// Setup autocomplete for input
+function setupSlashCommandAutocomplete(input) {
+    // Load commands on initialization
+    loadSlashCommands();
+
+    // Listen to input events
+    input.addEventListener('input', (e) => {
+        handleAutocompleteInput(e.target);
+    });
+
+    // Close autocomplete on blur (with delay to allow click)
+    input.addEventListener('blur', () => {
+        setTimeout(() => {
+            hideAutocomplete();
+        }, 200);
+    });
+
+    // Close autocomplete when clicking outside
+    document.addEventListener('click', (e) => {
+        const autocomplete = document.getElementById('slash-command-autocomplete');
+        const input = document.getElementById('chat-input');
+        if (autocomplete && !autocomplete.contains(e.target) && e.target !== input) {
+            hideAutocomplete();
+        }
+    });
+}
+
+// Handle input changes
+function handleAutocompleteInput(input) {
+    const text = input.value;
+    const cursorPos = input.selectionStart;
+
+    // Find if cursor is in a slash command
+    const beforeCursor = text.substring(0, cursorPos);
+
+    // Try to match a complete command with subcommand
+    // Pattern: /command subcommand_prefix
+    const fullMatch = beforeCursor.match(/\/([\w]+)\s+(\w*)$/);
+
+    if (fullMatch) {
+        // User is typing a subcommand
+        const mainCommand = fullMatch[1].toLowerCase();
+        const subQuery = fullMatch[2].toLowerCase();
+        showSubcommandAutocomplete(mainCommand, subQuery);
+    } else {
+        // Try to match just the main command
+        const cmdMatch = beforeCursor.match(/\/([\w]*)$/);
+        if (cmdMatch) {
+            const query = cmdMatch[1].toLowerCase();
+            showMainCommandAutocomplete(query);
+        } else {
+            hideAutocomplete();
+        }
+    }
+}
+
+// Show main command autocomplete
+function showMainCommandAutocomplete(query) {
+    const autocomplete = document.getElementById('slash-command-autocomplete');
+    const listContainer = document.getElementById('autocomplete-list');
+    const headerEl = autocomplete.querySelector('.autocomplete-header');
+
+    // Filter commands
+    if (query === '') {
+        // Show all commands
+        autocompleteState.filteredCommands = autocompleteState.commands;
+    } else {
+        // Filter by query
+        autocompleteState.filteredCommands = autocompleteState.commands.filter(cmd => {
+            const cmdName = cmd.name.toLowerCase();
+            return cmdName.includes('/' + query) || cmdName.includes(query);
+        });
+    }
+
+    // If no matches, hide
+    if (autocompleteState.filteredCommands.length === 0) {
+        hideAutocomplete();
+        return;
+    }
+
+    // Update header
+    headerEl.textContent = 'Slash Commands';
+
+    // Render command list
+    listContainer.innerHTML = autocompleteState.filteredCommands.map((cmd, index) => {
+        const isSelected = index === autocompleteState.selectedIndex;
+        const hasSubcommands = cmd.subcommands && cmd.subcommands.length > 0;
+
+        return `
+            <div class="autocomplete-item ${isSelected ? 'selected' : ''}" data-index="${index}" data-type="command" onclick="selectMainCommand(${index})">
+                <div class="autocomplete-command-name">
+                    ${escapeHtml(cmd.name)}
+                    ${hasSubcommands ? '<span class="subcommand-indicator">▸</span>' : ''}
+                </div>
+                <div class="autocomplete-command-desc">${escapeHtml(cmd.summary || cmd.description)}</div>
+                ${cmd.source === 'extension' ? '<span class="autocomplete-badge">Extension</span>' : '<span class="autocomplete-badge builtin">Built-in</span>'}
+            </div>
+        `;
+    }).join('');
+
+    // Show autocomplete
+    autocomplete.style.display = 'block';
+    autocompleteState.isVisible = true;
+    autocompleteState.selectedIndex = -1;
+    autocompleteState.currentLevel = 'main';
+}
+
+// Show subcommand autocomplete
+function showSubcommandAutocomplete(mainCommand, subQuery) {
+    const autocomplete = document.getElementById('slash-command-autocomplete');
+    const listContainer = document.getElementById('autocomplete-list');
+    const headerEl = autocomplete.querySelector('.autocomplete-header');
+
+    // Find the main command
+    const cmd = autocompleteState.commands.find(c =>
+        c.name.toLowerCase() === '/' + mainCommand
+    );
+
+    if (!cmd || !cmd.subcommands || cmd.subcommands.length === 0) {
+        hideAutocomplete();
+        return;
+    }
+
+    // Filter subcommands
+    let filteredSubcommands;
+    if (subQuery === '') {
+        filteredSubcommands = cmd.subcommands;
+    } else {
+        filteredSubcommands = cmd.subcommands.filter(sub => {
+            return sub.name.toLowerCase().startsWith(subQuery);
+        });
+    }
+
+    if (filteredSubcommands.length === 0) {
+        hideAutocomplete();
+        return;
+    }
+
+    // Store for selection
+    autocompleteState.filteredCommands = filteredSubcommands.map(sub => ({
+        name: sub.name,
+        description: sub.description,
+        mainCommand: cmd.name
+    }));
+
+    // Update header
+    headerEl.textContent = `${cmd.name} - Subcommands`;
+
+    // Render subcommand list
+    listContainer.innerHTML = filteredSubcommands.map((sub, index) => {
+        const isSelected = index === autocompleteState.selectedIndex;
+        return `
+            <div class="autocomplete-item ${isSelected ? 'selected' : ''}" data-index="${index}" data-type="subcommand" onclick="selectSubcommand(${index})">
+                <div class="autocomplete-command-name autocomplete-subcommand">${escapeHtml(sub.name)}</div>
+                <div class="autocomplete-command-desc">${escapeHtml(sub.description)}</div>
+            </div>
+        `;
+    }).join('');
+
+    // Show autocomplete
+    autocomplete.style.display = 'block';
+    autocompleteState.isVisible = true;
+    autocompleteState.selectedIndex = -1;
+    autocompleteState.currentLevel = 'sub';
+    autocompleteState.currentMainCommand = cmd.name;
+}
+
+// Hide autocomplete
+function hideAutocomplete() {
+    const autocomplete = document.getElementById('slash-command-autocomplete');
+    if (autocomplete) {
+        autocomplete.style.display = 'none';
+        autocompleteState.isVisible = false;
+        autocompleteState.selectedIndex = -1;
+    }
+}
+
+// Handle keyboard navigation
+function handleAutocompleteKeydown(e) {
+    if (!autocompleteState.isVisible) {
+        return false;
+    }
+
+    const input = document.getElementById('chat-input');
+
+    switch (e.key) {
+        case 'ArrowDown':
+            e.preventDefault();
+            autocompleteState.selectedIndex = Math.min(
+                autocompleteState.selectedIndex + 1,
+                autocompleteState.filteredCommands.length - 1
+            );
+            updateAutocompleteSelection();
+            return true;
+
+        case 'ArrowUp':
+            e.preventDefault();
+            autocompleteState.selectedIndex = Math.max(
+                autocompleteState.selectedIndex - 1,
+                0
+            );
+            updateAutocompleteSelection();
+            return true;
+
+        case 'Enter':
+        case 'Tab':
+            if (autocompleteState.selectedIndex >= 0) {
+                e.preventDefault();
+                // Call appropriate select function based on current level
+                if (autocompleteState.currentLevel === 'sub') {
+                    selectSubcommand(autocompleteState.selectedIndex);
+                } else {
+                    selectMainCommand(autocompleteState.selectedIndex);
+                }
+                return true;
+            }
+            break;
+
+        case 'Escape':
+            e.preventDefault();
+            hideAutocomplete();
+            return true;
+    }
+
+    return false;
+}
+
+// Update visual selection
+function updateAutocompleteSelection() {
+    const items = document.querySelectorAll('.autocomplete-item');
+    items.forEach((item, index) => {
+        if (index === autocompleteState.selectedIndex) {
+            item.classList.add('selected');
+            item.scrollIntoView({ block: 'nearest' });
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+}
+
+// Select a main command
+function selectMainCommand(index) {
+    const cmd = autocompleteState.filteredCommands[index];
+    if (!cmd) return;
+
+    const input = document.getElementById('chat-input');
+    const text = input.value;
+    const cursorPos = input.selectionStart;
+
+    // Find the slash command position
+    const beforeCursor = text.substring(0, cursorPos);
+    const match = beforeCursor.match(/\/([\w]*)$/);
+
+    if (match) {
+        const matchStart = beforeCursor.length - match[0].length;
+        const afterCursor = text.substring(cursorPos);
+
+        // Check if command has subcommands
+        const hasSubcommands = cmd.subcommands && cmd.subcommands.length > 0;
+
+        // Replace with selected command
+        const newText = text.substring(0, matchStart) + cmd.name + ' ' + afterCursor;
+        input.value = newText;
+
+        // Set cursor after command
+        const newCursorPos = matchStart + cmd.name.length + 1;
+        input.setSelectionRange(newCursorPos, newCursorPos);
+
+        // If command has subcommands, keep autocomplete open and show subcommands
+        if (hasSubcommands) {
+            // Trigger input event to show subcommands
+            setTimeout(() => {
+                handleAutocompleteInput(input);
+            }, 0);
+        } else {
+            hideAutocomplete();
+        }
+    }
+
+    input.focus();
+}
+
+// Select a subcommand
+function selectSubcommand(index) {
+    const subcmd = autocompleteState.filteredCommands[index];
+    if (!subcmd) return;
+
+    const input = document.getElementById('chat-input');
+    const text = input.value;
+    const cursorPos = input.selectionStart;
+
+    // Find the command + subcommand position
+    const beforeCursor = text.substring(0, cursorPos);
+    const match = beforeCursor.match(/\/([\w]+)\s+(\w*)$/);
+
+    if (match) {
+        const matchStart = beforeCursor.length - match[0].length;
+        const afterCursor = text.substring(cursorPos);
+
+        // Replace with main command + subcommand
+        const newText = text.substring(0, matchStart) +
+                       autocompleteState.currentMainCommand + ' ' +
+                       subcmd.name + ' ' + afterCursor;
+        input.value = newText;
+
+        // Set cursor after subcommand
+        const newCursorPos = matchStart +
+                            autocompleteState.currentMainCommand.length + 1 +
+                            subcmd.name.length + 1;
+        input.setSelectionRange(newCursorPos, newCursorPos);
+    }
+
+    hideAutocomplete();
+    input.focus();
+}
+
+// ============================================================================
+// Capability Governance Views (Task #29)
+// ============================================================================
+
+function renderCapabilityDashboardView(container) {
+    if (!window.CapabilityDashboardView) {
+        container.innerHTML = '<div class="p-6 text-red-500">CapabilityDashboardView not loaded</div>';
+        return;
+    }
+    state.currentViewInstance = new CapabilityDashboardView(container);
+}
+
+function renderDecisionTimelineView(container) {
+    if (!window.DecisionTimelineView) {
+        container.innerHTML = '<div class="p-6 text-red-500">DecisionTimelineView not loaded</div>';
+        return;
+    }
+    window.currentDecisionTimelineView = new DecisionTimelineView(container);
+    state.currentViewInstance = window.currentDecisionTimelineView;
+}
+
+function renderActionLogView(container) {
+    if (!window.ActionExecutionLogView) {
+        container.innerHTML = '<div class="p-6 text-red-500">ActionExecutionLogView not loaded</div>';
+        return;
+    }
+    window.currentActionLogView = new ActionExecutionLogView(container);
+    state.currentViewInstance = window.currentActionLogView;
+}
+
+function renderEvidenceChainView(container) {
+    if (!window.EvidenceChainView) {
+        container.innerHTML = '<div class="p-6 text-red-500">EvidenceChainView not loaded</div>';
+        return;
+    }
+    state.currentViewInstance = new EvidenceChainView(container);
+}
+
+function renderGovernanceAuditView(container) {
+    if (!window.GovernanceAuditView) {
+        container.innerHTML = '<div class="p-6 text-red-500">GovernanceAuditView not loaded</div>';
+        return;
+    }
+    window.currentGovernanceAuditView = new GovernanceAuditView(container);
+    state.currentViewInstance = window.currentGovernanceAuditView;
+}
+
+function renderAgentMatrixView(container) {
+    if (!window.AgentCapabilityMatrixView) {
+        container.innerHTML = '<div class="p-6 text-red-500">AgentCapabilityMatrixView not loaded</div>';
+        return;
+    }
+    window.currentAgentCapabilityMatrixView = new AgentCapabilityMatrixView(container);
+    state.currentViewInstance = window.currentAgentCapabilityMatrixView;
+}
+
+// ===================================================================
+// Chat Voice Integration
+// ===================================================================
+
+/**
+ * ChatVoiceManager - Manages voice interaction in Chat
+ */
+class ChatVoiceManager {
+    constructor() {
+        this.state = 'idle'; // idle, recording, processing
+        this.micCapture = null;
+        this.voiceWS = null;
+        this.voiceSessionId = null;
+        this.partialTranscript = '';
+        this.finalTranscript = '';
+
+        this.button = document.getElementById('voice-input-btn');
+        this.input = document.getElementById('chat-input');
+        this.preview = document.getElementById('voice-transcript-preview');
+
+        this.init();
+    }
+
+    init() {
+        console.log('[ChatVoice] Initializing...');
+        this.button.addEventListener('click', () => this.toggle());
+        this.updateButtonUI();
+    }
+
+    async toggle() {
+        if (this.state === 'idle') {
+            await this.startRecording();
+        } else if (this.state === 'recording') {
+            await this.stopRecording();
+        }
+    }
+
+    async startRecording() {
+        try {
+            console.log('[ChatVoice] Starting recording...');
+            this.setState('processing');
+
+            // 1. Create voice session
+            const sessionResponse = await fetch('/api/voice/sessions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': getCsrfToken() || ''
+                },
+                body: JSON.stringify({
+                    mode: 'chat_input',
+                    language: 'auto'
+                })
+            });
+
+            if (!sessionResponse.ok) {
+                throw new Error('Failed to create voice session');
+            }
+
+            const sessionData = await sessionResponse.json();
+            this.voiceSessionId = sessionData.data.session_id;
+            console.log('[ChatVoice] Voice session created:', this.voiceSessionId);
+
+            // 2. Connect WebSocket
+            this.voiceWS = new VoiceWebSocket();
+            this.setupWebSocketHandlers();
+            await this.voiceWS.connect(this.voiceSessionId);
+
+            // 3. Resume audio context
+            await this.voiceWS.resumeAudioContext();
+
+            // 4. Start microphone capture
+            this.micCapture = new MicCapture((pcmData) => {
+                if (this.voiceWS && this.voiceWS.isOpen()) {
+                    this.voiceWS.sendAudioChunk(pcmData);
+                }
+            });
+
+            await this.micCapture.start();
+
+            // Update state
+            this.setState('recording');
+            this.showPreview('Listening...');
+            Toast.success('Recording started');
+
+        } catch (error) {
+            console.error('[ChatVoice] Failed to start recording:', error);
+            this.setState('idle');
+            this.hidePreview();
+
+            if (error.name === 'NotAllowedError') {
+                Toast.error('Microphone permission denied');
+            } else if (error.name === 'NotFoundError') {
+                Toast.error('No microphone found');
+            } else {
+                Toast.error('Failed to start recording: ' + error.message);
+            }
+
+            this.cleanup();
+        }
+    }
+
+    async stopRecording() {
+        try {
+            console.log('[ChatVoice] Stopping recording...');
+            this.setState('processing');
+
+            // Stop microphone
+            if (this.micCapture) {
+                this.micCapture.stop();
+                this.micCapture = null;
+            }
+
+            // Send audio end signal
+            if (this.voiceWS && this.voiceWS.isOpen()) {
+                this.voiceWS.sendAudioEnd();
+            }
+
+            // Wait for final transcript
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Insert transcript into input
+            if (this.finalTranscript) {
+                this.insertTextIntoInput(this.finalTranscript);
+                Toast.success('Transcript inserted');
+            }
+
+            // Cleanup
+            this.cleanup();
+            this.setState('idle');
+            this.hidePreview();
+
+        } catch (error) {
+            console.error('[ChatVoice] Failed to stop recording:', error);
+            Toast.error('Error stopping recording');
+            this.cleanup();
+            this.setState('idle');
+            this.hidePreview();
+        }
+    }
+
+    setupWebSocketHandlers() {
+        // Partial transcript (real-time)
+        this.voiceWS.on('stt.partial', (data) => {
+            this.partialTranscript = data.text;
+            this.showPreview(data.text);
+        });
+
+        // Final transcript
+        this.voiceWS.on('stt.final', (data) => {
+            this.finalTranscript = data.text;
+            this.partialTranscript = '';
+            this.showPreview(data.text);
+            console.log('[ChatVoice] Final transcript:', data.text);
+        });
+
+        // Error handling
+        this.voiceWS.on('error', (data) => {
+            console.error('[ChatVoice] WebSocket error:', data);
+            Toast.error('Voice error: ' + data.error);
+            this.stopRecording();
+        });
+
+        // Connection events
+        this.voiceWS.on('disconnected', () => {
+            if (this.state === 'recording') {
+                Toast.warning('Connection lost');
+                this.stopRecording();
+            }
+        });
+    }
+
+    setState(newState) {
+        this.state = newState;
+        this.updateButtonUI();
+    }
+
+    updateButtonUI() {
+        const icon = this.button.querySelector('.material-icons');
+
+        // Remove all state classes
+        this.button.classList.remove('voice-idle', 'voice-recording', 'voice-processing');
+
+        switch (this.state) {
+            case 'idle':
+                icon.textContent = 'mic';
+                this.button.classList.add('voice-idle');
+                this.button.title = 'Start voice input';
+                break;
+
+            case 'recording':
+                icon.textContent = 'mic';
+                this.button.classList.add('voice-recording');
+                this.button.title = 'Stop recording';
+                break;
+
+            case 'processing':
+                icon.textContent = 'mic_off';
+                this.button.classList.add('voice-processing');
+                this.button.title = 'Processing...';
+                break;
+        }
+    }
+
+    showPreview(text) {
+        if (!this.preview) return;
+
+        const textEl = this.preview.querySelector('.transcript-text');
+        if (textEl) {
+            textEl.textContent = text;
+        }
+
+        this.preview.style.display = 'block';
+    }
+
+    hidePreview() {
+        if (this.preview) {
+            this.preview.style.display = 'none';
+        }
+    }
+
+    insertTextIntoInput(text) {
+        if (!this.input) return;
+
+        const currentValue = this.input.value.trim();
+        this.input.value = currentValue ? `${currentValue} ${text}` : text;
+
+        // Focus input
+        this.input.focus();
+
+        // Trigger input event to update UI
+        this.input.dispatchEvent(new Event('input'));
+
+        // Optional: Auto-send (commented out by default)
+        // sendMessage();
+    }
+
+    cleanup() {
+        if (this.micCapture) {
+            this.micCapture.stop();
+            this.micCapture = null;
+        }
+
+        if (this.voiceWS) {
+            this.voiceWS.close();
+            this.voiceWS = null;
+        }
+
+        if (this.voiceSessionId) {
+            // Optionally stop session via API
+            fetch(`/api/voice/sessions/${this.voiceSessionId}/stop`, {
+                method: 'POST',
+                headers: { 'X-CSRF-Token': getCsrfToken() || '' }
+            }).catch(err => console.warn('[ChatVoice] Failed to stop session:', err));
+
+            this.voiceSessionId = null;
+        }
+
+        this.partialTranscript = '';
+        this.finalTranscript = '';
+    }
+}
+
+// Global chat voice manager instance
+let chatVoiceManager = null;
+
+/**
+ * Initialize Chat voice interaction
+ */
+function initializeChatVoice() {
+    try {
+        // Check if required classes are available
+        if (!window.MicCapture || !window.VoiceWebSocket) {
+            console.warn('[ChatVoice] MicCapture or VoiceWebSocket not available');
+            // Fallback to placeholder
+            document.getElementById('voice-input-btn').addEventListener('click', () => {
+                Toast.warning('Voice feature requires microphone support');
+            });
+            return;
+        }
+
+        chatVoiceManager = new ChatVoiceManager();
+        console.log('[ChatVoice] Initialized successfully');
+
+    } catch (error) {
+        console.error('[ChatVoice] Failed to initialize:', error);
+        // Fallback to placeholder
+        document.getElementById('voice-input-btn').addEventListener('click', () => {
+            Toast.error('Voice feature unavailable');
+        });
+    }
 }

@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 
 from agentos.core.events.bus import get_event_bus
 from agentos.core.events.types import Event, EventType, EventEntity
+from agentos.core.time import utc_now_iso
 from agentos.core.mode.mode_alerts import (
     ModeAlertAggregator,
     get_alert_aggregator,
@@ -167,7 +168,7 @@ class ModeEventListener:
                 "message": message,
                 "context": context,
             },
-            ts=datetime.now(timezone.utc).isoformat(),
+            ts=utc_now_iso(),
         )
 
     def get_stats(self) -> Dict[str, Any]:

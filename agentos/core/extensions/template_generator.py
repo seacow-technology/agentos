@@ -30,6 +30,12 @@ MANIFEST_TEMPLATE = Template('''{
   "author": "$author",
   "license": "Apache-2.0",
   "entrypoint": null,
+  "runtime": "python",
+  "python": {
+    "version": "3.8",
+    "dependencies": []
+  },
+  "external_bins": [],
   "capabilities": $capabilities,
   "permissions_required": $permissions,
   "platforms": ["linux", "darwin", "win32"],

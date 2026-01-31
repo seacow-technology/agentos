@@ -1,0 +1,42 @@
+======================================================================
+DRY EXECUTION RESULT EXPLANATION
+======================================================================
+
+Result ID: (generated)
+Schema Version: 0.10.0
+Created: (timestamp)
+
+Source Intent: intent_example_high_risk
+
+--- Execution Graph ---
+Nodes: 10 (5 phases + 5 actions)
+Edges: 14
+Swimlanes: 3 (database_engineer, security_engineer, sre_engineer)
+
+--- Patch Plan ---
+Files: 5
+  - modify: agentos/store/migrations/v010_add_user_credentials_table.sql (risk: high)
+  - modify: agentos/store/migrations/v010_rollback.sql (risk: critical)
+  - modify: agentos/models/user_credentials.py (risk: medium)
+  - modify: agentos/services/credentials_service.py (risk: high)
+  - modify: tests/integration/test_credentials_migration.py (risk: medium)
+
+--- Commit Plan ---
+Commits: 3 (respects max_commits: 3)
+  - Commit 1: Migration scripts (schema + rollback)
+  - Commit 2: Service layer (model + service)
+  - Commit 3: Integration tests and validation
+
+--- Review Requirements ---
+Dominant Risk: high
+Required Reviews: security, data, architecture, release, compliance
+Estimated Review Time: extended
+
+======================================================================
+
+IMPORTANT NOTES:
+- This is a HIGH RISK operation involving database schema changes
+- Rollback script must be tested before production deployment
+- Security review REQUIRED for encryption implementation
+- Compliance review REQUIRED for credentials storage
+- Deployment requires manual approval and monitoring

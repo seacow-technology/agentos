@@ -14,6 +14,8 @@ import json
 from .mode_selector import ModeSelection
 from ..executor.executor_engine import ExecutorEngine
 from ..task import TaskManager, TaskContext
+from agentos.core.time import utc_now_iso
+
 
 
 @dataclass
@@ -115,7 +117,7 @@ class ModePipelineRunner:
             ... )
         """
         pipeline_id = f"pipeline_{uuid.uuid4().hex[:12]}"
-        started_at = datetime.now(timezone.utc).isoformat()
+        started_at = utc_now_iso()
         
         # Task-Driven: Create or resolve task
         if not task_id:
@@ -190,7 +192,7 @@ class ModePipelineRunner:
         if overall_status == "success" and len(stages) < len(mode_selection.pipeline):
             overall_status = "partial"
         
-        finished_at = datetime.now(timezone.utc).isoformat()
+        finished_at = utc_now_iso()
         
         # Update task status
         self.task_manager.update_task_status(task_id, overall_status)
@@ -256,7 +258,7 @@ class ModePipelineRunner:
         Returns:
             StageResult: 阶段执行结果
         """
-        started_at = datetime.now(timezone.utc).isoformat()
+        started_at = utc_now_iso()
         
         # 构造 execution_request
         exec_req_id = f"stage_{stage_idx}_{mode_id}_{uuid.uuid4().hex[:8]}"
@@ -297,7 +299,7 @@ class ModePipelineRunner:
                 caller_source="task_runner"  # Pipeline runner is always called by task runner
             )
             
-            finished_at = datetime.now(timezone.utc).isoformat()
+            finished_at = utc_now_iso()
             
             # 判断执行状态
             status = result.get("status", "unknown")
@@ -313,7 +315,7 @@ class ModePipelineRunner:
             )
             
         except Exception as e:
-            finished_at = datetime.now(timezone.utc).isoformat()
+            finished_at = utc_now_iso()
             return StageResult(
                 mode_id=mode_id,
                 status="failed",
@@ -350,7 +352,7 @@ class ModePipelineRunner:
             "mode_id": mode_id,  # 🔩 关键：明确设置 mode_id
             "context": context,
             "repo_path": str(repo_path),
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": utc_now_iso(),
             "steps": []  # 简化版：步骤由 Executor 内部决定
         }
         

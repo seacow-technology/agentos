@@ -75,13 +75,19 @@ class LeadScanJob:
         初始化扫描作业
 
         Args:
-            db_path: 数据库路径（默认 ~/.agentos/store.db）
+            db_path: 数据库路径（默认使用环境变量 AGENTOS_LEAD_SCAN_DB 或 ~/.agentos/store.db）
             config_path: 配置文件路径（可选，用于 override 默认配置）
             config: Miner 配置（可选，向后兼容，优先级低于 config_path）
             alert_thresholds: 告警阈值配置（可选，向后兼容，优先级低于 config_path）
         """
         if db_path is None:
-            db_path = Path.home() / ".agentos" / "store.db"
+            # Use environment variable with fallback
+            db_path_str = os.getenv("AGENTOS_LEAD_SCAN_DB")
+            if db_path_str:
+                db_path = Path(db_path_str)
+            else:
+                from agentos.core.storage.paths import component_db_path
+                db_path = component_db_path("agentos")
 
         self.db_path = db_path
         self._config_path_override = config_path  # 保存用于 config_info
@@ -708,7 +714,7 @@ def main():
     parser.add_argument(
         "--db-path",
         type=Path,
-        help="数据库路径（默认: ~/.agentos/store.db）"
+        help="数据库路径（默认: ~/.agentos/store/agentos/db.sqlite）"
     )
 
     parser.add_argument(

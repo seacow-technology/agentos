@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from agentos.schemas.project import RepoRole, RepoSpec
+from agentos.core.time import utc_now
+
 
 logger = logging.getLogger(__name__)
 
@@ -114,7 +116,7 @@ class ProjectRepository:
             cursor = conn.cursor()
 
             # Set timestamps if not provided
-            now = datetime.now(timezone.utc)
+            now = utc_now()
             if repo_spec.created_at is None:
                 repo_spec.created_at = now
             if repo_spec.updated_at is None:
@@ -296,7 +298,7 @@ class ProjectRepository:
             cursor = conn.cursor()
 
             # Update timestamp
-            repo_spec.updated_at = datetime.now(timezone.utc)
+            repo_spec.updated_at = utc_now()
             db_dict = repo_spec.to_db_dict()
 
             cursor.execute(

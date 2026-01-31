@@ -1,0 +1,310 @@
+{
+  "run_id": "coord_run_example_high_risk",
+  "schema_version": "0.9.2",
+  "intent_id": "intent_example_high_risk_interactive",
+  "coordinator_version": "0.9.2",
+  "started_at": "2026-01-25T11:05:00Z",
+  "completed_at": "2026-01-25T11:18:30Z",
+  "final_state": "DONE",
+  "states": [
+    {
+      "sequence": 1,
+      "from_state": "INIT",
+      "to_state": "RECEIVED",
+      "timestamp": "2026-01-25T11:05:00Z",
+      "trigger": "Intent submitted",
+      "guards_evaluated": [],
+      "duration_ms": 100
+    },
+    {
+      "sequence": 2,
+      "from_state": "RECEIVED",
+      "to_state": "PRECHECKED",
+      "timestamp": "2026-01-25T11:05:10Z",
+      "trigger": "Schema validation passed",
+      "guards_evaluated": [
+        {
+          "guard_name": "intent_schema_valid",
+          "passed": true,
+          "reason": "Intent conforms to v0.9.1 schema",
+          "evidence_refs": ["intent_example_high_risk_interactive"]
+        },
+        {
+          "guard_name": "registry_content_exists",
+          "passed": true,
+          "reason": "All referenced content exists in registry",
+          "evidence_refs": ["registry://workflows/database_migration_workflow"]
+        }
+      ],
+      "outputs_produced": [
+        {
+          "artifact_type": "precheck_report",
+          "artifact_id": "precheck_high_risk_001"
+        }
+      ],
+      "duration_ms": 10000
+    },
+    {
+      "sequence": 3,
+      "from_state": "PRECHECKED",
+      "to_state": "CONTEXT_BUILT",
+      "timestamp": "2026-01-25T11:05:25Z",
+      "trigger": "Context assembled",
+      "guards_evaluated": [
+        {
+          "guard_name": "memory_pack_available",
+          "passed": true,
+          "reason": "MemoryPack with database migration experiences loaded",
+          "evidence_refs": ["memory_pack://agentos/database"]
+        }
+      ],
+      "outputs_produced": [
+        {
+          "artifact_type": "context_bundle",
+          "artifact_id": "context_high_risk_001"
+        }
+      ],
+      "duration_ms": 15000
+    },
+    {
+      "sequence": 4,
+      "from_state": "CONTEXT_BUILT",
+      "to_state": "RULES_EVALUATED",
+      "timestamp": "2026-01-25T11:05:40Z",
+      "trigger": "Rules adjudication complete",
+      "guards_evaluated": [
+        {
+          "guard_name": "all_rules_decidable",
+          "passed": true,
+          "reason": "High-risk rules evaluated: requires_review triggered",
+          "evidence_refs": ["rule://rule_high_risk_requires_review"]
+        }
+      ],
+      "outputs_produced": [
+        {
+          "artifact_type": "rule_decisions",
+          "artifact_id": "decisions_high_risk_001"
+        }
+      ],
+      "duration_ms": 15000
+    },
+    {
+      "sequence": 5,
+      "from_state": "RULES_EVALUATED",
+      "to_state": "GRAPH_DRAFTED",
+      "timestamp": "2026-01-25T11:06:00Z",
+      "trigger": "Initial graph constructed with question placeholders",
+      "guards_evaluated": [
+        {
+          "guard_name": "graph_is_dag",
+          "passed": true,
+          "reason": "Graph structure validated as DAG",
+          "evidence_refs": []
+        }
+      ],
+      "outputs_produced": [
+        {
+          "artifact_type": "execution_graph",
+          "artifact_id": "graph_example_high_risk_interactive"
+        }
+      ],
+      "duration_ms": 20000
+    },
+    {
+      "sequence": 6,
+      "from_state": "GRAPH_DRAFTED",
+      "to_state": "QUESTIONS_EMITTED",
+      "timestamp": "2026-01-25T11:06:10Z",
+      "trigger": "Uncertainties detected, questions generated",
+      "guards_evaluated": [
+        {
+          "guard_name": "question_budget_available",
+          "passed": true,
+          "reason": "Budget: 10, Required: 2, Remaining: 8",
+          "evidence_refs": ["policy://question_budget"]
+        },
+        {
+          "guard_name": "questions_have_evidence",
+          "passed": true,
+          "reason": "All questions backed by evidence refs",
+          "evidence_refs": []
+        }
+      ],
+      "outputs_produced": [
+        {
+          "artifact_type": "question_pack",
+          "artifact_id": "qpack_high_risk_interactive"
+        }
+      ],
+      "duration_ms": 10000
+    },
+    {
+      "sequence": 7,
+      "from_state": "QUESTIONS_EMITTED",
+      "to_state": "AWAITING_ANSWERS",
+      "timestamp": "2026-01-25T11:06:15Z",
+      "trigger": "QuestionPack delivered, awaiting AnswerPack",
+      "guards_evaluated": [],
+      "duration_ms": 5000
+    },
+    {
+      "sequence": 8,
+      "from_state": "AWAITING_ANSWERS",
+      "to_state": "GRAPH_FINALIZED",
+      "timestamp": "2026-01-25T11:15:00Z",
+      "trigger": "AnswerPack received and integrated",
+      "guards_evaluated": [
+        {
+          "guard_name": "answers_valid",
+          "passed": true,
+          "reason": "All answers conform to question schema",
+          "evidence_refs": ["apack_high_risk_001"]
+        },
+        {
+          "guard_name": "no_rule_conflicts",
+          "passed": true,
+          "reason": "Answers do not conflict with rule decisions",
+          "evidence_refs": []
+        }
+      ],
+      "outputs_produced": [
+        {
+          "artifact_type": "execution_graph",
+          "artifact_id": "graph_example_high_risk_interactive_final"
+        }
+      ],
+      "duration_ms": 8000
+    },
+    {
+      "sequence": 9,
+      "from_state": "GRAPH_FINALIZED",
+      "to_state": "REVIEW_PACK_BUILT",
+      "timestamp": "2026-01-25T11:15:20Z",
+      "trigger": "Review pack generated with high-risk warnings",
+      "guards_evaluated": [
+        {
+          "guard_name": "requires_review_satisfied",
+          "passed": true,
+          "reason": "Review requirements for data/architecture/security all satisfied",
+          "evidence_refs": []
+        }
+      ],
+      "outputs_produced": [
+        {
+          "artifact_type": "review_pack",
+          "artifact_id": "review_high_risk_001"
+        }
+      ],
+      "duration_ms": 20000
+    },
+    {
+      "sequence": 10,
+      "from_state": "REVIEW_PACK_BUILT",
+      "to_state": "FROZEN_OUTPUTS",
+      "timestamp": "2026-01-25T11:18:25Z",
+      "trigger": "All outputs frozen",
+      "guards_evaluated": [
+        {
+          "guard_name": "lineage_complete",
+          "passed": true,
+          "reason": "Full lineage chain from intent to outputs",
+          "evidence_refs": []
+        }
+      ],
+      "outputs_produced": [
+        {
+          "artifact_type": "frozen_outputs",
+          "artifact_id": "frozen_high_risk_001"
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "sequence": 11,
+      "from_state": "FROZEN_OUTPUTS",
+      "to_state": "DONE",
+      "timestamp": "2026-01-25T11:18:30Z",
+      "trigger": "Coordination complete",
+      "guards_evaluated": [],
+      "duration_ms": 5000
+    }
+  ],
+  "decisions": [
+    {
+      "decision_id": "decision_001",
+      "decision_type": "risk_assessment",
+      "timestamp": "2026-01-25T11:05:35Z",
+      "inputs": {
+        "evidence_refs": ["scan://database/users_table_schema", "fact://current_user_count"],
+        "rule_refs": ["rule://rule_high_risk_requires_review"]
+      },
+      "rationale": "Database migration with write effects to production data classified as high risk. Requires multiple review gates.",
+      "outcome": "high_risk_confirmed",
+      "alternatives_considered": [
+        {
+          "alternative": "Classify as medium risk",
+          "reason_rejected": "Potential for data loss requires high-risk classification"
+        }
+      ]
+    },
+    {
+      "decision_id": "decision_002",
+      "decision_type": "question_emission",
+      "timestamp": "2026-01-25T11:06:05Z",
+      "inputs": {
+        "evidence_refs": ["scan://database/users_table_schema"],
+        "context_refs": ["intent://zero_downtime_requirement"]
+      },
+      "rationale": "Intent specifies zero-downtime requirement but database analysis shows potential locking issues. Need clarification on migration strategy.",
+      "outcome": "emit_blocker_question_on_migration_strategy"
+    },
+    {
+      "decision_id": "decision_003",
+      "decision_type": "question_emission",
+      "timestamp": "2026-01-25T11:06:08Z",
+      "inputs": {
+        "evidence_refs": ["doc://database/migration_standards.md"]
+      },
+      "rationale": "Indexing strategy affects performance but not correctness. Optimization question for better plan.",
+      "outcome": "emit_optimization_question_on_indexing"
+    }
+  ],
+  "rule_evaluations": [
+    {
+      "evaluation_id": "eval_001",
+      "rule_id": "rule://rule_high_risk_requires_review",
+      "decision": "require_review",
+      "timestamp": "2026-01-25T11:05:36Z",
+      "target": "generate_migration_script command",
+      "evidence_used": ["risk_level:high", "effects:write"],
+      "reason": "High-risk write operation requires data team review"
+    },
+    {
+      "evaluation_id": "eval_002",
+      "rule_id": "rule://rule_database_migration_safety",
+      "decision": "allow",
+      "timestamp": "2026-01-25T11:05:38Z",
+      "target": "validate_migration command",
+      "evidence_used": ["scan://database/test_db_state"],
+      "reason": "Test database available for validation"
+    }
+  ],
+  "model_routing_decisions": [
+    {
+      "decision_id": "model_decision_001",
+      "task_type": "generate_migration_script_reasoning",
+      "model_selected": "claude-3-sonnet",
+      "timestamp": "2026-01-25T11:05:55Z",
+      "reason": "Database migration requires careful reasoning about schema changes and data safety",
+      "cost_estimate": 2.5,
+      "budget_remaining": 7.5,
+      "data_sensitivity": "confidential",
+      "fallback_available": true
+    }
+  ],
+  "metadata": {
+    "total_duration_ms": 810000,
+    "state_transitions_count": 11,
+    "decisions_count": 3
+  }
+}

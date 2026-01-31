@@ -1,0 +1,4 @@
+{"timestamp": "2026-01-25T11:33:23.423846+00:00", "event": "pipeline_start", "inputs": {"nl_request": "/Users/pangge/PycharmProjects/AgentOS/examples/pipeline/nl/nl_001_doc_change.txt", "db_path": null}}
+{"timestamp": "2026-01-25T11:33:23.425028+00:00", "event": "command_start", "description": "Intent Builder", "command": "/Users/pangge/PycharmProjects/AgentOS/.venv/bin/python3 -m agentos.cli.main builder run --input /Users/pangge/PycharmProjects/AgentOS/outputs/pipeline/gate_b_test/nl_001_doc_change/01_intent/nl_001_doc_change_nl_request.json --policy semi_auto --out /Users/pangge/PycharmProjects/AgentOS/outputs/pipeline/gate_b_test/nl_001_doc_change/01_intent"}
+{"timestamp": "2026-01-25T11:33:24.079855+00:00", "event": "command_end", "description": "Intent Builder", "exit_code": 0, "stdout_lines": 17, "stderr_lines": 0}
+{"timestamp": "2026-01-25T11:33:24.080916+00:00", "event": "pipeline_blocked", "reason": "question_pack_non_empty"}

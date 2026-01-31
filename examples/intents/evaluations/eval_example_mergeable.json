@@ -1,0 +1,106 @@
+{
+  "id": "eval_result_api_analysis_mergeable",
+  "type": "intent_evaluation_result",
+  "schema_version": "0.9.3",
+  "created_at": "2026-01-25T11:05:00Z",
+  "input": {
+    "intent_set_id": "intent_set_api_analysis_mergeable",
+    "intent_checksums": {
+      "intent_analyze_api_performance": "a1b2c3d4e5f6789012345678901234567890123456789012345678901234abcd",
+      "intent_analyze_api_security": "b2c3d4e5f67890123456789012345678901234567890123456789012345bcde"
+    }
+  },
+  "evaluation": {
+    "conflicts": [],
+    "merge_plan": {
+      "strategy": "merge_union",
+      "operations": [
+        {
+          "op_id": "op_001",
+          "operation": "union_commands",
+          "source_intent_id": "intent_analyze_api_performance",
+          "target_field": "planned_commands",
+          "evidence": "Merging commands from intent_analyze_api_performance"
+        },
+        {
+          "op_id": "op_002",
+          "operation": "union_commands",
+          "source_intent_id": "intent_analyze_api_security",
+          "target_field": "planned_commands",
+          "evidence": "Merging commands from intent_analyze_api_security"
+        },
+        {
+          "op_id": "op_003",
+          "operation": "union_workflows",
+          "source_intent_id": "intent_analyze_api_performance",
+          "target_field": "selected_workflows",
+          "evidence": "Merging workflows from intent_analyze_api_performance"
+        },
+        {
+          "op_id": "op_004",
+          "operation": "union_workflows",
+          "source_intent_id": "intent_analyze_api_security",
+          "target_field": "selected_workflows",
+          "evidence": "Merging workflows from intent_analyze_api_security"
+        },
+        {
+          "op_id": "op_005",
+          "operation": "union_agents",
+          "source_intent_id": "intent_analyze_api_performance",
+          "target_field": "selected_agents",
+          "evidence": "Merging agents from intent_analyze_api_performance"
+        },
+        {
+          "op_id": "op_006",
+          "operation": "union_agents",
+          "source_intent_id": "intent_analyze_api_security",
+          "target_field": "selected_agents",
+          "evidence": "Merging agents from intent_analyze_api_security"
+        }
+      ],
+      "result_intent_id": "intent_merged_api_analysis"
+    },
+    "risk_comparison": {
+      "matrix": [
+        {
+          "intent_id": "intent_analyze_api_performance",
+          "overall_risk": "low",
+          "dimensions": {
+            "effects_risk": 0,
+            "scope_risk": 10,
+            "blast_radius": 10,
+            "unknowns": 60
+          }
+        },
+        {
+          "intent_id": "intent_analyze_api_security",
+          "overall_risk": "low",
+          "dimensions": {
+            "effects_risk": 0,
+            "scope_risk": 10,
+            "blast_radius": 10,
+            "unknowns": 60
+          }
+        }
+      ],
+      "dominance": [],
+      "incomparable": [
+        ["intent_analyze_api_performance", "intent_analyze_api_security"]
+      ]
+    }
+  },
+  "requires_questions": [],
+  "constraints": {
+    "execution": "forbidden"
+  },
+  "lineage": {
+    "derived_from_intent_set": "intent_set_api_analysis_mergeable",
+    "intent_set_checksum": "f1e2d3c4b5a69780123456789abcdef0123456789abcdef0123456789abcdef0",
+    "evaluator_version": "0.9.3"
+  },
+  "checksum": "c3d4e5f6a7b890123456789abcdef0123456789abcdef0123456789abcdef012",
+  "metadata": {
+    "evaluation_duration_ms": 150,
+    "evaluator_mode": "automatic"
+  }
+}

@@ -38,9 +38,19 @@ def get_slash_command_router() -> SlashCommandRouter:
     """Get or create SlashCommandRouter instance (singleton)"""
     global _slash_command_router
     if _slash_command_router is None:
+        from pathlib import Path
+        from agentos.store import get_store_path
+
         registry = get_extension_registry()
-        _slash_command_router = SlashCommandRouter(registry)
-        logger.info("SlashCommandRouter initialized")
+
+        # Use project's store/extensions directory
+        extensions_dir = get_store_path("extensions")
+
+        _slash_command_router = SlashCommandRouter(
+            registry,
+            extensions_dir=Path(extensions_dir)
+        )
+        logger.info(f"SlashCommandRouter initialized with extensions_dir={extensions_dir}")
     return _slash_command_router
 
 
@@ -60,6 +70,40 @@ class SlashCommandsResponse(BaseModel):
     """Response for GET /api/chat/slash-commands"""
     commands: List[SlashCommandInfo]
     total: int
+
+
+@router.post("/chat/slash-commands/refresh")
+async def refresh_slash_commands():
+    """Refresh slash command cache
+
+    Forces the router to reload all commands from extensions.
+    Useful after installing/uninstalling extensions without restarting server.
+
+    Returns:
+        Success message with command count
+    """
+    try:
+        router = get_slash_command_router()
+        router.refresh_cache()
+
+        command_count = len(router.command_cache)
+
+        return {
+            "success": True,
+            "message": f"Refreshed slash command cache",
+            "command_count": command_count,
+            "commands": list(router.command_cache.keys())
+        }
+    except Exception as e:
+        logger.error(f"Failed to refresh slash commands: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "success": False,
+                "error": str(e),
+                "message": "Failed to refresh slash commands"
+            }
+        )
 
 
 @router.get("/chat/slash-commands", response_model=SlashCommandsResponse)

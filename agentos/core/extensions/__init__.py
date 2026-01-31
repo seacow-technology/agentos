@@ -32,6 +32,8 @@ from agentos.core.extensions.models import (
     ExtensionStatus,
     InstallStatus,
     InstallSource,
+    RuntimeType,
+    PythonConfig,
 )
 from agentos.core.extensions.validator import ExtensionValidator
 from agentos.core.extensions.downloader import URLDownloader
@@ -58,6 +60,8 @@ __all__ = [
     "ExtensionStatus",
     "InstallStatus",
     "InstallSource",
+    "RuntimeType",
+    "PythonConfig",
     # Engine
     "ExtensionInstallEngine",
     "InstallResult",

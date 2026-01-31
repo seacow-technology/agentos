@@ -208,7 +208,7 @@ class BrainQueryConsoleView {
 
         const seed = input.value.trim();
         if (!seed) {
-            alert('Please enter a query seed');
+            Dialog.alert('Please enter a query seed', { title: 'Validation Error' });
             return;
         }
 
@@ -225,7 +225,8 @@ class BrainQueryConsoleView {
 
         try {
             const endpoint = `/api/brain/query/${this.currentTab}`;
-            const response = await fetch(endpoint, {
+            // CSRF Fix: Use fetchWithCSRF for protected endpoint
+            const response = await window.fetchWithCSRF(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ seed })

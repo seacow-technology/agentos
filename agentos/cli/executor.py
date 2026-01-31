@@ -5,6 +5,8 @@ import click
 from pathlib import Path
 from rich.console import Console
 from datetime import datetime, timezone
+from agentos.core.time import utc_now_iso
+
 
 console = Console()
 
@@ -37,7 +39,7 @@ def plan_cmd(dry_result_path: str, output_path: str):
             "execution_mode": "controlled",
             "allowed_operations": ["file_write", "file_update", "lint", "test"],
             "requires_review": dry_result.get("requires_review", False),
-            "created_at": datetime.now(timezone.utc).isoformat()
+            "created_at": utc_now_iso()
         }
         
         # Save

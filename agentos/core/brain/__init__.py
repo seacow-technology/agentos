@@ -18,9 +18,30 @@ BrainOS 提供只读推理能力，通过索引、构图、查询来支持：
 
 Version History:
 - 0.1.0-alpha: Initial skeleton with frozen contracts
+- 0.2.0-alpha: Add InfoNeed pattern models and ImprovementProposal
 """
 
-__version__ = "0.1.0-alpha"
+__version__ = "0.2.0-alpha"
+
+# Import key data models
+from agentos.core.brain.improvement_proposal import (
+    ImprovementProposal,
+    ProposalEvidence,
+    ProposalStatus,
+    ChangeType,
+    RiskLevel,
+    RecommendationType,
+)
+
+__all__ = [
+    "ImprovementProposal",
+    "ProposalEvidence",
+    "ProposalStatus",
+    "ChangeType",
+    "RiskLevel",
+    "RecommendationType",
+    "validate_readonly_compliance",
+]
 
 # 冻结契约 (Frozen Contracts)
 READONLY_PRINCIPLE = "BrainOS MUST NOT modify any repo content"

@@ -13,6 +13,9 @@ from rich.console import Console
 
 from agentos.core.locks.exceptions import LockConflict
 from agentos.core.locks.lock_token import LockToken
+from agentos.core.storage.paths import component_db_path
+from agentos.core.time import utc_now, utc_now_iso
+
 
 console = Console()
 
@@ -23,7 +26,7 @@ class TaskLockManager:
     def __init__(self, db_path: Optional[Path] = None):
         """Initialize task lock manager."""
         if db_path is None:
-            db_path = Path.home() / ".agentos" / "store.db"
+            db_path = component_db_path("agentos")
         self.db_path = db_path
 
     def _get_connection(self) -> sqlite3.Connection:
@@ -49,7 +52,7 @@ class TaskLockManager:
         cursor = conn.cursor()
         cursor.row_factory = sqlite3.Row
 
-        now = datetime.now(timezone.utc)
+        now = utc_now()
         expires_at = (now + timedelta(seconds=ttl_seconds)).timestamp()
 
         try:
@@ -157,7 +160,7 @@ class TaskLockManager:
                     datetime.fromtimestamp(new_expires_at, tz=timezone.utc).isoformat(),
                     run_id,
                     token.holder,
-                    datetime.now(timezone.utc).isoformat(),
+                    utc_now_iso(),
                 ),
             )
 
@@ -243,7 +246,7 @@ class TaskLock:
             )
 
         if db_path is None:
-            db_path = Path.home() / ".agentos" / "store.db"
+            db_path = component_db_path("agentos")
 
         self.db_path = db_path
         self.task_id = task_id
@@ -352,7 +355,7 @@ class TaskLock:
         conn = self._mgr._get_connection()
         cursor = conn.cursor()
 
-        now = datetime.now(timezone.utc)
+        now = utc_now()
 
         try:
             cursor.execute(

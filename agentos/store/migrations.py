@@ -39,7 +39,7 @@ class MigrationError(Exception):
 ║ 常见解决方案:
 ║  1. 检查数据库文件权限
 ║  2. 查看完整日志: agentos migrate --verbose
-║  3. 备份后重置: cp store/registry.sqlite store/registry.sqlite.bak
+║  3. 备份数据库文件
 ║  4. 寻求帮助: github.com/agentos/issues
 ╚══════════════════════════════════════════════════════════════════
 """

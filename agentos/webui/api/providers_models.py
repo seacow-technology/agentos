@@ -23,6 +23,8 @@ from agentos.providers import platform_utils
 from agentos.providers.providers_config import ProvidersConfigManager
 from agentos.webui.api import providers_errors
 
+
+from agentos.webui.api.time_format import iso_z
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -692,7 +694,7 @@ async def list_model_files(
                             name=item.name,
                             size=stat.st_size,
                             size_human=format_file_size(stat.st_size),
-                            modified=modified.isoformat(),
+                            modified=iso_z(modified),
                             extension=item.suffix
                         ))
                     except (OSError, ValueError) as e:

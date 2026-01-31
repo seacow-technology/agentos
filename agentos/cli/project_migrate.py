@@ -18,6 +18,7 @@ from agentos.core.project.compat import (
 from agentos.core.project.repository import ProjectRepository
 from agentos.schemas.project import Project, RepoSpec
 from agentos.store import get_db
+from agentos.core.db import registry_db
 
 console = Console()
 
@@ -63,8 +64,8 @@ def check_compatibility(project_id: str, check_all: bool):
             raise click.Abort()
 
         # Check each project
-        db_path = Path("store/registry.sqlite")
-        repo_crud = ProjectRepository(db_path)
+        # Use registry_db connection instead of hardcoded path
+        repo_crud = ProjectRepository(registry_db.get_db())
 
         results = []
         for pid in project_ids:
@@ -189,8 +190,8 @@ def migrate_to_multi_repo(project_id: str, workspace_root: str, dry_run: bool):
             raise click.Abort()
 
         # Load existing repos
-        db_path = Path("store/registry.sqlite")
-        repo_crud = ProjectRepository(db_path)
+        # Use registry_db connection instead of hardcoded path
+        repo_crud = ProjectRepository(registry_db.get_db())
         repos = repo_crud.list_repos(project_id)
 
         # Create Project instance
@@ -311,8 +312,8 @@ def list_repos(project_id: str):
         db.close()
 
         # Load repos
-        db_path = Path("store/registry.sqlite")
-        repo_crud = ProjectRepository(db_path)
+        # Use registry_db connection instead of hardcoded path
+        repo_crud = ProjectRepository(registry_db.get_db())
         repos = repo_crud.list_repos(project_id)
 
         if not repos:

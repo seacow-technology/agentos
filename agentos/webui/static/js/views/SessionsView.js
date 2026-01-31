@@ -45,7 +45,9 @@ class SessionsView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Session Details</h3>
-                            <button class="btn-close" id="sessions-drawer-close">close</button>
+                            <button class="btn-close" id="sessions-drawer-close">
+                                <span class="material-icons">close</span>
+                            </button>
                         </div>
                         <div class="drawer-body" id="sessions-drawer-body">
                             <!-- Session details will be rendered here -->
@@ -106,7 +108,7 @@ class SessionsView {
                     label: 'Session ID',
                     width: '250px',
                     render: (value) => {
-                        // PR-3 护栏规则：missing session_id 显示 badge
+                        // PR-3 护栏Rule：missing session_id Show badge
                         if (!value) {
                             return '<span class="status-badge status-unknown">(missing)</span>';
                         }
@@ -147,7 +149,15 @@ class SessionsView {
             data: [],
             emptyText: 'No sessions found',
             loadingText: 'Loading sessions...',
-            onRowClick: (session) => this.showSessionDetail(session),
+            onRowClick: (session, event) => {
+                // Stop event propagation to prevent it from reaching overlay
+                if (event) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                }
+                console.log('[SessionsView] Row clicked, showing detail for:', session.session_id);
+                this.showSessionDetail(session);
+            },
             pagination: true,
             pageSize: 10
         });
@@ -164,18 +174,36 @@ class SessionsView {
             this.createSession();
         });
 
-        // Drawer close
+        // Drawer close button
         this.container.querySelector('#sessions-drawer-close').addEventListener('click', () => {
+            console.log('[SessionsView] Close button clicked');
             this.hideSessionDetail();
         });
 
-        this.container.querySelector('#sessions-drawer-overlay').addEventListener('click', () => {
-            this.hideSessionDetail();
+        // Drawer overlay click - check if click target is exactly the overlay
+        const overlay = this.container.querySelector('#sessions-drawer-overlay');
+        overlay.addEventListener('click', (e) => {
+            console.log('[SessionsView] Overlay click event:', {
+                target: e.target,
+                currentTarget: e.currentTarget,
+                isOverlay: e.target === overlay,
+                targetClass: e.target.className,
+                targetId: e.target.id
+            });
+
+            // Only close if user clicked directly on the overlay (not on drawer-content)
+            if (e.target === overlay) {
+                console.log('[SessionsView] Overlay clicked (valid close)');
+                this.hideSessionDetail();
+            } else {
+                console.log('[SessionsView] Overlay child clicked (ignored)');
+            }
         });
 
         // Keyboard shortcut: Escape to close drawer
         const handleKeydown = (e) => {
             if (e.key === 'Escape' && !this.container.querySelector('#sessions-detail-drawer').classList.contains('hidden')) {
+                console.log('[SessionsView] Escape pressed, closing drawer');
                 this.hideSessionDetail();
             }
         };
@@ -212,7 +240,7 @@ class SessionsView {
             });
 
             if (result.ok) {
-                // PR-3 护栏规则：检查 session_id
+                // PR-3 护栏Rule：检查 session_id
                 const sessions = result.data.sessions || result.data || [];
 
                 // Validate: 所有 session 必须有 session_id
@@ -247,7 +275,9 @@ class SessionsView {
     }
 
     async showSessionDetail(session) {
-        // PR-3 护栏规则：没有 session_id 则不允许打开
+        console.log('[SessionsView] showSessionDetail called for:', session.session_id);
+
+        // PR-3 护栏Rule：没有 session_id 则不允许Open
         if (!session.session_id) {
             showToast('Cannot open session: missing session_id', 'error');
             return;
@@ -257,9 +287,17 @@ class SessionsView {
         const drawer = this.container.querySelector('#sessions-detail-drawer');
         const drawerBody = this.container.querySelector('#sessions-drawer-body');
 
+        // Prevent closing during loading
+        this._drawerIsLoading = true;
+
         // Show drawer with loading state
         drawer.classList.remove('hidden');
+        drawer.classList.add('visible');  // 添加 visible 类以显示内容
+        console.log('[SessionsView] Drawer shown with visible class, loading details...');
         drawerBody.innerHTML = '<div class="loading-spinner">Loading session details...</div>';
+
+        // Small delay to prevent immediate close from event bubbling
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         try {
             // Fetch full session details
@@ -269,9 +307,11 @@ class SessionsView {
 
             if (result.ok) {
                 const sessionDetail = result.data;
+                console.log('[SessionsView] Session details loaded successfully');
                 this.renderSessionDetail(sessionDetail);
             } else {
-                // 404 或其他错误
+                // 404 或其他Error
+                console.error('[SessionsView] Failed to load session details:', result.message);
                 drawerBody.innerHTML = `
                     <div class="error-message">
                         <div class="error-icon"><span class="material-icons md-18">warning</span></div>
@@ -280,13 +320,56 @@ class SessionsView {
                 `;
             }
         } catch (error) {
-            console.error('Failed to load session detail:', error);
+            console.error('[SessionsView] Exception loading session detail:', error);
             drawerBody.innerHTML = `
                 <div class="error-message">
                     <div class="error-icon"><span class="material-icons md-18">warning</span></div>
                     <div class="error-text">Failed to load session details</div>
                 </div>
             `;
+        } finally {
+            // Allow closing after loading completes
+            this._drawerIsLoading = false;
+            console.log('[SessionsView] Drawer loading complete');
+
+            // Debug: Check drawer state
+            const drawer = this.container.querySelector('#sessions-detail-drawer');
+            const drawerContent = this.container.querySelector('.drawer-content');
+            const overlay = this.container.querySelector('#sessions-drawer-overlay');
+
+            console.log('[SessionsView] Drawer state check:');
+            console.log('  - drawer.classList:', drawer ? Array.from(drawer.classList) : 'NULL');
+            console.log('  - drawer display:', drawer ? window.getComputedStyle(drawer).display : 'NULL');
+            console.log('  - drawerContent exists:', !!drawerContent);
+            console.log('  - overlay exists:', !!overlay);
+
+            if (drawerContent) {
+                const contentStyle = window.getComputedStyle(drawerContent);
+                console.log('  - drawer-content display:', contentStyle.display);
+                console.log('  - drawer-content transform:', contentStyle.transform);
+                console.log('  - drawer-content opacity:', contentStyle.opacity);
+                console.log('  - drawer-content visibility:', contentStyle.visibility);
+                console.log('  - drawer-content width:', contentStyle.width);
+                console.log('  - drawer-content right:', contentStyle.right);
+            }
+
+            if (drawer && drawer.classList.contains('hidden')) {
+                console.error('[SessionsView] ⚠️ PROBLEM: Drawer has hidden class after loading!');
+            }
+
+            // Check again after a delay to see if something changes
+            setTimeout(() => {
+                console.log('[SessionsView] Drawer state check (after 1s):');
+                const drawer2 = this.container.querySelector('#sessions-detail-drawer');
+                const drawerContent2 = this.container.querySelector('.drawer-content');
+                console.log('  - drawer still exists:', !!drawer2);
+                console.log('  - drawer-content still exists:', !!drawerContent2);
+                if (drawerContent2) {
+                    const style2 = window.getComputedStyle(drawerContent2);
+                    console.log('  - drawer-content display:', style2.display);
+                    console.log('  - drawer-content transform:', style2.transform);
+                }
+            }, 1000);
         }
     }
 
@@ -354,10 +437,10 @@ class SessionsView {
                     <h4>Related Data</h4>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                         <button class="btn-secondary" id="session-view-tasks">
-                            <span class="material-icons md-18">content_copy</span> View Tasks
+                            <span class="material-icons md-18">task</span> View Tasks
                         </button>
                         <button class="btn-secondary" id="session-view-events">
-                            sensors View Events
+                            <span class="material-icons md-18">sensors</span> View Events
                         </button>
                         <button class="btn-secondary" id="session-view-logs">
                             <span class="material-icons md-18">edit_note</span> View Logs
@@ -460,22 +543,54 @@ class SessionsView {
     }
 
     hideSessionDetail() {
+        // Get stack trace to see who called this
+        const stack = new Error().stack;
+        console.log('[SessionsView] hideSessionDetail called, loading:', this._drawerIsLoading);
+        console.log('[SessionsView] Call stack:', stack);
+
+        // Don't close if still loading (prevent premature close)
+        if (this._drawerIsLoading) {
+            console.log('[SessionsView] Drawer is loading, ignoring close request');
+            return;
+        }
+
         const drawer = this.container.querySelector('#sessions-detail-drawer');
-        drawer.classList.add('hidden');
+        if (drawer) {
+            const wasHidden = drawer.classList.contains('hidden');
+            drawer.classList.remove('visible');  // 移除 visible 类
+            drawer.classList.add('hidden');
+            console.log('[SessionsView] Drawer hidden (was already hidden:', wasHidden, ')');
+        } else {
+            console.error('[SessionsView] Drawer element not found!');
+        }
         this.selectedSession = null;
     }
 
     /**
      * Create new session (Step 4: CRUD)
-     * PR-3 最小成功：创建并跳转进入
+     * PR-3 最小Success：创建并跳转进入
      */
     async createSession() {
+        // Check if Dialog is available
+        if (typeof Dialog === 'undefined') {
+            console.error('Dialog component not loaded');
+            showToast('Dialog component not available', 'error');
+            return;
+        }
+
         // Prompt for session title
-        const title = await Dialog.prompt('Enter session title (optional):', {
-            title: 'Create New Session',
-            defaultValue: 'New Session',
-            placeholder: 'My Session'
-        });
+        let title;
+        try {
+            title = await Dialog.prompt('Enter session title (optional):', {
+                title: 'Create New Session',
+                defaultValue: 'New Session',
+                placeholder: 'My Session'
+            });
+        } catch (error) {
+            console.error('Dialog.prompt error:', error);
+            showToast('Failed to show dialog', 'error');
+            return;
+        }
 
         // User cancelled
         if (title === null) {
@@ -493,7 +608,7 @@ class SessionsView {
             if (result.ok) {
                 const newSession = result.data;
 
-                // PR-3 护栏规则：验证返回的 session_id
+                // PR-3 护栏Rule：验证返回的 session_id
                 const sessionId = newSession.session_id || newSession.id;
                 if (!sessionId) {
                     showToast('Error: Backend did not return session_id (contract bug)', 'error');
@@ -503,7 +618,7 @@ class SessionsView {
 
                 showToast('Session created successfully', 'success');
 
-                // 刷新列表
+                // Refresh列表
                 await this.loadSessions(true);
 
                 // PR-3 核心路径：创建后跳转到 Chat
@@ -522,12 +637,26 @@ class SessionsView {
      * PR-3: PATCH/PUT 任一方式
      */
     async showRenameDialog(session) {
+        // Check if Dialog is available
+        if (typeof Dialog === 'undefined') {
+            console.error('Dialog component not loaded');
+            showToast('Dialog component not available', 'error');
+            return;
+        }
+
         const currentTitle = session.title || 'Untitled';
-        const newTitle = await Dialog.prompt('Enter new title:', {
-            title: 'Rename Session',
-            defaultValue: currentTitle,
-            placeholder: 'Session Title'
-        });
+        let newTitle;
+        try {
+            newTitle = await Dialog.prompt('Enter new title:', {
+                title: 'Rename Session',
+                defaultValue: currentTitle,
+                placeholder: 'Session Title'
+            });
+        } catch (error) {
+            console.error('Dialog.prompt error:', error);
+            showToast('Failed to show dialog', 'error');
+            return;
+        }
 
         // User cancelled
         if (newTitle === null || newTitle === currentTitle) {
@@ -553,7 +682,7 @@ class SessionsView {
                 // 更新本地数据
                 session.title = newTitle;
 
-                // 刷新列表
+                // Refresh列表
                 await this.loadSessions(true);
 
                 // 如果 drawer 还开着，更新 drawer 内容
@@ -571,7 +700,7 @@ class SessionsView {
 
     /**
      * Delete session (Step 4: CRUD)
-     * PR-3 护栏规则：不要求级联清理，只显示删除结果
+     * PR-3 护栏Rule：不要求级联清理，只ShowDelete结果
      */
     async deleteSession(session) {
         const sessionId = session.session_id || session.id;
@@ -602,14 +731,14 @@ class SessionsView {
             if (result.ok) {
                 showToast('Session deleted successfully', 'success');
 
-                // 关闭 drawer
+                // Close drawer
                 this.hideSessionDetail();
 
-                // 刷新列表
+                // Refresh列表
                 await this.loadSessions(true);
             } else {
                 showToast(`Failed to delete session: ${result.message}`, 'error');
-                // drawer 保持打开（按蓝图要求）
+                // drawer 保持Open（按蓝图要求）
             }
         } catch (error) {
             console.error('Failed to delete session:', error);

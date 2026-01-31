@@ -209,7 +209,7 @@ class HistoryView {
 
             if (this.dataTable) {
                 this.dataTable.setData(history);
-                this.dataTable.setLoading(false);  // check_circle 关闭加载状态
+                this.dataTable.setLoading(false);  // check_circle Close加载Status
             }
 
             if (forceRefresh && window.showToast) {
@@ -246,7 +246,7 @@ class HistoryView {
 
             if (this.dataTable) {
                 this.dataTable.setData(pinned);
-                this.dataTable.setLoading(false);  // check_circle 关闭加载状态
+                this.dataTable.setLoading(false);  // check_circle Close加载Status
             }
 
             if (window.showToast) {
@@ -370,6 +370,11 @@ class HistoryView {
                         <button class="btn-secondary" id="copy-command-id">
                             <span class="material-icons md-18">content_copy</span> Copy Command ID
                         </button>
+                        ${history.task_id ? `
+                            <button class="btn-secondary" id="view-provenance" data-task-id="${this.escapeHtml(history.task_id)}">
+                                <span class="material-icons md-18">search</span> View Provenance
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
             </div>
@@ -412,6 +417,25 @@ class HistoryView {
                 navigator.clipboard.writeText(history.command_id);
                 if (window.showToast) {
                     window.showToast('Command ID copied', 'success', 1000);
+                }
+            });
+        }
+
+        // Setup view provenance button
+        const provenanceBtn = drawerBody.querySelector('#view-provenance');
+        if (provenanceBtn) {
+            provenanceBtn.addEventListener('click', () => {
+                const taskId = provenanceBtn.dataset.taskId;
+                // Navigate to governance dashboard with task filter
+                // For now, navigate to governance findings view
+                if (typeof updateNavigationActive === 'function') {
+                    updateNavigationActive('governance-findings');
+                    loadView('governance-findings');
+                    // Store the task_id for the view to use
+                    sessionStorage.setItem('governance_filter_task_id', taskId);
+                } else {
+                    // Fallback
+                    window.location.hash = `governance-findings?task_id=${taskId}`;
                 }
             });
         }

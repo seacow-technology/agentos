@@ -16,7 +16,7 @@ Task: #7 - P0-2 - CheckpointManager + EvidenceVerifier Implementation
 
 import json
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from contextlib import contextmanager
@@ -26,6 +26,8 @@ from .evidence import EvidenceVerifier, EvidenceVerificationError
 
 # Import logging for checkpoint events
 import logging as _logging
+from agentos.core.time import utc_now, utc_now_iso
+
 _logger = _logging.getLogger(__name__)
 
 
@@ -42,7 +44,9 @@ class CheckpointManager:
     checkpoints in the recovery system.
 
     Examples:
-        manager = CheckpointManager(db_path="store/registry.sqlite")
+        from agentos.core.storage.paths import component_db_path
+
+        manager = CheckpointManager(db_path=str(component_db_path("agentos")))
 
         # Begin step
         step_id = manager.begin_step(
@@ -71,7 +75,7 @@ class CheckpointManager:
 
     def __init__(
         self,
-        db_path: str = "store/registry.sqlite",
+        db_path: str = None,
         base_path: Optional[Path] = None,
         auto_verify: bool = True
     ):
@@ -79,10 +83,13 @@ class CheckpointManager:
         Initialize checkpoint manager
 
         Args:
-            db_path: Path to SQLite database
+            db_path: Path to SQLite database (defaults to component_db_path("agentos"))
             base_path: Base path for evidence verification
             auto_verify: Automatically verify checkpoints after creation
         """
+        if db_path is None:
+            from agentos.core.storage.paths import component_db_path
+            db_path = component_db_path("agentos")
         self.db_path = Path(db_path)
         self.base_path = base_path or Path.cwd()
         self.auto_verify = auto_verify
@@ -141,7 +148,7 @@ class CheckpointManager:
             "snapshot": snapshot,
             "work_item_id": work_item_id,
             "metadata": metadata or {},
-            "created_at": datetime.utcnow(),
+            "created_at": utc_now(),
         }
 
         # PR-V2: Emit checkpoint_begin event
@@ -273,7 +280,7 @@ class CheckpointManager:
 
         # Update checkpoint
         checkpoint.verified = is_verified
-        checkpoint.last_verified_at = datetime.utcnow()
+        checkpoint.last_verified_at = utc_now()
 
         # Save verification results
         self._update_checkpoint_verification(checkpoint)
@@ -480,7 +487,7 @@ class CheckpointManager:
                     checkpoint.sequence_number,
                     json.dumps(snapshot_with_evidence),
                     json.dumps(checkpoint.metadata),
-                    checkpoint.created_at.isoformat() if checkpoint.created_at else datetime.utcnow().isoformat(),
+                    checkpoint.created_at.isoformat() if checkpoint.created_at else utc_now_iso(),
                 )
             )
             conn.commit()

@@ -10,6 +10,8 @@ import hashlib
 from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime, timezone
+from agentos.core.time import utc_now_iso
+
 
 
 class AnswerStore:
@@ -156,7 +158,7 @@ class AnswerStore:
         Returns:
             Generated answer pack ID (format: apack_<hash>)
         """
-        timestamp = datetime.now(timezone.utc).isoformat()
+        timestamp = utc_now_iso()
         content = f"{question_pack_id}_{timestamp}"
         hash_value = hashlib.sha256(content.encode("utf-8")).hexdigest()[:16]
         return f"apack_{hash_value}"

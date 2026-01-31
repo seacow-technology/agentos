@@ -13,6 +13,8 @@ from typing import Dict, List, Optional
 
 from .inbox import InboxManager
 from .models import SupervisorEvent, EventSource
+from agentos.core.time import utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -57,15 +59,20 @@ class EventPoller:
             f"EventPoller initialized (source_table={source_table}, batch_size={batch_size})"
         )
 
-    def scan(self) -> int:
+    def scan(self, conn: Optional[sqlite3.Connection] = None) -> int:
         """
         扫描并拉取新事件
+
+        Args:
+            conn: 可选的数据库连接（用于共享事务）
 
         Returns:
             拉取的事件数量
         """
-        conn = sqlite3.connect(str(self.db_path))
-        conn.row_factory = sqlite3.Row
+        own_connection = conn is None
+        if own_connection:
+            conn = sqlite3.connect(str(self.db_path))
+            conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
         try:
@@ -113,7 +120,8 @@ class EventPoller:
             if max_id > last_seen_id:
                 self._update_checkpoint(cursor, max_id)
 
-            conn.commit()
+            if own_connection:
+                conn.commit()
 
             logger.info(
                 f"✅ Polled {inserted_count}/{len(events)} new events "
@@ -122,7 +130,8 @@ class EventPoller:
             return inserted_count
 
         finally:
-            conn.close()
+            if own_connection:
+                conn.close()
 
     def _get_checkpoint(self, cursor: sqlite3.Cursor) -> int:
         """
@@ -160,7 +169,7 @@ class EventPoller:
                 source_table, last_seen_id, updated_at
             ) VALUES (?, ?, ?)
             """,
-            (self.source_table, last_seen_id, datetime.now(timezone.utc).isoformat()),
+            (self.source_table, last_seen_id, utc_now_iso()),
         )
 
     def _fetch_new_events(
@@ -220,19 +229,24 @@ class EventPoller:
             source=EventSource.POLLING,
             task_id=row["task_id"],
             event_type=row["event_type"],
-            ts=row.get("created_at", datetime.now(timezone.utc).isoformat()),
+            ts=row.get("created_at", utc_now_iso()),
             payload=payload,
         )
 
-    def get_checkpoint_status(self) -> Dict[str, any]:
+    def get_checkpoint_status(self, conn: Optional[sqlite3.Connection] = None) -> Dict[str, any]:
         """
         获取 checkpoint 状态
+
+        Args:
+            conn: 可选的数据库连接（用于共享事务）
 
         Returns:
             Checkpoint 状态字典
         """
-        conn = sqlite3.connect(str(self.db_path))
-        conn.row_factory = sqlite3.Row
+        own_connection = conn is None
+        if own_connection:
+            conn = sqlite3.connect(str(self.db_path))
+            conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
         try:
@@ -263,4 +277,5 @@ class EventPoller:
             }
 
         finally:
-            conn.close()
+            if own_connection:
+                conn.close()

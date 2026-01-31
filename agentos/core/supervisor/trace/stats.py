@@ -14,8 +14,10 @@ Stats Calculator - 治理统计和指标计算
 
 import json
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
+from agentos.core.time import utc_now
+
 
 
 class StatsCalculator:
@@ -52,7 +54,7 @@ class StatsCalculator:
             }
         """
         # 计算时间范围
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = utc_now() - timedelta(hours=hours)
         cutoff_str = cutoff_time.isoformat()
 
         cursor = self.conn.execute(
@@ -157,7 +159,7 @@ class StatsCalculator:
             }
         """
         # 计算时间范围
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = utc_now() - timedelta(hours=hours)
         cutoff_str = cutoff_time.isoformat()
 
         # 检查是否有冗余列（v21+）

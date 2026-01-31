@@ -11,22 +11,25 @@ Target: Complete all checks in <5 seconds.
 
 Example:
     from agentos.core.startup import run_startup_health_check, HealthCheckMode
+    from agentos.core.storage.paths import component_db_path
+
+    db_path = component_db_path("agentos")
 
     # Production: block startup on failure
     run_startup_health_check(
-        db_path="store/registry.sqlite",
+        db_path=str(db_path),
         mode=HealthCheckMode.STRICT
     )
 
     # Staging: disable recovery features on failure
     run_startup_health_check(
-        db_path="store/registry.sqlite",
+        db_path=str(db_path),
         mode=HealthCheckMode.SAFE
     )
 
     # Development: warn only
     run_startup_health_check(
-        db_path="store/registry.sqlite",
+        db_path=str(db_path),
         mode=HealthCheckMode.DEV
     )
 """
@@ -93,7 +96,9 @@ class StartupHealthCheck:
             (all_passed, results_dict)
 
         Example:
-            checker = StartupHealthCheck("store/registry.sqlite")
+            from agentos.core.storage.paths import component_db_path
+
+            checker = StartupHealthCheck(str(component_db_path("agentos")))
             all_passed, results = checker.run_all_checks()
 
             if not all_passed:
@@ -308,15 +313,17 @@ def run_startup_health_check(
         RuntimeError: If mode=STRICT and checks fail
 
     Examples:
+        from agentos.core.storage.paths import component_db_path
+
         # Production: block startup on failure
         result = run_startup_health_check(
-            "store/registry.sqlite",
+            str(component_db_path("agentos")),
             mode=HealthCheckMode.STRICT
         )
 
         # Staging: disable recovery on failure
         result = run_startup_health_check(
-            "store/registry.sqlite",
+            str(component_db_path("agentos")),
             mode=HealthCheckMode.SAFE
         )
         if not result["recovery_enabled"]:
@@ -324,7 +331,7 @@ def run_startup_health_check(
 
         # Development: warn only
         result = run_startup_health_check(
-            "store/registry.sqlite",
+            str(component_db_path("agentos")),
             mode=HealthCheckMode.DEV
         )
     """

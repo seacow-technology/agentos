@@ -58,7 +58,9 @@ class EventsView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Event Details</h3>
-                            <button class="btn-close" id="events-drawer-close">close</button>
+                            <button class="btn-close" id="events-drawer-close">
+                                <span class="material-icons">close</span>
+                            </button>
                         </div>
                         <div class="drawer-body" id="events-drawer-body">
                             <!-- Event details will be rendered here -->

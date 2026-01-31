@@ -1,0 +1,26 @@
+id: nl_req_low_risk_doc
+schema_version: "0.9.4"
+project_id: "agentos"
+input_text: |
+  请为 IntentBuilder 类添加完整的文档注释，包括：
+  - 类级别的 docstring 说明其用途和 RED LINES
+  - 每个公共方法的参数说明和返回值
+  - 使用示例
+  目标文件：agentos/core/intent_builder/builder.py
+context_hints:
+  files:
+    - "agentos/core/intent_builder/builder.py"
+  areas:
+    - "docs"
+created_at: "2026-01-25T10:00:00Z"
+checksum: "0000000000000000000000000000000000000000000000000000000000000001"
+lineage:
+  introduced_in: "0.9.4"
+  derived_from: []
+  supersedes: []
+metadata:
+  user_id: "developer_001"
+  source: "cli"
+  tags:
+    - "documentation"
+    - "low_risk"

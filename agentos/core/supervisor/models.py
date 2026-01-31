@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 import uuid
+from agentos.core.time import utc_now_iso
+
 
 
 class EventSource(str, Enum):
@@ -77,7 +79,7 @@ class SupervisorEvent:
             source=EventSource.POLLING,
             task_id=row["task_id"],
             event_type=row["event_type"],
-            ts=row.get("created_at", datetime.now(timezone.utc).isoformat()),
+            ts=row.get("created_at", utc_now_iso()),
             payload=row.get("payload", {})
         )
 
@@ -131,7 +133,7 @@ class Decision:
     reason: str = ""                        # 决策理由
     findings: List[Finding] = field(default_factory=list)  # 相关发现
     actions: List["Action"] = field(default_factory=list)   # 要执行的动作
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: utc_now_iso())
 
     def to_dict(self) -> Dict[str, Any]:
         """序列化为字典"""

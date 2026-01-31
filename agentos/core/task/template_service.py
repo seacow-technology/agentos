@@ -10,6 +10,8 @@ import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Dict, Any, List
+from agentos.core.time import utc_now, utc_now_iso
+
 
 try:
     from ulid import ULID
@@ -73,8 +75,8 @@ class TemplateService:
             raise ValueError("Title template cannot be empty")
 
         # Generate template_id
-        template_id = str(ULID.from_datetime(datetime.now(timezone.utc)))
-        now = datetime.now(timezone.utc).isoformat()
+        template_id = str(ULID.from_datetime(utc_now()))
+        now = utc_now_iso()
 
         if metadata_template is None:
             metadata_template = {}
@@ -163,29 +165,26 @@ class TemplateService:
         order_clause = valid_order_fields[order_by]
 
         conn = get_db()
-        try:
-            cursor = conn.execute(
-                f"""
-                SELECT
-                    template_id, name, description, title_template,
-                    created_by_default, metadata_template_json,
-                    created_at, updated_at, created_by, use_count
-                FROM task_templates
-                ORDER BY {order_clause}
-                LIMIT ? OFFSET ?
-                """,
-                (limit, offset),
-            )
+        cursor = conn.execute(
+            f"""
+            SELECT
+                template_id, name, description, title_template,
+                created_by_default, metadata_template_json,
+                created_at, updated_at, created_by, use_count
+            FROM task_templates
+            ORDER BY {order_clause}
+            LIMIT ? OFFSET ?
+            """,
+            (limit, offset),
+        )
 
-            templates = []
-            for row in cursor.fetchall():
-                template = TaskTemplate.from_db_row(dict(row))
-                templates.append(template)
+        templates = []
+        for row in cursor.fetchall():
+            template = TaskTemplate.from_db_row(dict(row))
+            templates.append(template)
 
-            return templates
-
-        finally:
-            conn.close()
+        # Do NOT close: get_db() returns shared thread-local connection
+        return templates
 
     def get_template(self, template_id: str) -> Optional[TaskTemplate]:
         """
@@ -198,26 +197,23 @@ class TemplateService:
             TaskTemplate object or None if not found
         """
         conn = get_db()
-        try:
-            cursor = conn.execute(
-                """
-                SELECT
-                    template_id, name, description, title_template,
-                    created_by_default, metadata_template_json,
-                    created_at, updated_at, created_by, use_count
-                FROM task_templates
-                WHERE template_id = ?
-                """,
-                (template_id,),
-            )
+        cursor = conn.execute(
+            """
+            SELECT
+                template_id, name, description, title_template,
+                created_by_default, metadata_template_json,
+                created_at, updated_at, created_by, use_count
+            FROM task_templates
+            WHERE template_id = ?
+            """,
+            (template_id,),
+        )
 
-            row = cursor.fetchone()
-            if row:
-                return TaskTemplate.from_db_row(dict(row))
-            return None
-
-        finally:
-            conn.close()
+        row = cursor.fetchone()
+        if row:
+            return TaskTemplate.from_db_row(dict(row))
+        return None
+        # Do NOT close: get_db() returns shared thread-local connection
 
     def update_template(
         self,
@@ -289,7 +285,7 @@ class TemplateService:
 
         # Add updated_at
         updates.append("updated_at = ?")
-        params.append(datetime.now(timezone.utc).isoformat())
+        params.append(utc_now_iso())
 
         # Add template_id to params
         params.append(template_id)

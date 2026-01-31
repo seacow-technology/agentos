@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Registry View Test</title>
+
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="agentos/webui/static/css/main.css">
+    <link rel="stylesheet" href="agentos/webui/static/css/components.css">
+    <link rel="stylesheet" href="agentos/webui/static/css/content-registry.css">
+
+    <style>
+        body {
+            background: #f9fafb;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .test-container {
+            padding: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .test-header {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #d1fae5;
+            color: #065f46;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <!-- Test Header -->
+        <div class="test-header">
+            <h1 style="font-size: 1.875rem; font-weight: 700; color: #111827; margin-bottom: 0.5rem;">
+                Content Registry View Test
+            </h1>
+            <p style="color: #6b7280; margin-bottom: 1rem;">
+                Testing ContentRegistryView implementation (Wave2-D1 + Wave3-D2)
+            </p>
+            <div class="status-indicator">
+                <span class="material-icons" style="font-size: 18px;">check_circle</span>
+                <span>View Module Loaded</span>
+            </div>
+        </div>
+
+        <!-- View Container -->
+        <div id="content-registry-container"></div>
+    </div>
+
+    <!-- Mock API Client -->
+    <script>
+        // Mock API client for testing
+        const mockApiClient = {
+            async get(url) {
+                console.log('Mock API GET:', url);
+
+                if (url.includes('/api/runtime/mode')) {
+                    return { mode: 'local' };
+                }
+
+                if (url.includes('/api/governance/admin/validate')) {
+                    return { valid: false };
+                }
+
+                if (url.includes('/api/content/registry')) {
+                    return {
+                        items: [
+                            {
+                                id: 'agent-001',
+                                name: 'Code Review Agent',
+                                type: 'agent',
+                                status: 'active',
+                                version: '2.1.0',
+                                description: 'Automated code review and quality checks',
+                                author: 'AgentOS Team',
+                                created_at: '2024-01-15T10:00:00Z',
+                                updated_at: '2024-03-20T14:30:00Z',
+                                tags: ['coding', 'review', 'quality'],
+                                dependencies: ['tool-git', 'skill-code-analysis'],
+                                versions: [
+                                    {
+                                        version: '2.1.0',
+                                        status: 'active',
+                                        released_at: '2024-03-20T14:30:00Z',
+                                        notes: 'Performance improvements'
+                                    },
+                                    {
+                                        version: '2.0.0',
+                                        status: 'deprecated',
+                                        released_at: '2024-02-01T10:00:00Z',
+                                        notes: 'Major refactor'
+                                    }
+                                ]
+                            },
+                            {
+                                id: 'workflow-001',
+                                name: 'CI/CD Pipeline',
+                                type: 'workflow',
+                                status: 'active',
+                                version: '1.3.0',
+                                description: 'Automated build, test, and deployment workflow',
+                                author: 'DevOps Team',
+                                created_at: '2024-02-01T09:00:00Z',
+                                updated_at: '2024-03-25T16:45:00Z',
+                                tags: ['cicd', 'automation', 'deployment'],
+                                dependencies: ['agent-build', 'agent-test', 'tool-docker'],
+                                versions: [
+                                    {
+                                        version: '1.3.0',
+                                        status: 'active',
+                                        released_at: '2024-03-25T16:45:00Z',
+                                        notes: 'Added deployment stages'
+                                    }
+                                ]
+                            },
+                            {
+                                id: 'skill-002',
+                                name: 'Natural Language Processing',
+                                type: 'skill',
+                                status: 'frozen',
+                                version: '3.0.0',
+                                description: 'Advanced NLP capabilities for text analysis',
+                                author: 'AI Research',
+                                created_at: '2024-01-01T08:00:00Z',
+                                updated_at: '2024-03-15T11:20:00Z',
+                                tags: ['nlp', 'text', 'ai'],
+                                dependencies: ['tool-transformers'],
+                                versions: [
+                                    {
+                                        version: '3.0.0',
+                                        status: 'frozen',
+                                        released_at: '2024-03-15T11:20:00Z',
+                                        notes: 'Frozen for stability'
+                                    }
+                                ]
+                            }
+                        ],
+                        total: 3
+                    };
+                }
+
+                return {};
+            },
+
+            async post(url, data) {
+                console.log('Mock API POST:', url, data);
+                return { success: true };
+            },
+
+            async put(url, data) {
+                console.log('Mock API PUT:', url, data);
+                return { success: true };
+            }
+        };
+
+        // Mock Toast
+        window.showToast = function(message, type) {
+            console.log('Toast:', type, message);
+            alert(`[${type.toUpperCase()}] ${message}`);
+        };
+    </script>
+
+    <!-- View Script -->
+    <script src="agentos/webui/static/js/views/ContentRegistryView.js"></script>
+
+    <!-- Initialize View -->
+    <script>
+        async function initView() {
+            try {
+                console.log('Initializing Content Registry View...');
+
+                const container = document.getElementById('content-registry-container');
+                const view = new ContentRegistryView(mockApiClient);
+
+                // Render
+                const html = await view.render();
+                container.innerHTML = html;
+
+                // Mount
+                await view.mount();
+
+                // Store reference globally
+                window.contentRegistryView = view;
+
+                console.log('View initialized successfully!');
+            } catch (error) {
+                console.error('Failed to initialize view:', error);
+                document.getElementById('content-registry-container').innerHTML = `
+                    <div style="background: #fee; border: 1px solid #fcc; border-radius: 8px; padding: 2rem; text-align: center;">
+                        <h2 style="color: #c00; font-size: 1.5rem; margin-bottom: 1rem;">Error</h2>
+                        <p style="color: #600;">${error.message}</p>
+                        <pre style="text-align: left; margin-top: 1rem; padding: 1rem; background: #fff; border-radius: 6px; overflow: auto;">${error.stack}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', initView);
+    </script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+Create a modern landing page for AgentOS with the following structure:
+
+## Required Sections (in order):
+
+1. **Hero Section**
+   - Main heading: "AgentOS - The Operating System for AI Agents"
+   - Subheading: "Frozen plans, controlled execution, and verifiable results"
+   - Two CTA buttons: "Get Started" (primary) and "View Demo" (secondary)
+   - Modern gradient background
+
+2. **Features Section**
+   - Title: "Why AgentOS?"
+   - 4 feature cards with icons:
+     a) Intent Builder: "Natural language to executable plans"
+     b) Frozen Plans: "Immutable execution blueprints with full traceability"
+     c) Controlled Execution: "Sandbox isolation + human review gates"
+     d) Tool Adapters: "Delegate to specialized AI tools (Claude, Codex, OpenCode)"
+
+3. **Architecture Diagram Section**
+   - Title: "How It Works"
+   - Show the flow: NL Request → Coordinator → Intent Builder → Dry Executor → Executor
+   - Use simple HTML/CSS boxes (no need for Mermaid in first version)
+
+4. **Use Cases Section**
+   - Title: "Real-World Applications"
+   - 3 use case cards:
+     a) "Build a landing page from description"
+     b) "Refactor a codebase with strict gates"
+     c) "Integrate external AI tools safely"
+
+5. **Footer**
+   - GitHub repo link: https://github.com/yourusername/agentos
+   - Documentation link placeholder
+   - Copyright © 2026 AgentOS
+   - MIT License
+
+## Technical Requirements:
+
+- **Responsive Design**: Mobile-first, with breakpoint at 768px
+- **Color Scheme**: 
+  - Primary: #6366f1 (indigo)
+  - Secondary: #8b5cf6 (purple)
+  - Background: #0f172a (dark blue)
+  - Text: #f8fafc (light gray)
+- **Typography**: System fonts (sans-serif)
+- **No external dependencies**: Pure HTML/CSS/JS (optional JS for smooth scrolling)
+
+## File Structure:
+
+```
+/
+├── index.html
+├── style.css
+├── script.js (optional)
+├── README.md
+└── .gitignore
+```
+
+## README.md Must Include:
+
+- How to run locally (just open index.html)
+- Project structure
+- How to replay audit logs
+- How to rollback using git
+
+## Constraints:
+
+- All files must be created from scratch
+- No external CDN dependencies (except Google Fonts if needed)
+- Must work offline
+- Total size < 100KB

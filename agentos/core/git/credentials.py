@@ -254,7 +254,8 @@ class CredentialsManager:
             logger.error(f"Failed to create auth profile: {e}")
             raise
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection
+            pass
 
     def get_profile(self, profile_name: str) -> Optional[AuthProfile]:
         """Get profile by name (with decrypted credentials)"""
@@ -303,7 +304,8 @@ class CredentialsManager:
             )
 
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection
+            pass
 
     def get_profile_by_id(self, profile_id: str) -> Optional[AuthProfile]:
         """Get profile by ID"""
@@ -321,7 +323,8 @@ class CredentialsManager:
             return self.get_profile(row["profile_name"])
 
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection
+            pass
 
     def list_profiles(self, include_sensitive: bool = False) -> List[AuthProfile]:
         """List all profiles"""
@@ -376,7 +379,8 @@ class CredentialsManager:
             return profiles
 
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection
+            pass
 
     def delete_profile(self, profile_name: str) -> bool:
         """Delete a profile by name"""
@@ -396,7 +400,8 @@ class CredentialsManager:
             return deleted
 
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection
+            pass
 
     def update_validation_status(
         self,
@@ -426,7 +431,8 @@ class CredentialsManager:
             conn.commit()
 
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection
+            pass
 
     def log_usage(
         self,
@@ -462,7 +468,8 @@ class CredentialsManager:
             logger.warning(f"Failed to log auth usage: {e}")
 
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection
+            pass
 
     def get_from_env(self, provider: TokenProvider) -> Optional[str]:
         """Get token from environment variables (fallback mechanism)"""

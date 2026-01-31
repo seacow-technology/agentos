@@ -7,8 +7,11 @@
  * - Manual dismiss
  * - Stacking
  * - Position configuration
+ * - Action buttons (M-13: Unified Error Handling)
+ * - Error categorization
  *
  * v0.3.2 - WebUI 100% Coverage Sprint
+ * v0.3.2 - M-13: Unified Error Notification
  */
 
 class ToastManager {
@@ -36,14 +39,27 @@ class ToastManager {
 
     /**
      * Show toast
+     *
+     * @param {string|Object} message - Message or options object
+     * @param {string} type - Toast type (info, success, error, warning)
+     * @param {number} duration - Duration in ms (0 = no auto-dismiss)
+     * @param {Object} options - Additional options (action, details, etc.)
      */
-    show(message, type = 'info', duration = null) {
+    show(message, type = 'info', duration = null, options = {}) {
+        // Handle object parameter
+        if (typeof message === 'object') {
+            options = message;
+            message = options.message;
+            type = options.type || type;
+            duration = options.duration !== undefined ? options.duration : duration;
+        }
+
         // Remove oldest toast if at max capacity
         if (this.toasts.length >= this.options.maxToasts) {
             this.remove(this.toasts[0]);
         }
 
-        const toast = this.createToast(message, type, duration);
+        const toast = this.createToast(message, type, duration, options);
         this.toasts.push(toast);
         this.container.appendChild(toast.element);
 
@@ -64,8 +80,9 @@ class ToastManager {
 
     /**
      * Create toast element
+     * M-13: Enhanced with action buttons and details
      */
-    createToast(message, type, duration) {
+    createToast(message, type, duration, options = {}) {
         const toast = {
             id: Date.now() + Math.random(),
             type: type,
@@ -73,6 +90,7 @@ class ToastManager {
             duration: duration !== null ? duration : this.options.duration,
             element: null,
             timer: null,
+            options: options
         };
 
         // Toast element
@@ -94,6 +112,30 @@ class ToastManager {
         messageEl.className = 'toast-message';
         messageEl.textContent = message;
         content.appendChild(messageEl);
+
+        // Details (optional)
+        if (options.details) {
+            const detailsEl = document.createElement('div');
+            detailsEl.className = 'toast-details';
+            detailsEl.textContent = options.details;
+            content.appendChild(detailsEl);
+        }
+
+        // Action button (optional)
+        if (options.action) {
+            const actionBtn = document.createElement('button');
+            actionBtn.className = 'toast-action';
+            actionBtn.textContent = options.action.label || 'Action';
+            actionBtn.onclick = () => {
+                if (options.action.onClick) {
+                    options.action.onClick(toast);
+                }
+                if (options.action.dismiss !== false) {
+                    this.remove(toast);
+                }
+            };
+            content.appendChild(actionBtn);
+        }
 
         element.appendChild(content);
 
@@ -159,20 +201,76 @@ class ToastManager {
     /**
      * Convenience methods
      */
-    success(message, duration) {
-        return this.show(message, 'success', duration);
+    success(message, duration, options) {
+        return this.show(message, 'success', duration, options);
     }
 
-    error(message, duration) {
-        return this.show(message, 'error', duration);
+    error(message, duration, options) {
+        return this.show(message, 'error', duration, options);
     }
 
-    warning(message, duration) {
-        return this.show(message, 'warning', duration);
+    warning(message, duration, options) {
+        return this.show(message, 'warning', duration, options);
     }
 
-    info(message, duration) {
-        return this.show(message, 'info', duration);
+    info(message, duration, options) {
+        return this.show(message, 'info', duration, options);
+    }
+
+    /**
+     * M-13: Show error with retry action
+     */
+    showErrorWithRetry(message, retryCallback, details = null) {
+        return this.error(message, 0, {
+            details: details,
+            action: {
+                label: 'Retry',
+                onClick: (toast) => {
+                    if (retryCallback) {
+                        retryCallback();
+                    }
+                },
+                dismiss: true
+            }
+        });
+    }
+
+    /**
+     * M-13: Show API error (normalized)
+     */
+    showApiError(apiResponse, retryCallback = null) {
+        const errorType = apiResponse.error || 'unknown_error';
+        const message = apiResponse.message || 'An error occurred';
+        const details = apiResponse.detail || null;
+
+        const options = {
+            details: details
+        };
+
+        // Add retry action for retryable errors
+        if (retryCallback && this.isRetryableError(errorType)) {
+            options.action = {
+                label: 'Retry',
+                onClick: retryCallback,
+                dismiss: true
+            };
+        }
+
+        return this.error(message, 0, options);
+    }
+
+    /**
+     * M-13: Check if error is retryable
+     */
+    isRetryableError(errorType) {
+        const retryableErrors = [
+            'timeout',
+            'network_error',
+            'service_unavailable',
+            'bad_gateway',
+            'rate_limited'
+        ];
+        return retryableErrors.includes(errorType);
     }
 }
 
@@ -180,8 +278,8 @@ class ToastManager {
 window.toastManager = new ToastManager();
 
 // Global function for convenience
-window.showToast = (message, type, duration) => {
-    return window.toastManager.show(message, type, duration);
+window.showToast = (message, type, duration, options) => {
+    return window.toastManager.show(message, type, duration, options);
 };
 
 // Export Toast object for convenience (alias to toastManager)

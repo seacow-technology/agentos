@@ -1,0 +1,131 @@
+{
+  "id": "intent_example_low_risk",
+  "type": "execution_intent",
+  "title": "Add documentation comments to utility functions",
+  "description": "Add docstrings to utility functions in agentos/utils/ module for better code documentation and maintainability.",
+  "version": "0.9.1",
+  "status": "draft",
+  "created_at": "2026-01-25T10:00:00Z",
+  "lineage": {
+    "introduced_in": "0.9.1",
+    "derived_from": [],
+    "supersedes": []
+  },
+  "scope": {
+    "project_id": "agentos",
+    "repo_root": "/Users/pangge/PycharmProjects/AgentOS",
+    "targets": {
+      "files": [
+        "agentos/utils/format.py",
+        "agentos/utils/validation.py"
+      ],
+      "modules": [
+        "agentos.utils"
+      ],
+      "areas": [
+        "backend"
+      ]
+    }
+  },
+  "objective": {
+    "goal": "Add docstrings to all public utility functions for better code documentation",
+    "success_criteria": [
+      "All public functions have docstrings",
+      "Docstrings follow Google style guide",
+      "Examples included for complex functions"
+    ],
+    "non_goals": [
+      "Change function signatures",
+      "Add type hints",
+      "Refactor implementations"
+    ]
+  },
+  "selected_workflows": [
+    {
+      "workflow_id": "documentation_workflow",
+      "phases": [
+        "analysis",
+        "implementation",
+        "review"
+      ],
+      "reason": "Standard documentation workflow for adding function docstrings"
+    }
+  ],
+  "selected_agents": [
+    {
+      "agent_id": "documentation_agent",
+      "role": "documenter",
+      "responsibilities": [
+        "Scan utility modules for undocumented functions",
+        "Generate docstrings following style guide",
+        "Add usage examples where needed"
+      ]
+    }
+  ],
+  "planned_commands": [
+    {
+      "command_id": "scan_python_files",
+      "intent": "Identify all public functions in utils module",
+      "effects": [
+        "read"
+      ],
+      "risk_level": "low",
+      "evidence_refs": [
+        "scan://python_modules/agentos.utils"
+      ]
+    },
+    {
+      "command_id": "modify_python_file",
+      "intent": "Add docstrings to undocumented functions",
+      "effects": [
+        "write"
+      ],
+      "risk_level": "low",
+      "evidence_refs": [
+        "scan://file/agentos/utils/format.py",
+        "scan://file/agentos/utils/validation.py"
+      ]
+    }
+  ],
+  "interaction": {
+    "mode": "semi_auto",
+    "question_budget": 2,
+    "question_policy": "blockers_only"
+  },
+  "risk": {
+    "overall": "low",
+    "drivers": [
+      "Only adding documentation, no logic changes"
+    ],
+    "requires_review": [
+      "release"
+    ]
+  },
+  "budgets": {
+    "max_files": 15,
+    "max_commits": 1,
+    "max_tokens": 50000,
+    "max_cost_usd": 2.0
+  },
+  "evidence_refs": [
+    "scan://python_modules/agentos.utils",
+    "doc://contributing/docstring_style.md"
+  ],
+  "constraints": {
+    "execution": "forbidden",
+    "no_fabrication": true,
+    "registry_only": true,
+    "lock_scope": {
+      "mode": "files",
+      "paths": [
+        "agentos/utils/format.py",
+        "agentos/utils/validation.py"
+      ]
+    }
+  },
+  "audit": {
+    "created_by": "human_operator",
+    "source": "human",
+    "checksum": "e87e081eaa352ae8c2196420609d47f985a30dd8f9439c9e760fb64720861701"
+  }
+}

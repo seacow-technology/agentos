@@ -47,7 +47,8 @@ class MemoryGCJob:
             dry_run: If True, no changes are made
         """
         if db_path is None:
-            db_path = Path.home() / ".agentos" / "store.db"
+            from agentos.core.storage.paths import component_db_path
+            db_path = component_db_path("memoryos")
         
         self.db_path = db_path
         self.dry_run = dry_run

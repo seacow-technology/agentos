@@ -1,0 +1,21 @@
+{
+  "id": "test-agent-001",
+  "type": "agent",
+  "version": "1.0.0",
+  "status": "draft",
+  "metadata": {
+    "created_at": "2026-01-25T10:00:00Z",
+    "checksum": "",
+    "is_root": true,
+    "author": "test-user",
+    "tags": ["test", "example"]
+  },
+  "spec": {
+    "name": "Test Agent",
+    "description": "A test agent for v0.5 validation",
+    "capabilities": ["read", "write"],
+    "constraints": {
+      "max_tokens": 1000
+    }
+  }
+}

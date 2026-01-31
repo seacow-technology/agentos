@@ -17,11 +17,13 @@ import hashlib
 import os
 import sqlite3
 import subprocess
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
 from .models import Evidence, EvidencePack, EvidenceType, VerificationStatus
+from agentos.core.time import utc_now
+
 
 
 class EvidenceVerificationError(Exception):
@@ -103,14 +105,14 @@ class EvidenceVerifier:
                 evidence.verification_status = VerificationStatus.FAILED
                 evidence.verification_error = "Verification failed"
 
-            evidence.verified_at = datetime.utcnow()
+            evidence.verified_at = utc_now()
             return result
 
         except Exception as e:
             evidence.verified = False
             evidence.verification_status = VerificationStatus.FAILED
             evidence.verification_error = str(e)
-            evidence.verified_at = datetime.utcnow()
+            evidence.verified_at = utc_now()
             return False
 
     def verify_evidence_pack(self, pack: EvidencePack) -> bool:
@@ -246,7 +248,7 @@ class EvidenceVerifier:
 
         Metadata format:
             {
-                "db_path": "/path/to/database.sqlite"  # optional, default: store/registry.sqlite
+                "db_path": "/path/to/database.sqlite"  # optional, default: component_db_path("agentos")
             }
         """
         table = evidence.expected.get("table")
@@ -257,8 +259,12 @@ class EvidenceVerifier:
             raise EvidenceVerificationError("Missing 'table' in expected")
 
         # Get database path
-        db_path = evidence.metadata.get("db_path", "store/registry.sqlite")
-        db_path = Path(db_path)
+        db_path_str = evidence.metadata.get("db_path")
+        if db_path_str is None:
+            from agentos.core.storage.paths import component_db_path
+            db_path = component_db_path("agentos")
+        else:
+            db_path = Path(db_path_str)
         if not db_path.is_absolute():
             db_path = self.base_path / db_path
 

@@ -369,3 +369,127 @@ class SpecNotFrozenError(TaskStateError):
             reason=reason,
             metadata=metadata or {}
         )
+
+
+class BudgetExceededError(TaskStateError):
+    """
+    Exception raised when token/cost budget is exceeded
+
+    PR-0131-2026-1: Token Budget & Cost Governance (v0.6 → PASS)
+
+    This error is raised when cumulative token usage exceeds the configured
+    budget for a task. Ensures cost control and prevents runaway token consumption.
+
+    Architecture Rule (v0.6 Cost Control):
+        cumulative_tokens > budget → ❌ execution blocked (HARD STOP)
+        cumulative_tokens <= budget → ✅ execution allowed (VALID)
+
+    Enforcement:
+        - Checked at every LLM call
+        - Hard stop (not soft warning)
+        - Full audit trail with token usage history
+    """
+
+    def __init__(
+        self,
+        task_id: str,
+        budget: dict,
+        cumulative_usage: dict,
+        reason: str,
+        metadata: dict = None
+    ):
+        """
+        Initialize BudgetExceededError
+
+        Args:
+            task_id: Task ID
+            budget: Budget configuration (dict)
+            cumulative_usage: Cumulative token usage (dict)
+            reason: Specific reason for budget violation
+            metadata: Optional additional context
+        """
+        self.budget = budget
+        self.cumulative_usage = cumulative_usage
+        self.reason = reason
+
+        message = (
+            f"Token budget exceeded. "
+            f"Budget: {budget.get('max_total_tokens', 'N/A')} total tokens. "
+            f"Actual: {cumulative_usage.get('total_tokens', 0)} tokens. "
+            f"Reason: {reason}"
+        )
+
+        super().__init__(
+            message=message,
+            task_id=task_id,
+            budget=budget,
+            cumulative_usage=cumulative_usage,
+            reason=reason,
+            metadata=metadata or {}
+        )
+
+
+class HighRiskBlockedError(TaskStateError):
+    """
+    Exception raised when HIGH/CRITICAL risk operation is blocked
+
+    PR-0131-2026-2: Risk Hard Gate (v0.9 → PASS)
+
+    This error is raised when a HIGH or CRITICAL risk operation attempts to
+    execute without explicit human approval. This is a hard gate that cannot
+    be bypassed by configuration.
+
+    Architecture Rule (v0.9 Risk Gate):
+        risk_level >= HIGH + no_approval → ❌ execution blocked (HARD STOP)
+        risk_level >= HIGH + approval → ✅ execution allowed (WITH AUDIT)
+        risk_level < HIGH → ✅ execution allowed (STANDARD FLOW)
+
+    Enforcement:
+        - Enforced at Supervisor.process_event() level
+        - No configuration bypass
+        - Requires explicit approval_ref in audit trail
+        - All paths (API / Extension / dry-run) are blocked
+    """
+
+    def __init__(
+        self,
+        task_id: str,
+        risk_level: str,
+        operation: str,
+        reason: str = "HIGH/CRITICAL risk operations require explicit approval",
+        approval_required: bool = True,
+        metadata: dict = None
+    ):
+        """
+        Initialize HighRiskBlockedError
+
+        Args:
+            task_id: Task ID
+            risk_level: Risk level (HIGH or CRITICAL)
+            operation: Operation that was blocked
+            reason: Reason for blocking
+            approval_required: Whether approval is required
+            metadata: Optional additional context
+        """
+        self.risk_level = risk_level
+        self.operation = operation
+        self.reason = reason
+        self.approval_required = approval_required
+
+        message = (
+            f"High-risk operation blocked. "
+            f"Risk level: {risk_level}. "
+            f"Operation: {operation}. "
+            f"Approval required: {approval_required}. "
+            f"Reason: {reason}"
+        )
+
+        super().__init__(
+            message=message,
+            task_id=task_id,
+            risk_level=risk_level,
+            operation=operation,
+            reason=reason,
+            approval_required=approval_required,
+            metadata=metadata or {}
+        )

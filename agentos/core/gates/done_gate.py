@@ -27,6 +27,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Any
+from agentos.core.time import utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +78,7 @@ class GateRunResult:
     gates_executed: List[GateResult] = field(default_factory=list)
     overall_status: str = "passed"  # "passed", "failed", "error"
     total_duration_seconds: float = 0.0
-    executed_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    executed_at: str = field(default_factory=lambda: utc_now_iso())
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""

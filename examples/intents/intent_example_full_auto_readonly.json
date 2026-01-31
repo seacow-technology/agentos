@@ -1,0 +1,141 @@
+{
+  "id": "intent_example_full_auto_readonly",
+  "type": "execution_intent",
+  "title": "Scan codebase for security vulnerabilities",
+  "description": "Run automated security scan tools across the codebase and generate comprehensive vulnerability report.",
+  "version": "0.9.1",
+  "status": "approved",
+  "created_at": "2026-01-25T12:00:00Z",
+  "lineage": {
+    "introduced_in": "0.9.1",
+    "derived_from": [],
+    "supersedes": []
+  },
+  "scope": {
+    "project_id": "agentos",
+    "repo_root": "/Users/pangge/PycharmProjects/AgentOS",
+    "targets": {
+      "files": [],
+      "modules": [],
+      "areas": [
+        "backend",
+        "frontend",
+        "infra",
+        "security"
+      ]
+    }
+  },
+  "objective": {
+    "goal": "Identify security vulnerabilities, outdated dependencies, and common security anti-patterns across the entire codebase",
+    "success_criteria": [
+      "All Python files scanned for security patterns",
+      "All dependencies checked for known CVEs",
+      "Report generated with severity ratings",
+      "No false positives in critical findings"
+    ],
+    "non_goals": [
+      "Fix any vulnerabilities",
+      "Update dependencies",
+      "Change code"
+    ]
+  },
+  "selected_workflows": [
+    {
+      "workflow_id": "security_scan_workflow",
+      "phases": [
+        "setup",
+        "analysis"
+      ],
+      "reason": "Read-only security scan workflow for vulnerability detection"
+    }
+  ],
+  "selected_agents": [
+    {
+      "agent_id": "security_scanner",
+      "role": "vulnerability_analyzer",
+      "responsibilities": [
+        "Run security pattern detection",
+        "Check dependencies for CVEs",
+        "Generate vulnerability report",
+        "Categorize findings by severity"
+      ]
+    }
+  ],
+  "planned_commands": [
+    {
+      "command_id": "scan_security_patterns",
+      "intent": "Detect common security vulnerabilities in source code",
+      "effects": [
+        "read",
+        "security"
+      ],
+      "risk_level": "low",
+      "evidence_refs": [
+        "scan://security/pattern_rules"
+      ]
+    },
+    {
+      "command_id": "scan_dependencies",
+      "intent": "Check all dependencies for known CVEs",
+      "effects": [
+        "read",
+        "security"
+      ],
+      "risk_level": "low",
+      "evidence_refs": [
+        "scan://file/pyproject.toml",
+        "scan://file/package.json"
+      ]
+    },
+    {
+      "command_id": "generate_report",
+      "intent": "Compile findings into structured vulnerability report",
+      "effects": [
+        "read"
+      ],
+      "risk_level": "low",
+      "evidence_refs": [
+        "scan://security/findings"
+      ]
+    }
+  ],
+  "interaction": {
+    "mode": "full_auto",
+    "question_budget": 0,
+    "question_policy": "never"
+  },
+  "risk": {
+    "overall": "low",
+    "drivers": [
+      "Read-only operation with no code changes",
+      "Automated scan with no human intervention needed"
+    ],
+    "requires_review": []
+  },
+  "budgets": {
+    "max_files": 500,
+    "max_commits": 0,
+    "max_tokens": 200000,
+    "max_cost_usd": 3.0
+  },
+  "evidence_refs": [
+    "scan://security/pattern_rules",
+    "scan://file/pyproject.toml",
+    "scan://file/package.json",
+    "doc://security/vulnerability_database.md"
+  ],
+  "constraints": {
+    "execution": "forbidden",
+    "no_fabrication": true,
+    "registry_only": true,
+    "lock_scope": {
+      "mode": "none",
+      "paths": []
+    }
+  },
+  "audit": {
+    "created_by": "security_automation",
+    "source": "agentos",
+    "checksum": "e68802473acdfc399e41488730b58cc7ee51537199e734cb1829006598bca60c"
+  }
+}

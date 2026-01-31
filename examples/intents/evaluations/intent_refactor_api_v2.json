@@ -1,0 +1,137 @@
+{
+  "id": "intent_refactor_api_v2",
+  "type": "execution_intent",
+  "title": "Refactor API routes (v2 comprehensive)",
+  "description": "Comprehensive API refactor with modern patterns",
+  "version": "0.9.1",
+  "status": "approved",
+  "created_at": "2026-01-25T10:00:00Z",
+  "lineage": {
+    "introduced_in": "0.9.1",
+    "derived_from": [],
+    "supersedes": []
+  },
+  "scope": {
+    "project_id": "agentos",
+    "repo_root": "/Users/pangge/PycharmProjects/AgentOS",
+    "targets": {
+      "files": [
+        "agentos/api/routes.py",
+        "agentos/api/handlers.py"
+      ],
+      "modules": [
+        "agentos.api"
+      ],
+      "areas": [
+        "backend"
+      ]
+    }
+  },
+  "objective": {
+    "goal": "Comprehensive API refactor with modern patterns and error handling",
+    "success_criteria": [
+      "Routes grouped by resource type",
+      "Consistent error handling",
+      "Improved type hints",
+      "Better documentation"
+    ],
+    "non_goals": [
+      "Change API contracts"
+    ]
+  },
+  "selected_workflows": [
+    {
+      "workflow_id": "comprehensive_refactoring_workflow",
+      "phases": [
+        "analysis",
+        "design",
+        "implementation",
+        "validation"
+      ],
+      "reason": "Comprehensive refactoring with design phase"
+    }
+  ],
+  "selected_agents": [
+    {
+      "agent_id": "senior_refactoring_agent",
+      "role": "lead_refactorer",
+      "responsibilities": [
+        "Design refactoring approach",
+        "Implement modern patterns",
+        "Ensure backward compatibility"
+      ]
+    }
+  ],
+  "planned_commands": [
+    {
+      "command_id": "modify_routes_file_comprehensive",
+      "intent": "Comprehensive refactor of routes.py with modern patterns",
+      "effects": [
+        "write"
+      ],
+      "risk_level": "medium",
+      "evidence_refs": [
+        "scan://file/agentos/api/routes.py",
+        "doc://architecture/api_patterns.md"
+      ]
+    },
+    {
+      "command_id": "modify_handlers_file",
+      "intent": "Update handlers to match new patterns",
+      "effects": [
+        "write"
+      ],
+      "risk_level": "medium",
+      "evidence_refs": [
+        "scan://file/agentos/api/handlers.py"
+      ]
+    }
+  ],
+  "interaction": {
+    "mode": "semi_auto",
+    "question_budget": 5,
+    "question_policy": "blockers_only"
+  },
+  "risk": {
+    "overall": "medium",
+    "drivers": [
+      "Modifies core API components",
+      "Broader scope than v1"
+    ],
+    "requires_review": [
+      "architecture",
+      "release"
+    ]
+  },
+  "budgets": {
+    "max_files": 10,
+    "max_commits": 2,
+    "max_tokens": 80000,
+    "max_cost_usd": 5.0
+  },
+  "evidence_refs": [
+    "scan://file/agentos/api/routes.py",
+    "scan://file/agentos/api/handlers.py",
+    "doc://architecture/api_patterns.md"
+  ],
+  "constraints": {
+    "execution": "forbidden",
+    "no_fabrication": true,
+    "registry_only": true,
+    "lock_scope": {
+      "mode": "files",
+      "paths": [
+        "agentos/api/routes.py",
+        "agentos/api/handlers.py"
+      ]
+    }
+  },
+  "audit": {
+    "created_by": "human_operator",
+    "source": "human",
+    "checksum": "e5f6a7b8c9d012345678900abcdef0123456789abcdef0123456789abcdef234"
+  },
+  "metadata": {
+    "priority": 10
+  }
+}

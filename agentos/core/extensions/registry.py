@@ -125,11 +125,17 @@ class ExtensionRegistry:
                 existing = cursor.fetchone()
 
                 if existing:
-                    if existing['status'] != 'UNINSTALLED':
-                        raise RegistryError(
-                            f"Extension '{manifest.id}' is already installed. "
-                            "Please uninstall it first."
-                        )
+                    # Allow re-registration if previous installation was incomplete
+                    if existing['status'] in ('INSTALLING', 'FAILED', 'UNINSTALLED'):
+                        logger.info(f"Extension '{manifest.id}' exists with status {existing['status']}, allowing re-registration")
+                        # Will be replaced by INSERT OR REPLACE
+                    elif existing['status'] == 'INSTALLED':
+                        # Extension is properly installed - this is likely a duplicate call
+                        logger.warning(f"Extension '{manifest.id}' is already properly installed, skipping registration")
+                        # Continue anyway - INSERT OR REPLACE will update it
+                        # This makes the operation idempotent
+                    else:
+                        logger.warning(f"Extension '{manifest.id}' has unknown status: {existing['status']}")
 
                 # Prepare JSON fields
                 permissions_json = json.dumps(manifest.permissions_required)

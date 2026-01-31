@@ -32,6 +32,10 @@ from agentos.core.task.audit_service import TaskAuditService
 from agentos.core.executor_dry.dry_executor import DryExecutor
 from agentos.core.task.models import Task
 
+
+from agentos.webui.api.time_format import iso_z
+from agentos.core.time import utc_now
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -260,7 +264,7 @@ async def get_execution_plan(task_id: str) -> UnifiedResponse:
             steps=steps,
             total_steps=len(steps),
             risk_markers=risk_markers,
-            created_at=dry_run_result.get("created_at", datetime.now(timezone.utc).isoformat())
+            created_at=dry_run_result.get("created_at", iso_z(utc_now()))
         )
 
         # Record audit
@@ -617,7 +621,7 @@ async def generate_execution_proposal(request: ProposalRequest = Body(...)) -> U
             steps=steps,
             total_steps=len(steps),
             risk_markers=risk_markers,
-            created_at=datetime.now(timezone.utc).isoformat()
+            created_at=iso_z(utc_now())
         )
 
         # Store proposal in task metadata
@@ -635,7 +639,7 @@ async def generate_execution_proposal(request: ProposalRequest = Body(...)) -> U
                 "proposal_id": proposal_id,
                 "status": "pending_review",
                 "dry_run_result": dry_run_result,
-                "created_at": datetime.now(timezone.utc).isoformat(),
+                "created_at": iso_z(utc_now()),
                 "created_by": request.actor,
                 "params": request.params
             })
@@ -645,7 +649,7 @@ async def generate_execution_proposal(request: ProposalRequest = Body(...)) -> U
 
             cursor.execute(
                 "UPDATE tasks SET metadata = ?, updated_at = ? WHERE task_id = ?",
-                (json.dumps(current_metadata), datetime.now(timezone.utc).isoformat(), request.task_id)
+                (json.dumps(current_metadata), iso_z(utc_now()), request.task_id)
             )
             conn.commit()
         finally:
@@ -673,7 +677,7 @@ async def generate_execution_proposal(request: ProposalRequest = Body(...)) -> U
             status="pending_review",
             plan=plan,
             requires_approval=True,
-            created_at=datetime.now(timezone.utc).isoformat()
+            created_at=iso_z(utc_now())
         )
 
         return UnifiedResponse(

@@ -1,0 +1,84 @@
+{
+  "id": "rule_r09_evidence_refs_required_for_key_decisions",
+  "type": "rule",
+  "version": "0.9.0",
+  "status": "draft",
+  "metadata": {
+    "created_at": "2026-01-25T08:29:46.667630+00:00",
+    "checksum": "e0ce8390a33acf50b329b29c0dc342064e915305dd2e053aab567a06aee44b7d",
+    "is_root": true,
+    "tags": [
+      "evidence",
+      "decisions",
+      "auditability"
+    ]
+  },
+  "spec": {
+    "id": "rule_r09_evidence_refs_required_for_key_decisions",
+    "type": "rule",
+    "title": "Key decisions must cite evidence references",
+    "description": "Major architectural, design, or implementation decisions must include evidence_refs (factpack IDs, scan results, etc.) for auditability.",
+    "version": "0.9.0",
+    "status": "active",
+    "lineage": {
+      "introduced_in": "v0.9",
+      "derived_from": null,
+      "supersedes": []
+    },
+    "constraints": {
+      "execution": "forbidden"
+    },
+    "rule": {
+      "severity": "warn",
+      "scope": {
+        "applies_to_types": [
+          "workflow",
+          "command"
+        ],
+        "applies_to_risk": [
+          "medium",
+          "high",
+          "critical"
+        ],
+        "applies_to_phases": [
+          "analysis",
+          "design",
+          "implementation",
+          "review"
+        ]
+      },
+      "when": {
+        "all_of": [
+          {
+            "decision_is_key": true
+          },
+          {
+            "evidence_refs_missing": true
+          }
+        ]
+      },
+      "then": {
+        "decision": "warn",
+        "reason": "Key decisions should cite evidence for transparency and auditability",
+        "required_changes": [
+          "Add evidence_refs field with factpack/scan IDs",
+          "Document reasoning chain from evidence to decision",
+          "Include relevant file paths or command outputs"
+        ]
+      },
+      "evidence_required": [
+        "decision_metadata",
+        "evidence_references",
+        "reasoning_trace"
+      ]
+    },
+    "metadata": {
+      "tags": [
+        "evidence",
+        "decisions",
+        "auditability"
+      ],
+      "author": "AgentOS Team"
+    }
+  }
+}

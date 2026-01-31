@@ -45,7 +45,9 @@ class MemoryView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Memory Details</h3>
-                            <button class="btn-close" id="memory-drawer-close">close</button>
+                            <button class="btn-close" id="memory-drawer-close">
+                                <span class="material-icons">close</span>
+                            </button>
                         </div>
                         <div class="drawer-body" id="memory-drawer-body">
                             <!-- Memory details will be rendered here -->
@@ -58,7 +60,9 @@ class MemoryView {
                     <div class="drawer-content">
                         <div class="drawer-header">
                             <h3>Add Memory Item</h3>
-                            <button class="btn-close" id="memory-add-close">close</button>
+                            <button class="btn-close" id="memory-add-close">
+                                <span class="material-icons">close</span>
+                            </button>
                         </div>
                         <div class="drawer-body" id="memory-add-body">
                             <!-- Add memory form will be rendered here -->
@@ -151,14 +155,20 @@ class MemoryView {
                         : '<span class="text-xs text-gray-400">N/A</span>'
                 },
                 {
-                    key: 'created_at',
-                    label: 'Created',
+                    key: 'updated_at',
+                    label: 'Last Updated',
                     width: '15%',
-                    render: (value) => `
-                        <span class="text-xs text-gray-600" title="${new Date(value).toLocaleString()}">
-                            ${this.formatRelativeTime(new Date(value))}
-                        </span>
-                    `
+                    render: (value, row) => {
+                        const updated = value || row.created_at;
+                        const versionBadge = row.version && row.version > 1
+                            ? `<span class="badge badge-sm badge-info ml-1">v${row.version}</span>`
+                            : '';
+                        return `
+                            <span class="text-xs text-gray-600" title="${new Date(updated).toLocaleString()}">
+                                ${this.formatRelativeTime(new Date(updated))}${versionBadge}
+                            </span>
+                        `;
+                    }
                 },
                 {
                     key: 'actions',
@@ -361,6 +371,33 @@ class MemoryView {
                                 <span class="detail-label">Created</span>
                                 <span class="detail-value">${new Date(memoryDetail.created_at).toLocaleString()}</span>
                             </div>
+                            ${memoryDetail.updated_at ? `
+                                <div class="detail-item">
+                                    <span class="detail-label">Last Updated</span>
+                                    <span class="detail-value">
+                                        ${new Date(memoryDetail.updated_at).toLocaleString()}
+                                        <span class="text-xs text-gray-500 ml-1">(${this.formatRelativeTime(new Date(memoryDetail.updated_at))})</span>
+                                    </span>
+                                </div>
+                            ` : ''}
+                            ${memoryDetail.version && memoryDetail.version > 1 ? `
+                                <div class="detail-item">
+                                    <span class="detail-label">Version</span>
+                                    <span class="detail-value">
+                                        <span class="badge badge-info">v${memoryDetail.version}</span>
+                                        ${memoryDetail.supersedes ? `<span class="text-xs text-gray-500 ml-2">Updated from previous version</span>` : ''}
+                                    </span>
+                                </div>
+                            ` : ''}
+                            ${!memoryDetail.is_active || memoryDetail.is_active === false ? `
+                                <div class="detail-item">
+                                    <span class="detail-label">Status</span>
+                                    <span class="detail-value">
+                                        <span class="badge badge-warning">Superseded</span>
+                                        ${memoryDetail.superseded_at ? `<span class="text-xs text-gray-500 ml-2">${this.formatRelativeTime(new Date(memoryDetail.superseded_at))}</span>` : ''}
+                                    </span>
+                                </div>
+                            ` : ''}
                             ${memoryDetail.source_type ? `
                                 <div class="detail-item">
                                     <span class="detail-label">Source Type</span>
@@ -397,9 +434,14 @@ class MemoryView {
                             <button class="btn-sm btn-secondary" id="copy-memory-id">
                                 <span class="material-icons md-18">content_copy</span> Copy ID
                             </button>
+                            ${(memoryDetail.version && memoryDetail.version > 1) || memoryDetail.supersedes || memoryDetail.superseded_by ? `
+                                <button class="btn-sm btn-secondary" id="view-history">
+                                    <span class="material-icons md-18">history</span> View History
+                                </button>
+                            ` : ''}
                             ${memoryDetail.source ? `
                                 <button class="btn-sm btn-secondary" id="view-source">
-                                    link View Source
+                                    <span class="material-icons md-18">link</span> View Source
                                 </button>
                             ` : ''}
                         </div>
@@ -422,6 +464,11 @@ class MemoryView {
                         window.showToast('Memory ID copied', 'success', 1500);
                     }
                 });
+            }
+
+            const viewHistoryBtn = drawerBody.querySelector('#view-history');
+            if (viewHistoryBtn) {
+                viewHistoryBtn.addEventListener('click', () => this.showVersionHistory(memoryDetail));
             }
 
             const viewSourceBtn = drawerBody.querySelector('#view-source');
@@ -554,6 +601,108 @@ class MemoryView {
 
         if (cancelBtn) {
             cancelBtn.addEventListener('click', () => this.closeAddDrawer());
+        }
+    }
+
+    async showVersionHistory(memory) {
+        try {
+            // Fetch version history from API
+            const response = await apiClient.get(`/api/memory/${memory.id}/history`);
+
+            if (!response.ok) {
+                throw new Error(response.error || 'Failed to load version history');
+            }
+
+            const history = response.data || [];
+
+            if (history.length === 0) {
+                if (window.showToast) {
+                    window.showToast('No version history available', 'info');
+                }
+                return;
+            }
+
+            // Display history in drawer body
+            const drawerBody = this.container.querySelector('#memory-drawer-body');
+            if (!drawerBody) return;
+
+            drawerBody.innerHTML = `
+                <div class="memory-history">
+                    <div class="detail-section">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-900">Version History</h4>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    ${history.length} version(s) found
+                                </p>
+                            </div>
+                            <button class="btn-sm btn-secondary" id="back-to-detail">
+                                <span class="material-icons md-18">arrow_back</span> Back
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <div class="space-y-4">
+                            ${history.map((version, index) => {
+                                const isActive = version.is_active !== false;
+                                const isCurrent = index === history.length - 1;
+
+                                return `
+                                    <div class="memory-version-item p-4 border rounded ${isActive ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-gray-50'}">
+                                        <div class="flex items-start justify-between mb-3">
+                                            <div>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="badge ${isActive ? 'badge-success' : 'badge-secondary'}">
+                                                        v${version.version || index + 1}
+                                                    </span>
+                                                    ${isCurrent ? '<span class="badge badge-info">Latest</span>' : ''}
+                                                    ${isActive ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-warning">Superseded</span>'}
+                                                </div>
+                                                <p class="text-xs text-gray-600 mt-1 font-mono">${version.id}</p>
+                                            </div>
+                                            <div class="text-right text-xs text-gray-600">
+                                                ${version.updated_at ? new Date(version.updated_at).toLocaleString() : new Date(version.created_at).toLocaleString()}
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-2">
+                                            <span class="text-xs font-semibold text-gray-700">Value:</span>
+                                            <div class="bg-white p-2 rounded border border-gray-200 mt-1">
+                                                <pre class="text-xs whitespace-pre-wrap">${this.escapeHtml(version.value || JSON.stringify(version.content, null, 2))}</pre>
+                                            </div>
+                                        </div>
+
+                                        ${version.confidence ? `
+                                            <div class="text-xs text-gray-600">
+                                                Confidence: <span class="font-semibold">${(version.confidence * 100).toFixed(0)}%</span>
+                                            </div>
+                                        ` : ''}
+
+                                        ${version.superseded_at && !isActive ? `
+                                            <div class="text-xs text-gray-600 mt-1">
+                                                Superseded: ${this.formatRelativeTime(new Date(version.superseded_at))}
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Setup back button
+            const backBtn = drawerBody.querySelector('#back-to-detail');
+            if (backBtn) {
+                backBtn.addEventListener('click', () => this.showMemoryDetail(memory));
+            }
+
+        } catch (error) {
+            console.error('Failed to load version history:', error);
+            if (window.showToast) {
+                window.showToast(`Error: ${error.message}`, 'error');
+            }
         }
     }
 

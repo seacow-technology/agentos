@@ -5,11 +5,13 @@ Maps to v25 schema (projects and project_repos tables).
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
+from agentos.core.time import utc_now, parse_db_time, iso_z
+
 
 
 class RiskProfile(BaseModel):
@@ -146,14 +148,17 @@ class RepoSpec(BaseModel):
     @field_validator("created_at", "updated_at", mode="before")
     @classmethod
     def parse_datetime(cls, v: Any) -> Optional[datetime]:
-        """Parse datetime from string if needed"""
+        """Parse datetime from string if needed, ensuring timezone-aware UTC"""
         if v is None:
             return None
-        if isinstance(v, str):
-            # Handle ISO format with or without 'Z'
-            v = v.replace('Z', '+00:00')
-            return datetime.fromisoformat(v)
-        return v
+        # Use parse_db_time to handle various formats and ensure UTC
+        dt = parse_db_time(v)
+        if dt is None and isinstance(v, datetime):
+            # Fallback for datetime objects
+            if v.tzinfo is None:
+                return v.replace(tzinfo=timezone.utc)
+            return v.astimezone(timezone.utc)
+        return dt
 
     def is_default(self) -> bool:
         """Check if this is a default repository"""
@@ -224,11 +229,11 @@ class Project(BaseModel):
 
     # Timestamps (v25)
     created_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=utc_now,
         description="Creation timestamp"
     )
     updated_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=utc_now,
         description="Last update timestamp"
     )
     created_by: Optional[str] = Field(None, description="Creator user ID or identifier")
@@ -313,15 +318,20 @@ class Project(BaseModel):
     @field_validator("created_at", "updated_at", mode="before")
     @classmethod
     def parse_datetime(cls, v: Any) -> datetime:
-        """Parse datetime from string if needed"""
+        """Parse datetime from string if needed, ensuring timezone-aware UTC"""
         if v is None:
-            return datetime.utcnow()
-        if isinstance(v, str):
-            v = v.replace('Z', '+00:00')
-            return datetime.fromisoformat(v)
-        if isinstance(v, datetime):
-            return v
-        return datetime.utcnow()
+            return utc_now()
+        # Use parse_db_time to handle various formats and ensure UTC
+        dt = parse_db_time(v)
+        if dt is None:
+            if isinstance(v, datetime):
+                # Fallback for datetime objects
+                if v.tzinfo is None:
+                    return v.replace(tzinfo=timezone.utc)
+                return v.astimezone(timezone.utc)
+            # If parsing failed, return current time
+            return utc_now()
+        return dt
 
     def get_default_repo(self) -> Optional[RepoSpec]:
         """Get the default repository
@@ -494,8 +504,8 @@ class Project(BaseModel):
             "default_repo_id": self.default_repo_id,
             "default_workdir": self.default_workdir,
             "settings": self.settings.model_dump() if self.settings else None,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "created_at": iso_z(self.created_at),
+            "updated_at": iso_z(self.updated_at),
             "created_by": self.created_by,
             "path": self.path,  # Legacy
             "metadata": self.metadata,  # Legacy

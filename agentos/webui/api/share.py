@@ -8,11 +8,15 @@ Phase 4: Advanced Features
 
 import logging
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+
+
+from agentos.webui.api.time_format import iso_z
+from agentos.core.time import utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -80,14 +84,14 @@ async def create_share(request: ShareRequest):
             share_id = str(uuid.uuid4())[:8]
 
         # Calculate expiry
-        now = datetime.utcnow()
+        now = utc_now()
         expires_at = now + timedelta(days=SHARE_EXPIRY_DAYS)
 
         # Store share data
         shared_previews[share_id] = {
             'code': request.code,
-            'created_at': now.isoformat(),
-            'expires_at': expires_at.isoformat()
+            'created_at': iso_z(now),
+            'expires_at': iso_z(expires_at)
         }
 
         # Clean up old shares if needed
@@ -105,7 +109,7 @@ async def create_share(request: ShareRequest):
         return ShareResponse(
             id=share_id,
             url=f"/share/{share_id}",
-            expires_at=expires_at.isoformat()
+            expires_at=iso_z(expires_at)
         )
 
     except Exception as e:
@@ -134,7 +138,7 @@ async def get_share(share_id: str):
 
     # Check if expired
     expires_at = datetime.fromisoformat(share['expires_at'])
-    if datetime.utcnow() > expires_at:
+    if utc_now() > expires_at:
         del shared_previews[share_id]
         raise HTTPException(status_code=404, detail="Share has expired")
 
@@ -188,7 +192,7 @@ async def get_stats():
 
 def cleanup_expired_shares():
     """Remove expired shares from storage"""
-    now = datetime.utcnow()
+    now = utc_now()
     expired = [
         share_id
         for share_id, share in shared_previews.items()

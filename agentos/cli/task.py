@@ -9,6 +9,8 @@ from rich.tree import Tree
 from datetime import datetime
 
 from agentos.core.task import TaskManager, TraceBuilder
+from agentos.core.time import utc_now_iso
+
 
 console = Console()
 
@@ -274,7 +276,7 @@ def resume_task(task_id: str, force: bool):
             ref_id="requested",
             phase="execution",
             metadata={
-                "resumed_at": datetime.now(timezone.utc).isoformat(),
+                "resumed_at": utc_now_iso(),
                 "resumed_by": "cli_user",
                 "resumed_from_status": task.status
             }

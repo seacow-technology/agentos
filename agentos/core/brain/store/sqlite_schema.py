@@ -104,6 +104,123 @@ CREATE TABLE IF NOT EXISTS _schema_metadata (
 );
 """
 
+# P3-B: Snapshot tables for Compare functionality
+BRAIN_SNAPSHOTS_TABLE = """
+CREATE TABLE IF NOT EXISTS brain_snapshots (
+    id TEXT PRIMARY KEY,
+    timestamp TEXT NOT NULL,
+    description TEXT,
+
+    -- 统计摘要
+    entity_count INTEGER NOT NULL,
+    edge_count INTEGER NOT NULL,
+    evidence_count INTEGER NOT NULL,
+
+    -- 覆盖摘要
+    coverage_percentage REAL NOT NULL,
+    git_coverage REAL NOT NULL,
+    doc_coverage REAL NOT NULL,
+    code_coverage REAL NOT NULL,
+
+    -- 盲区摘要
+    blind_spot_count INTEGER NOT NULL,
+    high_risk_blind_spot_count INTEGER NOT NULL,
+
+    -- 元数据
+    graph_version TEXT NOT NULL,
+    created_by TEXT,
+
+    UNIQUE(timestamp)
+);
+"""
+
+BRAIN_SNAPSHOT_ENTITIES_TABLE = """
+CREATE TABLE IF NOT EXISTS brain_snapshot_entities (
+    snapshot_id TEXT NOT NULL,
+    entity_id TEXT NOT NULL,
+    entity_type TEXT NOT NULL,
+    entity_key TEXT NOT NULL,
+    entity_name TEXT NOT NULL,
+
+    -- 快照时的认知属性
+    evidence_count INTEGER NOT NULL,
+    coverage_sources TEXT NOT NULL,
+    is_blind_spot INTEGER NOT NULL,
+    blind_spot_severity REAL,
+
+    PRIMARY KEY (snapshot_id, entity_id),
+    FOREIGN KEY (snapshot_id) REFERENCES brain_snapshots(id)
+);
+"""
+
+BRAIN_SNAPSHOT_EDGES_TABLE = """
+CREATE TABLE IF NOT EXISTS brain_snapshot_edges (
+    snapshot_id TEXT NOT NULL,
+    edge_id TEXT NOT NULL,
+    src_entity_id TEXT NOT NULL,
+    dst_entity_id TEXT NOT NULL,
+    edge_type TEXT NOT NULL,
+
+    -- 快照时的证据
+    evidence_count INTEGER NOT NULL,
+    evidence_types TEXT NOT NULL,
+
+    PRIMARY KEY (snapshot_id, edge_id),
+    FOREIGN KEY (snapshot_id) REFERENCES brain_snapshots(id)
+);
+"""
+
+# Snapshot indexes
+SNAPSHOT_INDEXES = [
+    "CREATE INDEX IF NOT EXISTS idx_brain_snapshots_timestamp ON brain_snapshots(timestamp);",
+    "CREATE INDEX IF NOT EXISTS idx_brain_snapshot_entities_snapshot ON brain_snapshot_entities(snapshot_id);",
+    "CREATE INDEX IF NOT EXISTS idx_brain_snapshot_edges_snapshot ON brain_snapshot_edges(snapshot_id);",
+]
+
+# P4-A: Decision Records (Governance Layer)
+DECISION_RECORDS_TABLE = """
+CREATE TABLE IF NOT EXISTS decision_records (
+    decision_id TEXT PRIMARY KEY,
+    decision_type TEXT NOT NULL,
+    seed TEXT NOT NULL,
+    inputs TEXT NOT NULL,
+    outputs TEXT NOT NULL,
+    rules_triggered TEXT NOT NULL,
+    final_verdict TEXT NOT NULL,
+    confidence_score REAL NOT NULL,
+    timestamp TEXT NOT NULL,
+    snapshot_ref TEXT,
+    signed_by TEXT,
+    sign_timestamp TEXT,
+    sign_note TEXT,
+    status TEXT NOT NULL,
+    record_hash TEXT NOT NULL,
+
+    CHECK (status IN ('PENDING', 'APPROVED', 'BLOCKED', 'SIGNED', 'FAILED'))
+);
+"""
+
+DECISION_SIGNOFFS_TABLE = """
+CREATE TABLE IF NOT EXISTS decision_signoffs (
+    signoff_id TEXT PRIMARY KEY,
+    decision_id TEXT NOT NULL,
+    signed_by TEXT NOT NULL,
+    timestamp TEXT NOT NULL,
+    note TEXT NOT NULL,
+
+    FOREIGN KEY (decision_id) REFERENCES decision_records(decision_id)
+);
+"""
+
+# Decision indexes
+DECISION_INDEXES = [
+    "CREATE INDEX IF NOT EXISTS idx_decision_records_seed ON decision_records(seed);",
+    "CREATE INDEX IF NOT EXISTS idx_decision_records_type ON decision_records(decision_type);",
+    "CREATE INDEX IF NOT EXISTS idx_decision_records_timestamp ON decision_records(timestamp);",
+    "CREATE INDEX IF NOT EXISTS idx_decision_records_status ON decision_records(status);",
+    "CREATE INDEX IF NOT EXISTS idx_decision_signoffs_decision_id ON decision_signoffs(decision_id);",
+]
+
 
 def init_schema(db_path: str) -> None:
     """
@@ -130,8 +247,25 @@ def init_schema(db_path: str) -> None:
         cursor.execute(FTS_COMMITS_TABLE)
         cursor.execute(SCHEMA_METADATA_TABLE)
 
+        # Create snapshot tables (P3-B)
+        cursor.execute(BRAIN_SNAPSHOTS_TABLE)
+        cursor.execute(BRAIN_SNAPSHOT_ENTITIES_TABLE)
+        cursor.execute(BRAIN_SNAPSHOT_EDGES_TABLE)
+
+        # Create decision tables (P4-A)
+        cursor.execute(DECISION_RECORDS_TABLE)
+        cursor.execute(DECISION_SIGNOFFS_TABLE)
+
         # Create indexes
         for index_sql in INDEXES:
+            cursor.execute(index_sql)
+
+        # Create snapshot indexes
+        for index_sql in SNAPSHOT_INDEXES:
+            cursor.execute(index_sql)
+
+        # Create decision indexes
+        for index_sql in DECISION_INDEXES:
             cursor.execute(index_sql)
 
         # Record schema version
@@ -184,7 +318,9 @@ def verify_schema(db_path: str) -> bool:
         # Check required tables
         required_tables = [
             'entities', 'edges', 'evidence',
-            'build_metadata', 'fts_commits', '_schema_metadata'
+            'build_metadata', 'fts_commits', '_schema_metadata',
+            'brain_snapshots', 'brain_snapshot_entities', 'brain_snapshot_edges',
+            'decision_records', 'decision_signoffs'
         ]
 
         cursor.execute("""

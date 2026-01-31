@@ -25,6 +25,8 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 
 from agentos.core.guardian import GuardianService, GuardianReview
+from agentos.core.time import utc_now
+
 
 router = APIRouter(prefix="/api/guardian", tags=["guardian"])
 
@@ -334,7 +336,7 @@ async def get_guardian_statistics(
         since = None
         if since_hours is not None:
             from datetime import timedelta, timezone
-            since = datetime.now(timezone.utc) - timedelta(hours=since_hours)
+            since = utc_now() - timedelta(hours=since_hours)
 
         stats = service.get_statistics(target_type=target_type, since=since)
 

@@ -1,0 +1,50 @@
+# Data Retention Policy
+#
+# Purpose: Enforce data retention and deletion policies
+# Domain: State
+# Risk: HIGH
+
+policy:
+  id: "data_retention_policy"
+  version: "1.0.0"
+  domain: "state"
+  name: "Data Retention Policy"
+  description: "Enforces data retention requirements and prevents unauthorized data deletion"
+
+  rules:
+    - condition: "operation == 'delete' and data_age_days < 30"
+      condition_type: "expression"
+      action: "DENY"
+      rationale: "Cannot delete data less than 30 days old (retention requirement)"
+      priority: 5
+
+    - condition: "operation == 'delete' and contains_pii == true"
+      condition_type: "expression"
+      action: "ESCALATE"
+      rationale: "Deletion of PII data requires compliance approval"
+      priority: 10
+
+    - condition: "operation == 'delete' and trust_tier < 'T4'"
+      condition_type: "expression"
+      action: "DENY"
+      rationale: "Only admin-level agents (T4) can delete data"
+      priority: 15
+
+    - condition: "data_age_days > 365 and contains_pii == true"
+      condition_type: "expression"
+      action: "WARN"
+      rationale: "PII data older than 365 days should be reviewed for deletion"
+      priority: 20
+
+  evolution_history:
+    - version: "1.0.0"
+      changes: "Initial data retention policy"
+      reason: "Comply with GDPR and data retention regulations"
+      changed_by: "compliance_team"
+      date: "2026-02-01"
+
+  metadata:
+    owner: "compliance_team"
+    enforcement_level: "strict"
+    regulatory_basis: ["GDPR", "CCPA"]
+    review_interval_days: 90

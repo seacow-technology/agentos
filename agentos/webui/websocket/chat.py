@@ -24,8 +24,8 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 # Import ChatEngine
 from agentos.core.chat.engine import ChatEngine
 
-# Import SessionStore (injected via app.py)
-from agentos.webui.api.sessions import get_session_store
+# Import ChatService (PR-2: unified session management)
+from agentos.core.chat.service import ChatService
 
 logger = logging.getLogger(__name__)
 
@@ -161,6 +161,31 @@ manager = ConnectionManager()
 # Global ChatEngine instance (initialized on first use)
 _chat_engine: Optional[ChatEngine] = None
 
+# Task #7: Track active streams to prevent concurrent processing
+# Maps session_id -> message_id
+active_streams: Dict[str, str] = {}
+
+
+@dataclass
+class StreamState:
+    """
+    Task #7: Track streaming state with sequence numbers for deduplication
+
+    Prevents message duplication on WebSocket reconnect by:
+    - Adding sequence numbers to each delta
+    - Tracking stream lifecycle (started -> streaming -> ended)
+    - Preventing concurrent streams for same session
+    """
+    message_id: str
+    seq: int = 0
+    started: bool = False
+    ended: bool = False
+
+    def increment_seq(self) -> int:
+        """Increment and return next sequence number"""
+        self.seq += 1
+        return self.seq
+
 
 def get_chat_engine() -> ChatEngine:
     """Get or create ChatEngine instance (singleton)"""
@@ -282,7 +307,7 @@ async def handle_task_command(session_id: str, content: str, metadata: Dict[str,
         content: Message content starting with /task
         metadata: Message metadata
     """
-    store = get_session_store()
+    chat_service = ChatService()
 
     try:
         # 1. Parse command
@@ -303,7 +328,7 @@ async def handle_task_command(session_id: str, content: str, metadata: Dict[str,
             return
 
         # 2. Store user message
-        store.add_message(
+        chat_service.add_message(
             session_id=session_id,
             role="user",
             content=content,
@@ -355,7 +380,7 @@ async def handle_task_command(session_id: str, content: str, metadata: Dict[str,
             })
 
             # Store assistant message
-            store.add_message(
+            chat_service.add_message(
                 session_id=session_id,
                 role="assistant",
                 content=response_content,
@@ -409,7 +434,7 @@ async def handle_user_message(session_id: str, content: str, metadata: Dict[str,
     - WebUI writes to webui_sessions/webui_messages (UI display)
     - No coupling between storage layers
     """
-    store = get_session_store()
+    chat_service = ChatService()
 
     # Phase 3: Extract runtime config from metadata
     logger.info(f"mail Received metadata from WebUI: {metadata}")
@@ -433,8 +458,8 @@ async def handle_user_message(session_id: str, content: str, metadata: Dict[str,
         logger.info(f"Runtime config: {config_dict}")
 
     try:
-        # 1. Store user message to WebUI
-        user_msg = store.add_message(
+        # 1. Store user message (using ChatService instead of deprecated store)
+        user_msg = chat_service.add_message(
             session_id=session_id,
             role="user",
             content=content,
@@ -466,8 +491,6 @@ async def handle_user_message(session_id: str, content: str, metadata: Dict[str,
     # Note: ChatEngine expects its own session_id in chat_sessions table
     # We create it on-demand if needed, passing runtime_config as session metadata
     try:
-        from agentos.core.chat.service import ChatService
-        chat_service = ChatService()
 
         # Try to get session, create if not exists
         try:
@@ -505,14 +528,36 @@ async def handle_user_message(session_id: str, content: str, metadata: Dict[str,
     response_buffer = []
     message_id = str(uuid.uuid4())
 
+    # Task #7: Check for concurrent streams
+    if session_id in active_streams:
+        existing_msg_id = active_streams[session_id]
+        logger.warning(f"Session {session_id} already has active stream: {existing_msg_id}")
+        # Wait briefly for existing stream to complete
+        await asyncio.sleep(0.5)
+        if session_id in active_streams:
+            # Still active, send error
+            await manager.send_message(session_id, {
+                "type": "message.error",
+                "message_id": message_id,
+                "content": "warning Another message is still being processed. Please wait.",
+                "metadata": {"error_type": "concurrent_stream"},
+            })
+            return
+
+    # Task #7: Initialize stream state with sequence tracking
+    stream_state = StreamState(message_id=message_id)
+    active_streams[session_id] = message_id
+
     try:
-        # Send message.start event
+        # Send message.start event with initial sequence number
         await manager.send_message(session_id, {
             "type": "message.start",
-            "message_id": message_id,
+            "message_id": stream_state.message_id,
+            "seq": stream_state.seq,
             "role": "assistant",
             "metadata": {},
         })
+        stream_state.started = True
 
         # Get streaming generator from ChatEngine
         stream_generator = chat_engine.send_message(
@@ -591,8 +636,11 @@ async def handle_user_message(session_id: str, content: str, metadata: Dict[str,
                 if msg_type == "chunk":
                     response_buffer.append(data)
 
+                    # Task #7: Add sequence number to each delta
                     await manager.send_message(session_id, {
                         "type": "message.delta",
+                        "message_id": stream_state.message_id,
+                        "seq": stream_state.increment_seq(),
                         "content": data,
                         "metadata": {},
                     })
@@ -612,26 +660,46 @@ async def handle_user_message(session_id: str, content: str, metadata: Dict[str,
         # Send message.end event
         full_response = "".join(response_buffer)
 
+        # Task #7: Mark stream as ended
+        stream_state.ended = True
+
         end_metadata = {
             "total_chunks": len(response_buffer),
-            "total_chars": len(full_response)
+            "total_chars": len(full_response),
+            "total_seq": stream_state.seq  # Task #7: Include final sequence number
         }
 
-        await manager.send_message(session_id, {
+        # Task #5: Check if ChatEngine returned external_info in response
+        # Get the last assistant message to retrieve external_info declarations
+        external_info_data = None
+        try:
+            messages = chat_service.get_messages(session_id, limit=1)
+            if messages and messages[0].role == "assistant":
+                msg_metadata = messages[0].metadata or {}
+                if msg_metadata.get("external_info"):
+                    external_info_data = msg_metadata.get("external_info")
+                    logger.info(f"External info declarations found: {len(external_info_data)} items")
+        except Exception as e:
+            logger.warning(f"Failed to retrieve external_info: {e}")
+
+        # Include external_info in message.end event
+        message_end_payload = {
             "type": "message.end",
             "message_id": message_id,
             "content": full_response,
             "metadata": end_metadata,
-        })
+        }
+
+        if external_info_data:
+            message_end_payload["external_info"] = external_info_data
+
+        await manager.send_message(session_id, message_end_payload)
 
         logger.info(f"Streamed response: {len(response_buffer)} chunks, {len(full_response)} chars")
 
         # Check for truncation and send completion info (P1-8)
         # This is for streaming responses - we'll get truncation info from saved message
         try:
-            from agentos.core.chat.service import ChatService
-            chat_service = ChatService()
-
             # Get the last assistant message to check for truncation metadata
             messages = chat_service.get_messages(session_id, limit=1)
             if messages and messages[0].role == "assistant":
@@ -696,13 +764,19 @@ async def handle_user_message(session_id: str, content: str, metadata: Dict[str,
             "metadata": {},
         })
 
-    # 5. Store assistant message to WebUI (only once, at the end)
+    finally:
+        # Task #7: Always clean up active stream tracking
+        if session_id in active_streams and active_streams[session_id] == message_id:
+            active_streams.pop(session_id, None)
+            logger.debug(f"Cleaned up active stream for session {session_id}")
+
+    # 5. Store assistant message (only once, at the end, using ChatService)
     try:
         full_response = "".join(response_buffer)
 
         # Only store if we have content (not just error)
         if full_response and not full_response.startswith("warning"):
-            assistant_msg = store.add_message(
+            assistant_msg = chat_service.add_message(
                 session_id=session_id,
                 role="assistant",
                 content=full_response,

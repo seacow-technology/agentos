@@ -1,0 +1,82 @@
+{
+  "id": "rule_r06_question_budget_full_auto_zero",
+  "type": "rule",
+  "version": "0.9.0",
+  "status": "draft",
+  "metadata": {
+    "created_at": "2026-01-25T08:29:46.658876+00:00",
+    "checksum": "e1bbbe75a6f19f2a513708adccfef972dfba948c710b38596e8523364753d372",
+    "is_root": true,
+    "tags": [
+      "automation",
+      "interaction",
+      "budget"
+    ]
+  },
+  "spec": {
+    "id": "rule_r06_question_budget_full_auto_zero",
+    "type": "rule",
+    "title": "Full-auto mode must have zero question budget",
+    "description": "When running in full_auto mode, question_budget must be 0. System cannot ask user questions in unattended execution.",
+    "version": "0.9.0",
+    "status": "active",
+    "lineage": {
+      "introduced_in": "v0.9",
+      "derived_from": null,
+      "supersedes": []
+    },
+    "constraints": {
+      "execution": "forbidden"
+    },
+    "rule": {
+      "severity": "block",
+      "scope": {
+        "applies_to_types": [
+          "workflow"
+        ],
+        "applies_to_risk": [
+          "low",
+          "medium",
+          "high",
+          "critical"
+        ],
+        "applies_to_phases": [
+          "setup",
+          "analysis",
+          "design",
+          "implementation"
+        ]
+      },
+      "when": {
+        "all_of": [
+          {
+            "mode_is_full_auto": true
+          },
+          {
+            "question_budget_not_zero": true
+          }
+        ]
+      },
+      "then": {
+        "decision": "deny",
+        "reason": "Full-auto mode cannot have question budget > 0 (no user interaction)",
+        "required_changes": [
+          "Set question_budget: 0 for full_auto mode",
+          "Or switch to semi_auto mode if questions needed"
+        ]
+      },
+      "evidence_required": [
+        "execution_policy",
+        "mode_configuration"
+      ]
+    },
+    "metadata": {
+      "tags": [
+        "automation",
+        "interaction",
+        "budget"
+      ],
+      "author": "AgentOS Team"
+    }
+  }
+}

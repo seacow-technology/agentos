@@ -52,6 +52,7 @@ class SelfCheckResult:
     summary: str  # "OK", "WARN", "FAIL"
     ts: str
     items: List[CheckItem]
+    version: str = "v3-session-filter"  # Version identifier
 
 
 class SelfCheckRunner:
@@ -81,10 +82,19 @@ class SelfCheckRunner:
         Returns:
             SelfCheckResult with summary and detailed items
         """
+        # Get target provider from session if available
+        target_provider = None
+        if session_id:
+            target_provider = await self._get_session_provider(session_id)
+            if target_provider:
+                logger.info(f"Self-check will focus on session provider: {target_provider}")
+            else:
+                logger.warning(f"Session {session_id} has no runtime.provider configured, will check all providers")
+
         # Gather all checks concurrently
         tasks = [
             self._check_runtime(),
-            self._check_providers(include_network=include_network),
+            self._check_providers(include_network=include_network, target_provider=target_provider),
         ]
 
         if include_context:
@@ -262,13 +272,14 @@ class SelfCheckRunner:
                 actions=[],
             )
 
-    async def _check_providers(self, include_network: bool = False) -> List[CheckItem]:
+    async def _check_providers(self, include_network: bool = False, target_provider: Optional[str] = None) -> List[CheckItem]:
         """
         Check provider status
 
         Args:
             include_network: If True, actively probe all providers (including cloud, may cost API calls).
                             If False, use cached status only (no network calls).
+            target_provider: If set, only check this provider (session-specific)
         """
         # Import ProviderState at function level (used throughout this method)
         from agentos.providers.base import ProviderStatus, ProviderState
@@ -309,6 +320,26 @@ class SelfCheckRunner:
         for status in status_list:
             if status is None:
                 continue
+
+            # 如果指定了 target_provider,只检查该 provider instance/type
+            # status.id 格式: "provider.llamacpp:qwen3-coder-30b" 或 "provider.ollama"
+            # target_provider 格式: "llamacpp:qwen3-coder-30b" (specific instance) 或 "llamacpp" (type only)
+            if target_provider:
+                status_id_normalized = status.id.replace("provider.", "")
+
+                # Two matching strategies:
+                # 1. Exact match: target_provider matches full provider ID
+                # 2. Type match: target_provider matches only the provider type (before ":")
+                if ":" in target_provider:
+                    # Specific instance requested - exact match
+                    if status_id_normalized != target_provider:
+                        continue
+                else:
+                    # Provider type only - match all instances of this type
+                    # Extract provider type from status_id (e.g., "llamacpp:qwen3-coder-30b" -> "llamacpp")
+                    provider_type_in_status = status_id_normalized.split(":")[0] if ":" in status_id_normalized else status_id_normalized
+                    if provider_type_in_status != target_provider:
+                        continue
 
             provider_id = status.id
             provider = self.registry.get(provider_id)
@@ -500,26 +531,20 @@ class SelfCheckRunner:
     async def _check_session_binding(self, session_id: str) -> CheckItem:
         """Check if session exists and is readable"""
         try:
-            # Try to load session from store
-            # This depends on your session store implementation
-            from agentos.webui.api import sessions
+            # Try to load session from ChatService (PR-2: unified session management)
+            from agentos.core.chat.service import ChatService
 
-            store = sessions.get_session_store()
-            if not store:
-                return CheckItem(
-                    id="context.session_binding",
-                    group="context",
-                    name=f"Session '{session_id}' binding",
-                    status="WARN",
-                    detail="Session store not initialized",
-                    hint=None,
-                    actions=[],
-                )
+            chat_service = ChatService()
 
             # Check if session exists
-            session = store.get_session(session_id)
+            try:
+                session = chat_service.get_session(session_id)
+            except ValueError:
+                session = None
+
             if session:
-                msg_count = len(session.messages) if hasattr(session, "messages") else 0
+                # Get message count using ChatService
+                msg_count = chat_service.count_messages(session_id)
                 return CheckItem(
                     id="context.session_binding",
                     group="context",
@@ -550,3 +575,124 @@ class SelfCheckRunner:
                 hint=None,
                 actions=[],
             )
+
+    async def _get_session_provider(self, session_id: str) -> Optional[str]:
+        """
+        Get the provider instance ID currently used by a session from its metadata.
+
+        Uses intelligent matching strategy to handle various model name formats:
+        1. Try exact match with full provider instance ID
+        2. Try fuzzy match by checking if provider IDs contain the model name
+        3. Fall back to provider type only if no model match found
+
+        Args:
+            session_id: The session ID to check
+
+        Returns:
+            Provider instance ID (e.g., "llamacpp:qwen3-coder-30b") or provider type (e.g., "llamacpp")
+
+        Examples:
+            Session model: "Qwen3-Coder-30B-A3B-Instruct-UD-Q8_K_XL.gguf"
+            Registry ID: "llamacpp:qwen3-coder-30b"
+            → Fuzzy match: "qwen3-coder-30b-a3b-instruct-ud-q8-k-xl" starts with "qwen3-coder-30b" ✓
+        """
+        try:
+            from agentos.core.chat.service import ChatService
+
+            chat_service = ChatService()
+            session = chat_service.get_session(session_id)
+
+            if session and session.metadata:
+                runtime = session.metadata.get("runtime", {})
+                provider_type = runtime.get("provider")
+                model_name = runtime.get("model")
+
+                if not provider_type:
+                    return None
+
+                if not model_name:
+                    # No model specified, return provider type only
+                    return provider_type
+
+                # Normalize model name for matching
+                # Remove .gguf extension first
+                model_normalized = model_name.lower().replace(".gguf", "")
+
+                # Replace underscores with dashes
+                model_normalized = model_normalized.replace("_", "-")
+
+                # Handle version numbers: replace "4.7" with "47", "2.5" with "25", etc.
+                # This handles patterns like "GLM-4.7-Flash" -> "glm-47-flash"
+                import re
+                model_normalized = re.sub(r'(\d+)\.(\d+)', r'\1\2', model_normalized)
+
+                # Get all providers from registry to find the best match
+                all_providers = self.registry.list_all()
+                provider_instances = [
+                    p.id for p in all_providers
+                    if p.id.startswith(f"{provider_type}:")
+                ]
+
+                if not provider_instances:
+                    # No instances for this provider type, return type only
+                    return provider_type
+
+                # Strategy 1: Try exact match
+                target_id = f"{provider_type}:{model_normalized}"
+                if target_id in provider_instances:
+                    logger.info(f"Exact match found: {target_id}")
+                    return target_id
+
+                # Strategy 2: Try fuzzy match using multiple approaches
+                for provider_id in provider_instances:
+                    # Extract model part from provider_id (e.g., "llamacpp:qwen3-coder-30b" -> "qwen3-coder-30b")
+                    if ":" in provider_id:
+                        _, registry_model = provider_id.split(":", 1)
+                        registry_model = registry_model.lower()
+
+                        # Strategy 2a: Check if model_normalized starts with registry_model
+                        # e.g., "qwen3-coder-30b-a3b-instruct..." starts with "qwen3-coder-30b"
+                        if model_normalized.startswith(registry_model):
+                            logger.info(f"Fuzzy match found: {provider_id} (session model: {model_name})")
+                            return provider_id
+
+                        # Strategy 2b: Check dash-less comparison for cases like "glm-47-flash" vs "glm47flash"
+                        # Remove all dashes and compare
+                        model_no_dash = model_normalized.replace("-", "")
+                        registry_no_dash = registry_model.replace("-", "")
+                        if model_no_dash.startswith(registry_no_dash):
+                            logger.info(f"Fuzzy match found (dash-less): {provider_id} (session model: {model_name})")
+                            return provider_id
+
+                # Strategy 2c: Check provider configuration metadata for exact model match
+                # This handles cases where the registry ID is a simplified name but metadata has the full filename
+                try:
+                    from agentos.providers.providers_config import ProvidersConfigManager
+                    config_mgr = ProvidersConfigManager()
+                    all_configs = config_mgr.get_all_provider_configs()
+
+                    for prov_config in all_configs:
+                        if prov_config.provider_id == provider_type:
+                            for instance_config in prov_config.instances:
+                                # Check if metadata.model matches the session model
+                                metadata_model = instance_config.metadata.get("model") if instance_config.metadata else None
+                                if metadata_model and metadata_model.lower() == model_name.lower():
+                                    # Found exact match in metadata!
+                                    matched_id = f"{provider_type}:{instance_config.id}"
+                                    logger.info(f"Fuzzy match found (metadata): {matched_id} (session model: {model_name})")
+                                    return matched_id
+                except Exception as e:
+                    logger.debug(f"Failed to check provider metadata: {e}")
+
+                # Strategy 3: No match found, return provider type only (will match all instances)
+                logger.warning(
+                    f"No exact match for model '{model_name}' in provider '{provider_type}'. "
+                    f"Falling back to provider type matching."
+                )
+                return provider_type
+
+            return None
+
+        except Exception as e:
+            logger.warning(f"Failed to get provider for session {session_id}: {str(e)}")
+            return None

@@ -1,0 +1,344 @@
+{
+  "result_id": "dryexec_163e4e86532c880e",
+  "schema_version": "0.10.0",
+  "intent_ref": {
+    "intent_id": "intent_example_low_risk",
+    "checksum": "e87e081eaa352ae8c2196420609d47f985a30dd8f9439c9e760fb64720861701",
+    "version": "0.9.1"
+  },
+  "created_at": "2026-01-25T10:20:19.655621Z",
+  "graph": {
+    "graph_id": "graph_163e4e86532c880e",
+    "schema_version": "0.10.0",
+    "intent_id": "intent_example_low_risk",
+    "created_at": "2026-01-25T10:20:19.655432Z",
+    "nodes": [
+      {
+        "node_id": "node_0001",
+        "node_type": "phase",
+        "label": "documentation_workflow: analysis",
+        "description": "Phase 'analysis' from workflow 'documentation_workflow'",
+        "phase_ref": "documentation_workflow.analysis",
+        "evidence_refs": [
+          "intent://intent_example_low_risk/selected_workflows/documentation_workflow",
+          "Standard documentation workflow for adding function docstrings"
+        ]
+      },
+      {
+        "node_id": "node_0002",
+        "node_type": "phase",
+        "label": "documentation_workflow: implementation",
+        "description": "Phase 'implementation' from workflow 'documentation_workflow'",
+        "phase_ref": "documentation_workflow.implementation",
+        "evidence_refs": [
+          "intent://intent_example_low_risk/selected_workflows/documentation_workflow",
+          "Standard documentation workflow for adding function docstrings"
+        ]
+      },
+      {
+        "node_id": "node_0003",
+        "node_type": "phase",
+        "label": "documentation_workflow: review",
+        "description": "Phase 'review' from workflow 'documentation_workflow'",
+        "phase_ref": "documentation_workflow.review",
+        "evidence_refs": [
+          "intent://intent_example_low_risk/selected_workflows/documentation_workflow",
+          "Standard documentation workflow for adding function docstrings"
+        ]
+      },
+      {
+        "node_id": "node_0004",
+        "node_type": "action_plan",
+        "label": "Plan: scan_python_files",
+        "description": "Identify all public functions in utils module",
+        "command_ref": "scan_python_files",
+        "effects": [
+          "read"
+        ],
+        "risk_level": "low",
+        "evidence_refs": [
+          "scan://python_modules/agentos.utils"
+        ]
+      },
+      {
+        "node_id": "node_0005",
+        "node_type": "action_plan",
+        "label": "Plan: modify_python_file",
+        "description": "Add docstrings to undocumented functions",
+        "command_ref": "modify_python_file",
+        "effects": [
+          "write"
+        ],
+        "risk_level": "low",
+        "evidence_refs": [
+          "scan://file/agentos/utils/format.py",
+          "scan://file/agentos/utils/validation.py"
+        ]
+      },
+      {
+        "node_id": "node_0006",
+        "node_type": "review_checkpoint",
+        "label": "Pre-execution Review",
+        "description": "Review checkpoint before execution",
+        "review_criteria": [
+          "release"
+        ],
+        "evidence_refs": [
+          "intent://intent_example_low_risk/risk/requires_review"
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "edge_id": "edge_0001",
+        "from_node": "node_0001",
+        "to_node": "node_0002",
+        "edge_type": "sequential"
+      },
+      {
+        "edge_id": "edge_0002",
+        "from_node": "node_0002",
+        "to_node": "node_0003",
+        "edge_type": "sequential"
+      },
+      {
+        "edge_id": "edge_0003",
+        "from_node": "node_0003",
+        "to_node": "node_0004",
+        "edge_type": "parallel"
+      },
+      {
+        "edge_id": "edge_0004",
+        "from_node": "node_0003",
+        "to_node": "node_0005",
+        "edge_type": "parallel"
+      },
+      {
+        "edge_id": "edge_0005",
+        "from_node": "node_0004",
+        "to_node": "node_0006",
+        "edge_type": "sequential"
+      },
+      {
+        "edge_id": "edge_0006",
+        "from_node": "node_0005",
+        "to_node": "node_0006",
+        "edge_type": "sequential"
+      }
+    ],
+    "swimlanes": [
+      {
+        "swimlane_id": "swimlane_documentation_agent",
+        "agent_id": "documentation_agent",
+        "role": "documenter",
+        "node_refs": [
+          "node_0004",
+          "node_0005"
+        ]
+      }
+    ],
+    "lineage": {
+      "derived_from_intent": "intent_example_low_risk",
+      "intent_checksum": "e87e081eaa352ae8c2196420609d47f985a30dd8f9439c9e760fb64720861701",
+      "dry_executor_version": "0.10.0"
+    },
+    "checksum": "8e6a3d0efb2bbda0a26865d5c6cfdbf330f268ad85e79febd565a73e68742ee2"
+  },
+  "patch_plan": {
+    "plan_id": "patchplan_163e4e86532c880e",
+    "schema_version": "0.10.0",
+    "intent_id": "intent_example_low_risk",
+    "created_at": "2026-01-25T10:20:19.655534Z",
+    "files": [
+      {
+        "path": "agentos/utils/format.py",
+        "action": "modify",
+        "rationale": "Modify agentos/utils/format.py to: Add docstrings to all public utility functions for better code documentation",
+        "risk": "low",
+        "evidence_refs": [
+          "intent://intent_example_low_risk/scope/targets/files/agentos/utils/format.py",
+          "scan://file/agentos/utils/format.py",
+          "scan://file/agentos/utils/validation.py"
+        ],
+        "lock_intent": {
+          "mode": "exclusive",
+          "scope": "file",
+          "reason": "Exclusive lock needed for modification"
+        },
+        "estimated_impact": "minimal"
+      },
+      {
+        "path": "agentos/utils/validation.py",
+        "action": "modify",
+        "rationale": "Modify agentos/utils/validation.py to: Add docstrings to all public utility functions for better code documentation",
+        "risk": "low",
+        "evidence_refs": [
+          "intent://intent_example_low_risk/scope/targets/files/agentos/utils/validation.py",
+          "scan://file/agentos/utils/format.py",
+          "scan://file/agentos/utils/validation.py"
+        ],
+        "lock_intent": {
+          "mode": "exclusive",
+          "scope": "file",
+          "reason": "Exclusive lock needed for modification"
+        },
+        "estimated_impact": "minimal"
+      }
+    ],
+    "estimated_diffs": [
+      {
+        "file_path": "agentos/utils/format.py",
+        "diff_hash_placeholder": "placeholder_decd74352d7b565a",
+        "intent_summary": "Changes to agentos/utils/format.py for: Add docstrings to all public utility functions for better code documentation",
+        "estimated_lines_changed": {
+          "added": 10,
+          "removed": 5,
+          "modified": 20
+        }
+      },
+      {
+        "file_path": "agentos/utils/validation.py",
+        "diff_hash_placeholder": "placeholder_62fc100459605afb",
+        "intent_summary": "Changes to agentos/utils/validation.py for: Add docstrings to all public utility functions for better code documentation",
+        "estimated_lines_changed": {
+          "added": 10,
+          "removed": 5,
+          "modified": 20
+        }
+      }
+    ],
+    "constraints": {
+      "no_exec": true,
+      "no_fs_write": true,
+      "no_fabrication": true
+    },
+    "unknowns": [],
+    "checksum": "e3575d79e47518177116bce0a9008038c09dbde6119759e16749cddfaf31ce67"
+  },
+  "commit_plan": {
+    "plan_id": "commitplan_163e4e86532c880e",
+    "schema_version": "0.10.0",
+    "intent_id": "intent_example_low_risk",
+    "created_at": "2026-01-25T10:20:19.655583Z",
+    "commits": [
+      {
+        "commit_id": "commit_0001",
+        "title": "feat(agentos): update 2 file(s)",
+        "scope": "agentos",
+        "files": [
+          "agentos/utils/format.py",
+          "agentos/utils/validation.py"
+        ],
+        "rationale": "Grouped 2 files from agentos directory",
+        "depends_on": [],
+        "risk": "low",
+        "evidence_refs": [
+          "intent://intent_example_low_risk/scope/targets/files/agentos/utils/format.py",
+          "intent://intent_example_low_risk/scope/targets/files/agentos/utils/validation.py",
+          "scan://file/agentos/utils/format.py",
+          "scan://file/agentos/utils/validation.py"
+        ],
+        "rollback_strategy": "revert",
+        "estimated_review_time": "quick",
+        "tags": [
+          "refactor"
+        ]
+      }
+    ],
+    "rules_applied": [],
+    "metadata": {
+      "total_files": 2,
+      "max_files_per_commit": 2,
+      "respects_max_commits_budget": true,
+      "commit_dag_depth": 1
+    },
+    "freeze_checksum": "93428bfb59124fcc60ebd178ff7412a6a78871c7f40e5382696029ea5431cb1e"
+  },
+  "review_pack_stub": {
+    "risk_summary": {
+      "dominant_risk": "low",
+      "risk_factors": [
+        "Only adding documentation, no logic changes"
+      ],
+      "mitigation_notes": [
+        "Standard review process sufficient",
+        "Basic testing in development environment"
+      ]
+    },
+    "requires_review": [
+      "release"
+    ],
+    "evidence_coverage": {
+      "total_nodes": 6,
+      "nodes_with_evidence": 6,
+      "coverage_percentage": 100.0,
+      "gaps": []
+    },
+    "estimated_review_time": "quick"
+  },
+  "audit_log": [
+    {
+      "timestamp": "2026-01-25T10:20:19.655378Z",
+      "decision_type": "graph_structure",
+      "decision": "Starting dry execution planning",
+      "rationale": "Processing intent intent_example_low_risk with risk level low"
+    },
+    {
+      "timestamp": "2026-01-25T10:20:19.655502Z",
+      "decision_type": "graph_structure",
+      "decision": "Built execution graph with 6 nodes",
+      "rationale": "Graph structure derived from intent workflows and commands"
+    },
+    {
+      "timestamp": "2026-01-25T10:20:19.655564Z",
+      "decision_type": "file_inclusion",
+      "decision": "Planned changes for 2 files",
+      "rationale": "Files from intent scope.targets.files",
+      "evidence_refs": [
+        "scan://python_modules/agentos.utils",
+        "doc://contributing/docstring_style.md",
+        "scan://file/agentos/utils/format.py",
+        "scan://file/agentos/utils/validation.py"
+      ]
+    },
+    {
+      "timestamp": "2026-01-25T10:20:19.655601Z",
+      "decision_type": "commit_grouping",
+      "decision": "Grouped into 1 commits",
+      "rationale": "Respects max_commits budget: True"
+    },
+    {
+      "timestamp": "2026-01-25T10:20:19.655618Z",
+      "decision_type": "risk_assessment",
+      "decision": "Dominant risk: low",
+      "rationale": "Risk determined from intent and planned changes"
+    }
+  ],
+  "metadata": {
+    "dry_executor_version": "0.10.0",
+    "execution_mode": "dry_run",
+    "constraints_enforced": [
+      "DE1_no_exec",
+      "DE2_no_fs_write",
+      "DE3_no_fabrication",
+      "DE4_evidence_required",
+      "DE5_high_risk_review",
+      "DE6_freezable"
+    ],
+    "warnings": [],
+    "processing_time_ms": 0
+  },
+  "lineage": {
+    "derived_from": [
+      {
+        "type": "intent",
+        "id": "intent_example_low_risk",
+        "checksum": "e87e081eaa352ae8c2196420609d47f985a30dd8f9439c9e760fb64720861701"
+      }
+    ],
+    "generation_context": {
+      "environment": "dry_executor_v0.10"
+    }
+  },
+  "checksum": "fb69cfa9af5d95dff68e64437ea3a30b77e009b1fafa37377ba73a3b1c2bd8e1"
+}

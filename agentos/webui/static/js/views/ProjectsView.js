@@ -49,7 +49,9 @@ class ProjectsView {
                         <div class="drawer-content">
                             <div class="drawer-header">
                                 <h3>Project Details</h3>
-                                <button class="btn-close" id="project-drawer-close">close</button>
+                                <button class="btn-close" id="project-drawer-close">
+                                <span class="material-icons">close</span>
+                            </button>
                             </div>
                             <div class="drawer-body" id="project-drawer-body">
                                 <!-- Project details will be rendered here -->
@@ -63,7 +65,9 @@ class ProjectsView {
                         <div class="drawer-content">
                             <div class="drawer-header">
                                 <h3>Repository Details</h3>
-                                <button class="btn-close" id="repo-drawer-close">close</button>
+                                <button class="btn-close" id="repo-drawer-close">
+                                <span class="material-icons">close</span>
+                            </button>
                             </div>
                             <div class="drawer-body" id="repo-drawer-body">
                                 <!-- Repo details will be rendered here -->

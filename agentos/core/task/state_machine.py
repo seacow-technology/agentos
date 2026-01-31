@@ -20,6 +20,7 @@ from agentos.core.task.errors import (
     TaskAlreadyInStateError,
     ModeViolationError,
 )
+from agentos.core.time import utc_now_iso
 from agentos.core.task.models import Task
 from agentos.store import get_db, get_writer
 
@@ -275,10 +276,12 @@ class TaskStateMachine:
             )
 
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection (unless db_path provided)
+            if self.db_path:
+                conn.close()
 
         # Perform write operations via SQLiteWriter (serialized writes)
-        now = datetime.now(timezone.utc).isoformat()
+        now = utc_now_iso()
 
         def _execute_transition(write_conn: sqlite3.Connection) -> None:
             """Execute state transition writes in writer thread"""
@@ -379,7 +382,9 @@ class TaskStateMachine:
                 metadata=task_metadata,
             )
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection (unless db_path provided)
+            if self.db_path:
+                conn.close()
 
     def get_valid_transitions(self, from_state: str) -> Set[str]:
         """
@@ -446,7 +451,9 @@ class TaskStateMachine:
             return history
 
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection (unless db_path provided)
+            if self.db_path:
+                conn.close()
 
     def is_terminal_state(self, state: str) -> bool:
         """

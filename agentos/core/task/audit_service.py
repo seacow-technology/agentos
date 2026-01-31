@@ -18,12 +18,14 @@ import logging
 import sqlite3
 import subprocess
 from dataclasses import dataclass, field, asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from agentos.core.task.repo_context import TaskRepoContext
 from agentos.store import get_db, get_writer
+from agentos.core.time import utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -124,7 +126,7 @@ class TaskAudit:
             "level": self.level,
             "event_type": self.event_type,
             "payload": json.dumps(payload),
-            "created_at": self.created_at or datetime.utcnow().isoformat(),
+            "created_at": self.created_at or utc_now_iso(),
         }
 
     @classmethod

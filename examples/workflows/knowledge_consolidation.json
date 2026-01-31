@@ -1,0 +1,106 @@
+{
+  "id": "knowledge_consolidation",
+  "type": "workflow",
+  "version": "0.6.0",
+  "status": "draft",
+  "metadata": {
+    "created_at": "2026-01-25T05:37:21.356188+00:00",
+    "checksum": "a0b7dcd171d05bcfd6db0fe7a2b1b1d6573f6ed0f04f75edc530392448587340",
+    "is_root": true,
+    "tags": [
+      "learning",
+      "knowledge-management",
+      "retrospective"
+    ]
+  },
+  "spec": {
+    "id": "knowledge_consolidation",
+    "version": "0.6.0",
+    "category": "learning",
+    "description": "Consolidate lessons learned into reusable knowledge.\nThis workflow transforms project experiences, patterns, and insights into codified organizational knowledge that can inform future decisions.\n",
+    "phases": [
+      {
+        "id": "signal_extraction",
+        "description": "Extract signals and lessons from project history",
+        "requires": [
+          "project_history",
+          "outcomes"
+        ],
+        "produces": [
+          "raw_signals"
+        ],
+        "allows_questions": false,
+        "risk_level": "low"
+      },
+      {
+        "id": "pattern_identification",
+        "description": "Identify recurring patterns and anti-patterns",
+        "requires": [
+          "raw_signals"
+        ],
+        "produces": [
+          "patterns",
+          "anti_patterns"
+        ],
+        "allows_questions": false,
+        "risk_level": "medium"
+      },
+      {
+        "id": "codification",
+        "description": "Codify knowledge into actionable form",
+        "requires": [
+          "patterns"
+        ],
+        "produces": [
+          "knowledge_artifacts"
+        ],
+        "allows_questions": true,
+        "risk_level": "medium"
+      }
+    ],
+    "interaction": {
+      "default_mode": "question_only",
+      "question_policy": {
+        "trigger_when": [
+          "pattern_ambiguous",
+          "multiple_interpretations",
+          "actionability_unclear"
+        ]
+      },
+      "allowed_phases": [
+        "codification"
+      ]
+    },
+    "constraints": {
+      "execution": "forbidden",
+      "side_effects": "forbidden",
+      "requires_approval": false
+    },
+    "lineage": {
+      "introduced_in": "v0.6",
+      "derived_from": null,
+      "change_reason": null
+    },
+    "metadata": {
+      "tags": [
+        "learning",
+        "knowledge-management",
+        "retrospective"
+      ],
+      "related_workflows": [
+        "incident_response",
+        "problem_discovery"
+      ],
+      "use_cases": [
+        "Post-project retrospectives",
+        "Pattern extraction from incidents",
+        "Best practice documentation"
+      ],
+      "anti_use_cases": [
+        "Real-time problem solving",
+        "Active feature implementation",
+        "Urgent decisions"
+      ]
+    }
+  }
+}

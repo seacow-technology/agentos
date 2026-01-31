@@ -718,6 +718,303 @@
     }
 }
 
+/* ========================================
+   Runtime and Compliance Badges
+   ======================================== */
+
+/* Runtime badge */
+.runtime-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    white-space: nowrap;
+}
+
+.runtime-badge .material-icons {
+    font-size: 14px;
+}
+
+/* Compliance badge */
+.compliance-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #10b981;
+    color: white;
+    white-space: nowrap;
+}
+
+.compliance-badge.non-compliant {
+    background: #f59e0b;
+}
+
+.compliance-badge .material-icons {
+    font-size: 14px;
+}
+
+/* Runtime info section in detail view */
+.runtime-info {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+}
+
+.runtime-info .info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.runtime-info .info-item:last-child {
+    border-bottom: none;
+}
+
+.runtime-info .info-item label {
+    font-weight: 600;
+    color: #6b7280;
+    min-width: 180px;
+}
+
+.runtime-info .info-item > span,
+.runtime-info .info-item > div {
+    flex: 1;
+    text-align: right;
+}
+
+/* Dependencies list */
+.dependencies-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-align: left;
+}
+
+.dependencies-list li {
+    padding: 6px 10px;
+    background: #fff;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    border: 1px solid #e5e7eb;
+}
+
+.dependencies-list code {
+    font-family: 'Monaco', 'Menlo', monospace;
+    font-size: 12px;
+    color: #4b5563;
+}
+
+/* Status colors */
+.text-warning {
+    color: #f59e0b;
+    font-weight: 500;
+}
+
+.text-success {
+    color: #10b981;
+    font-weight: 500;
+}
+
+/* Ensure badges fit nicely in meta area */
+.extension-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+/* ============================================
+ * L-16: Drag and Drop Zone
+ * ============================================ */
+
+.drop-zone {
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    padding: 48px 24px;
+    text-align: center;
+    background: #f9fafb;
+    transition: all 0.2s ease;
+}
+
+.drop-zone:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.drop-zone-active {
+    border-color: #3b82f6;
+    background: #dbeafe;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.drop-zone-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* ============================================
+ * L-17: Screenshot Carousel
+ * ============================================ */
+
+.screenshot-carousel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #f9fafb;
+}
+
+.screenshot-track {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding: 16px;
+    scrollbar-width: thin;
+}
+
+.screenshot-track::-webkit-scrollbar {
+    height: 8px;
+}
+
+.screenshot-track::-webkit-scrollbar-track {
+    background: #e5e7eb;
+    border-radius: 4px;
+}
+
+.screenshot-track::-webkit-scrollbar-thumb {
+    background: #9ca3af;
+    border-radius: 4px;
+}
+
+.screenshot-image {
+    height: 200px;
+    width: auto;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.screenshot-image:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.carousel-btn:hover {
+    background: #f3f4f6;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.carousel-prev {
+    left: 8px;
+}
+
+.carousel-next {
+    right: 8px;
+}
+
+/* ============================================
+ * L-18: Rating System
+ * ============================================ */
+
+.extension-rating {
+    display: flex;
+    align-items: center;
+}
+
+.rating-container {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.star-rating {
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.star-rating:hover {
+    transform: scale(1.2);
+}
+
+/* ============================================
+ * L-19: Bulk Operations
+ * ============================================ */
+
+.bulk-operations-toolbar {
+    padding: 12px 24px;
+    background: #fffbeb;
+    border-bottom: 1px solid #fbbf24;
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: #3b82f6;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 4px 8px;
+    transition: color 0.2s ease;
+}
+
+.btn-link:hover {
+    color: #2563eb;
+    text-decoration: underline;
+}
+
+.extension-checkbox {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 10;
+}
+
+.bulk-select-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #3b82f6;
+}
+
+/* Bulk mode active state for cards */
+.extension-card.bulk-mode-active {
+    padding-left: 48px;
+}
+
 /* ============================================
  * Responsive Design
  * ============================================ */
@@ -752,5 +1049,14 @@
 
     .detail-header {
         flex-direction: column;
+    }
+
+    .bulk-operations-toolbar {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .carousel-btn {
+        display: none;
     }
 }

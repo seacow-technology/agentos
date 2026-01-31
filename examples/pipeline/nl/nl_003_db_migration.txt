@@ -1,0 +1,8 @@
+添加 Builder 输出持久化到数据库：
+- 新增 builder_outputs 表（id, nl_request_id, output_json, created_at）
+- 新增 builder_selections 表（output_id, type, content_id, evidence）
+- 添加索引：nl_request_id, created_at
+- 编写数据库迁移脚本
+- 迁移脚本需要向后兼容（不影响现有数据）
+- 更新 Builder 类以保存输出到数据库
+- 添加回滚方案

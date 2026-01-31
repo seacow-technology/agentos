@@ -1,0 +1,1034 @@
+/**
+ * Decision Review View Styles
+ * P4-C2 - 决策审查界面样式
+ *
+ * 包含:
+ * - 时间线列表样式
+ * - 左右对比面板
+ * - 状态和治理动作标签
+ * - 完整性验证显示
+ * - 签字模态框
+ */
+
+/* ============================================
+   Decision Review View Container
+   ============================================ */
+.decision-review-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #f8f9fa;
+    overflow: hidden;
+}
+
+.decision-review-view .view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    background: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.decision-review-view .view-header h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #212121;
+}
+
+.decision-review-view .header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.decision-review-view .btn-refresh {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.decision-review-view .btn-refresh:hover {
+    background: #f8f9fa;
+    border-color: #adb5bd;
+}
+
+/* ============================================
+   Filter Section
+   ============================================ */
+.decision-review-view .filter-section {
+    padding: 16px 24px;
+    background: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.decision-review-view .filter-bar {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.decision-review-view .filter-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.decision-review-view .filter-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #495057;
+}
+
+.decision-review-view .filter-select {
+    padding: 6px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 14px;
+    background: #ffffff;
+    cursor: pointer;
+    min-width: 150px;
+}
+
+.decision-review-view .filter-select:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* ============================================
+   Content Area (Left-Right Split)
+   ============================================ */
+.decision-review-view .content-area {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 0;
+    overflow: hidden;
+}
+
+/* ============================================
+   Timeline Panel (Left Side)
+   ============================================ */
+.decision-review-view .timeline-panel {
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border-right: 1px solid #e0e0e0;
+    overflow: hidden;
+}
+
+.decision-review-view .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.decision-review-view .panel-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #212121;
+}
+
+.decision-review-view .count-badge {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.decision-review-view .timeline-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+/* ============================================
+   Timeline Item
+   ============================================ */
+.decision-review-view .timeline-item {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.decision-review-view .timeline-item:hover {
+    background: #ffffff;
+    border-color: #2196f3;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.15);
+    transform: translateX(4px);
+}
+
+.decision-review-view .timeline-item.selected {
+    background: #e3f2fd;
+    border-color: #2196f3;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
+}
+
+.decision-review-view .timeline-item .item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.decision-review-view .timeline-item .decision-type {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+}
+
+.decision-review-view .timeline-item .decision-time {
+    font-size: 11px;
+    color: #adb5bd;
+}
+
+.decision-review-view .timeline-item .item-body {
+    margin-bottom: 8px;
+}
+
+.decision-review-view .timeline-item .seed-text {
+    font-size: 14px;
+    color: #212529;
+    line-height: 1.5;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.decision-review-view .timeline-item .item-footer {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* ============================================
+   Status Badges
+   ============================================ */
+.decision-review-view .status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.decision-review-view .status-badge.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.decision-review-view .status-badge.status-approved {
+    background: #d4edda;
+    color: #155724;
+}
+
+.decision-review-view .status-badge.status-blocked {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.decision-review-view .status-badge.status-signed {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.decision-review-view .status-badge.status-failed {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* ============================================
+   Verdict Badges
+   ============================================ */
+.decision-review-view .verdict-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.decision-review-view .verdict-badge.verdict-allow {
+    background: #d4edda;
+    color: #155724;
+}
+
+.decision-review-view .verdict-badge.verdict-warn {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.decision-review-view .verdict-badge.verdict-block {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.decision-review-view .verdict-badge.verdict-signoff {
+    background: #ffeaa7;
+    color: #d63031;
+}
+
+.decision-review-view .confidence-score {
+    font-size: 11px;
+    color: #6c757d;
+    margin-left: auto;
+}
+
+/* ============================================
+   Detail Panel (Right Side)
+   ============================================ */
+.decision-review-view .detail-panel {
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.decision-review-view .detail-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+}
+
+/* ============================================
+   Detail Header
+   ============================================ */
+.decision-review-view .detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 24px;
+}
+
+.decision-review-view .detail-header h3 {
+    margin: 0 0 8px 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #212121;
+}
+
+.decision-review-view .detail-header .decision-id {
+    margin: 0;
+    font-size: 13px;
+    font-family: 'Courier New', monospace;
+    color: #6c757d;
+}
+
+.decision-review-view .detail-header .header-badges {
+    display: flex;
+    gap: 8px;
+}
+
+/* ============================================
+   Detail Body Sections
+   ============================================ */
+.decision-review-view .detail-body > div {
+    margin-bottom: 24px;
+}
+
+.decision-review-view .detail-body h4 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Info Section */
+.decision-review-view .info-section {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.decision-review-view .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.decision-review-view .info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.decision-review-view .info-item label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+}
+
+.decision-review-view .info-item span {
+    font-size: 14px;
+    color: #212529;
+}
+
+/* ============================================
+   Integrity Check
+   ============================================ */
+.decision-review-view .integrity-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.decision-review-view .integrity-check.passed {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.decision-review-view .integrity-check.failed {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.decision-review-view .integrity-check .material-icons {
+    font-size: 20px;
+}
+
+/* ============================================
+   Rules Section
+   ============================================ */
+.decision-review-view .rules-section {
+    background: #fff3e0;
+    border: 1px solid #ffe082;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.decision-review-view .rules-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.decision-review-view .rule-item {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.decision-review-view .rule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.decision-review-view .rule-name {
+    font-weight: 600;
+    color: #212529;
+}
+
+.decision-review-view .rule-action {
+    font-size: 11px;
+}
+
+.decision-review-view .rule-rationale {
+    font-size: 13px;
+    color: #6c757d;
+    line-height: 1.5;
+}
+
+/* ============================================
+   Signoff Info
+   ============================================ */
+.decision-review-view .signoff-info {
+    background: #d1ecf1;
+    border: 1px solid #bee5eb;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.decision-review-view .signoff-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 15px;
+    color: #0c5460;
+}
+
+.decision-review-view .signoff-details p {
+    margin: 8px 0;
+    font-size: 14px;
+    color: #0c5460;
+}
+
+.decision-review-view .signoff-details strong {
+    font-weight: 600;
+}
+
+/* ============================================
+   Replay Section (Compare Panels)
+   ============================================ */
+.decision-review-view .replay-section {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.decision-review-view .compare-panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.decision-review-view .compare-panel {
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 16px;
+}
+
+.decision-review-view .compare-panel h5 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+    text-transform: uppercase;
+}
+
+.decision-review-view .compare-content {
+    font-size: 13px;
+    color: #212529;
+}
+
+.decision-review-view .compare-content .state-item {
+    margin-bottom: 12px;
+}
+
+.decision-review-view .compare-content .result-card {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 8px;
+    margin-top: 8px;
+}
+
+.decision-review-view .compare-content .result-card p {
+    margin: 0 0 6px 0;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.decision-review-view .compare-content .result-card small {
+    font-size: 11px;
+    color: #6c757d;
+}
+
+.decision-review-view .compare-content .metadata-json {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 8px;
+    margin-top: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    line-height: 1.4;
+    overflow-x: auto;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.decision-review-view .changed-facts {
+    margin-top: 16px;
+    background: #fff9e6;
+    border: 1px solid #ffd54f;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.decision-review-view .changed-facts h5 {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #f57c00;
+}
+
+.decision-review-view .changed-facts ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.decision-review-view .changed-facts li {
+    font-size: 13px;
+    color: #495057;
+    line-height: 1.6;
+}
+
+/* ============================================
+   Audit Section
+   ============================================ */
+.decision-review-view .audit-section {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.decision-review-view .audit-trail {
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    overflow-x: auto;
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 0;
+}
+
+/* ============================================
+   Detail Footer (Signoff Button)
+   ============================================ */
+.decision-review-view .detail-footer {
+    padding: 20px 24px;
+    border-top: 1px solid #e0e0e0;
+    background: #f8f9fa;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.decision-review-view .btn-signoff {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: #ff9800;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.decision-review-view .btn-signoff:hover {
+    background: #f57c00;
+    box-shadow: 0 4px 12px rgba(245, 124, 0, 0.3);
+}
+
+.decision-review-view .btn-signoff .material-icons {
+    font-size: 18px;
+}
+
+/* ============================================
+   Signoff Modal
+   ============================================ */
+.signoff-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.signoff-modal .modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+}
+
+.signoff-modal .modal-content {
+    position: relative;
+    background: #ffffff;
+    border-radius: 8px;
+    max-width: 600px;
+    max-height: 90vh;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    animation: modalSlideUp 0.3s ease-out;
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.signoff-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.signoff-modal .modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #212121;
+}
+
+.signoff-modal .btn-close {
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.15s;
+}
+
+.signoff-modal .btn-close:hover {
+    background: #f3f4f6;
+    color: #212121;
+}
+
+.signoff-modal .modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.signoff-modal .decision-summary {
+    margin-bottom: 20px;
+}
+
+.signoff-modal .decision-summary h4 {
+    margin: 0 0 12px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.signoff-modal .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.signoff-modal .summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.signoff-modal .summary-item label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+}
+
+.signoff-modal .summary-item span {
+    font-size: 14px;
+    color: #212529;
+}
+
+.signoff-modal .signoff-reason {
+    margin-bottom: 20px;
+    background: #fff3e0;
+    border: 1px solid #ffe082;
+    border-radius: 6px;
+    padding: 16px;
+}
+
+.signoff-modal .signoff-reason h4 {
+    margin: 0 0 12px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #f57c00;
+}
+
+.signoff-modal .signoff-reason ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.signoff-modal .signoff-reason li {
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #495057;
+    line-height: 1.5;
+}
+
+.signoff-modal .signoff-form {
+    margin-bottom: 16px;
+}
+
+.signoff-modal .form-group {
+    margin-bottom: 16px;
+}
+
+.signoff-modal .form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.signoff-modal .form-input,
+.signoff-modal .form-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.signoff-modal .form-input:focus,
+.signoff-modal .form-textarea:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+.signoff-modal .error-message {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    padding: 12px;
+    font-size: 14px;
+}
+
+.signoff-modal .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid #e0e0e0;
+    background: #f8f9fa;
+}
+
+.signoff-modal .btn-secondary {
+    padding: 10px 20px;
+    background: #6c757d;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.signoff-modal .btn-secondary:hover {
+    background: #5a6268;
+}
+
+.signoff-modal .btn-primary {
+    padding: 10px 20px;
+    background: #ff9800;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.signoff-modal .btn-primary:hover {
+    background: #f57c00;
+}
+
+.signoff-modal .btn-primary:disabled {
+    background: #adb5bd;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   Empty State & Loading
+   ============================================ */
+.decision-review-view .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #adb5bd;
+}
+
+.decision-review-view .empty-state .material-icons {
+    font-size: 72px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.decision-review-view .empty-state p {
+    margin: 0;
+    font-size: 16px;
+}
+
+.decision-review-view .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #6c757d;
+    font-size: 15px;
+}
+
+.decision-review-view .error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+}
+
+.decision-review-view .error-state .material-icons {
+    font-size: 64px;
+    margin-bottom: 16px;
+    color: #dc3545;
+}
+
+.decision-review-view .error-state h3 {
+    color: #dc3545;
+    margin-bottom: 12px;
+}
+
+.decision-review-view .error-state p {
+    color: #6c757d;
+    margin-bottom: 20px;
+}
+
+.decision-review-view .error-state .btn-primary {
+    padding: 10px 24px;
+    background: #007bff;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.decision-review-view .error-state .btn-primary:hover {
+    background: #0056b3;
+}
+
+/* ============================================
+   Scrollbar Styling
+   ============================================ */
+.decision-review-view .timeline-list::-webkit-scrollbar,
+.decision-review-view .detail-content::-webkit-scrollbar,
+.signoff-modal .modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.decision-review-view .timeline-list::-webkit-scrollbar-track,
+.decision-review-view .detail-content::-webkit-scrollbar-track,
+.signoff-modal .modal-body::-webkit-scrollbar-track {
+    background: #f5f5f5;
+}
+
+.decision-review-view .timeline-list::-webkit-scrollbar-thumb,
+.decision-review-view .detail-content::-webkit-scrollbar-thumb,
+.signoff-modal .modal-body::-webkit-scrollbar-thumb {
+    background: #bdbdbd;
+    border-radius: 4px;
+}
+
+.decision-review-view .timeline-list::-webkit-scrollbar-thumb:hover,
+.decision-review-view .detail-content::-webkit-scrollbar-thumb:hover,
+.signoff-modal .modal-body::-webkit-scrollbar-thumb:hover {
+    background: #9e9e9e;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 1024px) {
+    .decision-review-view .content-area {
+        grid-template-columns: 350px 1fr;
+    }
+
+    .decision-review-view .compare-panels {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .decision-review-view .content-area {
+        grid-template-columns: 1fr;
+    }
+
+    .decision-review-view .timeline-panel {
+        border-right: none;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .decision-review-view .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .decision-review-view .filter-item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .decision-review-view .filter-select {
+        width: 100%;
+    }
+}

@@ -1,0 +1,20 @@
+{
+  "id": "nl_req_001",
+  "schema_version": "0.9.4",
+  "project_id": "agentos",
+  "input_text": "请为 IntentBuilder 类添加完整的文档注释，包括：\n- 类级别的 docstring 说明其用途和 RED LINES\n- 每个公共方法的参数说明和返回值\n- 使用示例\n目标文件：agentos/core/intent_builder/builder.py",
+  "created_at": "2026-01-25T11:33:23.424831+00:00",
+  "checksum": "aa53071102ec306bc63c3a1867db4d901cda192d422dd2eb62ee5fcd895149bc",
+  "lineage": {
+    "introduced_in": "0.9.4",
+    "derived_from": [],
+    "supersedes": []
+  },
+  "metadata": {
+    "source": "pipeline",
+    "tags": [
+      "documentation",
+      "low_risk"
+    ]
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "id": "incident_response",
+  "type": "workflow",
+  "version": "0.6.0",
+  "status": "draft",
+  "metadata": {
+    "created_at": "2026-01-25T05:37:21.352801+00:00",
+    "checksum": "29510e89935134683a0a77625a01339605f172ec36d196a1983c4b9cb5c39daf",
+    "is_root": true,
+    "tags": [
+      "incident",
+      "operations",
+      "emergency-response"
+    ]
+  },
+  "spec": {
+    "id": "incident_response",
+    "version": "0.6.0",
+    "category": "operations",
+    "description": "Respond to production incidents.\nThis workflow provides a structured approach to incident management including triage, containment, and postmortem planning.\n",
+    "phases": [
+      {
+        "id": "incident_triage",
+        "description": "Assess and classify the incident",
+        "requires": [
+          "incident_report",
+          "monitoring_data"
+        ],
+        "produces": [
+          "severity",
+          "impact_assessment"
+        ],
+        "allows_questions": true,
+        "risk_level": "high"
+      },
+      {
+        "id": "containment_strategy",
+        "description": "Determine immediate containment approach",
+        "requires": [
+          "severity",
+          "impact_assessment"
+        ],
+        "produces": [
+          "containment_plan"
+        ],
+        "allows_questions": true,
+        "risk_level": "high"
+      },
+      {
+        "id": "postmortem_outline",
+        "description": "Create postmortem outline for later analysis",
+        "requires": [
+          "incident_timeline",
+          "actions_taken"
+        ],
+        "produces": [
+          "postmortem_outline"
+        ],
+        "allows_questions": false,
+        "risk_level": "low"
+      }
+    ],
+    "interaction": {
+      "default_mode": "question_only",
+      "question_policy": {
+        "trigger_when": [
+          "severity_unclear",
+          "impact_unknown",
+          "escalation_needed"
+        ]
+      },
+      "allowed_phases": [
+        "incident_triage",
+        "containment_strategy"
+      ]
+    },
+    "constraints": {
+      "execution": "forbidden",
+      "side_effects": "forbidden",
+      "requires_approval": false,
+      "max_duration_minutes": 60
+    },
+    "lineage": {
+      "introduced_in": "v0.6",
+      "derived_from": null,
+      "change_reason": null
+    },
+    "metadata": {
+      "tags": [
+        "incident",
+        "operations",
+        "emergency-response"
+      ],
+      "related_workflows": [
+        "deployment_planning",
+        "maintenance_planning"
+      ],
+      "use_cases": [
+        "Production outages",
+        "Security incidents",
+        "Data integrity issues"
+      ],
+      "anti_use_cases": [
+        "Planned maintenance (use maintenance_planning)",
+        "Non-urgent bugs",
+        "Feature requests"
+      ]
+    }
+  }
+}

@@ -4,7 +4,7 @@ Dry Executor Main Entry Point
 Orchestrates the generation of execution plans without performing any actual execution.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from .commit_planner import CommitPlanner
@@ -12,6 +12,8 @@ from .graph_builder import GraphBuilder
 from .patch_planner import PatchPlanner
 from .review_pack_stub import ReviewPackStubGenerator
 from .utils import compute_checksum, enforce_red_lines, extract_evidence_from_intent, generate_id
+from agentos.core.time import utc_now, utc_now_iso
+
 
 
 class DryExecutor:
@@ -45,7 +47,7 @@ class DryExecutor:
         Returns:
             DryExecutionResult matching dry_execution_result.schema.json
         """
-        start_time = datetime.utcnow()
+        start_time = utc_now()
         
         # Log decision: starting dry execution
         self._log_decision(
@@ -107,7 +109,7 @@ class DryExecutor:
                 "checksum": intent["audit"]["checksum"],
                 "version": intent.get("version", "0.9.1")
             },
-            "created_at": datetime.utcnow().isoformat() + "Z",
+            "created_at": utc_now_iso() + "Z",
             "graph": graph,
             "patch_plan": patch_plan,
             "commit_plan": commit_plan,
@@ -125,7 +127,7 @@ class DryExecutor:
                     "DE6_freezable"
                 ],
                 "warnings": [],
-                "processing_time_ms": int((datetime.utcnow() - start_time).total_seconds() * 1000)
+                "processing_time_ms": int((utc_now() - start_time).total_seconds() * 1000)
             },
             "lineage": {
                 "derived_from": [
@@ -162,7 +164,7 @@ class DryExecutor:
                       evidence_refs: list[str] = None, alternatives: list[str] = None):
         """Log a decision to the audit log."""
         entry = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": utc_now_iso() + "Z",
             "decision_type": decision_type,
             "decision": decision,
             "rationale": rationale

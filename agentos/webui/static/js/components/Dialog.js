@@ -105,6 +105,8 @@ class Dialog {
      * @returns {Promise<string|null>} - input value if confirmed, null if cancelled
      */
     static prompt(message, options = {}) {
+        console.log('[Dialog.prompt] Called with:', message, options);
+
         const {
             title = 'Input',
             cancelText = 'Cancel',
@@ -115,6 +117,7 @@ class Dialog {
         } = options;
 
         return new Promise((resolve) => {
+            console.log('[Dialog.prompt] Creating dialog...');
             const dialog = this._createPromptDialog({
                 title,
                 message,
@@ -126,6 +129,7 @@ class Dialog {
                         text: cancelText,
                         className: 'btn-secondary',
                         onClick: () => {
+                            console.log('[Dialog.prompt] Cancel clicked');
                             this._closeDialog(dialog);
                             resolve(null);
                         }
@@ -136,20 +140,25 @@ class Dialog {
                         onClick: () => {
                             const input = dialog.querySelector('.dialog-input');
                             const value = input ? input.value : '';
+                            console.log('[Dialog.prompt] OK clicked, value:', value);
                             this._closeDialog(dialog);
                             resolve(value);
                         }
                     }
                 ],
                 onBackdropClick: () => {
+                    console.log('[Dialog.prompt] Backdrop clicked');
                     this._closeDialog(dialog);
                     resolve(null);
                 },
                 onEscape: () => {
+                    console.log('[Dialog.prompt] Escape pressed');
                     this._closeDialog(dialog);
                     resolve(null);
                 }
             });
+
+            console.log('[Dialog.prompt] Dialog created successfully');
         });
     }
 
@@ -203,15 +212,35 @@ class Dialog {
         // Keyboard events
         const handleKeyDown = (e) => {
             if (e.key === 'Escape' && onEscape) {
+                console.log('[Dialog._createDialog] Escape key pressed');
                 onEscape();
                 document.removeEventListener('keydown', handleKeyDown);
             } else if (e.key === 'Enter' && buttons.length > 0) {
+                console.log('[Dialog._createDialog] Enter key pressed');
                 // Enter triggers the last button (primary action)
                 buttons[buttons.length - 1].onClick();
                 document.removeEventListener('keydown', handleKeyDown);
             }
         };
-        document.addEventListener('keydown', handleKeyDown);
+        // Delay keyboard event listener to prevent accidental triggers
+        // from the button click that opened the dialog
+        let keyboardListenerActive = false;
+        const keyboardTimeout = setTimeout(() => {
+            document.addEventListener('keydown', handleKeyDown);
+            keyboardListenerActive = true;
+            console.log('[Dialog._createDialog] Keyboard listener activated');
+        }, 100);
+
+        // Store cleanup function on backdrop for proper cleanup
+        backdrop._cleanup = () => {
+            if (keyboardTimeout) {
+                clearTimeout(keyboardTimeout);
+            }
+            if (keyboardListenerActive) {
+                document.removeEventListener('keydown', handleKeyDown);
+                console.log('[Dialog._createDialog] Keyboard listener removed');
+            }
+        };
 
         // Append to body
         backdrop.appendChild(dialog);
@@ -283,15 +312,35 @@ class Dialog {
         const input = dialog.querySelector('.dialog-input');
         const handleKeyDown = (e) => {
             if (e.key === 'Escape' && onEscape) {
+                console.log('[Dialog._createPromptDialog] Escape key pressed');
                 onEscape();
                 document.removeEventListener('keydown', handleKeyDown);
             } else if (e.key === 'Enter' && buttons.length > 0) {
+                console.log('[Dialog._createPromptDialog] Enter key pressed');
                 // Enter triggers the last button (primary action)
                 buttons[buttons.length - 1].onClick();
                 document.removeEventListener('keydown', handleKeyDown);
             }
         };
-        document.addEventListener('keydown', handleKeyDown);
+        // Delay keyboard event listener to prevent accidental triggers
+        // from the button click that opened the dialog
+        let keyboardListenerActive = false;
+        const keyboardTimeout = setTimeout(() => {
+            document.addEventListener('keydown', handleKeyDown);
+            keyboardListenerActive = true;
+            console.log('[Dialog._createPromptDialog] Keyboard listener activated');
+        }, 100);
+
+        // Store cleanup function on backdrop for proper cleanup
+        backdrop._cleanup = () => {
+            if (keyboardTimeout) {
+                clearTimeout(keyboardTimeout);
+            }
+            if (keyboardListenerActive) {
+                document.removeEventListener('keydown', handleKeyDown);
+                console.log('[Dialog._createPromptDialog] Keyboard listener removed');
+            }
+        };
 
         // Append to body
         backdrop.appendChild(dialog);
@@ -315,6 +364,13 @@ class Dialog {
      * @private
      */
     static _closeDialog(backdrop) {
+        console.log('[Dialog._closeDialog] Closing dialog...');
+
+        // Call cleanup function if it exists
+        if (typeof backdrop._cleanup === 'function') {
+            backdrop._cleanup();
+        }
+
         backdrop.classList.remove('dialog-backdrop--visible');
         const dialog = backdrop.querySelector('.dialog-container');
         if (dialog) {
@@ -323,6 +379,7 @@ class Dialog {
 
         setTimeout(() => {
             backdrop.remove();
+            console.log('[Dialog._closeDialog] Dialog removed from DOM');
         }, 300); // Match CSS transition duration
     }
 
@@ -337,7 +394,12 @@ class Dialog {
     }
 }
 
-// Export for use in other modules
+// Export for browser
+if (typeof window !== 'undefined') {
+    window.Dialog = Dialog;
+}
+
+// Export for Node.js (for testing)
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Dialog;
 }

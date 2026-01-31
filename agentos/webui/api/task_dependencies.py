@@ -15,6 +15,7 @@ from agentos.core.task.task_repo_service import TaskRepoService
 from agentos.core.task.audit_service import TaskAuditService
 from agentos.schemas.project import RepoRole
 from agentos.store import get_db
+from agentos.webui.api.time_format import iso_z
 
 router = APIRouter()
 
@@ -111,7 +112,7 @@ async def get_task_dependencies(
                 depends_on_task_id=dep.depends_on_task_id,
                 dependency_type=dep.dependency_type.value if hasattr(dep.dependency_type, "value") else dep.dependency_type,
                 reason=dep.reason,
-                created_at=dep.created_at.isoformat() if hasattr(dep.created_at, "isoformat") else dep.created_at,
+                created_at=iso_z(dep.created_at) if hasattr(dep.created_at, "isoformat") else dep.created_at,
                 metadata=dep.metadata,
             )
             for dep in forward_deps
@@ -128,7 +129,7 @@ async def get_task_dependencies(
                     depends_on_task_id=dep.depends_on_task_id,
                     dependency_type=dep.dependency_type.value if hasattr(dep.dependency_type, "value") else dep.dependency_type,
                     reason=dep.reason,
-                    created_at=dep.created_at.isoformat() if hasattr(dep.created_at, "isoformat") else dep.created_at,
+                    created_at=iso_z(dep.created_at) if hasattr(dep.created_at, "isoformat") else dep.created_at,
                     metadata=dep.metadata,
                 )
                 for dep in reverse_deps

@@ -39,6 +39,8 @@ from typing import Dict, List, Optional, Tuple
 
 from ..store import SQLiteStore
 from .blind_spot import detect_blind_spots, BlindSpot, BlindSpotType
+from agentos.core.time import utc_now, utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -168,14 +170,14 @@ def autocomplete_suggest(
         AutocompleteResult with filtered suggestions
 
     Examples:
-        >>> store = SQLiteStore("./brainos.db")
-        >>> store.connect()
+        >>> from agentos.core.db import registry_db
+        >>> conn = registry_db.get_db()
+        >>> store = SQLiteStore.from_connection(conn)
         >>> result = autocomplete_suggest(store, "task", limit=5)
         >>> print(f"Safe suggestions: {len(result.suggestions)}")
         >>> print(f"Filtered out: {result.filtered_out}")
         >>> for suggestion in result.suggestions:
         ...     print(f"  {suggestion.display_text} - {suggestion.hint_text}")
-        >>> store.close()
 
     Notes:
         - Returns empty result on error rather than crashing
@@ -184,7 +186,7 @@ def autocomplete_suggest(
         - High-risk blind spots (severity >= 0.7) excluded by default
     """
     logger.info(f"Autocomplete suggest: prefix='{prefix}', limit={limit}, types={entity_types}")
-    start_time = datetime.now(timezone.utc)
+    start_time = utc_now()
 
     try:
         conn = store.connect()
@@ -273,8 +275,8 @@ def autocomplete_suggest(
             f"{dangerous_count} high-risk blind spots"
         )
 
-        computed_at = datetime.now(timezone.utc).isoformat()
-        duration_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
+        computed_at = utc_now_iso()
+        duration_ms = int((utc_now() - start_time).total_seconds() * 1000)
 
         logger.info(
             f"Autocomplete completed in {duration_ms}ms: "
@@ -465,8 +467,8 @@ def _empty_result(
     """
     Create empty result for no matches or error cases.
     """
-    computed_at = datetime.now(timezone.utc).isoformat()
-    duration_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
+    computed_at = utc_now_iso()
+    duration_ms = int((utc_now() - start_time).total_seconds() * 1000)
 
     logger.info(f"Returning empty result: {reason} (took {duration_ms}ms)")
 

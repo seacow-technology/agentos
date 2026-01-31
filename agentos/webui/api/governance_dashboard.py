@@ -26,6 +26,10 @@ from pydantic import BaseModel
 
 from agentos.store import get_db
 
+
+from agentos.webui.api.time_format import iso_z
+from agentos.core.time import utc_now
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/governance", tags=["governance_dashboard"])
@@ -114,7 +118,7 @@ def get_findings_data(
 
         # 计算时间范围
         days = _parse_timeframe(timeframe)
-        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+        cutoff = iso_z(utc_now() - timedelta(days=days))
 
         # 查询 findings
         query = """
@@ -181,7 +185,7 @@ def get_audits_data(
 
         # 计算时间范围
         days = _parse_timeframe(timeframe)
-        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+        cutoff = iso_z(utc_now() - timedelta(days=days))
 
         # 查询 Supervisor 决策审计
         query = """
@@ -247,7 +251,7 @@ def get_guardian_data(
 
         # 计算时间范围
         days = _parse_timeframe(timeframe)
-        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+        cutoff = iso_z(utc_now() - timedelta(days=days))
 
         # 查询 guardian reviews
         query = """
@@ -312,7 +316,7 @@ def get_tasks_data(
 
         # 计算时间范围
         days = _parse_timeframe(timeframe)
-        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+        cutoff = iso_z(utc_now() - timedelta(days=days))
 
         # 查询 tasks
         query = """
@@ -558,7 +562,7 @@ def identify_top_risks(
     }
 
     risks = []
-    now = datetime.now(timezone.utc)
+    now = utc_now()
 
     # 从 findings 生成风险
     for finding in findings:
@@ -726,7 +730,7 @@ def get_cache_key() -> int:
     Returns:
         缓存键（整数）
     """
-    now = datetime.now(timezone.utc)
+    now = utc_now()
     return int(now.timestamp() / 300)  # 300 seconds = 5 minutes
 
 
@@ -827,7 +831,7 @@ def _compute_dashboard(
             },
             "top_risks": top_risks,
             "health": health,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": iso_z(utc_now()),
         }
 
     except Exception as e:
@@ -862,7 +866,7 @@ def _compute_dashboard(
                 "active_guardians": 0,
                 "last_scan": None,
             },
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": iso_z(utc_now()),
         }
 
 

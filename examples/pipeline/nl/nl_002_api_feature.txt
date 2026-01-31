@@ -1,0 +1,6 @@
+实现 Builder 历史记录查询 API：
+- GET /api/builder/history - 查询所有 builder 输出
+- GET /api/builder/history/:id - 获取特定输出
+- 支持分页和过滤（按 policy、risk_level）
+- 需要基本的输入验证
+- 添加单元测试

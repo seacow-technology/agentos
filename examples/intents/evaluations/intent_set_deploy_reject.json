@@ -1,0 +1,24 @@
+{
+  "id": "intent_set_deploy_reject",
+  "type": "intent_set",
+  "schema_version": "0.9.3",
+  "created_at": "2026-01-25T11:20:00Z",
+  "intent_ids": [
+    "intent_deploy_service_v3_0",
+    "intent_deploy_service_v2_9"
+  ],
+  "context": {
+    "project_id": "agentos",
+    "env": "staging",
+    "tags": ["deployment", "conflict", "same-priority"]
+  },
+  "lineage": {
+    "introduced_in": "0.9.3",
+    "derived_from": []
+  },
+  "checksum": "f3e4d5c6b7a89012345678abcdef0123456789abcdef0123456789abcdef012",
+  "metadata": {
+    "created_by": "human_operator",
+    "purpose": "Evaluate conflicting deployments with same priority (reject strategy)"
+  }
+}

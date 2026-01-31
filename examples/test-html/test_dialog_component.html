@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dialog Component Test</title>
+    <link rel="stylesheet" href="http://127.0.0.1:8080/static/css/dialog.css?v=1">
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 40px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-test {
+            background: #2563EB;
+            color: white;
+        }
+        h1 { margin-bottom: 30px; }
+    </style>
+</head>
+<body>
+    <h1>Dialog Component Test</h1>
+
+    <h2>Alert Tests</h2>
+    <button class="btn-test" onclick="testAlert()">Test Alert</button>
+    <button class="btn-test" onclick="testAlertLong()">Test Alert (Long Message)</button>
+
+    <h2>Confirm Tests</h2>
+    <button class="btn-test" onclick="testConfirm()">Test Confirm</button>
+    <button class="btn-test" onclick="testConfirmDanger()">Test Confirm (Danger)</button>
+
+    <h2>Result</h2>
+    <div id="result" style="padding: 10px; background: #f3f4f6; border-radius: 6px; min-height: 50px;"></div>
+
+    <script src="http://127.0.0.1:8080/static/js/components/Dialog.js?v=1"></script>
+    <script>
+        const resultDiv = document.getElementById('result');
+
+        async function testAlert() {
+            resultDiv.textContent = 'Testing alert...';
+            await Dialog.alert('This is a simple alert message', { title: 'Test Alert' });
+            resultDiv.textContent = 'Alert closed';
+        }
+
+        async function testAlertLong() {
+            resultDiv.textContent = 'Testing long alert...';
+            await Dialog.alert('This is a longer message with multiple lines.\n\nIt should display properly with line breaks\nand preserve formatting.', { title: 'Long Alert' });
+            resultDiv.textContent = 'Long alert closed';
+        }
+
+        async function testConfirm() {
+            resultDiv.textContent = 'Testing confirm...';
+            const result = await Dialog.confirm('Do you want to proceed with this action?', {
+                title: 'Confirm Action',
+                confirmText: 'Yes',
+                cancelText: 'No'
+            });
+            resultDiv.textContent = `Confirm result: ${result ? 'Confirmed' : 'Cancelled'}`;
+        }
+
+        async function testConfirmDanger() {
+            resultDiv.textContent = 'Testing danger confirm...';
+            const result = await Dialog.confirm('This action will delete all your data.\n\nAre you sure?', {
+                title: 'Dangerous Action',
+                confirmText: 'Delete All',
+                danger: true
+            });
+            resultDiv.textContent = `Danger confirm result: ${result ? 'Confirmed (would delete)' : 'Cancelled'}`;
+        }
+    </script>
+</body>
+</html>

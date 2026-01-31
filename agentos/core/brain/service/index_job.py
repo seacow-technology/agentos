@@ -83,7 +83,13 @@ class BrainIndexJob:
         repo_path = str(Path(repo_path).resolve())
 
         if db_path is None:
-            db_path = os.path.join(repo_path, '.brainos', 'index.db')
+            # Use environment variable with fallback to unified storage
+            env_db = os.getenv("BRAINOS_INDEX_DB")
+            if env_db:
+                db_path = env_db
+            else:
+                from agentos.core.storage.paths import component_db_path
+                db_path = str(component_db_path("brainos"))
 
         manifest_path = db_path + '.manifest.json'
 

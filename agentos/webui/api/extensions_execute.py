@@ -17,6 +17,8 @@ from agentos.core.capabilities.runner_base import Invocation, get_runner
 from agentos.core.runs import RunStore, RunStatus
 from agentos.webui.api.contracts import ReasonCode
 
+
+from agentos.webui.api.time_format import iso_z
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -38,7 +40,18 @@ def get_builtin_runner():
     """Get builtin runner instance"""
     global _builtin_runner
     if _builtin_runner is None:
-        _builtin_runner = get_runner("builtin", default_timeout=30)
+        from pathlib import Path
+        from agentos.store import get_store_path
+
+        # Use project's store/extensions directory
+        extensions_dir = Path(get_store_path("extensions"))
+
+        _builtin_runner = get_runner(
+            "builtin",
+            extensions_dir=extensions_dir,
+            default_timeout=30
+        )
+        logger.info(f"BuiltinRunner initialized with extensions_dir={extensions_dir}")
     return _builtin_runner
 
 
@@ -318,8 +331,8 @@ async def get_run_status(run_id: str):
             stdout=run.stdout,
             stderr=run.stderr,
             error=run.error,
-            started_at=run.started_at.isoformat() if run.started_at else None,
-            ended_at=run.ended_at.isoformat() if run.ended_at else None,
+            started_at=run.iso_z(started_at) if run.started_at else None,
+            ended_at=run.iso_z(ended_at) if run.ended_at else None,
             duration_seconds=run.duration_seconds,
             metadata=run.metadata
         )

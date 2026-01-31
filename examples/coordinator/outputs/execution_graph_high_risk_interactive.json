@@ -1,0 +1,230 @@
+{
+  "graph_id": "graph_example_high_risk_interactive",
+  "schema_version": "0.9.2",
+  "intent_id": "intent_example_high_risk_interactive",
+  "created_at": "2026-01-25T11:05:00Z",
+  "nodes": [
+    {
+      "node_id": "node_phase_001",
+      "node_type": "phase",
+      "label": "Design Phase",
+      "description": "Design user_roles table schema and migration strategy",
+      "phase_ref": "design"
+    },
+    {
+      "node_id": "node_action_001",
+      "node_type": "action_proposal",
+      "label": "Scan Database Schema",
+      "description": "Analyze current users table schema and constraints",
+      "command_ref": "scan_database_schema",
+      "effects": ["read"],
+      "risk_level": "low",
+      "evidence_refs": [
+        "scan://database/users_table_schema"
+      ]
+    },
+    {
+      "node_id": "node_question_001",
+      "node_type": "question",
+      "label": "Migration Strategy Question",
+      "description": "Clarify migration strategy: online vs offline",
+      "question_ref": "q_migration_strategy"
+    },
+    {
+      "node_id": "node_decision_001",
+      "node_type": "decision_point",
+      "label": "Risk Assessment",
+      "description": "Evaluate migration risk based on current schema and strategy",
+      "rule_refs": [
+        "rule_high_risk_requires_review",
+        "rule_database_migration_safety"
+      ]
+    },
+    {
+      "node_id": "node_phase_002",
+      "node_type": "phase",
+      "label": "Implementation Phase",
+      "description": "Write migration and rollback scripts",
+      "phase_ref": "implementation"
+    },
+    {
+      "node_id": "node_action_002",
+      "node_type": "action_proposal",
+      "label": "Generate Migration Script",
+      "description": "Create SQL migration script for user_roles table",
+      "command_ref": "generate_migration_script",
+      "effects": ["write"],
+      "risk_level": "high",
+      "evidence_refs": [
+        "scan://database/users_table_schema",
+        "doc://database/migration_standards.md"
+      ]
+    },
+    {
+      "node_id": "node_question_002",
+      "node_type": "question",
+      "label": "Indexing Strategy Question",
+      "description": "Confirm indexing strategy for foreign keys",
+      "question_ref": "q_indexing_strategy"
+    },
+    {
+      "node_id": "node_phase_003",
+      "node_type": "phase",
+      "label": "Validation Phase",
+      "description": "Test migration on test database",
+      "phase_ref": "validation"
+    },
+    {
+      "node_id": "node_action_003",
+      "node_type": "action_proposal",
+      "label": "Validate Migration",
+      "description": "Run migration validation tests on test database",
+      "command_ref": "validate_migration",
+      "effects": ["read", "data"],
+      "risk_level": "medium",
+      "evidence_refs": [
+        "scan://database/test_db_state"
+      ]
+    },
+    {
+      "node_id": "node_phase_004",
+      "node_type": "phase",
+      "label": "Review Phase",
+      "description": "Review migration scripts and validation results",
+      "phase_ref": "review"
+    },
+    {
+      "node_id": "node_review_001",
+      "node_type": "review_gate",
+      "label": "Data Architecture Review",
+      "description": "Review by data team for schema correctness and safety",
+      "review_criteria": [
+        "Schema design follows standards",
+        "Foreign key constraints correct",
+        "Migration is idempotent",
+        "Rollback tested",
+        "Zero downtime strategy verified"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "edge_001",
+      "from_node": "node_phase_001",
+      "to_node": "node_action_001",
+      "edge_type": "sequential"
+    },
+    {
+      "edge_id": "edge_002",
+      "from_node": "node_action_001",
+      "to_node": "node_question_001",
+      "edge_type": "sequential"
+    },
+    {
+      "edge_id": "edge_003",
+      "from_node": "node_question_001",
+      "to_node": "node_decision_001",
+      "edge_type": "conditional",
+      "condition": "answer received"
+    },
+    {
+      "edge_id": "edge_004",
+      "from_node": "node_decision_001",
+      "to_node": "node_phase_002",
+      "edge_type": "sequential"
+    },
+    {
+      "edge_id": "edge_005",
+      "from_node": "node_phase_002",
+      "to_node": "node_action_002",
+      "edge_type": "sequential"
+    },
+    {
+      "edge_id": "edge_006",
+      "from_node": "node_action_002",
+      "to_node": "node_question_002",
+      "edge_type": "sequential"
+    },
+    {
+      "edge_id": "edge_007",
+      "from_node": "node_question_002",
+      "to_node": "node_phase_003",
+      "edge_type": "conditional",
+      "condition": "answer received"
+    },
+    {
+      "edge_id": "edge_008",
+      "from_node": "node_phase_003",
+      "to_node": "node_action_003",
+      "edge_type": "sequential"
+    },
+    {
+      "edge_id": "edge_009",
+      "from_node": "node_action_003",
+      "to_node": "node_phase_004",
+      "edge_type": "sequential"
+    },
+    {
+      "edge_id": "edge_010",
+      "from_node": "node_phase_004",
+      "to_node": "node_review_001",
+      "edge_type": "sequential"
+    }
+  ],
+  "swimlanes": [
+    {
+      "swimlane_id": "swimlane_001",
+      "agent_id": "database_architect",
+      "role": "schema_designer",
+      "node_refs": [
+        "node_phase_001",
+        "node_action_001",
+        "node_question_001",
+        "node_decision_001"
+      ]
+    },
+    {
+      "swimlane_id": "swimlane_002",
+      "agent_id": "migration_specialist",
+      "role": "migration_executor",
+      "node_refs": [
+        "node_phase_002",
+        "node_action_002",
+        "node_question_002",
+        "node_phase_003",
+        "node_action_003",
+        "node_phase_004",
+        "node_review_001"
+      ]
+    }
+  ],
+  "lineage": {
+    "derived_from_intent": "intent_example_high_risk_interactive",
+    "intent_checksum": "69f81aa445c2fc75a8a6338d97ac6c855a62b0673a6450e5b935772584847f6b",
+    "registry_versions": {
+      "workflows": {
+        "database_migration_workflow": "2.1.0"
+      },
+      "agents": {
+        "database_architect": "1.5.0",
+        "migration_specialist": "1.3.0"
+      },
+      "commands": {
+        "scan_database_schema": "1.0.0",
+        "generate_migration_script": "2.0.0",
+        "validate_migration": "1.1.0"
+      },
+      "rules": {
+        "rule_high_risk_requires_review": "1.0.0",
+        "rule_database_migration_safety": "1.0.0"
+      }
+    },
+    "coordinator_version": "0.9.2"
+  },
+  "checksum": "b2c3d4e5f6789012345678901234567890123456789012345678901234abcdef",
+  "metadata": {
+    "execution_policy": "interactive",
+    "estimated_duration": "2-3 hours",
+    "complexity_score": 75
+  }
+}

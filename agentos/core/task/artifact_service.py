@@ -15,11 +15,13 @@ Created for Phase 5.2: Cross-repository audit trail
 import json
 import logging
 from dataclasses import dataclass, field, asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from agentos.store import get_db
+from agentos.core.time import utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +86,7 @@ class TaskArtifactRef:
             "ref_value": self.ref_value,
             "summary": self.summary,
             "metadata": json.dumps(self.metadata),
-            "created_at": self.created_at or datetime.utcnow().isoformat(),
+            "created_at": self.created_at or utc_now_iso(),
         }
 
     @classmethod

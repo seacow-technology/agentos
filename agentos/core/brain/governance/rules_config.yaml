@@ -1,0 +1,184 @@
+# BrainOS Governance Rules Configuration
+# Version: v1.0
+# Purpose: Define governance rules for Navigation, Compare, and Health decisions
+
+rules:
+  # ============================================================================
+  # Navigation Rules
+  # ============================================================================
+
+  - id: "nav_high_risk_block"
+    name: "High Risk Block Rule"
+    applies_to: "NAVIGATION"
+    condition:
+      type: "blind_spot_severity"
+      operator: ">="
+      value: 0.7
+    action: "BLOCK"
+    rationale: "Path contains high-risk blind spots (severity >= 0.7)"
+    enabled: true
+    priority: 100
+    description: "Block navigation paths that traverse high-severity blind spots"
+
+  - id: "nav_low_coverage_warn"
+    name: "Low Coverage Warning Rule"
+    applies_to: "NAVIGATION"
+    condition:
+      type: "coverage_percentage"
+      operator: "<"
+      value: 0.4
+    action: "WARN"
+    rationale: "Path has low coverage (< 40%)"
+    enabled: true
+    priority: 50
+    description: "Warn when navigation path has less than 40% coverage"
+
+  - id: "nav_many_blind_spots_signoff"
+    name: "Many Blind Spots Signoff Rule"
+    applies_to: "NAVIGATION"
+    condition:
+      type: "total_blind_spots"
+      operator: ">="
+      value: 3
+    action: "REQUIRE_SIGNOFF"
+    rationale: "Navigation crosses multiple blind spots (>= 3), requires review"
+    enabled: true
+    priority: 80
+    description: "Require human signoff when path crosses 3 or more blind spots"
+
+  - id: "nav_low_confidence_warn"
+    name: "Low Confidence Warning"
+    applies_to: "NAVIGATION"
+    condition:
+      type: "avg_confidence"
+      operator: "<"
+      value: 0.5
+    action: "WARN"
+    rationale: "Average path confidence is below 0.5"
+    enabled: true
+    priority: 60
+    description: "Warn when navigation confidence score is low"
+
+  # ============================================================================
+  # Compare Rules
+  # ============================================================================
+
+  - id: "cmp_degradation_signoff"
+    name: "Regression Escalation Rule"
+    applies_to: "COMPARE"
+    condition:
+      type: "overall_assessment"
+      operator: "=="
+      value: "DEGRADED"
+    action: "REQUIRE_SIGNOFF"
+    rationale: "Understanding degraded, requires human review"
+    enabled: true
+    priority: 80
+    description: "Require signoff when comparison shows degradation"
+
+  - id: "cmp_coverage_drop_warn"
+    name: "Coverage Drop Warning"
+    applies_to: "COMPARE"
+    condition:
+      type: "coverage_change_percentage"
+      operator: "<"
+      value: -10.0
+    action: "WARN"
+    rationale: "Coverage decreased by more than 10%"
+    enabled: true
+    priority: 60
+    description: "Warn when coverage drops by more than 10%"
+
+  - id: "cmp_health_score_drop_block"
+    name: "Health Score Drop Block"
+    applies_to: "COMPARE"
+    condition:
+      type: "health_score_change"
+      operator: "<"
+      value: -0.2
+    action: "BLOCK"
+    rationale: "Health score dropped by more than 20%"
+    enabled: true
+    priority: 90
+    description: "Block when health score drops significantly"
+
+  - id: "cmp_entity_removal_warn"
+    name: "Entity Removal Warning"
+    applies_to: "COMPARE"
+    condition:
+      type: "entities_removed"
+      operator: ">="
+      value: 10
+    action: "WARN"
+    rationale: "More than 10 entities were removed"
+    enabled: true
+    priority: 50
+    description: "Warn when many entities are removed in comparison"
+
+  # ============================================================================
+  # Health/Time Rules
+  # ============================================================================
+
+  - id: "health_decline_warn"
+    name: "Health Decline Rule"
+    applies_to: "HEALTH"
+    condition:
+      type: "coverage_trend_direction"
+      operator: "=="
+      value: "DEGRADING"
+    action: "WARN"
+    rationale: "Coverage trend is degrading over time"
+    enabled: true
+    priority: 70
+    description: "Warn when coverage trend shows degradation"
+
+  - id: "health_critical_signoff"
+    name: "Critical Health Rule"
+    applies_to: "HEALTH"
+    condition:
+      type: "current_health_level"
+      operator: "=="
+      value: "CRITICAL"
+    action: "REQUIRE_SIGNOFF"
+    rationale: "Health level is CRITICAL, requires immediate attention"
+    enabled: true
+    priority: 90
+    description: "Require signoff when system health is critical"
+
+  - id: "health_cognitive_debt_warn"
+    name: "High Cognitive Debt Warning"
+    applies_to: "HEALTH"
+    condition:
+      type: "cognitive_debt_count"
+      operator: ">="
+      value: 50
+    action: "WARN"
+    rationale: "Cognitive debt count is high (>= 50)"
+    enabled: true
+    priority: 60
+    description: "Warn when cognitive debt accumulates"
+
+  - id: "health_coverage_below_threshold"
+    name: "Low Health Coverage Block"
+    applies_to: "HEALTH"
+    condition:
+      type: "coverage_percentage"
+      operator: "<"
+      value: 0.3
+    action: "BLOCK"
+    rationale: "Overall coverage below 30%, system health compromised"
+    enabled: true
+    priority: 100
+    description: "Block when overall system coverage is critically low"
+
+# Rule evaluation order:
+# 1. Rules are evaluated by priority (highest first)
+# 2. All matching rules are triggered and recorded
+# 3. Final verdict is the most restrictive action (BLOCK > REQUIRE_SIGNOFF > WARN > ALLOW)
+# 4. Priority only affects evaluation order, not final verdict
+
+# Action hierarchy (most to least restrictive):
+# - BLOCK: Prevents the operation entirely
+# - REQUIRE_SIGNOFF: Allows operation only after human approval
+# - WARN: Operation proceeds with warning logged
+# - ALLOW: Operation proceeds normally

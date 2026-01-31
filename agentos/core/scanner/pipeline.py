@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Any
 
 from agentos.adapters import get_adapters
+from agentos.core.time import utc_now_iso
+
 
 
 class ScannerPipeline:
@@ -32,7 +34,7 @@ class ScannerPipeline:
             "schema_version": "1.0.0",
             "project_id": self.project_id,
             "repo_root": str(self.repo_root),
-            "scanned_at": datetime.now(timezone.utc).isoformat(),
+            "scanned_at": utc_now_iso(),
         }
         
         # Step 1: Fingerprint

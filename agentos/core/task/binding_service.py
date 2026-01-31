@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from agentos.schemas.v31_models import TaskBinding
+from agentos.core.time import utc_now_iso
 from agentos.core.project.errors import (
     BindingNotFoundError,
     BindingAlreadyExistsError,
@@ -89,7 +90,7 @@ class BindingService:
             if not is_valid:
                 raise InvalidWorkdirError(workdir, error_msg)
 
-        now = datetime.now(timezone.utc).isoformat()
+        now = utc_now_iso()
 
         # Define write function
         def _write_binding(conn):
@@ -185,7 +186,9 @@ class BindingService:
 
             return TaskBinding.from_db_row(dict(row))
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection (unless db_path provided)
+            if self.db_path:
+                conn.close()
 
     def update_binding(
         self,
@@ -218,7 +221,7 @@ class BindingService:
             if not is_valid:
                 raise InvalidWorkdirError(workdir, error_msg)
 
-        now = datetime.now(timezone.utc).isoformat()
+        now = utc_now_iso()
 
         # Define write function
         def _write_update(conn):
@@ -399,7 +402,9 @@ class BindingService:
                 errors.append(f"Task {task_id} spec is not frozen")
 
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection (unless db_path provided)
+            if self.db_path:
+                conn.close()
 
         is_valid = len(errors) == 0
         return is_valid, errors

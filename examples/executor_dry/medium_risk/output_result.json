@@ -1,0 +1,574 @@
+{
+  "result_id": "dryexec_1c21abd88d385fd5",
+  "schema_version": "0.10.0",
+  "intent_ref": {
+    "intent_id": "intent_example_medium_risk",
+    "checksum": "b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2",
+    "version": "0.9.1"
+  },
+  "created_at": "2026-01-25T10:21:08.877520Z",
+  "graph": {
+    "graph_id": "graph_1c21abd88d385fd5",
+    "schema_version": "0.10.0",
+    "intent_id": "intent_example_medium_risk",
+    "created_at": "2026-01-25T10:21:08.877241Z",
+    "nodes": [
+      {
+        "node_id": "node_0001",
+        "node_type": "phase",
+        "label": "feature_development_workflow: design",
+        "description": "Phase 'design' from workflow 'feature_development_workflow'",
+        "phase_ref": "feature_development_workflow.design",
+        "evidence_refs": [
+          "intent://intent_example_medium_risk/selected_workflows/feature_development_workflow",
+          "Standard feature development workflow for new API endpoints"
+        ]
+      },
+      {
+        "node_id": "node_0002",
+        "node_type": "phase",
+        "label": "feature_development_workflow: implementation",
+        "description": "Phase 'implementation' from workflow 'feature_development_workflow'",
+        "phase_ref": "feature_development_workflow.implementation",
+        "evidence_refs": [
+          "intent://intent_example_medium_risk/selected_workflows/feature_development_workflow",
+          "Standard feature development workflow for new API endpoints"
+        ]
+      },
+      {
+        "node_id": "node_0003",
+        "node_type": "phase",
+        "label": "feature_development_workflow: validation",
+        "description": "Phase 'validation' from workflow 'feature_development_workflow'",
+        "phase_ref": "feature_development_workflow.validation",
+        "evidence_refs": [
+          "intent://intent_example_medium_risk/selected_workflows/feature_development_workflow",
+          "Standard feature development workflow for new API endpoints"
+        ]
+      },
+      {
+        "node_id": "node_0004",
+        "node_type": "phase",
+        "label": "feature_development_workflow: review",
+        "description": "Phase 'review' from workflow 'feature_development_workflow'",
+        "phase_ref": "feature_development_workflow.review",
+        "evidence_refs": [
+          "intent://intent_example_medium_risk/selected_workflows/feature_development_workflow",
+          "Standard feature development workflow for new API endpoints"
+        ]
+      },
+      {
+        "node_id": "node_0005",
+        "node_type": "action_plan",
+        "label": "Plan: implement_api_route",
+        "description": "Create new API route for notifications",
+        "command_ref": "implement_api_route",
+        "effects": [
+          "write"
+        ],
+        "risk_level": "medium",
+        "evidence_refs": [
+          "scan://file/agentos/api/routes/notifications.py",
+          "api_spec://notifications_endpoint"
+        ]
+      },
+      {
+        "node_id": "node_0006",
+        "node_type": "action_plan",
+        "label": "Plan: implement_service",
+        "description": "Implement notification service logic",
+        "command_ref": "implement_service",
+        "effects": [
+          "write"
+        ],
+        "risk_level": "medium",
+        "evidence_refs": [
+          "scan://file/agentos/services/notification_service.py",
+          "design://notification_service_spec"
+        ]
+      },
+      {
+        "node_id": "node_0007",
+        "node_type": "action_plan",
+        "label": "Plan: create_model",
+        "description": "Define notification data model",
+        "command_ref": "create_model",
+        "effects": [
+          "write"
+        ],
+        "risk_level": "low",
+        "evidence_refs": [
+          "scan://file/agentos/models/notification.py"
+        ]
+      },
+      {
+        "node_id": "node_0008",
+        "node_type": "action_plan",
+        "label": "Plan: write_unit_tests",
+        "description": "Write unit tests for notification service",
+        "command_ref": "write_unit_tests",
+        "effects": [
+          "write"
+        ],
+        "risk_level": "low",
+        "evidence_refs": [
+          "scan://file/tests/unit/test_notification_service.py"
+        ]
+      },
+      {
+        "node_id": "node_0009",
+        "node_type": "action_plan",
+        "label": "Plan: write_integration_tests",
+        "description": "Write integration tests for notifications API",
+        "command_ref": "write_integration_tests",
+        "effects": [
+          "write"
+        ],
+        "risk_level": "medium",
+        "evidence_refs": [
+          "scan://file/tests/integration/test_notifications_api.py"
+        ]
+      },
+      {
+        "node_id": "node_0010",
+        "node_type": "review_checkpoint",
+        "label": "Pre-execution Review",
+        "description": "Review checkpoint before execution",
+        "review_criteria": [
+          "architecture",
+          "release"
+        ],
+        "evidence_refs": [
+          "intent://intent_example_medium_risk/risk/requires_review"
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "edge_id": "edge_0001",
+        "from_node": "node_0001",
+        "to_node": "node_0002",
+        "edge_type": "sequential"
+      },
+      {
+        "edge_id": "edge_0002",
+        "from_node": "node_0002",
+        "to_node": "node_0003",
+        "edge_type": "sequential"
+      },
+      {
+        "edge_id": "edge_0003",
+        "from_node": "node_0003",
+        "to_node": "node_0004",
+        "edge_type": "sequential"
+      },
+      {
+        "edge_id": "edge_0004",
+        "from_node": "node_0004",
+        "to_node": "node_0005",
+        "edge_type": "parallel"
+      },
+      {
+        "edge_id": "edge_0005",
+        "from_node": "node_0004",
+        "to_node": "node_0006",
+        "edge_type": "parallel"
+      },
+      {
+        "edge_id": "edge_0006",
+        "from_node": "node_0004",
+        "to_node": "node_0007",
+        "edge_type": "parallel"
+      },
+      {
+        "edge_id": "edge_0007",
+        "from_node": "node_0004",
+        "to_node": "node_0008",
+        "edge_type": "parallel"
+      },
+      {
+        "edge_id": "edge_0008",
+        "from_node": "node_0004",
+        "to_node": "node_0009",
+        "edge_type": "parallel"
+      },
+      {
+        "edge_id": "edge_0009",
+        "from_node": "node_0005",
+        "to_node": "node_0010",
+        "edge_type": "sequential"
+      },
+      {
+        "edge_id": "edge_0010",
+        "from_node": "node_0006",
+        "to_node": "node_0010",
+        "edge_type": "sequential"
+      },
+      {
+        "edge_id": "edge_0011",
+        "from_node": "node_0007",
+        "to_node": "node_0010",
+        "edge_type": "sequential"
+      },
+      {
+        "edge_id": "edge_0012",
+        "from_node": "node_0008",
+        "to_node": "node_0010",
+        "edge_type": "sequential"
+      },
+      {
+        "edge_id": "edge_0013",
+        "from_node": "node_0009",
+        "to_node": "node_0010",
+        "edge_type": "sequential"
+      }
+    ],
+    "swimlanes": [
+      {
+        "swimlane_id": "swimlane_backend_engineer",
+        "agent_id": "backend_engineer",
+        "role": "implementer",
+        "node_refs": [
+          "node_0005",
+          "node_0006",
+          "node_0007",
+          "node_0008",
+          "node_0009"
+        ]
+      },
+      {
+        "swimlane_id": "swimlane_qa_engineer",
+        "agent_id": "qa_engineer",
+        "role": "validator",
+        "node_refs": [
+          "node_0005",
+          "node_0006",
+          "node_0007",
+          "node_0008",
+          "node_0009"
+        ]
+      }
+    ],
+    "lineage": {
+      "derived_from_intent": "intent_example_medium_risk",
+      "intent_checksum": "b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2",
+      "dry_executor_version": "0.10.0"
+    },
+    "checksum": "28728c205c6c4f4c08424d30a4cc39ab0bf71dca6ce8e11d3a150067acd500ec"
+  },
+  "patch_plan": {
+    "plan_id": "patchplan_1c21abd88d385fd5",
+    "schema_version": "0.10.0",
+    "intent_id": "intent_example_medium_risk",
+    "created_at": "2026-01-25T10:21:08.877381Z",
+    "files": [
+      {
+        "path": "agentos/api/routes/notifications.py",
+        "action": "modify",
+        "rationale": "Modify agentos/api/routes/notifications.py to: Implement user notification API with proper testing coverage",
+        "risk": "medium",
+        "evidence_refs": [
+          "intent://intent_example_medium_risk/scope/targets/files/agentos/api/routes/notifications.py",
+          "scan://file/agentos/api/routes/notifications.py",
+          "api_spec://notifications_endpoint"
+        ],
+        "lock_intent": {
+          "mode": "exclusive",
+          "scope": "file",
+          "reason": "Exclusive lock needed for modification"
+        },
+        "estimated_impact": "moderate"
+      },
+      {
+        "path": "agentos/services/notification_service.py",
+        "action": "modify",
+        "rationale": "Modify agentos/services/notification_service.py to: Implement user notification API with proper testing coverage",
+        "risk": "medium",
+        "evidence_refs": [
+          "scan://file/agentos/services/notification_service.py",
+          "intent://intent_example_medium_risk/scope/targets/files/agentos/services/notification_service.py",
+          "design://notification_service_spec"
+        ],
+        "lock_intent": {
+          "mode": "exclusive",
+          "scope": "file",
+          "reason": "Exclusive lock needed for modification"
+        },
+        "estimated_impact": "moderate"
+      },
+      {
+        "path": "agentos/models/notification.py",
+        "action": "modify",
+        "rationale": "Modify agentos/models/notification.py to: Implement user notification API with proper testing coverage",
+        "risk": "medium",
+        "evidence_refs": [
+          "scan://file/agentos/models/notification.py",
+          "intent://intent_example_medium_risk/scope/targets/files/agentos/models/notification.py"
+        ],
+        "lock_intent": {
+          "mode": "exclusive",
+          "scope": "file",
+          "reason": "Exclusive lock needed for modification"
+        },
+        "estimated_impact": "moderate"
+      },
+      {
+        "path": "tests/unit/test_notification_service.py",
+        "action": "modify",
+        "rationale": "Modify tests/unit/test_notification_service.py to: Implement user notification API with proper testing coverage",
+        "risk": "medium",
+        "evidence_refs": [
+          "scan://file/tests/unit/test_notification_service.py",
+          "intent://intent_example_medium_risk/scope/targets/files/tests/unit/test_notification_service.py"
+        ],
+        "lock_intent": {
+          "mode": "exclusive",
+          "scope": "file",
+          "reason": "Exclusive lock needed for modification"
+        },
+        "estimated_impact": "moderate"
+      },
+      {
+        "path": "tests/integration/test_notifications_api.py",
+        "action": "modify",
+        "rationale": "Modify tests/integration/test_notifications_api.py to: Implement user notification API with proper testing coverage",
+        "risk": "medium",
+        "evidence_refs": [
+          "intent://intent_example_medium_risk/scope/targets/files/tests/integration/test_notifications_api.py",
+          "scan://file/tests/integration/test_notifications_api.py"
+        ],
+        "lock_intent": {
+          "mode": "exclusive",
+          "scope": "file",
+          "reason": "Exclusive lock needed for modification"
+        },
+        "estimated_impact": "moderate"
+      }
+    ],
+    "estimated_diffs": [
+      {
+        "file_path": "agentos/api/routes/notifications.py",
+        "diff_hash_placeholder": "placeholder_784883465a0203ea",
+        "intent_summary": "Changes to agentos/api/routes/notifications.py for: Implement user notification API with proper testing coverage",
+        "estimated_lines_changed": {
+          "added": 10,
+          "removed": 5,
+          "modified": 20
+        }
+      },
+      {
+        "file_path": "agentos/services/notification_service.py",
+        "diff_hash_placeholder": "placeholder_0f4e5488a5dabc41",
+        "intent_summary": "Changes to agentos/services/notification_service.py for: Implement user notification API with proper testing coverage",
+        "estimated_lines_changed": {
+          "added": 10,
+          "removed": 5,
+          "modified": 20
+        }
+      },
+      {
+        "file_path": "agentos/models/notification.py",
+        "diff_hash_placeholder": "placeholder_8d17ff4f5ba85dab",
+        "intent_summary": "Changes to agentos/models/notification.py for: Implement user notification API with proper testing coverage",
+        "estimated_lines_changed": {
+          "added": 10,
+          "removed": 5,
+          "modified": 20
+        }
+      },
+      {
+        "file_path": "tests/unit/test_notification_service.py",
+        "diff_hash_placeholder": "placeholder_5991cfeb7c4f3db5",
+        "intent_summary": "Changes to tests/unit/test_notification_service.py for: Implement user notification API with proper testing coverage",
+        "estimated_lines_changed": {
+          "added": 10,
+          "removed": 5,
+          "modified": 20
+        }
+      },
+      {
+        "file_path": "tests/integration/test_notifications_api.py",
+        "diff_hash_placeholder": "placeholder_e6cc36eb87e546af",
+        "intent_summary": "Changes to tests/integration/test_notifications_api.py for: Implement user notification API with proper testing coverage",
+        "estimated_lines_changed": {
+          "added": 10,
+          "removed": 5,
+          "modified": 20
+        }
+      }
+    ],
+    "constraints": {
+      "no_exec": true,
+      "no_fs_write": true,
+      "no_fabrication": true
+    },
+    "unknowns": [],
+    "checksum": "b0d526a99fcc2c0f2dfa453aef8cfac2c21b1ea375ce903516e411930e2abaf8"
+  },
+  "commit_plan": {
+    "plan_id": "commitplan_1c21abd88d385fd5",
+    "schema_version": "0.10.0",
+    "intent_id": "intent_example_medium_risk",
+    "created_at": "2026-01-25T10:21:08.877462Z",
+    "commits": [
+      {
+        "commit_id": "commit_0001",
+        "title": "feat(agentos): update 3 file(s)",
+        "scope": "agentos",
+        "files": [
+          "agentos/api/routes/notifications.py",
+          "agentos/services/notification_service.py",
+          "agentos/models/notification.py"
+        ],
+        "rationale": "Grouped 3 files from agentos directory",
+        "depends_on": [],
+        "risk": "medium",
+        "evidence_refs": [
+          "intent://intent_example_medium_risk/scope/targets/files/agentos/api/routes/notifications.py",
+          "scan://file/agentos/api/routes/notifications.py",
+          "intent://intent_example_medium_risk/scope/targets/files/agentos/services/notification_service.py",
+          "scan://file/agentos/services/notification_service.py",
+          "api_spec://notifications_endpoint",
+          "design://notification_service_spec",
+          "intent://intent_example_medium_risk/scope/targets/files/agentos/models/notification.py",
+          "scan://file/agentos/models/notification.py"
+        ],
+        "rollback_strategy": "forward_fix",
+        "estimated_review_time": "thorough",
+        "tags": [
+          "refactor"
+        ]
+      },
+      {
+        "commit_id": "commit_0002",
+        "title": "feat(tests): update 2 file(s)",
+        "scope": "tests",
+        "files": [
+          "tests/unit/test_notification_service.py",
+          "tests/integration/test_notifications_api.py"
+        ],
+        "rationale": "Grouped 2 files from tests directory",
+        "depends_on": [
+          "commit_0001"
+        ],
+        "risk": "medium",
+        "evidence_refs": [
+          "intent://intent_example_medium_risk/scope/targets/files/tests/integration/test_notifications_api.py",
+          "scan://file/tests/unit/test_notification_service.py",
+          "intent://intent_example_medium_risk/scope/targets/files/tests/unit/test_notification_service.py",
+          "scan://file/tests/integration/test_notifications_api.py"
+        ],
+        "rollback_strategy": "forward_fix",
+        "estimated_review_time": "thorough",
+        "tags": [
+          "tests"
+        ]
+      }
+    ],
+    "rules_applied": [],
+    "metadata": {
+      "total_files": 5,
+      "max_files_per_commit": 3,
+      "respects_max_commits_budget": true,
+      "commit_dag_depth": 2
+    },
+    "freeze_checksum": "c9f6344fca4748fae1fa941b86cffbc0eb536cf35fecd3d3f94a28d2bdf973f3"
+  },
+  "review_pack_stub": {
+    "risk_summary": {
+      "dominant_risk": "medium",
+      "risk_factors": [
+        "New API endpoint exposed to users",
+        "Database schema changes possible",
+        "Integration with existing systems"
+      ],
+      "mitigation_notes": [
+        "Single reviewer approval required",
+        "Test in staging environment",
+        "Have rollback plan ready"
+      ]
+    },
+    "requires_review": [
+      "architecture",
+      "release"
+    ],
+    "evidence_coverage": {
+      "total_nodes": 10,
+      "nodes_with_evidence": 10,
+      "coverage_percentage": 100.0,
+      "gaps": []
+    },
+    "estimated_review_time": "thorough"
+  },
+  "audit_log": [
+    {
+      "timestamp": "2026-01-25T10:21:08.877177Z",
+      "decision_type": "graph_structure",
+      "decision": "Starting dry execution planning",
+      "rationale": "Processing intent intent_example_medium_risk with risk level medium"
+    },
+    {
+      "timestamp": "2026-01-25T10:21:08.877317Z",
+      "decision_type": "graph_structure",
+      "decision": "Built execution graph with 10 nodes",
+      "rationale": "Graph structure derived from intent workflows and commands"
+    },
+    {
+      "timestamp": "2026-01-25T10:21:08.877428Z",
+      "decision_type": "file_inclusion",
+      "decision": "Planned changes for 5 files",
+      "rationale": "Files from intent scope.targets.files",
+      "evidence_refs": [
+        "scan://file/agentos/api/routes/notifications.py",
+        "doc://architecture/api_patterns.md",
+        "scan://file/tests/unit/test_notification_service.py",
+        "test://coverage_requirements",
+        "scan://file/tests/integration/test_notifications_api.py",
+        "scan://file/agentos/services/notification_service.py",
+        "api_spec://notifications_endpoint",
+        "design://notification_service_spec",
+        "doc://api/notifications_spec.md",
+        "scan://file/agentos/models/notification.py"
+      ]
+    },
+    {
+      "timestamp": "2026-01-25T10:21:08.877492Z",
+      "decision_type": "commit_grouping",
+      "decision": "Grouped into 2 commits",
+      "rationale": "Respects max_commits budget: True"
+    },
+    {
+      "timestamp": "2026-01-25T10:21:08.877517Z",
+      "decision_type": "risk_assessment",
+      "decision": "Dominant risk: medium",
+      "rationale": "Risk determined from intent and planned changes"
+    }
+  ],
+  "metadata": {
+    "dry_executor_version": "0.10.0",
+    "execution_mode": "dry_run",
+    "constraints_enforced": [
+      "DE1_no_exec",
+      "DE2_no_fs_write",
+      "DE3_no_fabrication",
+      "DE4_evidence_required",
+      "DE5_high_risk_review",
+      "DE6_freezable"
+    ],
+    "warnings": [],
+    "processing_time_ms": 0
+  },
+  "lineage": {
+    "derived_from": [
+      {
+        "type": "intent",
+        "id": "intent_example_medium_risk",
+        "checksum": "b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2"
+      }
+    ],
+    "generation_context": {
+      "environment": "dry_executor_v0.10"
+    }
+  },
+  "checksum": "685167ff114ab0946a5556427d27e6d6947496b38c08da7e21fe28b85ba1e83b"
+}

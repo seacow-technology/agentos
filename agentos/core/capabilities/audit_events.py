@@ -80,7 +80,7 @@ class ExtensionAuditEvent:
     action: str  # e.g., "/postman get collection-abc"
 
     # Timestamp with default
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=utc_now)
 
     # Optional fields
     args_hash: Optional[str] = None  # SHA256 of arguments (for privacy)

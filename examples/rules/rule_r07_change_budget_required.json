@@ -1,0 +1,83 @@
+{
+  "id": "rule_r07_change_budget_required",
+  "type": "rule",
+  "version": "0.9.0",
+  "status": "draft",
+  "metadata": {
+    "created_at": "2026-01-25T08:29:46.661920+00:00",
+    "checksum": "ed3f06b897d551eef64469cf3c645ba9436244c3cd336eaa95e5604f71f90327",
+    "is_root": true,
+    "tags": [
+      "budget",
+      "scope",
+      "resource-management"
+    ]
+  },
+  "spec": {
+    "id": "rule_r07_change_budget_required",
+    "type": "rule",
+    "title": "All plans must declare change budget",
+    "description": "Execution plans must declare max_files and max_commits to prevent unbounded changes. Budget enforcement is mandatory.",
+    "version": "0.9.0",
+    "status": "active",
+    "lineage": {
+      "introduced_in": "v0.9",
+      "derived_from": null,
+      "supersedes": []
+    },
+    "constraints": {
+      "execution": "forbidden"
+    },
+    "rule": {
+      "severity": "error",
+      "scope": {
+        "applies_to_types": [
+          "workflow"
+        ],
+        "applies_to_risk": [
+          "medium",
+          "high",
+          "critical"
+        ],
+        "applies_to_phases": [
+          "design",
+          "implementation"
+        ]
+      },
+      "when": {
+        "any_of": [
+          {
+            "field_missing": "resource_budget.max_files"
+          },
+          {
+            "field_missing": "resource_budget.max_commits"
+          },
+          {
+            "budget_unlimited": true
+          }
+        ]
+      },
+      "then": {
+        "decision": "deny",
+        "reason": "Plans must declare finite change budget to prevent scope creep",
+        "required_changes": [
+          "Add resource_budget.max_files (recommended: 10-50)",
+          "Add resource_budget.max_commits (recommended: 1-5)",
+          "Justify budget size in plan rationale"
+        ]
+      },
+      "evidence_required": [
+        "resource_budget",
+        "plan_metadata"
+      ]
+    },
+    "metadata": {
+      "tags": [
+        "budget",
+        "scope",
+        "resource-management"
+      ],
+      "author": "AgentOS Team"
+    }
+  }
+}

@@ -17,6 +17,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Any
 import json
+from agentos.core.time import utc_now
+
 
 logger = logging.getLogger(__name__)
 
@@ -63,11 +65,11 @@ class Lease:
 
     def is_expired(self) -> bool:
         """Check if lease has expired"""
-        return datetime.now(timezone.utc) >= self.lease_expires_at
+        return utc_now() >= self.lease_expires_at
 
     def time_until_expiry(self) -> timedelta:
         """Get time remaining until expiry"""
-        return self.lease_expires_at - datetime.now(timezone.utc)
+        return self.lease_expires_at - utc_now()
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""

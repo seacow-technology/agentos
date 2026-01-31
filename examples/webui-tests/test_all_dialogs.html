@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dialog Component Complete Test</title>
+    <link rel="stylesheet" href="http://127.0.0.1:8080/static/css/dialog.css?v=2">
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #f9fafb;
+        }
+        .test-section {
+            background: white;
+            padding: 24px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin-bottom: 30px;
+            color: #111827;
+        }
+        h2 {
+            font-size: 1.25rem;
+            margin-bottom: 16px;
+            color: #374151;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 8px 8px 8px 0;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            background: #2563EB;
+            color: white;
+            transition: all 0.15s;
+        }
+        button:hover {
+            background: #1D4ED8;
+        }
+        button.danger {
+            background: #DC2626;
+        }
+        button.danger:hover {
+            background: #B91C1C;
+        }
+        #result {
+            padding: 16px;
+            background: #F3F4F6;
+            border-radius: 6px;
+            min-height: 60px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #374151;
+        }
+        .feature-list {
+            margin-top: 12px;
+            padding-left: 24px;
+            color: #6B7280;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 Dialog Component 完整测试</h1>
+
+    <div class="test-section">
+        <h2>📢 Alert 测试</h2>
+        <p class="feature-list">
+            ✓ 单一确认按钮<br>
+            ✓ 支持多行文本<br>
+            ✓ Enter/Escape 快捷键
+        </p>
+        <button onclick="testAlert()">简单 Alert</button>
+        <button onclick="testAlertLong()">多行 Alert</button>
+        <button onclick="testAlertError()">错误 Alert</button>
+    </div>
+
+    <div class="test-section">
+        <h2>❓ Confirm 测试</h2>
+        <p class="feature-list">
+            ✓ 取消/确认按钮<br>
+            ✓ 危险操作红色按钮<br>
+            ✓ 返回 true/false
+        </p>
+        <button onclick="testConfirm()">普通 Confirm</button>
+        <button onclick="testConfirmDanger()" class="danger">危险 Confirm</button>
+        <button onclick="testConfirmCustom()">自定义按钮</button>
+    </div>
+
+    <div class="test-section">
+        <h2>✏️ Prompt 测试</h2>
+        <p class="feature-list">
+            ✓ 输入框自动聚焦<br>
+            ✓ 默认值预填充<br>
+            ✓ Placeholder 提示<br>
+            ✓ Enter 提交，Escape 取消
+        </p>
+        <button onclick="testPrompt()">简单 Prompt</button>
+        <button onclick="testPromptWithDefault()">带默认值 Prompt</button>
+        <button onclick="testPromptPath()">路径输入 Prompt</button>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 测试结果</h2>
+        <div id="result">等待测试...</div>
+    </div>
+
+    <script src="http://127.0.0.1:8080/static/js/components/Dialog.js?v=2"></script>
+    <script>
+        const resultDiv = document.getElementById('result');
+
+        // Alert Tests
+        async function testAlert() {
+            resultDiv.textContent = '测试中...';
+            await Dialog.alert('这是一个简单的提示消息', { title: '提示' });
+            resultDiv.textContent = '✅ Alert 已关闭';
+        }
+
+        async function testAlertLong() {
+            resultDiv.textContent = '测试中...';
+            await Dialog.alert(
+                '这是一个较长的消息。\n\n包含多行文本，\n可以显示换行符和格式化内容。\n\n测试一下效果如何。',
+                { title: '多行提示' }
+            );
+            resultDiv.textContent = '✅ 多行 Alert 已关闭';
+        }
+
+        async function testAlertError() {
+            resultDiv.textContent = '测试中...';
+            await Dialog.alert('操作失败：网络连接超时', { title: '错误' });
+            resultDiv.textContent = '✅ 错误 Alert 已关闭';
+        }
+
+        // Confirm Tests
+        async function testConfirm() {
+            resultDiv.textContent = '测试中...';
+            const result = await Dialog.confirm('确定要继续此操作吗？', {
+                title: '确认操作',
+                confirmText: '继续',
+                cancelText: '取消'
+            });
+            resultDiv.textContent = `Confirm 结果: ${result ? '✅ 用户点击了确认' : '❌ 用户点击了取消'}`;
+        }
+
+        async function testConfirmDanger() {
+            resultDiv.textContent = '测试中...';
+            const result = await Dialog.confirm(
+                '此操作将删除所有数据。\n\n确定要继续吗？',
+                {
+                    title: '危险操作',
+                    confirmText: '删除全部',
+                    danger: true
+                }
+            );
+            resultDiv.textContent = `危险 Confirm 结果: ${result ? '⚠️ 用户确认删除' : '✅ 用户取消了删除'}`;
+        }
+
+        async function testConfirmCustom() {
+            resultDiv.textContent = '测试中...';
+            const result = await Dialog.confirm('要保存更改吗？', {
+                title: '保存确认',
+                confirmText: '保存',
+                cancelText: '放弃'
+            });
+            resultDiv.textContent = `自定义 Confirm 结果: ${result ? '💾 保存' : '🗑️ 放弃'}`;
+        }
+
+        // Prompt Tests
+        async function testPrompt() {
+            resultDiv.textContent = '测试中...';
+            const result = await Dialog.prompt('请输入你的名字：', {
+                title: '输入姓名',
+                placeholder: '张三'
+            });
+            if (result === null) {
+                resultDiv.textContent = '❌ 用户取消了输入';
+            } else if (result === '') {
+                resultDiv.textContent = '⚠️ 用户输入为空';
+            } else {
+                resultDiv.textContent = `✅ 用户输入了: "${result}"`;
+            }
+        }
+
+        async function testPromptWithDefault() {
+            resultDiv.textContent = '测试中...';
+            const result = await Dialog.prompt('请输入会话标题（可选）：', {
+                title: '创建新会话',
+                defaultValue: 'New Session',
+                placeholder: 'My Session'
+            });
+            if (result === null) {
+                resultDiv.textContent = '❌ 用户取消了输入';
+            } else {
+                resultDiv.textContent = `✅ 会话标题: "${result}"`;
+            }
+        }
+
+        async function testPromptPath() {
+            resultDiv.textContent = '测试中...';
+            const result = await Dialog.prompt('输入目标文件路径（相对于项目根目录）：', {
+                title: '创建任务',
+                defaultValue: 'examples/demo.html',
+                placeholder: 'examples/my_file.html'
+            });
+            if (result === null) {
+                resultDiv.textContent = '❌ 用户取消了路径输入';
+            } else {
+                resultDiv.textContent = `✅ 文件路径: "${result}"`;
+            }
+        }
+    </script>
+</body>
+</html>

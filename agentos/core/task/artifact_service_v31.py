@@ -12,6 +12,8 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from agentos.core.time import utc_now, utc_now_iso
+
 
 try:
     from ulid import ULID
@@ -116,8 +118,8 @@ class ArtifactService:
                 pass  # Path validation already done above
 
         # Generate artifact ID
-        artifact_id = str(ULID.from_datetime(datetime.now(timezone.utc)))
-        now = datetime.now(timezone.utc).isoformat()
+        artifact_id = str(ULID.from_datetime(utc_now()))
+        now = utc_now_iso()
 
         # Define write function
         def _write_artifact(conn):
@@ -196,7 +198,9 @@ class ArtifactService:
 
             return TaskArtifact.from_db_row(dict(row))
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection (unless db_path provided)
+            if self.db_path:
+                conn.close()
 
     def list_artifacts(
         self,
@@ -241,7 +245,9 @@ class ArtifactService:
             rows = cursor.fetchall()
             return [TaskArtifact.from_db_row(dict(row)) for row in rows]
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection (unless db_path provided)
+            if self.db_path:
+                conn.close()
 
     def delete_artifact(self, artifact_id: str) -> bool:
         """Delete artifact record (doesn't delete actual file)

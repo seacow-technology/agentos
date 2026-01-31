@@ -1,0 +1,22 @@
+{
+  "id": "test-agent-001",
+  "type": "agent",
+  "version": "1.1.0",
+  "status": "draft",
+  "metadata": {
+    "created_at": "2026-01-25T11:00:00Z",
+    "checksum": "",
+    "is_root": false,
+    "parent_version": "1.0.0",
+    "change_reason": "Added new capability: execute",
+    "author": "test-user"
+  },
+  "spec": {
+    "name": "Test Agent",
+    "description": "A test agent for v0.5 validation - enhanced",
+    "capabilities": ["read", "write", "execute"],
+    "constraints": {
+      "max_tokens": 1000
+    }
+  }
+}

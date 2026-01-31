@@ -12,6 +12,8 @@ from rich.table import Table
 from agentos.core.memory import MemoryService
 from agentos.core.memory.decay import DecayEngine
 from agentos.core.verify.schema_validator import validate_memory_item
+from agentos.core.time import utc_now
+
 # MemoryGCJob imported lazily in gc command to avoid jobs/ dependency
 
 console = Console()
@@ -415,7 +417,7 @@ def memory_health(project_id: Optional[str]):
         if expires_at:
             try:
                 expires_dt = datetime.fromisoformat(expires_at.replace('Z', '+00:00'))
-                if expires_dt < datetime.now(timezone.utc):
+                if expires_dt < utc_now():
                     expired_count += 1
             except:
                 pass
@@ -475,7 +477,7 @@ def memory_health(project_id: Optional[str]):
     
     if last_gc:
         gc_time = datetime.fromisoformat(last_gc[0].replace('Z', '+00:00'))
-        days_ago = (datetime.now(timezone.utc) - gc_time).total_seconds() / 86400
+        days_ago = (utc_now() - gc_time).total_seconds() / 86400
         console.print(f"\n[bold]Last GC Run:[/bold] {int(days_ago)} days ago")
         console.print(f"  Decayed: {last_gc[1]}, Deleted: {last_gc[2]}, Promoted: {last_gc[3]}")
     else:

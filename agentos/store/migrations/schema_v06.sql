@@ -8,15 +8,15 @@
 
 CREATE TABLE IF NOT EXISTS tasks (
     task_id TEXT PRIMARY KEY,  -- ULID
-    session_id TEXT,  -- FK to task_sessions, optional
+    session_id TEXT,  -- FK to chat_sessions (formerly task_sessions), optional
     title TEXT,
     status TEXT DEFAULT 'created',  -- Free-form string, recommended: created/planning/executing/succeeded/failed/canceled/orphan
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by TEXT,  -- user/system identifier
     metadata TEXT,  -- JSON: {orphan: true, ...}
-    
-    FOREIGN KEY (session_id) REFERENCES task_sessions(session_id)
+
+    FOREIGN KEY (session_id) REFERENCES chat_sessions(session_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
@@ -52,17 +52,21 @@ CREATE INDEX IF NOT EXISTS idx_task_lineage_created ON task_lineage(created_at D
 -- ============================================
 -- Task Sessions: Conversation/Dialog Management
 -- ============================================
+-- DEPRECATED: task_sessions table has been merged into chat_sessions (schema v35)
+-- This table definition is kept for historical reference only.
+-- All session operations should now use chat_sessions table.
+-- See: agentos/store/migrations/schema_v35_merge_task_sessions.sql
 
-CREATE TABLE IF NOT EXISTS task_sessions (
-    session_id TEXT PRIMARY KEY,  -- ULID
-    channel TEXT,  -- cli|api|ui
-    metadata TEXT,  -- JSON: user info, context, etc.
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX IF NOT EXISTS idx_task_sessions_channel ON task_sessions(channel);
-CREATE INDEX IF NOT EXISTS idx_task_sessions_created ON task_sessions(created_at DESC);
+-- CREATE TABLE IF NOT EXISTS task_sessions (
+--     session_id TEXT PRIMARY KEY,  -- ULID
+--     channel TEXT,  -- cli|api|ui
+--     metadata TEXT,  -- JSON: user info, context, etc.
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- );
+--
+-- CREATE INDEX IF NOT EXISTS idx_task_sessions_channel ON task_sessions(channel);
+-- CREATE INDEX IF NOT EXISTS idx_task_sessions_created ON task_sessions(created_at DESC);
 
 -- ============================================
 -- Task Agents: Agent Invocation Records

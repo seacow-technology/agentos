@@ -13,6 +13,8 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 
 from .audit_logger import AuditLogger
+from agentos.core.time import utc_now_iso
+
 
 
 class RunTape:
@@ -52,7 +54,7 @@ class RunTape:
             details={
                 "step_type": step_type,
                 "params": params,
-                "started_at": datetime.now(timezone.utc).isoformat()
+                "started_at": utc_now_iso()
             }
         )
     
@@ -82,7 +84,7 @@ class RunTape:
                 "status": status,
                 "result": result,
                 "checksums": checksums,
-                "ended_at": datetime.now(timezone.utc).isoformat()
+                "ended_at": utc_now_iso()
             }
         )
         
@@ -146,7 +148,7 @@ class RunTape:
         
         snapshot = {
             "step_id": step_id,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": utc_now_iso(),
             "checksums": checksums,
             "file_count": len(checksums)
         }

@@ -9,12 +9,15 @@ PR-V6: Evidence Drawer (Trusted Progress Viewer)
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 from agentos.core.checkpoints.manager import CheckpointManager
 from agentos.core.checkpoints.evidence import EvidenceVerifier
 from agentos.core.checkpoints.models import EvidenceType, VerificationStatus
 from agentos.store import get_db_path
+from agentos.webui.api.time_format import iso_z
+from agentos.core.time import utc_now
+
 
 router = APIRouter()
 
@@ -133,7 +136,7 @@ async def get_checkpoint_evidence(checkpoint_id: str) -> CheckpointEvidenceRespo
                 verified=evidence.verified,
                 verification_status=evidence.verification_status.value if hasattr(evidence.verification_status, 'value') else str(evidence.verification_status),
                 verification_error=evidence.verification_error,
-                verified_at=evidence.verified_at.isoformat() if evidence.verified_at else None,
+                verified_at=iso_z(evidence.verified_at) if evidence.verified_at else None,
                 details=details
             ))
 
@@ -149,8 +152,8 @@ async def get_checkpoint_evidence(checkpoint_id: str) -> CheckpointEvidenceRespo
             status=overall_status,
             items=evidence_items,
             summary=summary,
-            created_at=checkpoint.created_at.isoformat() if checkpoint.created_at else datetime.utcnow().isoformat(),
-            last_verified_at=checkpoint.last_verified_at.isoformat() if checkpoint.last_verified_at else None
+            created_at=iso_z(checkpoint.created_at) if checkpoint.created_at else iso_z(utc_now()),
+            last_verified_at=iso_z(checkpoint.last_verified_at) if checkpoint.last_verified_at else None
         )
 
     except HTTPException:
@@ -207,7 +210,7 @@ def _build_evidence_details(evidence) -> Dict[str, Any]:
             "table": expected.get("table", ""),
             "where": expected.get("where", {}),
             "values": expected.get("values", {}),
-            "db_path": metadata.get("db_path", "store/registry.sqlite")
+            "db_path": metadata.get("db_path", "registry")  # Use registry_db.get_db() in verification
         }
 
     else:

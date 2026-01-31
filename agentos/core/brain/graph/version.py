@@ -24,8 +24,10 @@ TODO v0.2:
 
 from dataclasses import dataclass, field
 from typing import Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 import hashlib
+from agentos.core.time import utc_now, utc_now_iso
+
 
 
 @dataclass
@@ -67,7 +69,7 @@ class GraphVersion:
             str: 版本 ID
         """
         if not timestamp:
-            timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+            timestamp = utc_now().strftime("%Y%m%d%H%M%S")
         return f"v_{commit_hash[:8]}_{timestamp}"
 
     def to_dict(self) -> Dict[str, Any]:
@@ -123,7 +125,7 @@ class VersionManager:
             - 同一 commit_hash 应返回相同的 version_id（幂等性）
         """
         version_id = GraphVersion.generate_version_id(commit_hash)
-        created_at = datetime.utcnow().isoformat()
+        created_at = utc_now_iso()
 
         version = GraphVersion(
             version_id=version_id,

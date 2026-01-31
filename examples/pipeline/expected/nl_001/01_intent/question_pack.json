@@ -1,0 +1,17 @@
+{
+  "questions": [
+    {
+      "question_id": "q_missing_actions",
+      "type": "blocker",
+      "blocking_level": "critical",
+      "question_text": "No clear actions were detected in your input. Could you clarify what specific tasks or changes should be performed?",
+      "context": "The input text '请为 IntentBuilder 类添加完整的文档注释，包括：\n- 类级别的 docstring 说明其用途和 RED LINES\n- 每个公共方法的参数说明和返回值\n- 使用示例\n目标文件：agen...' does not contain clear action verbs or task descriptions.",
+      "evidence_refs": [
+        "nl_input:0:134"
+      ],
+      "default_strategy": "Generate a minimal documentation-only intent as fallback"
+    }
+  ],
+  "budget_used": 1,
+  "policy": "blockers_only"
+}

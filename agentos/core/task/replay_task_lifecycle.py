@@ -11,8 +11,9 @@ Features:
 
 Usage:
     from agentos.core.task.replay_task_lifecycle import TaskLifecycleReplayer
+    from agentos.core.storage.paths import component_db_path
 
-    replayer = TaskLifecycleReplayer('agentos.db')
+    replayer = TaskLifecycleReplayer(str(component_db_path('agentos')))
     result = replayer.replay_task('task-123')
     print(result['summary'])
 """
@@ -398,13 +399,18 @@ class TaskLifecycleReplayer:
 if __name__ == "__main__":
     import sys
     import argparse
+    from agentos.core.storage.paths import component_db_path
 
     parser = argparse.ArgumentParser(description='Replay task lifecycle')
     parser.add_argument('task_id', help='Task ID to replay')
-    parser.add_argument('--db', default='agentos.db', help='Database path')
+    parser.add_argument('--db', default=None, help='Database path (default: component_db_path("agentos"))')
     parser.add_argument('--format', choices=['text', 'json'], default='text', help='Output format')
 
     args = parser.parse_args()
+
+    # Use unified storage path if not specified
+    if args.db is None:
+        args.db = str(component_db_path("agentos"))
 
     try:
         replayer = TaskLifecycleReplayer(args.db)

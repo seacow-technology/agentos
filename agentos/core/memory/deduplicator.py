@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Optional
+from agentos.core.time import utc_now_iso
+
 
 
 class MemoryDeduplicator:
@@ -187,7 +189,7 @@ class MemoryDeduplicator:
             merged["last_used_at"] = newest_used
         
         # Update timestamp
-        merged["updated_at"] = datetime.now(timezone.utc).isoformat()
+        merged["updated_at"] = utc_now_iso()
         
         # Add metadata about merge
         if "metadata" not in merged:

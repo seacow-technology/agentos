@@ -1,0 +1,210 @@
+{
+  "id": "intent_example_high_risk",
+  "type": "execution_intent",
+  "title": "Add encrypted user credentials table with migration",
+  "description": "Create new database table for storing encrypted user credentials with proper migration scripts and rollback plan.",
+  "version": "0.9.1",
+  "status": "draft",
+  "created_at": "2026-01-25T12:00:00Z",
+  "lineage": {
+    "introduced_in": "0.9.1",
+    "derived_from": [],
+    "supersedes": []
+  },
+  "scope": {
+    "project_id": "agentos",
+    "repo_root": "/Users/pangge/PycharmProjects/AgentOS",
+    "targets": {
+      "files": [
+        "agentos/store/migrations/v010_add_user_credentials_table.sql",
+        "agentos/store/migrations/v010_rollback.sql",
+        "agentos/models/user_credentials.py",
+        "agentos/services/credentials_service.py",
+        "tests/integration/test_credentials_migration.py"
+      ],
+      "modules": [
+        "agentos.store",
+        "agentos.models",
+        "agentos.services"
+      ],
+      "areas": [
+        "backend",
+        "data",
+        "security"
+      ]
+    }
+  },
+  "objective": {
+    "goal": "Add secure user credentials storage with proper encryption and migration",
+    "success_criteria": [
+      "Migration script creates credentials table with proper schema",
+      "Encryption keys properly managed",
+      "Rollback script tested and verified",
+      "Service layer implements secure CRUD operations",
+      "Integration tests verify migration and rollback"
+    ],
+    "non_goals": [
+      "Migrate existing user data",
+      "Change authentication flow",
+      "Add new credential types"
+    ]
+  },
+  "selected_workflows": [
+    {
+      "workflow_id": "database_migration_workflow",
+      "phases": [
+        "design",
+        "implementation",
+        "validation",
+        "review",
+        "release"
+      ],
+      "reason": "Critical database change requires full migration workflow"
+    }
+  ],
+  "selected_agents": [
+    {
+      "agent_id": "database_engineer",
+      "role": "implementer",
+      "responsibilities": [
+        "Write migration and rollback scripts",
+        "Define table schema with proper constraints",
+        "Test migration on staging database"
+      ]
+    },
+    {
+      "agent_id": "security_engineer",
+      "role": "reviewer",
+      "responsibilities": [
+        "Review encryption implementation",
+        "Verify key management",
+        "Audit security controls"
+      ]
+    },
+    {
+      "agent_id": "sre_engineer",
+      "role": "validator",
+      "responsibilities": [
+        "Test rollback procedures",
+        "Verify backup strategies",
+        "Plan deployment timeline"
+      ]
+    }
+  ],
+  "planned_commands": [
+    {
+      "command_id": "create_migration_script",
+      "intent": "Create forward migration SQL script",
+      "effects": [
+        "write",
+        "data"
+      ],
+      "risk_level": "high",
+      "evidence_refs": [
+        "scan://file/agentos/store/migrations/v010_add_user_credentials_table.sql",
+        "doc://db_schema/credentials_table_spec"
+      ]
+    },
+    {
+      "command_id": "create_rollback_script",
+      "intent": "Create rollback migration SQL script",
+      "effects": [
+        "write",
+        "data"
+      ],
+      "risk_level": "critical",
+      "evidence_refs": [
+        "scan://file/agentos/store/migrations/v010_rollback.sql",
+        "doc://operations/rollback_procedures"
+      ]
+    },
+    {
+      "command_id": "implement_model",
+      "intent": "Create ORM model for credentials table",
+      "effects": [
+        "write"
+      ],
+      "risk_level": "medium",
+      "evidence_refs": [
+        "scan://file/agentos/models/user_credentials.py"
+      ]
+    },
+    {
+      "command_id": "implement_service",
+      "intent": "Implement credentials service with encryption",
+      "effects": [
+        "write",
+        "security"
+      ],
+      "risk_level": "high",
+      "evidence_refs": [
+        "scan://file/agentos/services/credentials_service.py",
+        "doc://security/encryption_standards"
+      ]
+    },
+    {
+      "command_id": "write_migration_tests",
+      "intent": "Write integration tests for migration",
+      "effects": [
+        "write"
+      ],
+      "risk_level": "medium",
+      "evidence_refs": [
+        "scan://file/tests/integration/test_credentials_migration.py"
+      ]
+    }
+  ],
+  "interaction": {
+    "mode": "interactive",
+    "question_budget": 10,
+    "question_policy": "blockers_only"
+  },
+  "risk": {
+    "overall": "high",
+    "drivers": [
+      "Database schema change (irreversible without proper rollback)",
+      "Sensitive user credentials storage",
+      "Encryption key management required",
+      "Production data at risk if migration fails"
+    ],
+    "requires_review": [
+      "security",
+      "data",
+      "architecture",
+      "release",
+      "compliance"
+    ]
+  },
+  "budgets": {
+    "max_files": 20,
+    "max_commits": 3,
+    "max_tokens": 300000,
+    "max_cost_usd": 20.0
+  },
+  "evidence_refs": [
+    "doc://db_schema/credentials_table_spec",
+    "doc://security/encryption_standards",
+    "doc://operations/migration_playbook",
+    "doc://operations/rollback_procedures",
+    "threat_model://credentials_storage"
+  ],
+  "constraints": {
+    "execution": "forbidden",
+    "no_fabrication": true,
+    "registry_only": true,
+    "lock_scope": {
+      "mode": "files",
+      "paths": [
+        "agentos/store/migrations/v010_add_user_credentials_table.sql",
+        "agentos/store/migrations/v010_rollback.sql",
+        "agentos/models/user_credentials.py",
+        "agentos/services/credentials_service.py"
+      ]
+    }
+  },
+  "audit": {
+    "created_by": "human_operator",
+    "source": "human",
+    "checksum": "c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2"
+  }
+}

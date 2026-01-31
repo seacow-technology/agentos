@@ -1,0 +1,186 @@
+/* Channels View Styles */
+
+.channels-view {
+    padding: 24px;
+}
+
+.channels-section {
+    margin-bottom: 48px;
+}
+
+.channels-section .section-header {
+    margin-bottom: 24px;
+}
+
+.channels-section .section-header h2 {
+    margin: 0 0 8px 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.channels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+}
+
+.channel-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: all 0.2s;
+}
+
+.channel-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.channel-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.channel-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.channel-icon .material-icons {
+    font-size: 28px;
+    color: white;
+}
+
+.channel-badges {
+    display: flex;
+    gap: 4px;
+}
+
+.badge-official {
+    background: var(--primary-bg);
+    color: var(--primary-color);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-verified {
+    background: var(--success-bg);
+    color: var(--success-color);
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+}
+
+.channel-card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.channel-card-body h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.channel-description {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.5;
+    flex: 1;
+}
+
+.channel-meta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.difficulty {
+    text-transform: capitalize;
+    font-weight: 500;
+}
+
+.difficulty-easy {
+    color: var(--success-color);
+}
+
+.difficulty-medium {
+    color: var(--warning-color);
+}
+
+.difficulty-hard {
+    color: var(--error-color);
+}
+
+.channel-capabilities {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.capability-tag {
+    padding: 4px 8px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.channel-card-footer {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-setup-channel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 16px;
+}
+
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 64px 24px;
+    color: var(--text-secondary);
+}
+
+.empty-state p {
+    margin: 12px 0 0 0;
+    font-size: 16px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .channels-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -514,12 +514,18 @@ class BrainDashboardView {
 
 // Global action handlers
 window.buildBrainIndex = async function() {
-    if (!confirm('Rebuild BrainOS index? This may take a few minutes.')) {
+    const confirmed = await Dialog.confirm('Rebuild BrainOS index? This may take a few minutes.', {
+        title: 'Rebuild Index',
+        confirmText: 'Rebuild'
+    });
+
+    if (!confirmed) {
         return;
     }
 
     try {
-        const response = await fetch('/api/brain/build', {
+        // CSRF Fix: Use fetchWithCSRF for protected endpoint
+        const response = await window.fetchWithCSRF('/api/brain/build', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ force: false })
@@ -528,19 +534,19 @@ window.buildBrainIndex = async function() {
         const result = await response.json();
 
         if (result.ok) {
-            alert('Index build started successfully!');
+            Dialog.alert('Index build started successfully!', { title: 'Build Started' });
             // Reload dashboard after a few seconds
             setTimeout(() => loadView('brain-dashboard'), 3000);
         } else {
-            alert(`Build failed: ${result.error}`);
+            Dialog.alert(`Build failed: ${result.error}`, { title: 'Build Error' });
         }
     } catch (error) {
         console.error('Build failed:', error);
-        alert('Build failed: ' + error.message);
+        Dialog.alert('Build failed: ' + error.message, { title: 'Build Error' });
     }
 };
 
 window.viewGoldenQueries = function() {
     // TODO: Implement golden queries view
-    alert('Golden Queries view coming soon!');
+    Dialog.alert('Golden Queries view coming soon!', { title: 'Coming Soon' });
 };

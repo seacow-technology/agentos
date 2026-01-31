@@ -27,7 +27,8 @@ def get_stats(db_path: str) -> Dict[str, Any]:
           - duration_ms: Build duration in milliseconds
 
     Example:
-        >>> stats = get_stats('./brainos.db')
+        >>> from agentos.core.db import registry_db
+        >>> stats = get_stats(registry_db._get_db_path())
         >>> print(f"Entities: {stats['entities']}")
         >>> print(f"Last build: {stats['last_build']['graph_version']}")
     """

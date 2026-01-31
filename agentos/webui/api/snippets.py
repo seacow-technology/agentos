@@ -17,6 +17,7 @@ import uuid
 import json
 
 from agentos.store import get_db
+from agentos.core.time import utc_now
 from agentos.core.audit import (
     log_audit_event,
     SNIPPET_USED_IN_PREVIEW,
@@ -121,7 +122,7 @@ async def create_snippet(req: CreateSnippetRequest) -> SnippetDetail:
 
     try:
         snippet_id = str(uuid.uuid4())
-        now = int(datetime.now(timezone.utc).timestamp())
+        now = int(utc_now().timestamp())
 
         # Generate default title if not provided
         title = req.title or f"{req.language} snippet {datetime.now().strftime('%Y-%m-%d')}"
@@ -169,8 +170,7 @@ async def create_snippet(req: CreateSnippetRequest) -> SnippetDetail:
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to create snippet: {str(e)}")
-    finally:
-        conn.close()
+        # Do NOT close: get_db() returns shared thread-local connection
 
 
 @router.get("")
@@ -261,8 +261,7 @@ async def list_snippets(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to search snippets: {str(e)}")
-    finally:
-        conn.close()
+        # Do NOT close: get_db() returns shared thread-local connection
 
 
 @router.get("/{snippet_id}")
@@ -313,8 +312,11 @@ async def get_snippet(snippet_id: str) -> SnippetDetail:
             usage=row["usage"],
         )
 
-    finally:
-        conn.close()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get snippet: {str(e)}")
+        # Do NOT close: get_db() returns shared thread-local connection
 
 
 @router.patch("/{snippet_id}")
@@ -338,7 +340,7 @@ async def update_snippet(snippet_id: str, req: UpdateSnippetRequest) -> SnippetD
         if not cursor.fetchone():
             raise HTTPException(status_code=404, detail="Snippet not found")
 
-        now = int(datetime.now(timezone.utc).timestamp())
+        now = int(utc_now().timestamp())
 
         # Update snippet fields
         updates = []
@@ -406,8 +408,7 @@ async def update_snippet(snippet_id: str, req: UpdateSnippetRequest) -> SnippetD
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to update snippet: {str(e)}")
-    finally:
-        conn.close()
+        # Do NOT close: get_db() returns shared thread-local connection
 
 
 @router.delete("/{snippet_id}")
@@ -442,8 +443,7 @@ async def delete_snippet(snippet_id: str) -> Dict[str, str]:
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to delete snippet: {str(e)}")
-    finally:
-        conn.close()
+        # Do NOT close: get_db() returns shared thread-local connection
 
 
 @router.post("/{snippet_id}/explain")
@@ -517,9 +517,12 @@ Please provide:
 """
 
         return ExplainPromptResponse(prompt=prompt)
+        # Do NOT close: get_db() returns shared thread-local connection
 
-    finally:
-        conn.close()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to explain snippet: {str(e)}")
 
 
 @router.post("/{snippet_id}/preview")
@@ -607,7 +610,7 @@ async def create_snippet_preview(snippet_id: str, req: CreatePreviewRequest, req
             SET updated_at = ?
             WHERE id = ?
             """,
-            (int(datetime.now(timezone.utc).timestamp()), snippet_id)
+            (int(utc_now().timestamp()), snippet_id)
         )
 
         conn.commit()
@@ -639,8 +642,7 @@ async def create_snippet_preview(snippet_id: str, req: CreatePreviewRequest, req
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to create preview: {str(e)}")
-    finally:
-        conn.close()
+        # Do NOT close: get_db() returns shared thread-local connection
 
 
 @router.post("/{snippet_id}/materialize")
@@ -734,5 +736,4 @@ async def materialize_snippet(snippet_id: str, req: MaterializeRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to materialize snippet: {str(e)}")
-    finally:
-        conn.close()
+        # Do NOT close: get_db() returns shared thread-local connection

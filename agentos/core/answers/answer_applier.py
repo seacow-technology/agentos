@@ -11,6 +11,8 @@ import json
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
+from agentos.core.time import utc_now_iso
+
 
 
 class AnswerApplier:
@@ -47,7 +49,7 @@ class AnswerApplier:
         enriched_intent["lineage"]["answer_pack_applied"] = {
             "answer_pack_id": answer_pack.get("answer_pack_id"),
             "question_pack_id": answer_pack.get("question_pack_id"),
-            "applied_at": datetime.now(timezone.utc).isoformat(),
+            "applied_at": utc_now_iso(),
             "answer_count": len(answer_pack.get("answers", []))
         }
 
@@ -133,7 +135,7 @@ class AnswerApplier:
         resume_context = {
             "resume_id": f"resume_{answer_pack.get('answer_pack_id', 'unknown')}",
             "original_run_dir": str(pipeline_run_dir),
-            "resumed_at": datetime.now(timezone.utc).isoformat(),
+            "resumed_at": utc_now_iso(),
             "enriched_intent": enriched_intent,
             "answer_pack_id": answer_pack.get("answer_pack_id"),
             "question_pack_id": answer_pack.get("question_pack_id"),
@@ -213,7 +215,7 @@ class AnswerApplier:
 
         audit_event = {
             "event_type": "answer_pack_applied",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": utc_now_iso(),
             "answer_pack_id": answer_pack.get("answer_pack_id"),
             "question_pack_id": answer_pack.get("question_pack_id"),
             "answer_count": len(answer_pack.get("answers", [])),

@@ -11,6 +11,8 @@ from agentos.core.generator import AgentSpecBuilder
 from agentos.core.scanner import ScannerPipeline
 from agentos.core.verify import MarkdownRenderer, validate_factpack
 from agentos.store import get_db
+from agentos.core.time import utc_now_iso
+
 
 console = Console()
 
@@ -84,7 +86,7 @@ class Orchestrator:
             cursor = db.cursor()
             
             # Find QUEUED tasks without active lease
-            now = datetime.now(timezone.utc).isoformat()
+            now = utc_now_iso()
             rows = cursor.execute("""
                 SELECT id, project_id, type
                 FROM runs

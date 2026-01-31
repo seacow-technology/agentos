@@ -16,6 +16,8 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone, timedelta
 from enum import Enum
 import logging
+from agentos.core.time import utc_now, utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -175,7 +177,7 @@ class RetryStrategyManager:
         delay_seconds = min(delay_seconds, retry_config.max_delay_seconds)
 
         # Calculate next retry time
-        now = datetime.now(timezone.utc)
+        now = utc_now()
         next_retry = now + timedelta(seconds=delay_seconds)
 
         return next_retry.isoformat()
@@ -197,7 +199,7 @@ class RetryStrategyManager:
         Returns:
             Updated retry state
         """
-        now = datetime.now(timezone.utc).isoformat()
+        now = utc_now_iso()
 
         # Increment retry count
         retry_state.retry_count += 1

@@ -11,6 +11,8 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from agentos.core.time import utc_now, utc_now_iso
+
 
 try:
     from ulid import ULID
@@ -89,8 +91,8 @@ class TaskSpecService:
             TaskNotFoundError: If task doesn't exist
         """
         # Generate spec ID
-        spec_id = str(ULID.from_datetime(datetime.now(timezone.utc)))
-        now = datetime.now(timezone.utc).isoformat()
+        spec_id = str(ULID.from_datetime(utc_now()))
+        now = utc_now_iso()
 
         if acceptance_criteria is None:
             acceptance_criteria = []
@@ -167,7 +169,7 @@ class TaskSpecService:
             SpecAlreadyFrozenError: If spec already frozen
             SpecIncompleteError: If spec missing required fields
         """
-        now = datetime.now(timezone.utc).isoformat()
+        now = utc_now_iso()
 
         # Define write function
         def _write_freeze(conn):
@@ -213,7 +215,7 @@ class TaskSpecService:
 
             # Create new spec version (frozen)
             new_version = spec_row["spec_version"] + 1
-            new_spec_id = str(ULID.from_datetime(datetime.now(timezone.utc)))
+            new_spec_id = str(ULID.from_datetime(utc_now()))
 
             cursor.execute(
                 """
@@ -285,7 +287,9 @@ class TaskSpecService:
             if row:
                 return TaskSpec.from_db_row(dict(row))
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection (unless db_path provided)
+            if self.db_path:
+                conn.close()
 
     def get_spec(self, task_id: str, version: int = None) -> Optional[TaskSpec]:
         """Get spec by task_id and optional version
@@ -329,7 +333,9 @@ class TaskSpecService:
 
             return TaskSpec.from_db_row(dict(row))
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection (unless db_path provided)
+            if self.db_path:
+                conn.close()
 
     def list_spec_versions(self, task_id: str) -> List[TaskSpec]:
         """Get all spec versions for a task (history)
@@ -355,7 +361,9 @@ class TaskSpecService:
             rows = cursor.fetchall()
             return [TaskSpec.from_db_row(dict(row)) for row in rows]
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection (unless db_path provided)
+            if self.db_path:
+                conn.close()
 
     # =========================================================================
     # SPEC VALIDATION

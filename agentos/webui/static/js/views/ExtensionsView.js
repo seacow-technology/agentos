@@ -12,6 +12,7 @@
  * - View extension logs
  *
  * Part of PR-C: WebUI Extensions Management
+ * Security: Task #36 - CSRF protection for all state-changing operations
  */
 
 class ExtensionsView {
@@ -20,6 +21,8 @@ class ExtensionsView {
         this.selectedExtensionId = null;
         this.pollIntervalId = null;
         this.activeInstalls = new Set();
+        this.selectedExtensions = new Set(); // For batch operations (L-19)
+        this.bulkModeActive = false; // Track if bulk selection mode is active
     }
 
     /**
@@ -29,6 +32,7 @@ class ExtensionsView {
         this.container = container;
         await this.renderExtensionsList();
         this.startPollingInstalls();
+        this.initKeyboardShortcuts();
     }
 
     /**
@@ -39,6 +43,7 @@ class ExtensionsView {
             clearInterval(this.pollIntervalId);
             this.pollIntervalId = null;
         }
+        this.removeKeyboardShortcuts();
     }
 
     /**
@@ -65,6 +70,46 @@ class ExtensionsView {
                     </div>
                 </div>
 
+                <!-- L-20: Search Box -->
+                <div class="extensions-search-bar" style="padding: 12px 24px; background: white; border-bottom: 1px solid #e5e7eb;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="flex: 1; position: relative;">
+                            <span class="material-icons" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 20px;">search</span>
+                            <input
+                                type="text"
+                                id="extensionSearchInput"
+                                placeholder="Search extensions... (Ctrl+K)"
+                                style="width: 100%; padding: 10px 12px 10px 42px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;"
+                            />
+                        </div>
+                        <button class="btn-secondary" id="btnToggleBulkMode" style="white-space: nowrap;">
+                            <span class="material-icons md-18">checklist</span> Bulk Select
+                        </button>
+                    </div>
+                </div>
+
+                <!-- L-19: Bulk Operations Toolbar (hidden by default) -->
+                <div id="bulkOperationsToolbar" class="bulk-operations-toolbar" style="display: none;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <span id="selectedCount" style="font-weight: 600; color: #374151;">0 selected</span>
+                            <button class="btn-link" id="btnSelectAll">Select All</button>
+                            <button class="btn-link" id="btnClearSelection">Clear</button>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-secondary" id="btnBulkEnable">
+                                <span class="material-icons md-18">check_circle</span> Enable Selected
+                            </button>
+                            <button class="btn-secondary" id="btnBulkDisable">
+                                <span class="material-icons md-18">cancel</span> Disable Selected
+                            </button>
+                            <button class="btn-delete" id="btnBulkUninstall">
+                                <span class="material-icons md-18">delete</span> Uninstall Selected
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="installProgressContainer" class="filter-section" style="display: none;"></div>
 
                 <div class="table-section">
@@ -82,6 +127,18 @@ class ExtensionsView {
         document.getElementById('btnCreateTemplate').addEventListener('click', () => this.showTemplateWizard());
         document.getElementById('btnInstallUpload').addEventListener('click', () => this.showInstallUploadModal());
         document.getElementById('btnInstallURL').addEventListener('click', () => this.showInstallURLModal());
+
+        // L-20: Search functionality
+        const searchInput = document.getElementById('extensionSearchInput');
+        searchInput.addEventListener('input', (e) => this.filterExtensions(e.target.value));
+
+        // L-19: Bulk operations
+        document.getElementById('btnToggleBulkMode').addEventListener('click', () => this.toggleBulkMode());
+        document.getElementById('btnSelectAll').addEventListener('click', () => this.selectAllExtensions());
+        document.getElementById('btnClearSelection').addEventListener('click', () => this.clearSelection());
+        document.getElementById('btnBulkEnable').addEventListener('click', () => this.bulkEnableExtensions());
+        document.getElementById('btnBulkDisable').addEventListener('click', () => this.bulkDisableExtensions());
+        document.getElementById('btnBulkUninstall').addEventListener('click', () => this.bulkUninstallExtensions());
 
         // Load extensions
         await this.loadExtensions();
@@ -125,7 +182,18 @@ class ExtensionsView {
 
                 // Attach capability tag copy listeners
                 this.attachCapabilityTagCopy(ext);
+
+                // Attach governance link listeners
+                this.attachGovernanceLink(ext);
             });
+
+            // L-18: Attach rating handlers
+            this.attachRatingHandlers();
+
+            // L-19: Attach checkbox handlers
+            if (this.bulkModeActive) {
+                this.attachCheckboxHandlers();
+            }
 
             // Attach ExplainButton handlers
             if (typeof ExplainButton !== 'undefined') {
@@ -172,25 +240,63 @@ class ExtensionsView {
         // Create Explain button for this extension
         const explainBtn = new ExplainButton('extension', ext.name, ext.name);
 
+        // L-18: Get rating from localStorage
+        const rating = this.getExtensionRating(ext.id);
+
+        // L-19: Checkbox for bulk selection
+        const checkboxHtml = this.bulkModeActive ? `
+            <div class="extension-checkbox" style="position: absolute; top: 12px; left: 12px; z-index: 10;">
+                <input type="checkbox" class="bulk-select-checkbox" data-ext-id="${ext.id}"
+                       ${this.selectedExtensions.has(ext.id) ? 'checked' : ''}
+                       style="width: 20px; height: 20px; cursor: pointer;">
+            </div>
+        ` : '';
+
         return `
-            <div class="extension-card ${disabledClass}" id="ext-card-${ext.id}">
+            <div class="extension-card ${disabledClass}" id="ext-card-${ext.id}" data-ext-name="${ext.name.toLowerCase()}" data-ext-description="${(ext.description || '').toLowerCase()}" style="position: relative;">
+                ${checkboxHtml}
                 <div class="extension-card-header">
-                    <img src="${iconUrl}" alt="${ext.name}" class="extension-icon" onerror="this.src='/static/icons/extension-default.svg'">
+                    <img src="${iconUrl}" alt="${ext.name}" class="extension-icon" onerror="this.src='/static/icons/extension-default.svg'"
+                         style="cursor: pointer;" onclick="window.extensionsView.showExtensionDetail('${ext.id}')">
                     <div class="extension-info">
                         <div class="extension-title-row">
-                            <h3>${ext.name}</h3>
+                            <h3 style="cursor: pointer;" onclick="window.extensionsView.showExtensionDetail('${ext.id}')">${ext.name}</h3>
                             ${explainBtn.render()}
                         </div>
                         <div class="extension-meta">
                             <span class="extension-version">v${ext.version}</span>
                             <span class="extension-status ${statusClass}">${ext.status}</span>
+                            ${ext.runtime ? `
+                                <span class="runtime-badge runtime-${ext.runtime}" title="Runtime: ${ext.runtime.toUpperCase()} ${ext.python_version || ''}">
+                                    <span class="material-icons md-14">code</span>
+                                    Python ${ext.python_version || '3.8'}
+                                </span>
+                            ` : ''}
+                            ${ext.adr_ext_002_compliant ? `
+                                <span class="compliance-badge" title="Complies with ADR-EXT-002: Python-only runtime policy">
+                                    <span class="material-icons md-14">verified</span>
+                                    ADR-EXT-002
+                                </span>
+                            ` : ext.runtime ? `
+                                <span class="compliance-badge non-compliant" title="Does not comply with ADR-EXT-002: May use external binaries">
+                                    <span class="material-icons md-14">warning</span>
+                                    Non-compliant
+                                </span>
+                            ` : ''}
                         </div>
                     </div>
                 </div>
                 <div class="extension-card-body">
                     <p class="extension-description">${ext.description || 'No description available'}</p>
+
+                    <!-- L-18: Rating Display -->
+                    <div class="extension-rating" style="margin-bottom: 12px;">
+                        ${this.renderStarRating(ext.id, rating)}
+                    </div>
+
                     ${capabilities ? `<div class="extension-capabilities">${capabilities}</div>` : ''}
                     ${permissions ? `<div class="extension-permissions">${permissions}</div>` : ''}
+                    ${this.renderGovernanceInfo(ext)}
                 </div>
                 <div class="extension-card-actions">
                     ${ext.enabled
@@ -199,6 +305,49 @@ class ExtensionsView {
                     }
                     <button class="btn-settings" data-action="config" data-ext-id="${ext.id}">Settings</button>
                     <button class="btn-delete" data-action="uninstall" data-ext-id="${ext.id}">Uninstall</button>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Render governance information for extension
+     */
+    renderGovernanceInfo(ext) {
+        // Check if extension has governance metadata
+        const trustTier = ext.trust_tier || ext.governance?.trust_tier;
+        const quotaStatus = ext.quota_status || ext.governance?.quota_status;
+
+        // If no governance info, return empty string (graceful degradation)
+        if (!trustTier && !quotaStatus) {
+            return '';
+        }
+
+        const trustBadgeClass = trustTier === 'T1' ? 'success' :
+                               trustTier === 'T2' ? 'warning' : 'error';
+        const quotaBadgeClass = quotaStatus === 'OK' ? 'success' :
+                               quotaStatus === 'WARNING' ? 'warning' : 'error';
+
+        return `
+            <div class="extension-governance" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+                <div style="font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Governance</div>
+                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                    ${trustTier ? `
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="font-size: 12px; color: #6b7280;">Trust Tier:</span>
+                            <span class="badge ${trustBadgeClass}" style="font-size: 11px;">${trustTier}</span>
+                        </div>
+                    ` : ''}
+                    ${quotaStatus ? `
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="font-size: 12px; color: #6b7280;">Quota:</span>
+                            <span class="badge ${quotaBadgeClass}" style="font-size: 11px;">${quotaStatus}</span>
+                        </div>
+                    ` : ''}
+                    <a href="#" class="governance-link" data-ext-id="${ext.id}"
+                       style="font-size: 12px; color: #3b82f6; text-decoration: none; margin-left: auto;">
+                        View Details →
+                    </a>
                 </div>
             </div>
         `;
@@ -270,7 +419,7 @@ class ExtensionsView {
                     await navigator.clipboard.writeText(command);
 
                     // Show success notification
-                    this.showNotification(`已复制: ${command}`, 'success');
+                    this.showNotification(`Copied: ${command}`, 'success');
 
                     // Visual feedback
                     const originalBg = tag.style.backgroundColor;
@@ -283,14 +432,38 @@ class ExtensionsView {
 
                 } catch (error) {
                     console.error('Failed to copy:', error);
-                    this.showNotification('复制失败', 'error');
+                    this.showNotification('Copy failed', 'error');
                 }
             });
         });
     }
 
     /**
-     * Show install from upload modal
+     * Attach governance link click handler
+     */
+    attachGovernanceLink(ext) {
+        const link = document.querySelector(`.governance-link[data-ext-id="${ext.id}"]`);
+        if (!link) return;
+
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Navigate to governance dashboard with extension filter
+            // For now, just navigate to governance dashboard
+            // In the future, could pass filter parameter
+            if (typeof updateNavigationActive === 'function') {
+                updateNavigationActive('governance-dashboard');
+                loadView('governance-dashboard');
+            } else {
+                // Fallback: direct link
+                window.location.hash = 'governance-dashboard';
+            }
+        });
+    }
+
+    /**
+     * Show install from upload modal (L-16: With drag-and-drop support)
      */
     showInstallUploadModal() {
         const modal = document.createElement('div');
@@ -303,20 +476,83 @@ class ExtensionsView {
                     <button class="modal-close" id="btnCloseUpload">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label>Select Extension Package</label>
-                        <input type="file" accept=".zip" id="zipFileInput">
-                        <div class="field-hint">Choose a ZIP file containing the extension package</div>
+                    <!-- L-16: Drag and Drop Area -->
+                    <div id="dropZone" class="drop-zone">
+                        <div class="drop-zone-content">
+                            <span class="material-icons" style="font-size: 48px; color: #9ca3af; margin-bottom: 12px;">cloud_upload</span>
+                            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #374151;">Drag and drop your extension here</h3>
+                            <p style="margin: 0 0 16px 0; font-size: 14px; color: #6b7280;">or</p>
+                            <label for="zipFileInput" class="btn-secondary" style="cursor: pointer; display: inline-block;">
+                                <span class="material-icons md-18">folder_open</span> Browse Files
+                            </label>
+                            <input type="file" accept=".zip" id="zipFileInput" style="display: none;">
+                            <p class="field-hint" style="margin-top: 12px;">Supports .zip files only</p>
+                            <div id="selectedFileName" style="margin-top: 12px; font-size: 14px; color: #10b981; font-weight: 500; display: none;"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn-secondary" id="btnCancelUpload">Cancel</button>
-                    <button class="btn-primary" id="btnConfirmUpload">Install</button>
+                    <button class="btn-primary" id="btnConfirmUpload" disabled>Install</button>
                 </div>
             </div>
         `;
 
         document.body.appendChild(modal);
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('zipFileInput');
+        const confirmBtn = document.getElementById('btnConfirmUpload');
+        const fileNameDisplay = document.getElementById('selectedFileName');
+        let selectedFile = null;
+
+        // L-16: Drag and drop handlers
+        const handleDragOver = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'copy';
+            dropZone.classList.add('drop-zone-active');
+        };
+
+        const handleDragLeave = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('drop-zone-active');
+        };
+
+        const handleDrop = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('drop-zone-active');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.name.endsWith('.zip')) {
+                    selectedFile = file;
+                    fileNameDisplay.textContent = `Selected: ${file.name}`;
+                    fileNameDisplay.style.display = 'block';
+                    confirmBtn.disabled = false;
+                } else {
+                    this.showNotification('Please select a ZIP file', 'error');
+                }
+            }
+        };
+
+        dropZone.addEventListener('dragover', handleDragOver);
+        dropZone.addEventListener('dragleave', handleDragLeave);
+        dropZone.addEventListener('drop', handleDrop);
+
+        // File input change handler
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                selectedFile = file;
+                fileNameDisplay.textContent = `Selected: ${file.name}`;
+                fileNameDisplay.style.display = 'block';
+                confirmBtn.disabled = false;
+            }
+        });
 
         const closeModal = () => {
             modal.remove();
@@ -325,16 +561,13 @@ class ExtensionsView {
         document.getElementById('btnCloseUpload').addEventListener('click', closeModal);
         document.getElementById('btnCancelUpload').addEventListener('click', closeModal);
         document.getElementById('btnConfirmUpload').addEventListener('click', async () => {
-            const fileInput = document.getElementById('zipFileInput');
-            const file = fileInput.files[0];
-
-            if (!file) {
+            if (!selectedFile) {
                 this.showNotification('Please select a ZIP file', 'error');
                 return;
             }
 
             closeModal();
-            await this.installFromUpload(file);
+            await this.installFromUpload(selectedFile);
         });
 
         // Close on background click
@@ -414,7 +647,7 @@ class ExtensionsView {
             const formData = new FormData();
             formData.append('file', file);
 
-            const response = await fetch('/api/extensions/install', {
+            const response = await fetchWithCSRF('/api/extensions/install', {
                 method: 'POST',
                 body: formData
             });
@@ -439,7 +672,7 @@ class ExtensionsView {
      */
     async installFromURL(url, sha256) {
         try {
-            const response = await fetch('/api/extensions/install-url', {
+            const response = await fetchWithCSRF('/api/extensions/install-url', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -600,7 +833,7 @@ class ExtensionsView {
      */
     async enableExtension(extensionId) {
         try {
-            const response = await fetch(`/api/extensions/${extensionId}/enable`, {
+            const response = await fetchWithCSRF(`/api/extensions/${extensionId}/enable`, {
                 method: 'POST'
             });
 
@@ -622,7 +855,7 @@ class ExtensionsView {
      */
     async disableExtension(extensionId) {
         try {
-            const response = await fetch(`/api/extensions/${extensionId}/disable`, {
+            const response = await fetchWithCSRF(`/api/extensions/${extensionId}/disable`, {
                 method: 'POST'
             });
 
@@ -690,7 +923,7 @@ class ExtensionsView {
             closeModal();
 
             try {
-                const response = await fetch(`/api/extensions/${extensionId}`, {
+                const response = await fetchWithCSRF(`/api/extensions/${extensionId}`, {
                     method: 'DELETE'
                 });
 
@@ -732,6 +965,60 @@ class ExtensionsView {
                             <div>
                                 <h1>${ext.name}</h1>
                                 <p>${ext.description || 'No description available'}</p>
+                            </div>
+                        </div>
+
+                        <!-- L-17: Screenshots -->
+                        ${ext.screenshots ? this.renderScreenshotCarousel(ext.screenshots) : ''}
+
+                        <div class="detail-section">
+                            <h3>Runtime Information</h3>
+                            <div class="runtime-info">
+                                <div class="info-item">
+                                    <label>Runtime Type:</label>
+                                    <span class="runtime-badge runtime-${ext.runtime || 'unknown'}">${ext.runtime || 'Unknown'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Python Version:</label>
+                                    <span>${ext.python_version || 'N/A'}</span>
+                                </div>
+                                ${ext.python_dependencies && ext.python_dependencies.length > 0 ? `
+                                    <div class="info-item">
+                                        <label>Python Dependencies:</label>
+                                        <div>
+                                            <ul class="dependencies-list">
+                                                ${ext.python_dependencies.map(dep => `<li><code>${dep}</code></li>`).join('')}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                ` : ''}
+                                <div class="info-item">
+                                    <label>External Binaries:</label>
+                                    <span class="${ext.has_external_bins ? 'text-warning' : 'text-success'}">
+                                        ${ext.has_external_bins
+                                            ? `⚠️ ${ext.external_bins_count} binary file(s) required`
+                                            : '✓ None (Python-only)'}
+                                    </span>
+                                </div>
+                                <div class="info-item">
+                                    <label>ADR-EXT-002 Compliance:</label>
+                                    ${ext.adr_ext_002_compliant ? `
+                                        <span class="compliance-badge">
+                                            <span class="material-icons md-18">verified</span>
+                                            Compliant
+                                        </span>
+                                    ` : `
+                                        <span class="compliance-badge non-compliant">
+                                            <span class="material-icons md-18">warning</span>
+                                            Non-compliant
+                                        </span>
+                                        ${ext.adr_ext_002_reason ? `
+                                            <div style="font-size: 12px; color: #ef4444; margin-top: 4px;">
+                                                ${ext.adr_ext_002_reason}
+                                            </div>
+                                        ` : ''}
+                                    `}
+                                </div>
                             </div>
                         </div>
 
@@ -852,7 +1139,7 @@ class ExtensionsView {
                 }
 
                 try {
-                    const saveResponse = await fetch(`/api/extensions/${extensionId}/config`, {
+                    const saveResponse = await fetchWithCSRF(`/api/extensions/${extensionId}/config`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json'
@@ -1123,6 +1410,25 @@ class ExtensionsView {
                 <div class="wizard-step">
                     <h3 style="margin-bottom: 1.5rem; color: #111827;">Basic Information</h3>
 
+                    <div class="policy-notice">
+                        <div class="policy-notice-icon">
+                            <span class="material-icons">info</span>
+                        </div>
+                        <div class="policy-notice-content">
+                            <h4>Python-Only Runtime Policy (ADR-EXT-002)</h4>
+                            <p>All AgentOS extensions must use <strong>Python runtime</strong> and cannot depend on external binary files. This policy ensures:</p>
+                            <ul>
+                                <li><strong>Security:</strong> All code is auditable and runs in a controlled environment</li>
+                                <li><strong>Cross-platform:</strong> Extensions work consistently on Linux, macOS, and Windows</li>
+                                <li><strong>Simplicity:</strong> No system-level installations or sudo permissions required</li>
+                            </ul>
+                            <p class="policy-note">
+                                <span class="material-icons md-16">lightbulb</span>
+                                The generated template will automatically include Python runtime configuration.
+                            </p>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label>Extension ID *</label>
                         <input type="text" id="extensionId" placeholder="tools.myext" value="${data.extension_id}">
@@ -1162,6 +1468,44 @@ class ExtensionsView {
                     <button class="btn-secondary" id="btnAddCapability" style="width: 100%; margin-top: 1rem;">
                         <span class="material-icons md-18">add</span> Add Capability
                     </button>
+
+                    <div class="help-text" style="margin-top: 24px; padding: 16px; background: #f9fafb; border-radius: 8px;">
+                        <h5 style="margin: 0 0 12px 0; color: #374151;">Python-Only Best Practices</h5>
+                        <div class="best-practices">
+                            <div class="practice-item">
+                                <span class="material-icons md-18 text-success">check_circle</span>
+                                <div>
+                                    <strong>Use Python packages from PyPI</strong>
+                                    <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
+                                        <code>requests</code>, <code>beautifulsoup4</code>, <code>pandas</code>, etc.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="practice-item">
+                                <span class="material-icons md-18 text-success">check_circle</span>
+                                <div>
+                                    <strong>Use Python standard library</strong>
+                                    <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
+                                        <code>json</code>, <code>urllib</code>, <code>os</code>, <code>pathlib</code>, etc.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="practice-item">
+                                <span class="material-icons md-18 text-danger">cancel</span>
+                                <div>
+                                    <strong>Don't use external binaries</strong>
+                                    <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
+                                        Avoid: <code>curl</code>, <code>jq</code>, <code>postman</code>, system tools
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="learn-more" style="margin-top: 12px; text-align: center;">
+                            <a href="#" onclick="window.open('/store/extensions/example.python-only/QUICKSTART.md', '_blank'); return false;" style="color: #2563eb; text-decoration: none;">
+                                View example.python-only for reference
+                            </a>
+                        </p>
+                    </div>
                 </div>
             `;
         } else if (step === 3) {
@@ -1403,7 +1747,7 @@ class ExtensionsView {
         try {
             this.showNotification('Generating template...', 'info');
 
-            const response = await fetch('/api/extensions/templates/generate', {
+            const response = await fetchWithCSRF('/api/extensions/templates/generate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1433,6 +1777,364 @@ class ExtensionsView {
             console.error('Failed to download template:', error);
             this.showNotification(`Failed to download template: ${error.message}`, 'error');
         }
+    }
+
+    // ============================================
+    // L-18: Rating System (localStorage-based)
+    // ============================================
+
+    /**
+     * Get extension rating from localStorage
+     */
+    getExtensionRating(extensionId) {
+        const ratings = JSON.parse(localStorage.getItem('extension_ratings') || '{}');
+        return ratings[extensionId] || 0;
+    }
+
+    /**
+     * Set extension rating in localStorage
+     */
+    setExtensionRating(extensionId, rating) {
+        const ratings = JSON.parse(localStorage.getItem('extension_ratings') || '{}');
+        ratings[extensionId] = rating;
+        localStorage.setItem('extension_ratings', JSON.stringify(ratings));
+    }
+
+    /**
+     * Render star rating component
+     */
+    renderStarRating(extensionId, currentRating) {
+        const stars = [];
+        for (let i = 1; i <= 5; i++) {
+            const filled = i <= currentRating;
+            stars.push(`
+                <span class="star-rating" data-ext-id="${extensionId}" data-rating="${i}"
+                      style="cursor: pointer; font-size: 18px; color: ${filled ? '#fbbf24' : '#d1d5db'};">
+                    ${filled ? '★' : '☆'}
+                </span>
+            `);
+        }
+        return `
+            <div class="rating-container" style="display: flex; align-items: center; gap: 4px;">
+                ${stars.join('')}
+                <span style="font-size: 12px; color: #6b7280; margin-left: 8px;">
+                    ${currentRating > 0 ? `${currentRating}/5` : 'Not rated'}
+                </span>
+            </div>
+        `;
+    }
+
+    /**
+     * Attach star rating click handlers
+     */
+    attachRatingHandlers() {
+        document.querySelectorAll('.star-rating').forEach(star => {
+            star.addEventListener('click', (e) => {
+                const extensionId = e.target.dataset.extId;
+                const rating = parseInt(e.target.dataset.rating);
+                this.setExtensionRating(extensionId, rating);
+                this.showNotification(`Rated ${rating} stars`, 'success');
+                // Re-render the card to update stars
+                this.loadExtensions();
+            });
+        });
+    }
+
+    // ============================================
+    // L-19: Bulk Operations
+    // ============================================
+
+    /**
+     * Toggle bulk selection mode
+     */
+    toggleBulkMode() {
+        this.bulkModeActive = !this.bulkModeActive;
+        const toolbar = document.getElementById('bulkOperationsToolbar');
+        const btn = document.getElementById('btnToggleBulkMode');
+
+        if (this.bulkModeActive) {
+            toolbar.style.display = 'block';
+            btn.innerHTML = '<span class="material-icons md-18">close</span> Exit Bulk Mode';
+        } else {
+            toolbar.style.display = 'none';
+            btn.innerHTML = '<span class="material-icons md-18">checklist</span> Bulk Select';
+            this.clearSelection();
+        }
+
+        // Re-render to show/hide checkboxes
+        this.loadExtensions();
+    }
+
+    /**
+     * Handle checkbox changes
+     */
+    attachCheckboxHandlers() {
+        document.querySelectorAll('.bulk-select-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const extId = e.target.dataset.extId;
+                if (e.target.checked) {
+                    this.selectedExtensions.add(extId);
+                } else {
+                    this.selectedExtensions.delete(extId);
+                }
+                this.updateSelectedCount();
+            });
+        });
+    }
+
+    /**
+     * Update selected count display
+     */
+    updateSelectedCount() {
+        const countEl = document.getElementById('selectedCount');
+        if (countEl) {
+            countEl.textContent = `${this.selectedExtensions.size} selected`;
+        }
+    }
+
+    /**
+     * Select all extensions
+     */
+    selectAllExtensions() {
+        document.querySelectorAll('.bulk-select-checkbox').forEach(checkbox => {
+            checkbox.checked = true;
+            this.selectedExtensions.add(checkbox.dataset.extId);
+        });
+        this.updateSelectedCount();
+    }
+
+    /**
+     * Clear selection
+     */
+    clearSelection() {
+        this.selectedExtensions.clear();
+        document.querySelectorAll('.bulk-select-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        this.updateSelectedCount();
+    }
+
+    /**
+     * Bulk enable extensions
+     */
+    async bulkEnableExtensions() {
+        if (this.selectedExtensions.size === 0) {
+            this.showNotification('No extensions selected', 'error');
+            return;
+        }
+
+        const confirmMsg = `Enable ${this.selectedExtensions.size} extension(s)?`;
+        if (!confirm(confirmMsg)) return;
+
+        let successCount = 0;
+        for (const extId of this.selectedExtensions) {
+            try {
+                await fetchWithCSRF(`/api/extensions/${extId}/enable`, { method: 'POST' });
+                successCount++;
+            } catch (error) {
+                console.error(`Failed to enable ${extId}:`, error);
+            }
+        }
+
+        this.showNotification(`Enabled ${successCount} extension(s)`, 'success');
+        this.clearSelection();
+        await this.loadExtensions();
+    }
+
+    /**
+     * Bulk disable extensions
+     */
+    async bulkDisableExtensions() {
+        if (this.selectedExtensions.size === 0) {
+            this.showNotification('No extensions selected', 'error');
+            return;
+        }
+
+        const confirmMsg = `Disable ${this.selectedExtensions.size} extension(s)?`;
+        if (!confirm(confirmMsg)) return;
+
+        let successCount = 0;
+        for (const extId of this.selectedExtensions) {
+            try {
+                await fetchWithCSRF(`/api/extensions/${extId}/disable`, { method: 'POST' });
+                successCount++;
+            } catch (error) {
+                console.error(`Failed to disable ${extId}:`, error);
+            }
+        }
+
+        this.showNotification(`Disabled ${successCount} extension(s)`, 'success');
+        this.clearSelection();
+        await this.loadExtensions();
+    }
+
+    /**
+     * Bulk uninstall extensions
+     */
+    async bulkUninstallExtensions() {
+        if (this.selectedExtensions.size === 0) {
+            this.showNotification('No extensions selected', 'error');
+            return;
+        }
+
+        const confirmMsg = `Are you sure you want to uninstall ${this.selectedExtensions.size} extension(s)? This action cannot be undone.`;
+        if (!confirm(confirmMsg)) return;
+
+        let successCount = 0;
+        for (const extId of this.selectedExtensions) {
+            try {
+                await fetchWithCSRF(`/api/extensions/${extId}`, { method: 'DELETE' });
+                successCount++;
+            } catch (error) {
+                console.error(`Failed to uninstall ${extId}:`, error);
+            }
+        }
+
+        this.showNotification(`Uninstalled ${successCount} extension(s)`, 'success');
+        this.clearSelection();
+        await this.loadExtensions();
+    }
+
+    // ============================================
+    // L-20: Keyboard Shortcuts
+    // ============================================
+
+    /**
+     * Initialize keyboard shortcuts
+     */
+    initKeyboardShortcuts() {
+        this.keyboardHandler = (e) => {
+            // Ctrl+K: Focus search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                const searchInput = document.getElementById('extensionSearchInput');
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.select();
+                }
+            }
+
+            // Escape: Close modal or clear search
+            if (e.key === 'Escape') {
+                // Check if modal is open
+                const modal = document.querySelector('.modal.active');
+                if (modal) {
+                    const closeBtn = modal.querySelector('.modal-close');
+                    if (closeBtn) closeBtn.click();
+                } else {
+                    // Clear search
+                    const searchInput = document.getElementById('extensionSearchInput');
+                    if (searchInput && searchInput.value) {
+                        searchInput.value = '';
+                        this.filterExtensions('');
+                    }
+                }
+            }
+
+            // Ctrl+R: Refresh list
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                e.preventDefault();
+                this.loadExtensions();
+                this.showNotification('Extensions list refreshed', 'info');
+            }
+        };
+
+        document.addEventListener('keydown', this.keyboardHandler);
+    }
+
+    /**
+     * Remove keyboard shortcuts
+     */
+    removeKeyboardShortcuts() {
+        if (this.keyboardHandler) {
+            document.removeEventListener('keydown', this.keyboardHandler);
+        }
+    }
+
+    /**
+     * Filter extensions based on search query
+     */
+    filterExtensions(query) {
+        const lowerQuery = query.toLowerCase();
+        document.querySelectorAll('.extension-card').forEach(card => {
+            const name = card.dataset.extName || '';
+            const description = card.dataset.extDescription || '';
+            const matches = name.includes(lowerQuery) || description.includes(lowerQuery);
+            card.style.display = matches ? '' : 'none';
+        });
+    }
+
+    // ============================================
+    // L-17: Screenshot Display (in detail modal)
+    // ============================================
+
+    /**
+     * Render screenshot carousel
+     */
+    renderScreenshotCarousel(screenshots) {
+        if (!screenshots || screenshots.length === 0) {
+            return '';
+        }
+
+        return `
+            <div class="detail-section">
+                <h2>Screenshots</h2>
+                <div class="screenshot-carousel">
+                    <div class="screenshot-track" id="screenshotTrack">
+                        ${screenshots.map((screenshot, index) => `
+                            <img src="${screenshot}" alt="Screenshot ${index + 1}"
+                                 class="screenshot-image"
+                                 onclick="window.extensionsView.showScreenshotFullscreen('${screenshot}')">
+                        `).join('')}
+                    </div>
+                    ${screenshots.length > 1 ? `
+                        <button class="carousel-btn carousel-prev" onclick="window.extensionsView.scrollCarousel(-1)">
+                            <span class="material-icons">chevron_left</span>
+                        </button>
+                        <button class="carousel-btn carousel-next" onclick="window.extensionsView.scrollCarousel(1)">
+                            <span class="material-icons">chevron_right</span>
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Scroll screenshot carousel
+     */
+    scrollCarousel(direction) {
+        const track = document.getElementById('screenshotTrack');
+        if (track) {
+            const scrollAmount = 320; // Width of one screenshot + gap
+            track.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+        }
+    }
+
+    /**
+     * Show screenshot in fullscreen
+     */
+    showScreenshotFullscreen(screenshotUrl) {
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
+        modal.innerHTML = `
+            <div class="modal-overlay" style="background: rgba(0, 0, 0, 0.9);"></div>
+            <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10001; max-width: 90vw; max-height: 90vh;">
+                <img src="${screenshotUrl}" style="max-width: 100%; max-height: 90vh; border-radius: 8px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);">
+                <button class="modal-close" id="btnCloseScreenshot" style="position: absolute; top: -40px; right: -40px; background: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 24px; color: #374151; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);">&times;</button>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        const closeModal = () => modal.remove();
+        document.getElementById('btnCloseScreenshot').addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-overlay')) {
+                closeModal();
+            }
+        });
     }
 }
 

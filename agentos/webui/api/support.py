@@ -18,6 +18,10 @@ from agentos.core.status_store import StatusStore
 from agentos.selfcheck import SelfCheckRunner
 from agentos.webui.middleware import sanitize_response
 
+
+from agentos.webui.api.time_format import iso_z
+from agentos.core.time import utc_now
+
 router = APIRouter()
 
 
@@ -130,7 +134,7 @@ async def get_diagnostic_bundle() -> DiagnosticBundleResponse:
 
     # Build response
     response = DiagnosticBundleResponse(
-        ts=datetime.now(timezone.utc).isoformat(),
+        ts=iso_z(utc_now()),
         version=version,
         system=system_info,
         providers=providers_info,

@@ -18,6 +18,8 @@ from pathlib import Path
 from typing import Optional
 
 from agentos.core.project_kb.types import Chunk, Source
+from agentos.core.time import utc_now_iso
+
 
 
 class FTS5NotAvailableError(RuntimeError):
@@ -32,7 +34,7 @@ class ProjectKBIndexer:
         """初始化索引器
 
         Args:
-            db_path: 数据库路径 (store/registry.sqlite)
+            db_path: 数据库路径 (use component_db_path("agentos"))
         """
         self.db_path = Path(db_path)
 
@@ -138,7 +140,7 @@ class ProjectKBIndexer:
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        now = datetime.now(timezone.utc).isoformat()
+        now = utc_now_iso()
 
         # 检查是否已存在
         cursor.execute(
@@ -237,7 +239,7 @@ class ProjectKBIndexer:
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        now = datetime.now(timezone.utc).isoformat()
+        now = utc_now_iso()
 
         cursor.execute(
             """
@@ -271,7 +273,7 @@ class ProjectKBIndexer:
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        now = datetime.now(timezone.utc).isoformat()
+        now = utc_now_iso()
 
         cursor.execute(
             """
@@ -557,7 +559,7 @@ class ProjectKBIndexer:
         conn = self._get_connection()
         
         try:
-            now = datetime.now(timezone.utc).isoformat()
+            now = utc_now_iso()
             
             # 记录 FTS 签名
             signatures = [

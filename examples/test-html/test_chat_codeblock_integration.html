@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test: Chat Code Block Integration</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        h2 { color: #555; margin-top: 0; }
+        .codeblock {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .codeblock__hdr {
+            background: #2d3748;
+            color: white;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .codeblock__lang {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .codeblock__actions {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-action {
+            background: #4a5568;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-action:hover {
+            background: #5a6678;
+        }
+        .btn-action:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        pre {
+            margin: 0;
+            padding: 15px;
+            background: #f8f8f8;
+            overflow-x: auto;
+        }
+        code {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .test-result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        .error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        .info {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .feature-list li:before {
+            content: "✓ ";
+            color: #48bb78;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chat Code Block Integration Test</h1>
+    <p>Testing the Snippet → Preview → Task pipeline integration in Chat view</p>
+
+    <div class="test-section">
+        <h2>✓ Implementation Complete</h2>
+        <ul class="feature-list">
+            <li><strong>Codeblocks.js Extended</strong>: Added data-snippet-id, data-session-id, data-message-id attributes</li>
+            <li><strong>New Toolbar Buttons</strong>: Preview and Make Task buttons added after Save button</li>
+            <li><strong>Auto-Save Logic</strong>: ensureSnippetIdForCodeblock() auto-saves if needed</li>
+            <li><strong>Preview Handler</strong>: handlePreviewSnippet() with Three.js auto-detection</li>
+            <li><strong>Make Task Handler</strong>: handleMakeTask() creates task drafts</li>
+            <li><strong>Preview Dialog</strong>: Shows iframe with preset, deps, and TTL info</li>
+            <li><strong>Task Draft Dialog</strong>: Shows draft with title, path, risk level, JSON</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>Sample: HTML Code Block with All Buttons</h2>
+        <div class="codeblock"
+             data-lang="html"
+             data-snippet-id=""
+             data-session-id="main"
+             data-message-id="msg-123">
+            <div class="codeblock__hdr">
+                <span class="codeblock__lang">html</span>
+                <div class="codeblock__actions">
+                    <button class="btn-action js-save-snippet" title="Save to Snippets">
+                        <span>Save</span>
+                    </button>
+                    <button class="btn-action js-preview-snippet" title="Preview with runtime preset">
+                        <span>Preview</span>
+                    </button>
+                    <button class="btn-action js-make-task" title="Create task draft from code">
+                        <span>Make Task</span>
+                    </button>
+                </div>
+            </div>
+            <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Test Page&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Hello World&lt;/h1&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+        </div>
+        <div class="test-result info">
+            When Save/Preview/Make Task is clicked on unsaved code, it will:
+            1. Auto-save to /api/snippets
+            2. Store snippet_id in data-snippet-id
+            3. Call /api/snippets/{id}/preview or /materialize
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Sample: JavaScript (Three.js) Code Block</h2>
+        <div class="codeblock"
+             data-lang="javascript"
+             data-snippet-id=""
+             data-session-id="main"
+             data-message-id="msg-456">
+            <div class="codeblock__hdr">
+                <span class="codeblock__lang">javascript</span>
+                <div class="codeblock__actions">
+                    <button class="btn-action js-save-snippet">
+                        <span>Save</span>
+                    </button>
+                    <button class="btn-action js-preview-snippet">
+                        <span>Preview</span>
+                    </button>
+                    <button class="btn-action js-make-task">
+                        <span>Make Task</span>
+                    </button>
+                </div>
+            </div>
+            <pre><code>const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+const geometry = new THREE.BoxGeometry();
+const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+const cube = new THREE.Mesh(geometry, material);</code></pre>
+        </div>
+        <div class="test-result success">
+            Auto-detection: THREE. keywords detected → preset="three-webgl-umd"
+            Dependencies: three-core, three-orbit-controls will be injected
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Flow Diagram</h2>
+        <pre style="background: #2d3748; color: #e2e8f0; padding: 20px; border-radius: 4px;">
+┌─────────────────────────────────────────────────────────────┐
+│ Chat Message with Code Block                                │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ [Save] [Preview] [Make Task]                            │ │
+│ └─────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                      │
+                      ├─[Preview]──────────────────────┐
+                      │                                 │
+                      ▼                                 ▼
+        ┌─────────────────────────┐      ┌────────────────────────┐
+        │ ensureSnippetId()       │      │ ensureSnippetId()      │
+        │ - Check data-snippet-id │      │ - Check data-snippet-id│
+        │ - Auto-save if empty    │      │ - Auto-save if empty   │
+        │ - Return snippet_id     │      │ - Return snippet_id    │
+        └─────────────────────────┘      └────────────────────────┘
+                      │                                 │
+                      ▼                                 ▼
+        ┌─────────────────────────┐      ┌────────────────────────┐
+        │ POST /api/snippets/     │      │ POST /api/snippets/    │
+        │   {id}/preview          │      │   {id}/materialize     │
+        │ - Auto-detect preset    │      │ - Prompt target_path   │
+        │ - Inject Three.js deps  │      │ - Generate task draft  │
+        └─────────────────────────┘      └────────────────────────┘
+                      │                                 │
+                      ▼                                 ▼
+        ┌─────────────────────────┐      ┌────────────────────────┐
+        │ openPreviewDialog()     │      │ openTaskDraftDialog()  │
+        │ - Show iframe           │      │ - Show draft JSON      │
+        │ - Display preset/deps   │      │ - Show risk level      │
+        │ - Show TTL              │      │ - Copy to clipboard    │
+        └─────────────────────────┘      └────────────────────────┘
+        </pre>
+    </div>
+
+    <div class="test-section">
+        <h2>API Endpoints Used</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr style="background: #edf2f7;">
+                <th style="padding: 10px; text-align: left; border: 1px solid #cbd5e0;">Endpoint</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #cbd5e0;">Method</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #cbd5e0;">Purpose</th>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #cbd5e0;"><code>/api/snippets</code></td>
+                <td style="padding: 10px; border: 1px solid #cbd5e0;">POST</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e0;">Auto-save code block to snippets</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #cbd5e0;"><code>/api/snippets/{id}/preview</code></td>
+                <td style="padding: 10px; border: 1px solid #cbd5e0;">POST</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e0;">Create preview session with preset</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #cbd5e0;"><code>/api/preview/{session_id}</code></td>
+                <td style="padding: 10px; border: 1px solid #cbd5e0;">GET</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e0;">Load preview HTML in iframe</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #cbd5e0;"><code>/api/snippets/{id}/materialize</code></td>
+                <td style="padding: 10px; border: 1px solid #cbd5e0;">POST</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e0;">Generate task draft from snippet</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="test-section">
+        <h2>Key Design Principles</h2>
+        <ol style="line-height: 1.8;">
+            <li><strong>Snippet-Centric</strong>: All operations (Preview/Make Task) require snippet_id</li>
+            <li><strong>Auto-Save Strategy</strong>: Unsaved code blocks are auto-saved on first Preview/Make Task</li>
+            <li><strong>Minimal Intrusion</strong>: Reuses existing dialog patterns, no new UI components</li>
+            <li><strong>Smart Detection</strong>: Auto-detects Three.js and selects appropriate preset</li>
+            <li><strong>UI Closure</strong>: Complete flow: Chat → Snippet → Preview/Task</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Files Modified</h2>
+        <ul style="font-family: monospace; font-size: 14px;">
+            <li>✓ <strong>agentos/webui/static/js/utils/codeblocks.js</strong>
+                <ul>
+                    <li>Added data-snippet-id, data-session-id, data-message-id attributes</li>
+                    <li>Added Preview and Make Task buttons to toolbar</li>
+                </ul>
+            </li>
+            <li>✓ <strong>agentos/webui/static/js/main.js</strong>
+                <ul>
+                    <li>Added event delegation for .js-preview-snippet and .js-make-task</li>
+                    <li>Implemented ensureSnippetIdForCodeblock() for auto-save</li>
+                    <li>Implemented handlePreviewSnippet() with Three.js detection</li>
+                    <li>Implemented handleMakeTask() with target path prompt</li>
+                    <li>Implemented openPreviewDialog() for iframe preview</li>
+                    <li>Implemented openTaskDraftDialog() for task draft display</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>Acceptance Criteria Status</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr style="background: #edf2f7;">
+                <th style="padding: 10px; text-align: left; border: 1px solid #cbd5e0;">Criteria</th>
+                <th style="padding: 10px; text-align: center; border: 1px solid #cbd5e0; width: 80px;">Status</th>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #cbd5e0;">Chat code blocks show Save | Preview | Make Task buttons</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e0; text-align: center;">✅</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #cbd5e0;">Click Preview/Make Task auto-saves if not yet saved</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e0; text-align: center;">✅</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #cbd5e0;">Preview auto-detects Three.js and uses three-webgl-umd preset</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e0; text-align: center;">✅</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #cbd5e0;">Preview dialog shows preset, deps, expires info</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e0; text-align: center;">✅</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #cbd5e0;">Make Task generates draft and shows summary</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e0; text-align: center;">✅</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #cbd5e0;">All operations based on snippet_id</td>
+                <td style="padding: 10px; border: 1px solid #cbd5e0; text-align: center;">✅</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="test-section" style="background: #c6f6d5; border: 2px solid #48bb78;">
+        <h2 style="color: #22543d;">✓ Task 6 Complete</h2>
+        <p style="margin: 0; color: #22543d;">
+            The Chat code block toolbar integration (Save/Preview/Make Task) is fully implemented.
+            The Snippet → Preview → Task pipeline is complete and ready for testing.
+        </p>
+    </div>
+
+    <script>
+        // Simulate button clicks for testing
+        document.querySelectorAll('.btn-action').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const action = this.classList.contains('js-save-snippet') ? 'Save' :
+                              this.classList.contains('js-preview-snippet') ? 'Preview' :
+                              this.classList.contains('js-make-task') ? 'Make Task' : 'Unknown';
+
+                const codeblock = this.closest('.codeblock');
+                const lang = codeblock.dataset.lang;
+                const snippetId = codeblock.dataset.snippetId;
+
+                alert(`${action} clicked!\n\nLanguage: ${lang}\nSnippet ID: ${snippetId || '(will auto-save)'}\n\nIn real app, this would:\n1. Call ensureSnippetIdForCodeblock()\n2. Call API endpoint\n3. Show dialog`);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+{
+  "id": "test_implementation",
+  "type": "workflow",
+  "version": "0.6.0",
+  "status": "draft",
+  "metadata": {
+    "created_at": "2026-01-25T05:37:21.388676+00:00",
+    "checksum": "c03683e13bc3160750cae08e7d67c3fa071c02aaaecbdb2f45260b80f004ebc1",
+    "is_root": true,
+    "tags": [
+      "testing",
+      "quality-assurance",
+      "implementation"
+    ]
+  },
+  "spec": {
+    "id": "test_implementation",
+    "version": "0.6.0",
+    "category": "testing",
+    "description": "Implement tests according to strategy.\nThis workflow guides the creation of actual test code based on a defined testing strategy, including failure analysis and iteration.\n",
+    "phases": [
+      {
+        "id": "test_creation",
+        "description": "Write test code according to strategy",
+        "requires": [
+          "test_strategy",
+          "implementation"
+        ],
+        "produces": [
+          "test_code"
+        ],
+        "allows_questions": false,
+        "risk_level": "medium"
+      },
+      {
+        "id": "failure_analysis",
+        "description": "Analyze and address test failures",
+        "requires": [
+          "test_code",
+          "test_results"
+        ],
+        "produces": [
+          "failure_analysis",
+          "fixes"
+        ],
+        "allows_questions": true,
+        "risk_level": "high"
+      }
+    ],
+    "interaction": {
+      "default_mode": "question_only",
+      "question_policy": {
+        "trigger_when": [
+          "unexpected_failure",
+          "blocker_detected",
+          "test_strategy_inadequate"
+        ]
+      },
+      "allowed_phases": [
+        "failure_analysis"
+      ]
+    },
+    "constraints": {
+      "execution": "forbidden",
+      "side_effects": "forbidden",
+      "requires_approval": false
+    },
+    "lineage": {
+      "introduced_in": "v0.6",
+      "derived_from": null,
+      "change_reason": null
+    },
+    "metadata": {
+      "tags": [
+        "testing",
+        "quality-assurance",
+        "implementation"
+      ],
+      "related_workflows": [
+        "testing_strategy",
+        "feature_implementation"
+      ],
+      "use_cases": [
+        "Test strategy is defined and needs implementation",
+        "Test failures need analysis",
+        "Test coverage needs to be achieved"
+      ],
+      "anti_use_cases": [
+        "No test strategy exists (use testing_strategy first)",
+        "Exploratory testing without plan",
+        "Production incident debugging"
+      ]
+    }
+  }
+}

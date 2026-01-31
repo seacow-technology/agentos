@@ -88,7 +88,8 @@ CREATE TABLE IF NOT EXISTS repos (
     metadata TEXT,                -- 扩展元数据（JSON）
 
     -- 外键约束
-    FOREIGN KEY (project_id) REFERENCES projects(project_id) ON DELETE CASCADE,
+    -- NOTE: projects表在v01中创建,主键列名为id,不是project_id
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
 
     -- 唯一约束：项目内仓库名称唯一
     UNIQUE(project_id, name)
@@ -167,7 +168,8 @@ CREATE TABLE IF NOT EXISTS task_bindings (
 
     -- 外键约束
     FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE,
-    FOREIGN KEY (project_id) REFERENCES projects(project_id) ON DELETE RESTRICT,
+    -- NOTE: projects表在v01中创建,主键列名为id,不是project_id
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE RESTRICT,
     FOREIGN KEY (repo_id) REFERENCES repos(repo_id) ON DELETE SET NULL
 );
 
@@ -230,15 +232,19 @@ ON task_artifacts(kind, created_at DESC);
 --
 
 -- 字段 1: project_id（项目绑定，可空，迁移后不可空）
-ALTER TABLE tasks ADD COLUMN project_id TEXT;
+-- NOTE: project_id column已在schema_v26_tasks_project_id.sql中添加,此处跳过
+-- ALTER TABLE tasks ADD COLUMN project_id TEXT;
 
 -- 字段 2: repo_id（仓库绑定，可空）
+-- NOTE: v20只向task_audits添加了repo_id,tasks表中需要在这里添加
 ALTER TABLE tasks ADD COLUMN repo_id TEXT;
 
 -- 字段 3: workdir（工作目录，可空）
+-- NOTE: 该列在其他迁移中不存在,需要在这里添加
 ALTER TABLE tasks ADD COLUMN workdir TEXT;
 
 -- 字段 4: spec_frozen（规格冻结标志，默认 false）
+-- NOTE: 该列在其他迁移中不存在,需要在这里添加
 ALTER TABLE tasks ADD COLUMN spec_frozen INTEGER DEFAULT 0;
 
 -- 索引：按项目查询任务
@@ -258,20 +264,15 @@ ON tasks(spec_frozen);
 --
 
 -- 1. 创建默认项目（用于迁移旧任务）
+-- NOTE: projects表在v01中创建,主键列名为id,不是project_id
 INSERT OR IGNORE INTO projects (
-    project_id,
-    name,
-    description,
-    tags,
-    created_at,
-    updated_at
+    id,
+    path,
+    added_at
 )
 VALUES (
     'proj_default',
-    'Default Project',
-    'Auto-created for legacy tasks migrated from v0.3',
-    '["legacy", "migrated"]',
-    datetime('now'),
+    '/default',
     datetime('now')
 );
 

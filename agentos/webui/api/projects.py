@@ -21,10 +21,13 @@ from fastapi import APIRouter, Query, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import json
 import uuid
 import hashlib
+from agentos.webui.api.time_format import iso_z
+from agentos.core.time import utc_now
+
 
 # Try to import ulid, fallback to uuid if not available
 try:
@@ -236,8 +239,8 @@ async def list_projects(
                 "status": project.status,
                 "tags": project.tags,
                 "repo_count": len(repos),
-                "created_at": project.created_at.isoformat() if project.created_at else None,
-                "updated_at": project.updated_at.isoformat() if project.updated_at else None,
+                "created_at": iso_z(project.created_at) if project.created_at else None,
+                "updated_at": iso_z(project.updated_at) if project.updated_at else None,
             })
 
         # Get total count for pagination
@@ -316,7 +319,7 @@ async def get_project(project_id: str) -> Dict[str, Any]:
 
         # Get statistics
         # 1. Count recent tasks (last 7 days)
-        seven_days_ago = (datetime.now() - timedelta(days=7)).isoformat()
+        seven_days_ago = iso_z(utc_now() - timedelta(days=7))
         cursor.execute("""
             SELECT COUNT(DISTINCT trs.task_id)
             FROM task_repo_scope trs
@@ -337,8 +340,8 @@ async def get_project(project_id: str) -> Dict[str, Any]:
                 "is_writable": repo.is_writable,
                 "workspace_relpath": repo.workspace_relpath,
                 "default_branch": repo.default_branch,
-                "created_at": repo.created_at.isoformat() if repo.created_at else None,
-                "updated_at": repo.updated_at.isoformat() if repo.updated_at else None,
+                "created_at": iso_z(repo.created_at) if repo.created_at else None,
+                "updated_at": iso_z(repo.updated_at) if repo.updated_at else None,
             }
             for repo in repos
         ]
@@ -353,8 +356,8 @@ async def get_project(project_id: str) -> Dict[str, Any]:
             "default_repo_id": project.default_repo_id,
             "default_workdir": project.default_workdir,
             "settings": project.settings.model_dump() if project.settings else None,
-            "created_at": project.created_at.isoformat() if project.created_at else None,
-            "updated_at": project.updated_at.isoformat() if project.updated_at else None,
+            "created_at": iso_z(project.created_at) if project.created_at else None,
+            "updated_at": iso_z(project.updated_at) if project.updated_at else None,
             "created_by": project.created_by,
             "repos": repo_summaries,
             "repos_count": len(repos),
@@ -407,7 +410,7 @@ async def create_project(request: CreateProjectRequest) -> Dict[str, Any]:
                 )
 
         # Insert project
-        now = datetime.utcnow().isoformat()
+        now = iso_z(utc_now())
         # Use default_workdir as path for backward compatibility, or default to "."
         path = request.default_workdir or "."
 
@@ -469,8 +472,8 @@ async def create_project(request: CreateProjectRequest) -> Dict[str, Any]:
             "tags": project.tags,
             "default_workdir": project.default_workdir,
             "settings": project.settings.model_dump() if project.settings else None,
-            "created_at": project.created_at.isoformat() if project.created_at else None,
-            "updated_at": project.updated_at.isoformat() if project.updated_at else None,
+            "created_at": iso_z(project.created_at) if project.created_at else None,
+            "updated_at": iso_z(project.updated_at) if project.updated_at else None,
             "repos": [],
             "repos_count": 0,
         }
@@ -546,7 +549,7 @@ async def update_project(project_id: str, request: UpdateProjectRequest) -> Dict
 
         # Always update updated_at
         update_fields.append("updated_at = ?")
-        params.append(datetime.utcnow().isoformat())
+        params.append(iso_z(utc_now()))
 
         if not update_fields:
             raise HTTPException(status_code=400, detail="No fields to update")
@@ -593,8 +596,8 @@ async def update_project(project_id: str, request: UpdateProjectRequest) -> Dict
             "default_repo_id": project.default_repo_id,
             "default_workdir": project.default_workdir,
             "settings": project.settings.model_dump() if project.settings else None,
-            "created_at": project.created_at.isoformat() if project.created_at else None,
-            "updated_at": project.updated_at.isoformat() if project.updated_at else None,
+            "created_at": iso_z(project.created_at) if project.created_at else None,
+            "updated_at": iso_z(project.updated_at) if project.updated_at else None,
             "repos_count": len(repos),
         }
 
@@ -634,7 +637,7 @@ async def archive_project(project_id: str) -> Dict[str, str]:
             UPDATE projects
             SET status = ?, updated_at = ?
             WHERE project_id = ?
-        """, ("archived", datetime.utcnow().isoformat(), project_id))
+        """, ("archived", iso_z(utc_now()), project_id))
         conn.commit()
 
         return {
@@ -744,8 +747,8 @@ async def list_repos(
                 is_writable=repo.is_writable,
                 workspace_relpath=repo.workspace_relpath,
                 default_branch=repo.default_branch,
-                created_at=repo.created_at.isoformat() if repo.created_at else datetime.now().isoformat(),
-                updated_at=repo.updated_at.isoformat() if repo.updated_at else datetime.now().isoformat(),
+                created_at=iso_z(repo.created_at) if repo.created_at else iso_z(utc_now()),
+                updated_at=iso_z(repo.updated_at) if repo.updated_at else iso_z(utc_now()),
             )
             for repo in repos
         ]
@@ -802,8 +805,8 @@ async def get_repo(project_id: str, repo_id: str) -> RepoDetail:
             auth_profile=repo.auth_profile,
             metadata=repo.metadata,
             task_count=task_count,
-            created_at=repo.created_at.isoformat() if repo.created_at else datetime.now().isoformat(),
-            updated_at=repo.updated_at.isoformat() if repo.updated_at else datetime.now().isoformat(),
+            created_at=iso_z(repo.created_at) if repo.created_at else iso_z(utc_now()),
+            updated_at=iso_z(repo.updated_at) if repo.updated_at else iso_z(utc_now()),
         )
 
     except HTTPException:
@@ -924,8 +927,8 @@ async def add_repo(project_id: str, request: AddRepoRequest) -> RepoDetail:
             auth_profile=repo_spec.auth_profile,
             metadata=repo_spec.metadata,
             task_count=0,
-            created_at=datetime.now().isoformat(),
-            updated_at=datetime.now().isoformat(),
+            created_at=iso_z(utc_now()),
+            updated_at=iso_z(utc_now()),
         )
 
     except Exception as e:
@@ -973,7 +976,7 @@ async def update_repo(
         if request.metadata is not None:
             repo.metadata.update(request.metadata)
 
-        repo.updated_at = datetime.now()
+        repo.updated_at = utc_now()
 
         # Update in database
         project_repo.update_repo(repo)
@@ -990,8 +993,8 @@ async def update_repo(
             auth_profile=repo.auth_profile,
             metadata=repo.metadata,
             task_count=None,
-            created_at=repo.created_at.isoformat() if repo.created_at else datetime.now().isoformat(),
-            updated_at=repo.updated_at.isoformat() if repo.updated_at else datetime.now().isoformat(),
+            created_at=iso_z(repo.created_at) if repo.created_at else iso_z(utc_now()),
+            updated_at=iso_z(repo.updated_at) if repo.updated_at else iso_z(utc_now()),
         )
 
     except HTTPException:
@@ -1139,7 +1142,7 @@ async def get_project_task_graph(project_id: str) -> TaskGraphResponse:
                 title=task[1] or task_id[:12],
                 status=task[2] or "created",
                 repos=task_repos,
-                created_at=task[3] or datetime.now().isoformat()
+                created_at=task[3] or iso_z(utc_now())
             ))
 
         # 4. Get task dependencies (only for tasks in this project)
@@ -1294,7 +1297,7 @@ async def create_project_snapshot(project_id: str) -> Dict[str, Any]:
         settings_hash = hashlib.sha256(settings_json.encode()).hexdigest()
 
         # 5. Generate snapshot ID
-        timestamp = datetime.now()
+        timestamp = utc_now()
         snapshot_id = f"snap-{project_id}-{int(timestamp.timestamp())}"
 
         # 6. Create snapshot
@@ -1316,7 +1319,7 @@ async def create_project_snapshot(project_id: str) -> Dict[str, Any]:
         cursor.execute("""
             INSERT INTO project_snapshots (snapshot_id, project_id, data, created_at)
             VALUES (?, ?, ?, ?)
-        """, (snapshot_id, project_id, snapshot.model_dump_json(), timestamp.isoformat()))
+        """, (snapshot_id, project_id, snapshot.model_dump_json(), iso_z(timestamp)))
         conn.commit()
 
         return snapshot.model_dump()

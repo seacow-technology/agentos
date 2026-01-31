@@ -25,6 +25,8 @@ import logging
 from pathlib import Path
 from typing import Optional, Dict, Any
 from datetime import datetime, timezone
+from agentos.core.time import utc_now, utc_now_iso
+
 
 try:
     from ulid import ULID
@@ -325,7 +327,7 @@ class TaskRollbackService:
             "original_status": source_task.status,
             "restart_reason": reason,
             "restarted_by": actor,
-            "restarted_at": datetime.now(timezone.utc).isoformat(),
+            "restarted_at": utc_now_iso(),
         }
 
         # Preserve original metadata if present
@@ -334,7 +336,7 @@ class TaskRollbackService:
 
         # Create new draft task
         new_title = title_override or source_task.title
-        new_task_id = str(ULID.from_datetime(datetime.now(timezone.utc)))
+        new_task_id = str(ULID.from_datetime(utc_now()))
 
         # Use TaskManager to create the new draft
         # Note: This creates with status="created" (legacy) but we'll transition to DRAFT
@@ -491,7 +493,7 @@ class TaskRollbackService:
             "actor": actor,
             "reason": reason,
             "rollback_metadata": metadata or {},
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": utc_now_iso(),
         }
 
         self.task_manager.add_audit(

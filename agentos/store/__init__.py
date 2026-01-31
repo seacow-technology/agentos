@@ -2,6 +2,7 @@
 
 import logging
 import sqlite3
+import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
@@ -9,32 +10,17 @@ if TYPE_CHECKING:
     from agentos.core.db import SQLiteWriter
 
 from .migrator import auto_migrate, get_migration_status
-from .connection_factory import (
-    ConnectionFactory,
-    init_factory,
-    get_thread_connection,
-    close_thread_connection,
-    get_factory,
-    shutdown_factory,
-)
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "get_db",
+    "get_db",  # Re-exported from registry_db (DEPRECATED: import from registry_db directly)
     "get_db_path",
     "get_store_path",
     "init_db",
     "ensure_migrations",
     "get_migration_status",
     "get_writer",
-    # Connection factory exports
-    "ConnectionFactory",
-    "init_factory",
-    "get_thread_connection",
-    "close_thread_connection",
-    "get_factory",
-    "shutdown_factory",
 ]
 
 # Global writer instance (singleton per process)
@@ -42,8 +28,23 @@ _writer_instance: Optional["SQLiteWriter"] = None
 
 
 def get_db_path() -> Path:
-    """Get the database path"""
-    return Path("store/registry.sqlite")
+    """Get the database path (DEPRECATED: use agentos.core.storage.paths.component_db_path).
+
+    This function is deprecated and maintained for backward compatibility only.
+    New code should use: agentos.core.storage.paths.component_db_path('agentos')
+
+    Returns:
+        Path to the main database file
+    """
+    # Lazy import to avoid circular dependency
+    from agentos.core.storage.paths import component_db_path
+
+    warnings.warn(
+        "get_db_path() is deprecated. Use agentos.core.storage.paths.component_db_path('agentos') instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+    return component_db_path("agentos")
 
 
 def get_store_path(subdir: str = "") -> Path:
@@ -68,45 +69,8 @@ def get_store_path(subdir: str = "") -> Path:
     return store_root
 
 
-def get_db():
-    """
-    Get database connection
-
-    自动执行未应用的迁移，确保数据库 schema 是最新的。
-
-    ⚠️ 注意：此连接用于读操作。所有写操作应使用 get_writer().submit()
-    """
-    import sqlite3
-
-    db_path = get_db_path()
-    if not db_path.exists():
-        raise FileNotFoundError(
-            f"Database not initialized. Run 'agentos init' first. Expected: {db_path}"
-        )
-
-    # 自动迁移
-    try:
-        ensure_migrations(db_path)
-    except Exception as e:
-        logger.warning(f"Auto-migration failed: {e}")
-        # 不阻断连接，允许降级使用
-
-    conn = sqlite3.connect(str(db_path))
-    conn.row_factory = sqlite3.Row
-
-    # Enable foreign keys for CASCADE support
-    conn.execute("PRAGMA foreign_keys = ON")
-
-    # Windows 并发优化: 启用 WAL 模式提高并发性能
-    conn.execute("PRAGMA journal_mode=WAL")
-
-    # 调整同步模式,平衡性能与安全性
-    conn.execute("PRAGMA synchronous=NORMAL")
-
-    # 增加锁超时时间到 5 秒 (默认 0 秒会立即失败)
-    conn.execute("PRAGMA busy_timeout=5000")
-
-    return conn
+# Lazy import of get_db to avoid circular dependency
+# This is done via __getattr__ at the bottom of this file
 
 
 def init_db(auto_migrate_after_init: bool = True):
@@ -148,7 +112,8 @@ def init_db(auto_migrate_after_init: bool = True):
         conn.execute("""
             CREATE TABLE IF NOT EXISTS schema_version (
                 version TEXT PRIMARY KEY,
-                applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                description TEXT
             )
         """)
         conn.commit()
@@ -225,3 +190,15 @@ def get_writer() -> "SQLiteWriter":
     if _writer_instance is None:
         _writer_instance = SQLiteWriter(str(get_db_path()))
     return _writer_instance
+
+
+def __getattr__(name):
+    """Lazy import for get_db to avoid circular dependencies.
+
+    DEPRECATED: get_db is re-exported from registry_db for backward compatibility.
+    Use agentos.core.db.registry_db.get_db() directly in new code.
+    """
+    if name == "get_db":
+        from agentos.core.db.registry_db import get_db
+        return get_db
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

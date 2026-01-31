@@ -1,0 +1,118 @@
+{
+  "id": "intent_deploy_service_v3_0",
+  "type": "execution_intent",
+  "title": "Deploy API service v3.0 to staging",
+  "description": "Deploy version 3.0 of API service to staging environment",
+  "version": "0.9.1",
+  "status": "proposed",
+  "created_at": "2026-01-25T10:20:00Z",
+  "lineage": {
+    "introduced_in": "0.9.1",
+    "derived_from": [],
+    "supersedes": []
+  },
+  "scope": {
+    "project_id": "agentos",
+    "repo_root": "/Users/pangge/PycharmProjects/AgentOS",
+    "targets": {
+      "files": [
+        "deployment/staging/api-service.yaml"
+      ],
+      "modules": [],
+      "areas": [
+        "ops"
+      ]
+    }
+  },
+  "objective": {
+    "goal": "Deploy API service v3.0 to staging for testing",
+    "success_criteria": [
+      "Service v3.0 deployed successfully",
+      "Health checks passing",
+      "No breaking changes"
+    ],
+    "non_goals": [
+      "Deploy to production"
+    ]
+  },
+  "selected_workflows": [
+    {
+      "workflow_id": "deployment_workflow",
+      "phases": [
+        "validation",
+        "operations"
+      ],
+      "reason": "Standard deployment workflow"
+    }
+  ],
+  "selected_agents": [
+    {
+      "agent_id": "deployment_agent",
+      "role": "deployer",
+      "responsibilities": [
+        "Validate deployment config",
+        "Deploy to staging",
+        "Run health checks"
+      ]
+    }
+  ],
+  "planned_commands": [
+    {
+      "command_id": "deploy_to_staging",
+      "intent": "Deploy API service v3.0 to staging",
+      "effects": [
+        "deploy"
+      ],
+      "risk_level": "medium",
+      "evidence_refs": [
+        "scan://file/deployment/staging/api-service.yaml",
+        "registry://release/v3.0"
+      ]
+    }
+  ],
+  "interaction": {
+    "mode": "semi_auto",
+    "question_budget": 2,
+    "question_policy": "blockers_only"
+  },
+  "risk": {
+    "overall": "medium",
+    "drivers": [
+      "Deployment to staging environment",
+      "New version with potential breaking changes"
+    ],
+    "requires_review": [
+      "release",
+      "operations"
+    ]
+  },
+  "budgets": {
+    "max_files": 5,
+    "max_commits": 1,
+    "max_tokens": 30000,
+    "max_cost_usd": 2.0
+  },
+  "evidence_refs": [
+    "registry://release/v3.0",
+    "scan://file/deployment/staging/api-service.yaml"
+  ],
+  "constraints": {
+    "execution": "forbidden",
+    "no_fabrication": true,
+    "registry_only": true,
+    "lock_scope": {
+      "mode": "files",
+      "paths": [
+        "deployment/staging/api-service.yaml"
+      ]
+    }
+  },
+  "audit": {
+    "created_by": "human_operator",
+    "source": "human",
+    "checksum": "f6a7b8c9d0e123456789abcdef0123456789abcdef0123456789abcdef345678"
+  },
+  "metadata": {
+    "priority": 7
+  }
+}

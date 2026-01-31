@@ -1,0 +1,399 @@
+/* ===================================================================
+   Voice Panel Styles
+   =================================================================== */
+
+.voice-view {
+    padding: 20px;
+    /* 移除 max-width 以与其他视图保持一致 */
+}
+
+.voice-panel {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 24px;
+}
+
+/* Controls Section */
+.voice-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.btn-voice-start,
+.btn-voice-stop {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-voice-start {
+    background: #2196F3;
+    color: white;
+}
+
+.btn-voice-start:hover:not(:disabled) {
+    background: #1976D2;
+}
+
+.btn-voice-stop {
+    background: #d32f2f;
+    color: white;
+}
+
+.btn-voice-stop:hover:not(:disabled) {
+    background: #c62828;
+}
+
+.btn-voice-start:disabled,
+.btn-voice-stop:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.voice-status-container {
+    margin-left: auto;
+}
+
+.voice-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.voice-status.idle {
+    background: #F3F4F6;
+    color: #6B7280;
+}
+
+.voice-status.recording {
+    background: #d32f2f;
+    color: white;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.voice-status.processing {
+    background: #FF9800;
+    color: white;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.85;
+        transform: scale(1.02);
+    }
+}
+
+/* Section Styles */
+.voice-section {
+    margin-bottom: 24px;
+}
+
+.voice-section .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.voice-section .section-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #212529;
+    margin: 0;
+}
+
+.voice-section .btn-icon {
+    background: transparent;
+    border: none;
+    color: #6B7280;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.voice-section .btn-icon:hover {
+    background: #F3F4F6;
+    color: #212529;
+}
+
+/* Transcript Display */
+.voice-transcript {
+    min-height: 150px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 16px;
+    background: #F9FAFB;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+}
+
+.voice-transcript::-webkit-scrollbar {
+    width: 8px;
+}
+
+.voice-transcript::-webkit-scrollbar-track {
+    background: #F3F4F6;
+}
+
+.voice-transcript::-webkit-scrollbar-thumb {
+    background: #D1D5DB;
+    border-radius: 4px;
+}
+
+.transcript-placeholder,
+.assistant-placeholder {
+    color: #9CA3AF;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
+
+.transcript-line {
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+.transcript-line.final {
+    color: #212529;
+    background: rgba(33, 150, 243, 0.1);
+}
+
+.transcript-line.partial {
+    color: #6B7280;
+    font-style: italic;
+    background: white;
+    border-left: 3px solid #D1D5DB;
+}
+
+/* Assistant Response Display */
+.voice-assistant {
+    min-height: 150px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 16px;
+    background: #F9FAFB;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.voice-assistant::-webkit-scrollbar {
+    width: 8px;
+}
+
+.voice-assistant::-webkit-scrollbar-track {
+    background: #F3F4F6;
+}
+
+.voice-assistant::-webkit-scrollbar-thumb {
+    background: #D1D5DB;
+    border-radius: 4px;
+}
+
+.assistant-message {
+    margin-bottom: 16px;
+    padding: 16px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+}
+
+.assistant-message.streaming {
+    opacity: 0.9;
+    border-left: 3px solid #FFC107;
+}
+
+.assistant-message .message-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+.assistant-message .message-time {
+    margin-left: auto;
+}
+
+.assistant-message .message-text {
+    font-size: 15px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Connection Info */
+.voice-info {
+    display: flex;
+    gap: 24px;
+    padding: 16px;
+    background: #F9FAFB;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    margin-top: 24px;
+}
+
+.voice-info .info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.voice-info .info-label {
+    color: #6B7280;
+    font-weight: 500;
+}
+
+.voice-info .info-value {
+    color: #212529;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    padding: 2px 8px;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.voice-info .info-value.status-success {
+    color: #16A34A;
+}
+
+.voice-info .info-value.status-idle {
+    color: #6B7280;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .voice-panel {
+        padding: 16px;
+    }
+
+    .voice-controls {
+        flex-wrap: wrap;
+    }
+
+    .voice-status-container {
+        margin-left: 0;
+        width: 100%;
+        margin-top: 12px;
+    }
+
+    .voice-info {
+        flex-direction: column;
+        gap: 12px;
+    }
+}
+
+/* Light theme (aligned with other views) */
+:root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #F9FAFB;
+    --text-primary: #212529;
+    --text-secondary: #6B7280;
+    --border-color: #dee2e6;
+}
+
+/* Material Icons sizing */
+.material-icons.md-14 { font-size: 14px; }
+.material-icons.md-18 { font-size: 18px; }
+.material-icons.md-24 { font-size: 24px; }
+
+/* ===================================================================
+   Chat Voice Integration Styles
+   =================================================================== */
+
+/* Voice transcript preview (above input box) */
+.voice-transcript-preview {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    padding: 10px 16px;
+    margin-bottom: 4px;
+    background: linear-gradient(135deg, #EBF5FF 0%, #F0F9FF 100%);
+    border: 1px solid #BFDBFE;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1E40AF;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+    animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.voice-transcript-preview .transcript-text {
+    font-style: italic;
+}
+
+/* Chat mic button states */
+.chat-input-icon-btn {
+    transition: all 0.3s ease;
+}
+
+.chat-input-icon-btn.voice-idle {
+    color: #6B7280;
+}
+
+.chat-input-icon-btn.voice-idle:hover {
+    color: #2563EB;
+    background: #EFF6FF;
+}
+
+.chat-input-icon-btn.voice-recording {
+    color: #DC2626;
+    background: #FEE2E2;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.chat-input-icon-btn.voice-processing {
+    color: #F59E0B;
+    background: #FEF3C7;
+    cursor: wait;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
+}

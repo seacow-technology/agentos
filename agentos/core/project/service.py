@@ -11,6 +11,8 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from agentos.core.time import utc_now, utc_now_iso
+
 
 try:
     from ulid import ULID
@@ -84,8 +86,8 @@ class ProjectService:
             ProjectNameConflictError: If name already exists
         """
         # Generate project ID
-        project_id = str(ULID.from_datetime(datetime.now(timezone.utc)))
-        now = datetime.now(timezone.utc).isoformat()
+        project_id = str(ULID.from_datetime(utc_now()))
+        now = utc_now_iso()
 
         # Prepare data
         if tags is None:
@@ -166,7 +168,9 @@ class ProjectService:
 
             return Project.from_db_row(dict(row))
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection (unless db_path provided)
+            if self.db_path:
+                conn.close()
 
     def list_projects(
         self,
@@ -218,7 +222,9 @@ class ProjectService:
             rows = cursor.fetchall()
             return [Project.from_db_row(dict(row)) for row in rows]
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection (unless db_path provided)
+            if self.db_path:
+                conn.close()
 
     def update_project(
         self,
@@ -244,7 +250,7 @@ class ProjectService:
             ProjectNotFoundError: If project doesn't exist
             ProjectNameConflictError: If new name already exists
         """
-        now = datetime.now(timezone.utc).isoformat()
+        now = utc_now_iso()
 
         # Define write function
         def _write_update(conn):
@@ -308,19 +314,45 @@ class ProjectService:
         return self.get_project(project_id)
 
     def delete_project(self, project_id: str, force: bool = False) -> bool:
-        """Delete project
+        """Delete project with referential integrity enforcement
+
+        Deletion Strategy (M-24 Fix):
+        1. By default (force=False): RESTRICT - prevents deletion if tasks exist
+        2. With force=True: Attempts deletion but will FAIL due to FK RESTRICT constraint
+        3. Associated repos: CASCADE deleted automatically (ON DELETE CASCADE)
+
+        Foreign Key Constraints:
+        - task_bindings.project_id -> projects.project_id (ON DELETE RESTRICT)
+          * Prevents deletion if any tasks reference this project
+          * Ensures data integrity - tasks must be deleted/reassigned first
+        - repos.project_id -> projects.project_id (ON DELETE CASCADE)
+          * Automatically deletes all repos when project deleted
+          * Cascades to task_repo_scope entries
 
         Args:
             project_id: Project ID
-            force: If True, delete even if project has tasks (will fail due to FK constraint)
-                   If False, check first and raise error if has tasks
+            force: If True, attempts deletion even if project has tasks
+                   (will still fail due to FK RESTRICT constraint on task_bindings)
 
         Returns:
-            True if deleted
+            True if deleted successfully
 
         Raises:
             ProjectNotFoundError: If project doesn't exist
             ProjectHasTasksError: If project has tasks and force=False
+            sqlite3.IntegrityError: If project has tasks and force=True
+                (FK constraint violation)
+
+        Example:
+            # Safe deletion (checks first)
+            service.delete_project("proj_123")  # Raises ProjectHasTasksError if tasks exist
+
+            # Force deletion (will fail at DB level if tasks exist)
+            try:
+                service.delete_project("proj_123", force=True)
+            except sqlite3.IntegrityError as e:
+                # FK constraint prevents deletion
+                pass
         """
 
         def _write_delete(conn):
@@ -331,7 +363,7 @@ class ProjectService:
             if not cursor.fetchone():
                 raise ProjectNotFoundError(project_id)
 
-            # Check for tasks if not forcing
+            # Check for tasks if not forcing (application-level check)
             if not force:
                 cursor.execute(
                     "SELECT COUNT(*) as count FROM task_bindings WHERE project_id = ?",
@@ -343,10 +375,12 @@ class ProjectService:
                 if task_count > 0:
                     raise ProjectHasTasksError(project_id, task_count)
 
-            # Delete project (CASCADE will delete repos and bindings)
+            # Delete project
+            # - CASCADE will delete repos automatically
+            # - RESTRICT will prevent deletion if task_bindings exist (DB-level check)
             cursor.execute("DELETE FROM projects WHERE project_id = ?", (project_id,))
 
-            logger.info(f"Deleted project: {project_id}")
+            logger.info(f"Deleted project: {project_id} (force={force})")
             return True
 
         # Submit write operation
@@ -386,7 +420,9 @@ class ProjectService:
             rows = cursor.fetchall()
             return [Repo.from_db_row(dict(row)) for row in rows]
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection (unless db_path provided)
+            if self.db_path:
+                conn.close()
 
     def get_project_tasks(
         self,
@@ -450,4 +486,6 @@ class ProjectService:
 
             return tasks
         finally:
-            conn.close()
+            # Do NOT close: get_db() returns shared thread-local connection (unless db_path provided)
+            if self.db_path:
+                conn.close()

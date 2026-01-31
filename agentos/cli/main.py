@@ -118,6 +118,18 @@ from agentos.cli.commands.project_v31 import project_v31_group
 from agentos.cli.commands.repo_v31 import repo_v31_group
 from agentos.cli.commands.task_v31 import task_v31_group
 
+# Import v3 Classifier Version Management
+from agentos.cli.classifier_version import version_group
+
+# Import v1.3 Inspection Commands (PR-0131-2026-4: CLI Read-only Parity)
+from agentos.cli.inspect import task_group as inspect_task_group, governance_group
+
+# Import Skill Management Commands (PR-0201-2026-3: GitHub Importer)
+from agentos.cli.commands.skill import skill as skill_group
+
+# Import NetworkOS Commands (Cloudflare Tunnel Management)
+from agentos.cli.commands.networkos import networkos as networkos_group
+
 cli.add_command(init_cmd, name="init")
 cli.add_command(doctor, name="doctor")
 cli.add_command(project_group, name="project")
@@ -146,6 +158,23 @@ cli.add_command(auth_group, name="auth")
 cli.add_command(project_v31_group, name="project-v31")
 cli.add_command(repo_v31_group, name="repo-v31")
 cli.add_command(task_v31_group, name="task-v31")
+
+# Register v3 Classifier Version Management
+cli.add_command(version_group, name="version")
+
+# Register v1.3 Inspection Commands (PR-0131-2026-4: CLI Read-only Parity)
+cli.add_command(governance_group, name="governance")
+
+# Register Skill Management Commands (PR-0201-2026-3: GitHub Importer)
+cli.add_command(skill_group, name="skill")
+
+# Register NetworkOS Commands (Cloudflare Tunnel Management)
+cli.add_command(networkos_group, name="networkos")
+
+# Add inspect commands to existing task_group
+from agentos.cli.inspect import task_inspect, governance_trace
+task_group.add_command(task_inspect, name="inspect")
+governance_group.add_command(governance_trace, name="trace")
 
 
 @cli.command(name="interactive")

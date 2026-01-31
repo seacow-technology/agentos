@@ -1,0 +1,241 @@
+{
+  "run_id": "coord_run_example_low_risk",
+  "schema_version": "0.9.2",
+  "intent_id": "intent_example_low_risk",
+  "coordinator_version": "0.9.2",
+  "started_at": "2026-01-25T10:05:00Z",
+  "completed_at": "2026-01-25T10:05:45Z",
+  "final_state": "DONE",
+  "states": [
+    {
+      "sequence": 1,
+      "from_state": "INIT",
+      "to_state": "RECEIVED",
+      "timestamp": "2026-01-25T10:05:00Z",
+      "trigger": "Intent submitted",
+      "guards_evaluated": [],
+      "duration_ms": 50
+    },
+    {
+      "sequence": 2,
+      "from_state": "RECEIVED",
+      "to_state": "PRECHECKED",
+      "timestamp": "2026-01-25T10:05:05Z",
+      "trigger": "Schema validation passed",
+      "guards_evaluated": [
+        {
+          "guard_name": "intent_schema_valid",
+          "passed": true,
+          "reason": "Intent conforms to v0.9.1 schema",
+          "evidence_refs": ["intent_example_low_risk"]
+        },
+        {
+          "guard_name": "registry_content_exists",
+          "passed": true,
+          "reason": "All referenced workflows, agents, and commands exist in registry",
+          "evidence_refs": ["registry://workflows/documentation_workflow", "registry://agents/documentation_agent"]
+        }
+      ],
+      "outputs_produced": [
+        {
+          "artifact_type": "precheck_report",
+          "artifact_id": "precheck_low_risk_001",
+          "checksum": "abc123def456789012345678901234567890123456789012345678901234abcd"
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "sequence": 3,
+      "from_state": "PRECHECKED",
+      "to_state": "CONTEXT_BUILT",
+      "timestamp": "2026-01-25T10:05:15Z",
+      "trigger": "Context assembled",
+      "guards_evaluated": [
+        {
+          "guard_name": "memory_pack_available",
+          "passed": true,
+          "reason": "MemoryPack constructed with 5 relevant memories",
+          "evidence_refs": ["memory_pack://agentos/documentation"]
+        },
+        {
+          "guard_name": "factpack_available",
+          "passed": true,
+          "reason": "FactPack contains project structure and evidence",
+          "evidence_refs": ["factpack://agentos/scan_20260125"]
+        }
+      ],
+      "outputs_produced": [
+        {
+          "artifact_type": "context_bundle",
+          "artifact_id": "context_low_risk_001",
+          "checksum": "def456abc789012345678901234567890123456789012345678901234abcdef"
+        }
+      ],
+      "duration_ms": 10000
+    },
+    {
+      "sequence": 4,
+      "from_state": "CONTEXT_BUILT",
+      "to_state": "RULES_EVALUATED",
+      "timestamp": "2026-01-25T10:05:25Z",
+      "trigger": "Rules adjudication complete",
+      "guards_evaluated": [
+        {
+          "guard_name": "all_rules_decidable",
+          "passed": true,
+          "reason": "All rules produced machine-decidable verdicts",
+          "evidence_refs": ["rule://require_evidence_for_write"]
+        }
+      ],
+      "outputs_produced": [
+        {
+          "artifact_type": "rule_decisions",
+          "artifact_id": "decisions_low_risk_001",
+          "checksum": "789012abc345def678901234567890123456789012345678901234abcdef012"
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "sequence": 5,
+      "from_state": "RULES_EVALUATED",
+      "to_state": "GRAPH_DRAFTED",
+      "timestamp": "2026-01-25T10:05:30Z",
+      "trigger": "Graph construction complete",
+      "guards_evaluated": [
+        {
+          "guard_name": "graph_is_dag",
+          "passed": true,
+          "reason": "Graph is acyclic (DAG verified)",
+          "evidence_refs": []
+        },
+        {
+          "guard_name": "all_phases_mapped",
+          "passed": true,
+          "reason": "All workflow phases mapped to graph nodes",
+          "evidence_refs": []
+        }
+      ],
+      "outputs_produced": [
+        {
+          "artifact_type": "execution_graph",
+          "artifact_id": "graph_example_low_risk",
+          "checksum": "a1b2c3d4e5f6789012345678901234567890123456789012345678901234abcd"
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "sequence": 6,
+      "from_state": "GRAPH_DRAFTED",
+      "to_state": "GRAPH_FINALIZED",
+      "timestamp": "2026-01-25T10:05:32Z",
+      "trigger": "No questions needed (semi_auto, low risk)",
+      "guards_evaluated": [
+        {
+          "guard_name": "no_blocking_uncertainties",
+          "passed": true,
+          "reason": "All information available, no blocking uncertainties",
+          "evidence_refs": []
+        }
+      ],
+      "duration_ms": 2000
+    },
+    {
+      "sequence": 7,
+      "from_state": "GRAPH_FINALIZED",
+      "to_state": "REVIEW_PACK_BUILT",
+      "timestamp": "2026-01-25T10:05:40Z",
+      "trigger": "Review pack generated",
+      "guards_evaluated": [
+        {
+          "guard_name": "requires_review_satisfied",
+          "passed": true,
+          "reason": "Review requirement for 'release' satisfied",
+          "evidence_refs": []
+        }
+      ],
+      "outputs_produced": [
+        {
+          "artifact_type": "review_pack",
+          "artifact_id": "review_low_risk_001",
+          "checksum": "012345abc678def901234567890123456789012345678901234abcdef012345"
+        }
+      ],
+      "duration_ms": 8000
+    },
+    {
+      "sequence": 8,
+      "from_state": "REVIEW_PACK_BUILT",
+      "to_state": "FROZEN_OUTPUTS",
+      "timestamp": "2026-01-25T10:05:43Z",
+      "trigger": "All outputs frozen with checksums",
+      "guards_evaluated": [
+        {
+          "guard_name": "lineage_complete",
+          "passed": true,
+          "reason": "All outputs have complete lineage tracking",
+          "evidence_refs": []
+        }
+      ],
+      "outputs_produced": [
+        {
+          "artifact_type": "frozen_outputs",
+          "artifact_id": "frozen_low_risk_001",
+          "checksum": "345678def012abc456789012345678901234567890123456789012abcdef345"
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "sequence": 9,
+      "from_state": "FROZEN_OUTPUTS",
+      "to_state": "DONE",
+      "timestamp": "2026-01-25T10:05:45Z",
+      "trigger": "Coordination complete",
+      "guards_evaluated": [],
+      "duration_ms": 2000
+    }
+  ],
+  "decisions": [
+    {
+      "decision_id": "decision_001",
+      "decision_type": "rule_adjudication",
+      "timestamp": "2026-01-25T10:05:22Z",
+      "inputs": {
+        "evidence_refs": ["scan://file/agentos/utils/format.py"],
+        "rule_refs": ["rule://require_evidence_for_write"]
+      },
+      "rationale": "Write operation to format.py requires evidence. Evidence provided via file scan reference.",
+      "outcome": "allow"
+    },
+    {
+      "decision_id": "decision_002",
+      "decision_type": "question_emission",
+      "timestamp": "2026-01-25T10:05:31Z",
+      "inputs": {
+        "context_refs": ["semi_auto_policy"]
+      },
+      "rationale": "No blocking uncertainties detected. All information available from Intent and FactPack. No questions needed.",
+      "outcome": "skip_questions"
+    }
+  ],
+  "rule_evaluations": [
+    {
+      "evaluation_id": "eval_001",
+      "rule_id": "rule://require_evidence_for_write",
+      "decision": "allow",
+      "timestamp": "2026-01-25T10:05:22Z",
+      "target": "modify_python_file command",
+      "evidence_used": ["scan://file/agentos/utils/format.py", "scan://file/agentos/utils/validation.py"],
+      "reason": "Both target files have evidence from FactPack scan"
+    }
+  ],
+  "model_routing_decisions": [],
+  "metadata": {
+    "total_duration_ms": 45000,
+    "state_transitions_count": 9,
+    "decisions_count": 2
+  }
+}

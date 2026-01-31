@@ -202,9 +202,12 @@ class ExplainDrawer {
             // Map 'map' to 'subgraph' for API
             const apiQueryType = queryType === 'map' ? 'subgraph' : queryType;
 
-            const response = await fetch(`/api/brain/query/${apiQueryType}`, {
+            // CSRF Fix: Use fetchWithCSRF for consistency and simplified code
+            const response = await window.fetchWithCSRF(`/api/brain/query/${apiQueryType}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({ seed })
             });
 

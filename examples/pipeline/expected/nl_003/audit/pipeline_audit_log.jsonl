@@ -1,0 +1,8 @@
+{"timestamp": "2026-01-25T11:27:51.731861+00:00", "event": "pipeline_start", "inputs": {"nl_request": "examples/pipeline/nl/nl_003_db_migration.txt", "db_path": null}}
+{"timestamp": "2026-01-25T11:27:51.733587+00:00", "event": "command_start", "description": "Intent Builder", "command": "/Users/pangge/PycharmProjects/AgentOS/.venv/bin/python3 -m agentos.cli.main builder run --input examples/pipeline/expected/nl_003/01_intent/nl_003_db_migration_nl_request.json --policy semi_auto --out examples/pipeline/expected/nl_003/01_intent"}
+{"timestamp": "2026-01-25T11:27:52.451867+00:00", "event": "command_end", "description": "Intent Builder", "exit_code": 0, "stdout_lines": 17, "stderr_lines": 0}
+{"timestamp": "2026-01-25T11:27:52.498739+00:00", "event": "coordinator_start", "method": "direct_import"}
+{"timestamp": "2026-01-25T11:27:52.498928+00:00", "event": "coordinator_end", "final_state": "DONE"}
+{"timestamp": "2026-01-25T11:27:52.499466+00:00", "event": "command_start", "description": "Dry-Executor plan", "command": "/Users/pangge/PycharmProjects/AgentOS/.venv/bin/python3 -m agentos.cli.main dry-run plan --intent examples/pipeline/expected/nl_003/01_intent/intent.json --coordinator examples/pipeline/expected/nl_003/03_dry_executor/coordinator_merged.json --out examples/pipeline/expected/nl_003/03_dry_executor"}
+{"timestamp": "2026-01-25T11:27:52.933690+00:00", "event": "command_end", "description": "Dry-Executor plan", "exit_code": 0, "stdout_lines": 22, "stderr_lines": 0}
+{"timestamp": "2026-01-25T11:27:52.935895+00:00", "event": "pipeline_complete", "status": "success"}

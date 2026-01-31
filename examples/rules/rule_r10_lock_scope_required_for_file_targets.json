@@ -1,0 +1,80 @@
+{
+  "id": "rule_r10_lock_scope_required_for_file_targets",
+  "type": "rule",
+  "version": "0.9.0",
+  "status": "draft",
+  "metadata": {
+    "created_at": "2026-01-25T08:29:46.670362+00:00",
+    "checksum": "bbc602aadbf458df79fbe14b7b8b28926005d31c0509e203e48d7ac02294bf62",
+    "is_root": true,
+    "tags": [
+      "locking",
+      "concurrency",
+      "files"
+    ]
+  },
+  "spec": {
+    "id": "rule_r10_lock_scope_required_for_file_targets",
+    "type": "rule",
+    "title": "File target operations must declare lock scope",
+    "description": "Commands targeting file sets must declare lock_scope to enable conflict detection and WAIT+replan strategy.",
+    "version": "0.9.0",
+    "status": "active",
+    "lineage": {
+      "introduced_in": "v0.9",
+      "derived_from": null,
+      "supersedes": []
+    },
+    "constraints": {
+      "execution": "forbidden"
+    },
+    "rule": {
+      "severity": "error",
+      "scope": {
+        "applies_to_types": [
+          "command"
+        ],
+        "applies_to_risk": [
+          "medium",
+          "high"
+        ],
+        "applies_to_phases": [
+          "implementation",
+          "validation"
+        ]
+      },
+      "when": {
+        "all_of": [
+          {
+            "targets_files": true
+          },
+          {
+            "lock_scope_missing": true
+          }
+        ]
+      },
+      "then": {
+        "decision": "deny",
+        "reason": "File operations require lock_scope for conflict management",
+        "required_changes": [
+          "Add lock_scope with target file paths/patterns",
+          "Declare lock mode (exclusive/shared)",
+          "Enable conflict detection for concurrent operations"
+        ]
+      },
+      "evidence_required": [
+        "target_file_list",
+        "lock_scope_declaration",
+        "conflict_check_result"
+      ]
+    },
+    "metadata": {
+      "tags": [
+        "locking",
+        "concurrency",
+        "files"
+      ],
+      "author": "AgentOS Team"
+    }
+  }
+}

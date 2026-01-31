@@ -26,7 +26,8 @@ Environment Variables:
     DATABASE_NAME: Database name, default: agentos
     DATABASE_USER: PostgreSQL username, default: postgres
     DATABASE_PASSWORD: PostgreSQL password, default: empty
-    SQLITE_PATH: SQLite database file path, default: ./store/registry.sqlite
+    SQLITE_PATH: SQLite database file path (DEPRECATED, use AGENTOS_DB_PATH)
+    AGENTOS_DB_PATH: SQLite database file path (preferred)
 """
 
 import logging
@@ -35,6 +36,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Optional
 from urllib.parse import quote_plus
+
+from agentos.core.storage.paths import component_db_path
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +75,17 @@ class DatabaseConfig:
         self.db_password = os.getenv("DATABASE_PASSWORD", "")
 
         # SQLite configuration
-        self.sqlite_path = os.getenv("SQLITE_PATH", "./store/registry.sqlite")
+        # Priority:
+        # 1. SQLITE_PATH (deprecated but supported for backward compatibility)
+        # 2. AGENTOS_DB_PATH (preferred environment variable)
+        # 3. Unified path from storage.paths module (default)
+        env_path = os.getenv("SQLITE_PATH") or os.getenv("AGENTOS_DB_PATH")
+        if env_path:
+            self.sqlite_path = env_path
+            logger.info(f"SQLite path from environment: {self.sqlite_path}")
+        else:
+            self.sqlite_path = str(component_db_path("agentos"))
+            logger.info(f"SQLite path from storage.paths: {self.sqlite_path}")
 
         # Connection pool configuration (PostgreSQL only)
         self.pool_size = int(os.getenv("DATABASE_POOL_SIZE", "10"))

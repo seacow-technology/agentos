@@ -12,6 +12,9 @@ from jinja2 import Environment, FileSystemLoader
 from rich.console import Console
 
 from agentos.core.orchestrator.patch_tracker import PatchTracker
+from agentos.core.storage.paths import component_db_path
+from agentos.core.time import utc_now_iso
+
 
 console = Console()
 
@@ -22,7 +25,7 @@ class ReviewPackGenerator:
     def __init__(self, db_path: Optional[Path] = None):
         """Initialize review pack generator."""
         if db_path is None:
-            db_path = Path.home() / ".agentos" / "store.db"
+            db_path = component_db_path("agentos")
         self.db_path = db_path
         self.patch_tracker = PatchTracker(db_path)
 
@@ -117,7 +120,7 @@ class ReviewPackGenerator:
                 for c in commits
             ],
             "rollback_guide": rollback_guide,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": utc_now_iso(),
             "metadata": {
                 "started_at": run_row["started_at"],
                 "completed_at": run_row["completed_at"],

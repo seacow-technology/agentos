@@ -13,6 +13,8 @@ from typing import Optional
 
 from ..guardian.models import GuardianVerdictSnapshot
 from ..states import can_transition
+from agentos.core.time import utc_now_iso
+
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +105,7 @@ class VerdictConsumer:
                         "task_id": verdict.task_id,
                         "verdict_id": verdict.verdict_id,
                         "state_transition": f"{target_state} -> VERIFIED",
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "timestamp": utc_now_iso(),
                     }
                     cursor.execute(
                         """
@@ -115,7 +117,7 @@ class VerdictConsumer:
                         (
                             verdict.task_id,
                             "GUARDIAN_FLOW_COMPLETED",
-                            datetime.now(timezone.utc).isoformat(),
+                            utc_now_iso(),
                             json.dumps(audit_data),
                             verdict.verdict_id,
                         ),
@@ -218,7 +220,7 @@ class VerdictConsumer:
             SET status = ?, updated_at = ?
             WHERE task_id = ?
             """,
-            (new_state, datetime.now(timezone.utc).isoformat(), task_id),
+            (new_state, utc_now_iso(), task_id),
         )
 
         if cursor.rowcount == 0:
@@ -251,7 +253,7 @@ class VerdictConsumer:
             "state_transition": f"{from_state} -> {to_state}",
             "flags": verdict.flags,
             "recommendations": verdict.recommendations,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": utc_now_iso(),
         }
 
         cursor.execute(
@@ -264,7 +266,7 @@ class VerdictConsumer:
             (
                 verdict.task_id,
                 "GUARDIAN_VERDICT_APPLIED",
-                datetime.now(timezone.utc).isoformat(),
+                utc_now_iso(),
                 json.dumps(audit_data),
                 verdict.verdict_id,
             ),

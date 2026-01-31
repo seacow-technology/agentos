@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Execution Plans View - Test</title>
+
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="agentos/webui/static/css/components.css">
+    <link rel="stylesheet" href="agentos/webui/static/css/execution-plans.css">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+        }
+        #test-container {
+            width: 100vw;
+            height: 100vh;
+        }
+        .btn-primary, .btn-secondary {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            background: #0066cc;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-secondary {
+            background: white;
+            color: #495057;
+        }
+        .btn-primary:hover {
+            background: #0052a3;
+        }
+        .btn-secondary:hover {
+            background: #f8f9fa;
+        }
+        .btn-link {
+            background: none;
+            border: none;
+            color: #0066cc;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px 8px;
+        }
+        .btn-link:hover {
+            text-decoration: underline;
+        }
+        .btn-copy {
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 2px;
+        }
+        code {
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div id="test-container"></div>
+
+    <!-- Mock API Client -->
+    <script>
+        // Mock API client for testing
+        window.apiClient = {
+            get: async (url, options) => {
+                console.log('Mock API GET:', url);
+
+                // Simulate API response for execution plan
+                if (url.includes('/api/exec/tasks/') || url.includes('/api/exec/plans/')) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+
+                    return {
+                        ok: true,
+                        data: {
+                            plan_id: 'plan-123456',
+                            task_id: 'task-789',
+                            status: 'validated',
+                            description: 'Execute a comprehensive code review and refactoring workflow',
+                            created_at: new Date().toISOString(),
+                            estimated_duration_ms: 45000,
+                            validation: {
+                                rules_passed: [
+                                    {
+                                        rule_name: 'Repository Access Check',
+                                        description: 'Verify read/write permissions to target repositories'
+                                    },
+                                    {
+                                        rule_name: 'Dependency Validation',
+                                        description: 'All required dependencies are available and accessible'
+                                    },
+                                    {
+                                        rule_name: 'Resource Limits',
+                                        description: 'Execution within allowed resource constraints'
+                                    }
+                                ],
+                                rules_failed: [
+                                    {
+                                        rule_name: 'Guardian Review Required',
+                                        description: 'High-risk operations require Guardian review before execution',
+                                        reason: 'Plan contains file modifications in critical directories',
+                                        hint: 'Submit this plan for Guardian review or adjust scope to exclude /src/core',
+                                        fix_suggestions: [
+                                            'Request Guardian review via the approval workflow',
+                                            'Modify plan to exclude critical directories',
+                                            'Split into smaller, lower-risk tasks'
+                                        ]
+                                    }
+                                ]
+                            },
+                            steps: [
+                                {
+                                    name: 'Scan Repository',
+                                    type: 'analysis',
+                                    description: 'Perform static code analysis to identify refactoring opportunities',
+                                    estimated_duration_ms: 5000,
+                                    risk_level: 'low',
+                                    inputs: {
+                                        repo_path: '/workspace/project',
+                                        scan_depth: 'full'
+                                    },
+                                    outputs: {
+                                        findings_count: 'integer',
+                                        report_path: 'string'
+                                    }
+                                },
+                                {
+                                    name: 'Generate Refactoring Plan',
+                                    type: 'planning',
+                                    description: 'Create detailed refactoring recommendations based on analysis',
+                                    estimated_duration_ms: 8000,
+                                    risk_level: 'low',
+                                    depends_on: ['Scan Repository'],
+                                    inputs: {
+                                        findings: 'array',
+                                        priority_threshold: 'high'
+                                    },
+                                    outputs: {
+                                        refactoring_tasks: 'array',
+                                        estimated_impact: 'object'
+                                    }
+                                },
+                                {
+                                    name: 'Apply Code Changes',
+                                    type: 'modification',
+                                    description: 'Execute approved refactoring changes to source files',
+                                    estimated_duration_ms: 15000,
+                                    risk_level: 'high',
+                                    risk_reason: 'Modifying source code in critical directories (/src/core)',
+                                    depends_on: ['Generate Refactoring Plan'],
+                                    inputs: {
+                                        tasks: 'array',
+                                        backup_enabled: true
+                                    },
+                                    outputs: {
+                                        modified_files: 'array',
+                                        rollback_snapshot: 'string'
+                                    }
+                                },
+                                {
+                                    name: 'Run Test Suite',
+                                    type: 'validation',
+                                    description: 'Execute comprehensive test suite to verify changes',
+                                    estimated_duration_ms: 12000,
+                                    risk_level: 'low',
+                                    depends_on: ['Apply Code Changes'],
+                                    inputs: {
+                                        test_scope: 'full',
+                                        coverage_threshold: 0.85
+                                    },
+                                    outputs: {
+                                        test_results: 'object',
+                                        coverage_report: 'string'
+                                    }
+                                },
+                                {
+                                    name: 'Generate Report',
+                                    type: 'reporting',
+                                    description: 'Create comprehensive execution summary and audit trail',
+                                    estimated_duration_ms: 5000,
+                                    risk_level: 'low',
+                                    depends_on: ['Run Test Suite'],
+                                    inputs: {
+                                        include_metrics: true,
+                                        format: 'markdown'
+                                    },
+                                    outputs: {
+                                        report_path: 'string',
+                                        summary: 'object'
+                                    }
+                                }
+                            ],
+                            explanation: {
+                                summary: 'This execution plan performs a **comprehensive code refactoring workflow** with built-in safety checks. The process starts with static analysis to identify improvement opportunities, generates a prioritized refactoring plan, applies approved changes with automatic backup, validates via testing, and produces a detailed audit report.',
+                                rationale: 'Breaking the workflow into distinct phases allows for checkpoint validation and rollback capability. The high-risk "Apply Code Changes" step is isolated and requires Guardian approval due to modifications in critical directories.',
+                                alternatives: [
+                                    'Manual code review without automated refactoring',
+                                    'Split into multiple smaller tasks for incremental approval',
+                                    'Use read-only analysis mode without applying changes'
+                                ],
+                                risks: [
+                                    'Code changes may introduce regressions if tests have incomplete coverage',
+                                    'Automated refactoring might not preserve all code semantics in edge cases',
+                                    'Large-scale changes could cause merge conflicts with concurrent work'
+                                ]
+                            },
+                            artifacts: [
+                                {
+                                    id: 'artifact-1',
+                                    name: 'analysis-report.json',
+                                    type: 'report',
+                                    size: 45678
+                                },
+                                {
+                                    id: 'artifact-2',
+                                    name: 'refactoring-plan.md',
+                                    type: 'file',
+                                    size: 12345
+                                },
+                                {
+                                    id: 'artifact-3',
+                                    name: 'test-results.xml',
+                                    type: 'log',
+                                    size: 23456
+                                }
+                            ]
+                        }
+                    };
+                }
+
+                return { ok: false, message: 'Not found' };
+            },
+            post: async (url, data, options) => {
+                console.log('Mock API POST:', url, data);
+                await new Promise(resolve => setTimeout(resolve, 500));
+                return { ok: true, message: 'Success' };
+            }
+        };
+
+        // Mock toast function
+        window.showToast = (message, type, duration) => {
+            console.log(`[${type.toUpperCase()}] ${message}`);
+            alert(`${type.toUpperCase()}: ${message}`);
+        };
+
+        // Mock navigateToView
+        window.navigateToView = (view, params) => {
+            console.log('Navigate to:', view, params);
+            alert(`Navigate to ${view}`);
+        };
+    </script>
+
+    <!-- View Script -->
+    <script src="agentos/webui/static/js/views/ExecutionPlansView.js"></script>
+
+    <!-- Initialize View -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('test-container');
+
+            // Simulate URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            if (!urlParams.has('task_id')) {
+                // Add task_id to URL for testing
+                window.history.replaceState({}, '', '?task_id=task-789');
+            }
+
+            const view = new ExecutionPlansView(container);
+            console.log('ExecutionPlansView initialized');
+        });
+    </script>
+</body>
+</html>
