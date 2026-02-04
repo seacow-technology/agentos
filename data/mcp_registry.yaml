@@ -1,0 +1,306 @@
+# MCP Marketplace Registry
+#
+# This is the official AgentOS MCP Package registry. Each package represents
+# an MCP server that can be "attached" to AgentOS (not "installed").
+#
+# Attachment Process:
+# 1. Discover: Browse packages in this registry
+# 2. Inspect: Review tools, side effects, and risks
+# 3. Approve: Review governance preview (Trust Tier, Quota, Gates)
+# 4. Attach: Add to local MCP config (disabled by default)
+# 5. Enable: Use CLI or API to enable the server
+#
+# This is NOT a plugin store - it's a capability discovery layer.
+
+version: "1.0"
+packages:
+  # ============================================
+  # T0: Official AgentOS MCPs
+  # ============================================
+  - package_id: "agentos.official/echo-math"
+    name: "Echo Math Calculator"
+    version: "1.0.0"
+    author: "AgentOS Team"
+    description: "Simple echo and math tools for testing and demonstrations"
+    long_description: |
+      A minimal MCP server providing echo and basic arithmetic operations.
+      Perfect for testing MCP integration without side effects.
+    
+    tools:
+      - name: "echo"
+        description: "Echo back the input message"
+        input_schema:
+          type: "object"
+          properties:
+            message:
+              type: "string"
+              description: "Message to echo"
+          required: ["message"]
+        side_effects: []
+        requires_confirmation: false
+      
+      - name: "add"
+        description: "Add two numbers"
+        input_schema:
+          type: "object"
+          properties:
+            a:
+              type: "number"
+              description: "First number"
+            b:
+              type: "number"
+              description: "Second number"
+          required: ["a", "b"]
+        side_effects: []
+        requires_confirmation: false
+    
+    declared_side_effects: []
+    
+    transport: "stdio"
+    connection_template:
+      command: "npx"
+      args: ["-y", "@modelcontextprotocol/server-echo"]
+      env: {}
+    
+    recommended_trust_tier: "T0"
+    recommended_quota_profile: "loose"
+    requires_admin_token: false
+    
+    homepage: "https://github.com/modelcontextprotocol/servers/tree/main/src/echo"
+    repository: "https://github.com/modelcontextprotocol/servers"
+    license: "MIT"
+    tags: ["official", "testing", "math", "utilities"]
+
+  # ============================================
+  # T1: Verified Stdio MCPs (Local, No Network)
+  # ============================================
+  - package_id: "community/filesystem"
+    name: "Filesystem Tools"
+    version: "1.2.0"
+    author: "MCP Community"
+    description: "Local filesystem operations (read, write, list)"
+    long_description: |
+      Provides tools for reading, writing, and listing files on the local filesystem.
+      High-risk due to filesystem write capabilities.
+    
+    tools:
+      - name: "read_file"
+        description: "Read contents of a file"
+        input_schema:
+          type: "object"
+          properties:
+            path:
+              type: "string"
+              description: "File path to read"
+          required: ["path"]
+        side_effects: ["filesystem_read"]
+        requires_confirmation: false
+      
+      - name: "write_file"
+        description: "Write content to a file"
+        input_schema:
+          type: "object"
+          properties:
+            path:
+              type: "string"
+              description: "File path to write"
+            content:
+              type: "string"
+              description: "Content to write"
+          required: ["path", "content"]
+        side_effects: ["filesystem_write"]
+        requires_confirmation: true
+      
+      - name: "delete_file"
+        description: "Delete a file"
+        input_schema:
+          type: "object"
+          properties:
+            path:
+              type: "string"
+              description: "File path to delete"
+          required: ["path"]
+        side_effects: ["filesystem_delete"]
+        requires_confirmation: true
+      
+      - name: "list_directory"
+        description: "List files in a directory"
+        input_schema:
+          type: "object"
+          properties:
+            path:
+              type: "string"
+              description: "Directory path"
+          required: ["path"]
+        side_effects: ["filesystem_read"]
+        requires_confirmation: false
+    
+    declared_side_effects: 
+      - "filesystem_read"
+      - "filesystem_write"
+      - "filesystem_delete"
+    
+    transport: "stdio"
+    connection_template:
+      command: "npx"
+      args: ["-y", "@modelcontextprotocol/server-filesystem"]
+      env: {}
+    
+    recommended_trust_tier: "T1"
+    recommended_quota_profile: "medium"
+    requires_admin_token: true
+    
+    homepage: "https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem"
+    repository: "https://github.com/modelcontextprotocol/servers"
+    license: "MIT"
+    tags: ["filesystem", "io", "local", "high-risk"]
+
+  # ============================================
+  # T3: Cloud Service MCPs (Network, API Calls)
+  # ============================================
+  - package_id: "smithery.ai/github"
+    name: "GitHub Integration"
+    version: "2.1.0"
+    author: "Smithery AI"
+    description: "GitHub API integration for issues, PRs, repos"
+    long_description: |
+      Comprehensive GitHub integration allowing read and write operations
+      on repositories, issues, pull requests, and more.
+      
+      Requires GitHub personal access token with appropriate scopes.
+      High-risk due to potential for code modifications and PR approvals.
+    
+    tools:
+      - name: "create_issue"
+        description: "Create a GitHub issue"
+        input_schema:
+          type: "object"
+          properties:
+            repo:
+              type: "string"
+              description: "Repository (owner/repo)"
+            title:
+              type: "string"
+              description: "Issue title"
+            body:
+              type: "string"
+              description: "Issue body"
+          required: ["repo", "title"]
+        side_effects: ["network_write", "cloud_resource_create"]
+        requires_confirmation: true
+      
+      - name: "list_pull_requests"
+        description: "List pull requests in a repository"
+        input_schema:
+          type: "object"
+          properties:
+            repo:
+              type: "string"
+              description: "Repository (owner/repo)"
+            state:
+              type: "string"
+              enum: ["open", "closed", "all"]
+              description: "PR state filter"
+          required: ["repo"]
+        side_effects: ["network_read"]
+        requires_confirmation: false
+      
+      - name: "merge_pull_request"
+        description: "Merge a pull request"
+        input_schema:
+          type: "object"
+          properties:
+            repo:
+              type: "string"
+              description: "Repository (owner/repo)"
+            pr_number:
+              type: "integer"
+              description: "Pull request number"
+            merge_method:
+              type: "string"
+              enum: ["merge", "squash", "rebase"]
+              description: "Merge method"
+          required: ["repo", "pr_number"]
+        side_effects: ["network_write", "cloud_resource_create"]
+        requires_confirmation: true
+    
+    declared_side_effects:
+      - "network_read"
+      - "network_write"
+      - "cloud_resource_create"
+    
+    transport: "stdio"
+    connection_template:
+      command: "npx"
+      args: ["-y", "@smithery/mcp-server-github"]
+      env:
+        GITHUB_TOKEN: "${GITHUB_TOKEN}"  # User must provide
+    
+    recommended_trust_tier: "T3"
+    recommended_quota_profile: "medium"
+    requires_admin_token: true
+    
+    homepage: "https://smithery.ai/server/@smithery/mcp-server-github"
+    repository: "https://github.com/smithery-ai/mcp-servers"
+    license: "MIT"
+    tags: ["github", "cloud", "git", "devtools", "critical-risk"]
+
+  - package_id: "smithery.ai/slack"
+    name: "Slack Integration"
+    version: "1.5.0"
+    author: "Smithery AI"
+    description: "Slack workspace integration for messaging and channels"
+    long_description: |
+      Send messages, create channels, and manage Slack workspaces.
+      
+      Requires Slack Bot Token with appropriate OAuth scopes.
+      Medium-risk for notification spam and channel management.
+    
+    tools:
+      - name: "send_message"
+        description: "Send a message to a Slack channel"
+        input_schema:
+          type: "object"
+          properties:
+            channel:
+              type: "string"
+              description: "Channel ID or name"
+            text:
+              type: "string"
+              description: "Message text"
+          required: ["channel", "text"]
+        side_effects: ["network_write", "user_notification"]
+        requires_confirmation: true
+      
+      - name: "list_channels"
+        description: "List channels in workspace"
+        input_schema:
+          type: "object"
+          properties:
+            types:
+              type: "string"
+              description: "Channel types (public_channel, private_channel)"
+          required: []
+        side_effects: ["network_read"]
+        requires_confirmation: false
+    
+    declared_side_effects:
+      - "network_read"
+      - "network_write"
+      - "user_notification"
+    
+    transport: "stdio"
+    connection_template:
+      command: "npx"
+      args: ["-y", "@smithery/mcp-server-slack"]
+      env:
+        SLACK_BOT_TOKEN: "${SLACK_BOT_TOKEN}"  # User must provide
+    
+    recommended_trust_tier: "T3"
+    recommended_quota_profile: "tight"
+    requires_admin_token: true
+    
+    homepage: "https://smithery.ai/server/@smithery/mcp-server-slack"
+    repository: "https://github.com/smithery-ai/mcp-servers"
+    license: "MIT"
+    tags: ["slack", "communication", "cloud", "notifications"]

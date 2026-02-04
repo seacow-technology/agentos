@@ -16,6 +16,11 @@ from pydantic import BaseModel, Field, field_validator
 import hashlib
 
 
+def utc_now() -> datetime:
+    """Return current UTC datetime."""
+    return datetime.now(timezone.utc)
+
+
 class ConfidenceLevel(str, Enum):
     """LLM self-assessed confidence level."""
     HIGH = "high"

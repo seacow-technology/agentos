@@ -49,6 +49,9 @@ pip install -e . -q
 echo ""
 echo "✅ Setup complete!"
 echo ""
+echo "ℹ️  Voice features are optional:"
+echo "   pip install -e '.[voice]'  (Python < 3.14)"
+echo ""
 
 # Run command
 case "${COMMAND}" in

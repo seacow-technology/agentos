@@ -1,0 +1,1 @@
+"""Core demo seed data"""

@@ -8,6 +8,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, Any, Optional, Callable
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================
@@ -147,3 +150,166 @@ class TimeoutError(RunnerError):
 class ValidationError(RunnerError):
     """Invocation validation error"""
     pass
+
+
+# ============================================
+# Governance Integration
+# ============================================
+
+def run_with_governance(
+    runner: Runner,
+    invocation: Invocation,
+    progress_cb: Optional[ProgressCallback] = None,
+    declared_permissions: Optional[list] = None,
+    require_auth: bool = True
+) -> RunResult:
+    """
+    Run invocation with governance checks (Wave C3)
+
+    This wrapper adds authorization checks and audit trail logging
+    to any Runner execution. It enforces the governance red lines:
+    1. All extensions must be pre-authorized
+    2. All executions (including blocked) must be logged
+    3. No silent execution without audit trail
+
+    Authorization Priority:
+    1. Session-scoped (most specific)
+    2. User-scoped
+    3. Global (least specific)
+
+    Args:
+        runner: Runner instance to execute
+        invocation: Invocation request
+        progress_cb: Progress callback
+        declared_permissions: Declared permissions (for future use)
+        require_auth: Whether to require authorization (default True)
+
+    Returns:
+        RunResult with execution outcome
+
+    Red Lines:
+    - If authorization fails, returns failure result with exit_code=403
+    - All blocked executions are logged in extension_executions table
+    - All successful executions are logged with full audit trail
+
+    Examples:
+        >>> from agentos.core.capabilities.runner_base.builtin_runner import BuiltinRunner
+        >>> runner = BuiltinRunner()
+        >>> invocation = Invocation(
+        ...     extension_id="tools.postman",
+        ...     action_id="get",
+        ...     session_id="session-123",
+        ...     user_id="user-456"
+        ... )
+        >>>
+        >>> # Run with governance
+        >>> result = run_with_governance(
+        ...     runner=runner,
+        ...     invocation=invocation,
+        ...     require_auth=True
+        ... )
+        >>>
+        >>> if result.success:
+        ...     print(result.output)
+        ... else:
+        ...     print(f"Failed: {result.error}")
+    """
+    from agentos.core.capabilities.governance import (
+        ExtensionGovernanceService,
+        AuthorizationRequest,
+    )
+
+    governance = ExtensionGovernanceService()
+
+    # Check authorization
+    auth_result = None
+    if require_auth:
+        auth_request = AuthorizationRequest(
+            extension_id=invocation.extension_id,
+            action_id=invocation.action_id,
+            session_id=invocation.session_id,
+            user_id=invocation.user_id
+        )
+
+        auth_result = governance.check_authorization(auth_request)
+
+        if not auth_result.allowed:
+            # Log blocked execution
+            governance.log_execution_blocked(
+                extension_id=invocation.extension_id,
+                action_id=invocation.action_id,
+                runner_type=runner.runner_type,
+                blocked_reason=auth_result.reason,
+                session_id=invocation.session_id,
+                user_id=invocation.user_id
+            )
+
+            # Return failure result
+            logger.warning(
+                f"[Governance] Blocked execution: {invocation.extension_id}/{invocation.action_id} "
+                f"- Reason: {auth_result.reason}"
+            )
+
+            return RunResult(
+                success=False,
+                output="",
+                error=f"Execution blocked: {auth_result.reason}",
+                exit_code=403,
+                duration_ms=0,
+                metadata={"blocked": True, "reason": auth_result.reason}
+            )
+
+        # Increment execution count
+        if auth_result.auth_id:
+            governance.increment_execution_count(auth_result.auth_id)
+
+    # Log execution start
+    execution_id = governance.log_execution_start(
+        extension_id=invocation.extension_id,
+        action_id=invocation.action_id,
+        runner_type=runner.runner_type,
+        auth_id=auth_result.auth_id if auth_result else None,
+        session_id=invocation.session_id,
+        user_id=invocation.user_id,
+        sandbox_mode="none",  # TODO: Implement sandbox detection
+        metadata={
+            "args": invocation.args,
+            "flags": invocation.flags
+        }
+    )
+
+    # Execute
+    started_at = datetime.now()
+    try:
+        result = runner.run(invocation, progress_cb, declared_permissions)
+    except Exception as e:
+        # Log execution failure
+        completed_at = datetime.now()
+        duration_ms = int((completed_at - started_at).total_seconds() * 1000)
+
+        governance.log_execution_complete(
+            execution_id=execution_id,
+            status="failed",
+            exit_code=-1,
+            duration_ms=duration_ms,
+            output_preview=None,
+            error_message=str(e)
+        )
+
+        # Re-raise exception
+        raise
+
+    completed_at = datetime.now()
+    duration_ms = int((completed_at - started_at).total_seconds() * 1000)
+
+    # Log execution complete
+    governance.log_execution_complete(
+        execution_id=execution_id,
+        status="success" if result.success else "failed",
+        exit_code=result.exit_code,
+        duration_ms=duration_ms,
+        output_preview=result.output[:1000] if result.output else None,
+        error_message=result.error
+    )
+
+    return result

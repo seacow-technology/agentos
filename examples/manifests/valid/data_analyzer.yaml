@@ -1,0 +1,75 @@
+# Capability Manifest: Data Analyzer
+# This is an example capability for statistical data analysis
+
+version: "1.0.0"
+
+metadata:
+  name: "data_analyzer"
+  display_name: "Data Analyzer"
+  description: "Perform statistical analysis on datasets"
+  long_description: |
+    A comprehensive data analysis capability that provides statistical
+    analysis, trend detection, outlier identification, and basic machine
+    learning predictions. Works with CSV, JSON, and Parquet formats.
+  category: "analytics"
+  tags:
+    - "statistics"
+    - "analysis"
+    - "machine-learning"
+  icon: "chart-line"
+  documentation_url: "https://docs.example.com/capabilities/data-analyzer"
+
+publisher:
+  publisher_id: "official"
+  name: "AgentOS Official"
+  contact: "support@example.com"
+  website: "https://example.com"
+
+capability_version: "1.0.0"
+
+api:
+  endpoint: "analyze"
+  parameters:
+    - name: "data_source"
+      type: "string"
+      description: "Path or URL to data file (CSV, JSON, or Parquet)"
+      required: true
+
+    - name: "analysis_type"
+      type: "string"
+      description: "Type of analysis: descriptive, trend, outlier, or predict"
+      required: true
+
+    - name: "target_column"
+      type: "string"
+      description: "Column name to analyze or predict"
+      required: false
+
+    - name: "confidence_level"
+      type: "float"
+      description: "Confidence level for statistical tests (0.0-1.0)"
+      required: false
+      default: 0.95
+
+  returns: "Analysis results with statistics, visualizations, and insights"
+
+requirements:
+  runtime: "python"
+  min_version: "3.9"
+  dependencies:
+    - name: "pandas"
+      version: ">=1.5.0"
+
+    - name: "numpy"
+      version: ">=1.23.0"
+
+    - name: "scipy"
+      version: ">=1.9.0"
+
+    - name: "scikit-learn"
+      version: ">=1.1.0"
+      optional: true
+
+  permissions:
+    - "filesystem.read"
+    - "network.https"

@@ -32,7 +32,6 @@ dependencies = [
     "duckduckgo-search>=6.3.11",  # Web search functionality (DuckDuckGo)
     "beautifulsoup4>=4.12.0",
     "lxml>=5.0.0",
-    "faster-whisper>=1.0.0",  # Local Whisper STT for voice communication
     "webrtcvad>=2.0.10",  # Voice Activity Detection (VAD)
     "numpy>=1.24.0",  # Required for audio processing
     "PyNaCl>=1.5.0",  # Ed25519 signature verification for Discord
@@ -46,6 +45,9 @@ dev = [
     "pytest-cov>=7.0.0",
     "pytest-asyncio>=0.23.0",
     "ruff>=0.8.5",
+]
+voice = [
+    "faster-whisper>=1.0.0; python_version < '3.14'",
 ]
 vector = [
     "sentence-transformers>=2.2.0",

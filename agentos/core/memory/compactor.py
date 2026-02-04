@@ -193,14 +193,14 @@ class MemoryCompactor:
         
         for cluster in significant_clusters:
             summary_memory = self._create_summary(cluster, scope, project_id)
-            
+
             # Add summary as new memory
-            summary_id = self.memory_service.upsert(summary_memory)
+            summary_id = self.memory_service.upsert("system", summary_memory)
             summaries_created += 1
-            
+
             # Delete original memories
             for mem in cluster.memories:
-                self.memory_service.delete(mem["id"])
+                self.memory_service.delete("system", mem["id"])
                 memories_merged += 1
         
         return {

@@ -1,0 +1,18 @@
+capability_id: official.security_pack.v1.0.0
+capability_type: pack
+declared_actions:
+- read
+- write
+- external
+- system
+required_sandbox_level: high
+max_trust_tier_allowed: HIGH
+publisher_id: official
+signature: ed25519:YXBwcm92ZWRfc2lnbmF0dXJlX2Zvcl9zZWN1cml0eV9wYWNrX3YxLjAuMA==
+version: 1.0.0
+created_at: '2026-02-02T00:00:00Z'
+metadata:
+  name: Security Pack
+  description: Comprehensive security suite including vulnerability scanning, compliance checks, and threat detection
+  author: AgentOS Security Team
+  homepage: https://agentos.dev/packs/security

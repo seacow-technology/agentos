@@ -1,0 +1,52 @@
+capability_id: official.ops_assistant
+capability_type: app
+version: 0.1.0
+name: Ops Assistant
+description: Operations assistant with governance demonstration
+
+# This is a reference implementation of Execution Trust.
+# It exists to prove governance works, not to be a feature-complete ops tool.
+
+# Extremely conservative declarations
+declared_actions:
+  - read       # Query status
+  - request    # Request operations
+  - observe    # Display results
+
+# Explicit boundaries
+max_trust_tier: MEDIUM
+sandbox_required: false  # But can be forced by Policy
+
+# Permission declarations
+permissions:
+  - context.read
+  - extensions.read
+  - governance.read
+  - context.refresh.request  # Only REQUEST, not execute
+
+# Security constraints
+constraints:
+  cannot_decide_execution: true
+  cannot_cache_authorization: true
+  cannot_bypass_policy: true
+
+# Risk profile
+risk_indicators:
+  - type: read_only_queries
+    impact: LOW
+  - type: context_refresh_request
+    impact: MEDIUM
+  - type: extension_execution_request
+    impact: HIGH
+
+# Expected behavior
+expected_failures:
+  - HIGH risk operations should be DENIED or REQUIRE_APPROVAL
+  - MEDIUM risk operations should be policy-evaluated
+  - All denials should have clear explanations
+
+# Design principle
+design_principle: |
+  Ops Assistant must "fail gracefully and often".
+  When denied, it explains WHY, not how to bypass.
+  It demonstrates that governance is a fact, not a suggestion.

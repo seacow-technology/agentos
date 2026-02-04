@@ -1,0 +1,21 @@
+{
+  "policy_id": "default_sandbox_v1",
+  "schema_version": "0.11.1",
+  "allowed_git_operations": ["git_add", "git_commit"],
+  "allowlist": {
+    "file_operations": ["write_file", "update_file", "patch_file", "delete_file", "mkdir"],
+    "paths": [
+      "docs/**",
+      "examples/**",
+      "agentos/**",
+      "tests/**",
+      "scripts/**"
+    ],
+    "commands": []
+  },
+  "limits": {
+    "max_file_size_mb": 10,
+    "max_files": 100,
+    "timeout_seconds": 1800
+  }
+}

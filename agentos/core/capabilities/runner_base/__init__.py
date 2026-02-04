@@ -14,10 +14,13 @@ from .base import (
     TimeoutError as RunnerTimeoutError,
 )
 from .builtin import BuiltinRunner
-from .mock import MockRunner
+from .simulated import SimulatedRunner
 from .shell import ShellRunner
 from .shell_config import ShellConfig
 from .command_template import CommandTemplate, CommandTemplateError
+
+# Backward compatibility alias
+MockRunner = SimulatedRunner
 
 __all__ = [
     "Runner",
@@ -27,7 +30,8 @@ __all__ = [
     "ValidationError",
     "RunnerTimeoutError",
     "BuiltinRunner",
-    "MockRunner",
+    "SimulatedRunner",
+    "MockRunner",  # Backward compatibility alias
     "ShellRunner",
     "ShellConfig",
     "CommandTemplate",
@@ -43,7 +47,7 @@ def get_runner(runner_type: str, **kwargs) -> Runner:
     Args:
         runner_type: Runner type identifier
             - "builtin" or "exec.python_handler" -> BuiltinRunner
-            - "mock" -> MockRunner
+            - "simulated" or "mock" -> SimulatedRunner (mock is deprecated alias)
             - "shell" or "exec.shell" -> ShellRunner
         **kwargs: Additional arguments passed to runner constructor
 
@@ -60,8 +64,8 @@ def get_runner(runner_type: str, **kwargs) -> Runner:
         # Get builtin runner with custom timeout
         runner = get_runner("builtin", default_timeout=60)
 
-        # Get mock runner
-        runner = get_runner("mock", delay_per_stage=1.0)
+        # Get simulated runner
+        runner = get_runner("simulated", delay_per_stage=1.0)
 
         # Get shell runner
         runner = get_runner("shell", config=shell_config)
@@ -72,12 +76,12 @@ def get_runner(runner_type: str, **kwargs) -> Runner:
     # Map runner types to implementations
     if runner_type_lower in ("builtin", "exec.python_handler", "default"):
         return BuiltinRunner(**kwargs)
-    elif runner_type_lower == "mock":
-        return MockRunner(**kwargs)
+    elif runner_type_lower in ("simulated", "mock"):  # "mock" is deprecated alias
+        return SimulatedRunner(**kwargs)
     elif runner_type_lower in ("shell", "exec.shell"):
         return ShellRunner(**kwargs)
     else:
         raise ValueError(
             f"Unknown runner type: {runner_type}. "
-            f"Supported types: builtin, mock, shell"
+            f"Supported types: builtin, simulated, shell"
         )

@@ -1,0 +1,79 @@
+# Capability Manifest: Web Scraper
+# This is an example capability that can be registered in the Marketplace Registry
+
+version: "1.0.0"
+
+metadata:
+  name: "web_scraper"
+  display_name: "Web Scraper"
+  description: "Extract structured data from web pages"
+  long_description: |
+    A robust web scraping capability that can extract structured data
+    from HTML pages. Supports CSS selectors, XPath, and custom extraction rules.
+    Handles dynamic content, pagination, and rate limiting.
+  category: "data"
+  tags:
+    - "web"
+    - "scraping"
+    - "data-extraction"
+  icon: "globe"
+  documentation_url: "https://docs.example.com/capabilities/web-scraper"
+
+publisher:
+  publisher_id: "official"
+  name: "AgentOS Official"
+  contact: "support@example.com"
+  website: "https://example.com"
+
+capability_version: "1.0.0"
+
+api:
+  endpoint: "scrape"
+  parameters:
+    - name: "url"
+      type: "string"
+      description: "URL of the web page to scrape"
+      required: true
+
+    - name: "selector"
+      type: "string"
+      description: "CSS selector for elements to extract"
+      required: true
+
+    - name: "follow_links"
+      type: "boolean"
+      description: "Whether to follow links and scrape linked pages"
+      required: false
+      default: false
+
+    - name: "max_depth"
+      type: "integer"
+      description: "Maximum depth for link following (if follow_links is true)"
+      required: false
+      default: 1
+
+    - name: "rate_limit"
+      type: "integer"
+      description: "Minimum milliseconds between requests"
+      required: false
+      default: 1000
+
+  returns: "Array of extracted data objects with metadata"
+
+requirements:
+  runtime: "python"
+  min_version: "3.8"
+  dependencies:
+    - name: "requests"
+      version: ">=2.28.0"
+
+    - name: "beautifulsoup4"
+      version: ">=4.11.0"
+
+    - name: "lxml"
+      version: ">=4.9.0"
+      optional: true
+
+  permissions:
+    - "network.http"
+    - "network.https"

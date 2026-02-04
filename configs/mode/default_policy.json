@@ -1,0 +1,66 @@
+{
+  "version": "1.0",
+  "description": "Default policy matching current hardcoded behavior - only implementation mode allows commits and diffs",
+  "modes": {
+    "implementation": {
+      "allows_commit": true,
+      "allows_diff": true,
+      "allowed_operations": ["read", "write", "execute"],
+      "risk_level": "moderate"
+    },
+    "design": {
+      "allows_commit": false,
+      "allows_diff": false,
+      "allowed_operations": ["read"],
+      "risk_level": "safe"
+    },
+    "chat": {
+      "allows_commit": false,
+      "allows_diff": false,
+      "allowed_operations": ["read"],
+      "risk_level": "safe"
+    },
+    "planning": {
+      "allows_commit": false,
+      "allows_diff": false,
+      "allowed_operations": ["read"],
+      "risk_level": "safe"
+    },
+    "debug": {
+      "allows_commit": false,
+      "allows_diff": false,
+      "allowed_operations": ["read"],
+      "risk_level": "safe"
+    },
+    "ops": {
+      "allows_commit": false,
+      "allows_diff": false,
+      "allowed_operations": ["read", "execute"],
+      "risk_level": "moderate"
+    },
+    "test": {
+      "allows_commit": false,
+      "allows_diff": false,
+      "allowed_operations": ["read", "execute"],
+      "risk_level": "safe"
+    },
+    "release": {
+      "allows_commit": false,
+      "allows_diff": false,
+      "allowed_operations": ["read"],
+      "risk_level": "high"
+    },
+    "experimental_open_plan": {
+      "allows_commit": false,
+      "allows_diff": false,
+      "allowed_operations": ["read"],
+      "risk_level": "safe"
+    }
+  },
+  "default_permissions": {
+    "allows_commit": false,
+    "allows_diff": false,
+    "allowed_operations": ["read"],
+    "risk_level": "safe"
+  }
+}

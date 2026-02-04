@@ -1,0 +1,140 @@
+# Demo Memory Seed Data
+# These memory items populate the Memory page in demo mode
+
+memory:
+  - id: "demo-memory-001"
+    type: "preference"
+    scope: "user"
+    key: "weather_location"
+    value: "Sydney, Australia"
+    confidence: 0.95
+    source: "chat_extraction"
+    created_at: "2026-02-01T09:00:30Z"
+    updated_at: "2026-02-01T09:00:30Z"
+    metadata:
+      extracted_from: "demo-session-001"
+      usage_count: 5
+      last_accessed: "2026-02-01T09:15:00Z"
+    tags:
+      - "demo"
+      - "weather"
+      - "location"
+
+  - id: "demo-memory-002"
+    type: "fact"
+    scope: "project"
+    key: "project_status"
+    value: "AI Weather Assistant is in active development with 3 team members"
+    confidence: 1.0
+    source: "project_metadata"
+    created_at: "2026-01-15T10:00:00Z"
+    updated_at: "2026-02-01T08:30:00Z"
+    metadata:
+      project_id: "demo-project-001"
+      verified: true
+    tags:
+      - "demo"
+      - "project"
+      - "status"
+
+  - id: "demo-memory-003"
+    type: "pattern"
+    scope: "user"
+    key: "task_creation_pattern"
+    value: "User prefers to create tasks during chat conversations rather than manually"
+    confidence: 0.85
+    source: "behavior_analysis"
+    created_at: "2026-01-20T14:30:00Z"
+    updated_at: "2026-02-01T09:10:00Z"
+    metadata:
+      observation_count: 12
+      pattern_strength: "strong"
+    tags:
+      - "demo"
+      - "behavior"
+      - "tasks"
+
+  - id: "demo-memory-004"
+    type: "fact"
+    scope: "system"
+    key: "slash_commands_learned"
+    value: "User has learned and used /help, /task, and /memory commands"
+    confidence: 1.0
+    source: "command_usage"
+    created_at: "2026-02-01T10:30:05Z"
+    updated_at: "2026-02-01T10:30:05Z"
+    metadata:
+      command_count: 3
+      help_accessed: 1
+    tags:
+      - "demo"
+      - "commands"
+      - "learning"
+
+  - id: "demo-memory-005"
+    type: "preference"
+    scope: "user"
+    key: "output_format"
+    value: "Prefers structured output with headers, bullet points, and emojis"
+    confidence: 0.90
+    source: "interaction_analysis"
+    created_at: "2026-01-25T11:00:00Z"
+    updated_at: "2026-02-01T09:15:00Z"
+    metadata:
+      observation_count: 8
+      positive_feedback: 6
+    tags:
+      - "demo"
+      - "formatting"
+      - "ui"
+
+  - id: "demo-memory-006"
+    type: "fact"
+    scope: "project"
+    key: "document_analysis_capability"
+    value: "Document Analyzer project can process PDF, DOCX, and TXT formats"
+    confidence: 1.0
+    source: "project_documentation"
+    created_at: "2026-01-20T14:00:00Z"
+    updated_at: "2026-01-20T14:00:00Z"
+    metadata:
+      project_id: "demo-project-002"
+      supported_formats: ["pdf", "docx", "txt"]
+    tags:
+      - "demo"
+      - "documents"
+      - "capability"
+
+  - id: "demo-memory-007"
+    type: "pattern"
+    scope: "system"
+    key: "peak_usage_time"
+    value: "System usage peaks between 9-11 AM and 2-4 PM"
+    confidence: 0.92
+    source: "usage_analytics"
+    created_at: "2026-01-28T00:00:00Z"
+    updated_at: "2026-02-01T00:00:00Z"
+    metadata:
+      data_points: 30
+      analysis_period: "30_days"
+    tags:
+      - "demo"
+      - "analytics"
+      - "usage"
+
+  - id: "demo-memory-008"
+    type: "preference"
+    scope: "user"
+    key: "notification_preference"
+    value: "User prefers in-app notifications over email for task updates"
+    confidence: 0.88
+    source: "settings_analysis"
+    created_at: "2026-01-22T16:00:00Z"
+    updated_at: "2026-01-22T16:00:00Z"
+    metadata:
+      notification_types: ["in_app"]
+      email_disabled: true
+    tags:
+      - "demo"
+      - "notifications"
+      - "settings"

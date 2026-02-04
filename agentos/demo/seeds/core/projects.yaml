@@ -1,0 +1,78 @@
+# Demo Projects Seed Data
+# These projects are used to populate the Projects page in demo mode
+
+projects:
+  - id: "demo-project-001"
+    name: "AI Weather Assistant"
+    description: "A demo project showcasing AI-powered weather queries and analysis"
+    status: "active"
+    created_at: "2026-01-15T10:00:00Z"
+    updated_at: "2026-02-01T08:30:00Z"
+    tags:
+      - "demo"
+      - "weather"
+      - "ai-assistant"
+    metadata:
+      priority: "high"
+      team: "Demo Team"
+      language: "Python"
+
+  - id: "demo-project-002"
+    name: "Document Analyzer"
+    description: "Automated document analysis and summarization system"
+    status: "active"
+    created_at: "2026-01-20T14:00:00Z"
+    updated_at: "2026-01-31T16:45:00Z"
+    tags:
+      - "demo"
+      - "nlp"
+      - "document-processing"
+    metadata:
+      priority: "medium"
+      team: "Demo Team"
+      language: "Python"
+
+  - id: "demo-project-003"
+    name: "Task Automation Pipeline"
+    description: "Demonstrates task orchestration and dependency management"
+    status: "completed"
+    created_at: "2025-12-01T09:00:00Z"
+    updated_at: "2026-01-10T12:00:00Z"
+    tags:
+      - "demo"
+      - "automation"
+      - "pipeline"
+    metadata:
+      priority: "low"
+      team: "Demo Team"
+      language: "Python"
+
+  - id: "demo-project-004"
+    name: "Knowledge Base Explorer"
+    description: "Interactive knowledge base query and exploration demo"
+    status: "draft"
+    created_at: "2026-01-28T11:00:00Z"
+    updated_at: "2026-01-30T15:20:00Z"
+    tags:
+      - "demo"
+      - "knowledge-base"
+      - "rag"
+    metadata:
+      priority: "medium"
+      team: "Demo Team"
+      language: "Python"
+
+  - id: "demo-project-005"
+    name: "Multi-Agent Collaboration"
+    description: "Showcases multiple agents working together on complex tasks"
+    status: "archived"
+    created_at: "2025-11-01T08:00:00Z"
+    updated_at: "2026-01-05T10:00:00Z"
+    tags:
+      - "demo"
+      - "multi-agent"
+      - "collaboration"
+    metadata:
+      priority: "low"
+      team: "Demo Team"
+      language: "Python"

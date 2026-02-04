@@ -19,40 +19,13 @@ def cli(ctx, web):
     """
     # Handle --web flag
     if web:
-        from agentos.webui.daemon import WebUIDaemon
-        from agentos.config import load_settings
-        try:
-            settings = load_settings()
-            host = settings.webui_host
-            port = settings.webui_port
-        except Exception:
-            host = "127.0.0.1"
-            port = 8080
-
-        daemon = WebUIDaemon(host=host, port=port)
-        running, pid = daemon.is_running()
-
-        if running:
-            click.echo(f"⚠️  WebUI already running (PID: {pid}), restarting...")
-            if not daemon.stop():
-                click.echo("❌ Failed to stop existing WebUI")
-                ctx.exit(1)
-            # Wait a moment for port to be released
-            import time
-            time.sleep(1)
-
-        click.echo("🚀 Starting WebUI...")
-        if daemon.start(background=True):
-            click.echo(f"✅ WebUI started at http://{host}:{port}")
-        else:
-            click.echo("❌ Failed to start WebUI")
-            ctx.exit(1)
-
-        # Open browser
-        import webbrowser
-        url = f"http://{host}:{port}"
-        click.echo(f"🌐 Opening browser: {url}")
-        webbrowser.open(url)
+        click.echo("⚠️  WebUI v1 has been removed.")
+        click.echo("   Please use WebUI v2 (standalone frontend).")
+        click.echo("")
+        click.echo("Quick start (dev server):")
+        click.echo("  cd webui-v2")
+        click.echo("  npm install")
+        click.echo("  npm run dev")
         ctx.exit(0)
     # Initialize language from settings (before any output)
     try:

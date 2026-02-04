@@ -1,0 +1,16 @@
+# Invalid: Malformed YAML with syntax errors
+capability_id: test.malformed.v1.0.0
+capability_type: extension
+declared_actions:
+- read
+  - external  # Wrong indentation
+required_sandbox_level: medium
+max_trust_tier_allowed: MEDIUM
+publisher_id: test
+signature: ed25519:test
+version: 1.0.0
+created_at: 2026-02-02T00:00:00Z
+metadata:
+  name: Malformed YAML
+  description: "This YAML has syntax errors
+  author: Test Author

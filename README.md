@@ -171,6 +171,11 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 # Install dependencies
 pip install -e .
 
+# Optional: voice features (Python < 3.14)
+pip install -e '.[voice]'
+
+# Note: Python 3.14 currently lacks onnxruntime wheels, so voice features are unavailable on 3.14.
+
 # Initialize database
 agentos init
 
@@ -184,8 +189,10 @@ agentos
 # One-command setup (auto-configures environment)
 ./run.sh doctor
 
-# Start WebUI
-./run.sh webui
+# Start WebUI (v2)
+cd webui-v2
+npm install
+npm run dev
 
 # Start CLI
 ./run.sh cli
@@ -198,8 +205,10 @@ agentos
 agentos doctor
 
 # 2. Start WebUI (recommended for first-time users)
-agentos --web
-# Open http://localhost:8080
+cd webui-v2
+npm install
+npm run dev
+# Open http://localhost:5173
 
 # 3. Or use interactive CLI
 agentos
@@ -225,17 +234,16 @@ agentos task show <task_id>
 agentos task resume <task_id>
 ```
 
-### Example 2: WebUI Management
+### Example 2: WebUI Management (v2)
 
 ```bash
-# Start WebUI on default port (8080)
-agentos --web
+# Start WebUI (v2 dev server)
+cd webui-v2
+npm install
+npm run dev
 
-# Start on custom port
-AGENTOS_WEBUI_PORT=8081 agentos --web
-
-# Access governance dashboard
-open http://localhost:8080/governance
+# Access governance dashboard (default dev port)
+open http://localhost:5173/governance
 ```
 
 ### Example 3: Project-Based Workflow
@@ -294,32 +302,32 @@ await comm.execute(
 
 ### User Guides
 
-- [Quick Start Guide](docs/guides/QUICK_START.md)
+- [Quick Start Guide](docs/SETUP_WIZARD_QUICK_START.md)
 - [Task Management Guide](docs/guides/user/TASK_MANAGEMENT_GUIDE.md)
-- [Project Management Guide](docs/guides/PROJECT_MANAGEMENT.md)
-- [WebUI User Guide](docs/guides/WEBUI_GUIDE.md)
+- [Project Management Guide](docs/projects.md)
+- [WebUI User Guide](docs/guides/WEBUI_USAGE.md)
 - [Memory System Guide](docs/MEMORY_EXTRACTOR_QUICK_REF.md)
 
 ### Developer Guides
 
-- [Architecture Overview](docs/architecture/OVERVIEW.md)
-- [API Reference](docs/api/README.md)
-- [Database Schema](docs/deployment/DATABASE_SCHEMA.md)
-- [Extension Development](docs/development/EXTENSIONS.md)
+- [Architecture Overview](docs/architecture/README.md)
+- [API Reference](docs/api/V31_API_REFERENCE.md)
+- [Database Schema](docs/deployment/DATABASE_QUICK_REFERENCE.md)
+- [Extension Development](docs/extensions/CAPABILITY_RUNNER_GUIDE.md)
 - [Contributing Guide](CONTRIBUTING.md)
 
 ### OS System Documentation
 
 - [CommunicationOS Guide](agentos/communicationos/README.md)
 - [NetworkOS Guide](agentos/networkos/README.md)
-- [SkillOS Guide](docs/skillos/README.md)
+- [SkillOS Guide](docs/SKILLS_ADMIN_GUIDE.md)
 - [MemoryOS Guide](docs/MEMORY_INTEGRATION_COMPLETE_SUMMARY.md)
 - [BrainOS Guide](docs/brainos/README.md)
 
 ### Migration Guides
 
 - [v2.0 to v2.1 Migration](#migration-from-v20-to-v21)
-- [v1.x to v2.0 Migration](docs/migration/V1_TO_V2.md)
+- [v1.x to v2.0 Migration](docs/WEBUI_V1_TO_V2_MIGRATION.md)
 - [Database Migration Guide](docs/deployment/DATABASE_MIGRATION.md)
 
 ---
@@ -449,8 +457,13 @@ SKILLOS_ENABLED=true
 Zero configuration required. Perfect for single-user scenarios.
 
 ```bash
-# Just run AgentOS
-agentos --web
+# Start AgentOS (CLI)
+agentos
+
+# Start WebUI v2
+cd webui-v2
+npm install
+npm run dev
 ```
 
 #### PostgreSQL (Production)
@@ -472,8 +485,13 @@ export DATABASE_PASSWORD=your_password
 # Run migrations
 agentos db migrate
 
-# Start AgentOS
-agentos --web
+# Start AgentOS (CLI)
+agentos
+
+# Start WebUI v2
+cd webui-v2
+npm install
+npm run dev
 ```
 
 **Performance**: PostgreSQL provides **2-4x better performance** for concurrent operations.

@@ -257,6 +257,10 @@ class ChatService:
         if "execution_phase" not in metadata:
             metadata["execution_phase"] = "planning"  # Safe default
 
+        # Set default project_id for memory context (cross-session sharing)
+        if "project_id" not in metadata or not metadata["project_id"]:
+            metadata["project_id"] = "default"
+
         # Task #8: Dual Write - Generate epoch_ms timestamp
         now = now_ms()
         created_at = from_epoch_ms(now)
@@ -1070,7 +1074,8 @@ class ChatService:
                             message=message,
                             session_id=message.session_id,
                             memory_service=memory_service,
-                            project_id=None  # Could be extracted from session metadata if needed
+                            project_id=None,  # Could be extracted from session metadata if needed
+                            agent_id="webui_chat"
                         ))
 
                         if count > 0:

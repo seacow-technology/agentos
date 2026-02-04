@@ -1,0 +1,51 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /* Path aliases */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@components": ["./src/components"],
+      "@components/*": ["./src/components/*"],
+      "@layouts": ["./src/layouts"],
+      "@layouts/*": ["./src/layouts/*"],
+      "@pages": ["./src/pages"],
+      "@pages/*": ["./src/pages/*"],
+      "@services": ["./src/services"],
+      "@services/*": ["./src/services/*"],
+      "@platform": ["./src/platform"],
+      "@platform/*": ["./src/platform/*"],
+      "@modules": ["./src/modules"],
+      "@modules/*": ["./src/modules/*"]
+    }
+  },
+  "include": ["src"],
+  "exclude": [
+    "src/**/__examples__/**",
+    "src/**/__tests__/**",
+    "src/**/_*.disabled/**",
+    "src/pages/_lab",
+    "src/features/phase5/EXAMPLE_FEATURE_TEMPLATE.ts",
+    "src/services/*.gen.ts"
+  ],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}

@@ -189,9 +189,9 @@ def _pin_to_memory(context: Dict[str, Any]) -> CommandResult:
             "project_id": project_id,
             "confidence": 0.9
         }
-        
-        memory_id = memory_service.upsert(memory_item)
-        
+
+        memory_id = memory_service.upsert("webui_chat", memory_item)
+
         logger.info(f"Pinned message {last_message.message_id} to memory: {memory_id}")
         
         return CommandResult.success_result(

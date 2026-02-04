@@ -2072,13 +2072,15 @@ class ChatEngine:
             user_count = await extract_and_store_async(
                 message=user_message,
                 session_id=session_id,
-                memory_service=memory_service
+                memory_service=memory_service,
+                agent_id="webui_chat"
             )
 
             assistant_count = await extract_and_store_async(
                 message=assistant_message,
                 session_id=session_id,
-                memory_service=memory_service
+                memory_service=memory_service,
+                agent_id="webui_chat"
             )
 
             total = user_count + assistant_count

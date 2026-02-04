@@ -474,7 +474,8 @@ async def extract_and_store_async(
     message: ChatMessage,
     session_id: str,
     memory_service,
-    project_id: Optional[str] = None
+    project_id: Optional[str] = None,
+    agent_id: str = "webui_chat"
 ) -> int:
     """
     Async wrapper for extracting and storing memories.
@@ -487,6 +488,7 @@ async def extract_and_store_async(
         session_id: Current session ID
         memory_service: MemoryService instance
         project_id: Optional project ID
+        agent_id: Agent ID for permission checks (default: "webui_chat")
 
     Returns:
         Number of memories extracted and stored
@@ -504,7 +506,7 @@ async def extract_and_store_async(
     stored_count = 0
     for memory in memories:
         try:
-            memory_id = memory_service.upsert(memory)
+            memory_id = memory_service.upsert(agent_id, memory)
             logger.debug(f"Stored memory: {memory_id}")
             stored_count += 1
         except Exception as e:

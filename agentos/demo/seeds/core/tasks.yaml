@@ -1,0 +1,154 @@
+# Demo Tasks Seed Data
+# These tasks populate the Tasks page in demo mode
+
+tasks:
+  - id: "demo-task-001"
+    title: "Daily Weather Forecast Check"
+    description: "Check Sydney weather forecast every morning"
+    status: "succeeded"
+    state: "completed"
+    priority: 2
+    created_at: "2026-02-01T09:10:25Z"
+    updated_at: "2026-02-01T09:15:00Z"
+    started_at: "2026-02-01T09:10:30Z"
+    completed_at: "2026-02-01T09:15:00Z"
+    project_id: "demo-project-001"
+    session_id: "demo-session-001"
+    tags:
+      - "demo"
+      - "weather"
+      - "automated"
+    metadata:
+      created_by: "demo-user"
+      execution_time: 270
+      result: "success"
+
+  - id: "demo-task-002"
+    title: "Analyze Quarterly Report"
+    description: "Extract key metrics and generate summary from Q4 2025 report"
+    status: "executing"
+    state: "in_progress"
+    priority: 1
+    created_at: "2026-01-31T14:00:00Z"
+    updated_at: "2026-01-31T14:15:00Z"
+    started_at: "2026-01-31T14:00:10Z"
+    project_id: "demo-project-002"
+    session_id: "demo-session-002"
+    tags:
+      - "demo"
+      - "analysis"
+      - "documents"
+    metadata:
+      created_by: "demo-user"
+      progress: 85
+      current_step: "Generating recommendations"
+
+  - id: "demo-task-003"
+    title: "Index Knowledge Base Documents"
+    description: "Scan and index all project documentation for RAG"
+    status: "planning"
+    state: "draft"
+    priority: 3
+    created_at: "2026-01-30T11:00:00Z"
+    updated_at: "2026-01-30T11:05:00Z"
+    project_id: "demo-project-004"
+    tags:
+      - "demo"
+      - "knowledge-base"
+      - "indexing"
+    metadata:
+      created_by: "demo-user"
+      estimated_docs: 450
+
+  - id: "demo-task-004"
+    title: "Deploy Multi-Agent System"
+    description: "Coordinate deployment of agent orchestration pipeline"
+    status: "failed"
+    state: "failed"
+    priority: 1
+    created_at: "2026-01-28T16:00:00Z"
+    updated_at: "2026-01-28T16:45:00Z"
+    started_at: "2026-01-28T16:05:00Z"
+    completed_at: "2026-01-28T16:45:00Z"
+    project_id: "demo-project-005"
+    tags:
+      - "demo"
+      - "deployment"
+      - "multi-agent"
+    metadata:
+      created_by: "demo-user"
+      error: "Agent coordination timeout"
+      retry_count: 2
+
+  - id: "demo-task-005"
+    title: "Generate Weekly Status Report"
+    description: "Compile and format weekly project status update"
+    status: "approved"
+    state: "ready"
+    priority: 2
+    created_at: "2026-01-29T09:00:00Z"
+    updated_at: "2026-01-29T10:30:00Z"
+    project_id: "demo-project-001"
+    tags:
+      - "demo"
+      - "reporting"
+      - "automated"
+    metadata:
+      created_by: "demo-user"
+      approval_time: "2026-01-29T10:30:00Z"
+      approved_by: "demo-admin"
+
+  - id: "demo-task-006"
+    title: "Optimize Database Queries"
+    description: "Profile and optimize slow database queries in production"
+    status: "draft"
+    state: "draft"
+    priority: 2
+    created_at: "2026-01-27T14:00:00Z"
+    updated_at: "2026-01-27T14:00:00Z"
+    project_id: "demo-project-003"
+    tags:
+      - "demo"
+      - "performance"
+      - "database"
+    metadata:
+      created_by: "demo-user"
+
+  - id: "demo-task-007"
+    title: "Extract Entities from Customer Feedback"
+    description: "Use NLP to identify key entities in customer feedback forms"
+    status: "succeeded"
+    state: "completed"
+    priority: 3
+    created_at: "2026-01-25T10:00:00Z"
+    updated_at: "2026-01-25T12:30:00Z"
+    started_at: "2026-01-25T10:05:00Z"
+    completed_at: "2026-01-25T12:30:00Z"
+    project_id: "demo-project-002"
+    tags:
+      - "demo"
+      - "nlp"
+      - "feedback"
+    metadata:
+      created_by: "demo-user"
+      entities_extracted: 342
+      execution_time: 8700
+
+  - id: "demo-task-008"
+    title: "Update API Documentation"
+    description: "Sync API docs with latest endpoint changes"
+    status: "executing"
+    state: "in_progress"
+    priority: 2
+    created_at: "2026-01-31T08:00:00Z"
+    updated_at: "2026-02-01T11:00:00Z"
+    started_at: "2026-01-31T08:05:00Z"
+    project_id: "demo-project-003"
+    tags:
+      - "demo"
+      - "documentation"
+      - "api"
+    metadata:
+      created_by: "demo-user"
+      progress: 60
+      current_step: "Updating endpoint schemas"

@@ -387,6 +387,7 @@ class ContextBuilder:
             # Build memory context (project_id can be None)
             from agentos.core.memory.budgeter import ContextBudget as MemoryBudget
             memory_context = self.memory_service.build_context(
+                agent_id="webui_chat",
                 project_id=project_id,
                 agent_type="chat",
                 confidence_threshold=0.3,
@@ -402,7 +403,10 @@ class ContextBuilder:
             return memories
 
         except Exception as e:
-            logger.warning(f"Failed to load memory facts: {e}")
+            logger.warning(
+                f"Failed to load memory facts: {e} (session_id={session_id}, project_id={project_id})",
+                exc_info=True
+            )
             return []
     
     def _load_rag_context(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:

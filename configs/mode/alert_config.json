@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "enabled": true,
+  "outputs": [
+    {
+      "type": "console",
+      "enabled": true
+    },
+    {
+      "type": "file",
+      "enabled": true,
+      "path": "outputs/mode_alerts.jsonl"
+    },
+    {
+      "type": "webhook",
+      "enabled": false,
+      "url": "https://your-webhook-url.com/alerts",
+      "comment": "Enable this for production webhook integration"
+    }
+  ],
+  "severity_threshold": "warning",
+  "max_recent_alerts": 100,
+  "alert_rules": {
+    "mode_violation": {
+      "severity": "error",
+      "enabled": true
+    },
+    "policy_load_failure": {
+      "severity": "warning",
+      "enabled": true
+    }
+  }
+}

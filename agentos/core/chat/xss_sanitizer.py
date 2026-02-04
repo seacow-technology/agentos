@@ -123,14 +123,16 @@ def sanitize_html(text: str, preserve_safe_html: bool = False) -> str:
                 text = re.sub(pattern, '', text, flags=re.IGNORECASE | re.DOTALL)
 
     # Step 3: HTML escape if not preserving safe HTML
+    # ✅ quote=False: Don't escape quotes (' and ") - they're safe in text content
+    # Only escape <, >, & which are dangerous for XSS
     if not preserve_safe_html:
-        text = html.escape(text)
+        text = html.escape(text, quote=False)
     else:
         # Preserve only safe tags: <b>, <i>, <em>, <strong>, <code>, <pre>, <br>
         safe_tags = ['b', 'i', 'em', 'strong', 'code', 'pre', 'br', 'p', 'ul', 'ol', 'li']
 
-        # Escape everything first
-        text = html.escape(text)
+        # Escape everything first (but not quotes)
+        text = html.escape(text, quote=False)
 
         # Then un-escape safe tags
         for tag in safe_tags:
@@ -183,7 +185,7 @@ def sanitize_message_content(content: str, preserve_markdown: bool = True) -> st
 
     Args:
         content: Message content
-        preserve_markdown: If True, preserve markdown-style formatting
+        preserve_markdown: If True, preserve markdown-style formatting and code blocks
 
     Returns:
         Sanitized content
@@ -191,9 +193,32 @@ def sanitize_message_content(content: str, preserve_markdown: bool = True) -> st
     if not content or not isinstance(content, str):
         return content
 
+    # ✅ NEW: Extract code blocks before sanitization (they should not be escaped)
+    # Code blocks are for display purposes, not execution
+    code_blocks = []
+    placeholder_template = "___CODE_BLOCK_{}___"
+
+    if preserve_markdown:
+        # Match: ```language\ncode\n```
+        code_block_pattern = r'(```[\w-]*\n[\s\S]*?```)'
+
+        def replace_code_block(match):
+            index = len(code_blocks)
+            code_blocks.append(match.group(0))
+            return placeholder_template.format(index)
+
+        # Replace code blocks with placeholders
+        content = re.sub(code_block_pattern, replace_code_block, content)
+
     # Remove dangerous patterns first
     # For markdown, we allow some safe HTML tags like <b>, <i>, <code>
     sanitized = sanitize_html(content, preserve_safe_html=preserve_markdown)
+
+    # ✅ NEW: Restore code blocks (without escaping)
+    if preserve_markdown and code_blocks:
+        for index, code_block in enumerate(code_blocks):
+            placeholder = placeholder_template.format(index)
+            sanitized = sanitized.replace(placeholder, code_block)
 
     # Additional validation: limit length
     max_length = 1_000_000  # 1MB of text

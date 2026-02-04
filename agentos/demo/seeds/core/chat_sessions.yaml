@@ -1,0 +1,184 @@
+# Demo Chat Sessions Seed Data
+# These sessions populate the Chat and Sessions pages in demo mode
+
+sessions:
+  - id: "demo-session-001"
+    title: "Weather Query Demo"
+    created_at: "2026-02-01T09:00:00Z"
+    updated_at: "2026-02-01T09:15:00Z"
+    mode: "chat"
+    phase: "conversation"
+    message_count: 6
+    project_id: "demo-project-001"
+    tags:
+      - "demo"
+      - "weather"
+    messages:
+      - id: "msg-001"
+        role: "user"
+        content: "What's the weather like in Sydney today?"
+        timestamp: "2026-02-01T09:00:00Z"
+
+      - id: "msg-002"
+        role: "assistant"
+        content: |
+          Let me check the weather in Sydney for you.
+
+          🌤️ **Sydney Weather Today**
+
+          - **Temperature**: 24°C (75°F)
+          - **Conditions**: Partly Cloudy
+          - **Humidity**: 65%
+          - **Wind**: 15 km/h NE
+          - **UV Index**: 7 (High)
+
+          It's a pleasant day in Sydney! The temperature is comfortable, but UV levels are high, so consider sunscreen if you're heading outside.
+        timestamp: "2026-02-01T09:00:15Z"
+
+      - id: "msg-003"
+        role: "user"
+        content: "What about tomorrow?"
+        timestamp: "2026-02-01T09:05:00Z"
+
+      - id: "msg-004"
+        role: "assistant"
+        content: |
+          **Sydney Weather Tomorrow**
+
+          - **Temperature**: 26°C (79°F)
+          - **Conditions**: Sunny
+          - **Chance of Rain**: 10%
+          - **Humidity**: 60%
+          - **Wind**: 12 km/h E
+
+          Tomorrow looks even better! Clear skies and warmer temperatures. Perfect for outdoor activities.
+        timestamp: "2026-02-01T09:05:20Z"
+
+      - id: "msg-005"
+        role: "user"
+        content: "Thanks! Can you create a task to remind me to check the forecast daily?"
+        timestamp: "2026-02-01T09:10:00Z"
+
+      - id: "msg-006"
+        role: "assistant"
+        content: |
+          ✅ Task created successfully!
+
+          **Task Details:**
+          - **Title**: Daily Weather Forecast Check
+          - **Description**: Check Sydney weather forecast
+          - **Recurrence**: Daily at 8:00 AM
+          - **Task ID**: `demo-task-001`
+
+          You can view this task in the Tasks page. I'll remind you every morning at 8 AM.
+        timestamp: "2026-02-01T09:10:25Z"
+
+  - id: "demo-session-002"
+    title: "Document Analysis Example"
+    created_at: "2026-01-31T14:00:00Z"
+    updated_at: "2026-01-31T14:20:00Z"
+    mode: "execution"
+    phase: "executing"
+    message_count: 4
+    project_id: "demo-project-002"
+    tags:
+      - "demo"
+      - "document"
+    messages:
+      - id: "msg-007"
+        role: "user"
+        content: "Analyze the quarterly report and summarize key findings"
+        timestamp: "2026-01-31T14:00:00Z"
+
+      - id: "msg-008"
+        role: "assistant"
+        content: |
+          I'll analyze the quarterly report for you. Let me break this down into steps:
+
+          **Analysis Plan:**
+          1. Load and parse the report document
+          2. Extract key metrics and data points
+          3. Identify trends and patterns
+          4. Generate executive summary
+
+          Starting analysis...
+        timestamp: "2026-01-31T14:00:10Z"
+
+      - id: "msg-009"
+        role: "assistant"
+        content: |
+          📊 **Quarterly Report Analysis Complete**
+
+          **Key Findings:**
+
+          1. **Revenue Growth**: +15% YoY
+             - Q4 2025: $2.3M
+             - Q4 2024: $2.0M
+
+          2. **Customer Acquisition**: +220 new customers
+             - Total customer base: 1,450
+             - Retention rate: 94%
+
+          3. **Product Performance**:
+             - Product A: 45% of revenue
+             - Product B: 35% of revenue
+             - Product C: 20% of revenue
+
+          4. **Key Trends**:
+             - Enterprise segment showing strong growth (+28%)
+             - Customer satisfaction score: 4.6/5.0
+             - Churn rate decreased by 2.3%
+
+          **Recommendations:**
+          - Focus on enterprise sales (highest growth)
+          - Investigate Product C performance
+          - Expand customer success team
+        timestamp: "2026-01-31T14:15:00Z"
+
+      - id: "msg-010"
+        role: "user"
+        content: "Great! Can you create a presentation from this?"
+        timestamp: "2026-01-31T14:18:00Z"
+
+  - id: "demo-session-003"
+    title: "Quick Help - Slash Commands"
+    created_at: "2026-02-01T10:30:00Z"
+    updated_at: "2026-02-01T10:32:00Z"
+    mode: "chat"
+    phase: "conversation"
+    message_count: 2
+    tags:
+      - "demo"
+      - "help"
+    messages:
+      - id: "msg-011"
+        role: "user"
+        content: "/help"
+        timestamp: "2026-02-01T10:30:00Z"
+
+      - id: "msg-012"
+        role: "assistant"
+        content: |
+          **Available Slash Commands:**
+
+          📝 **Task Management**
+          - `/task create [description]` - Create a new task
+          - `/task list` - Show all tasks
+          - `/task show [id]` - Show task details
+
+          💾 **Memory & Context**
+          - `/memory search [query]` - Search memory
+          - `/memory add [fact]` - Add to memory
+          - `/context show` - Show current context
+
+          📚 **Knowledge Base**
+          - `/kb search [query]` - Search knowledge base
+          - `/kb index [path]` - Index new documents
+
+          🔧 **System**
+          - `/help` - Show this help
+          - `/clear` - Clear chat history
+          - `/reset` - Reset session
+
+          Type any command to try it out!
+        timestamp: "2026-02-01T10:30:05Z"

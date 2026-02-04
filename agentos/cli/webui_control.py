@@ -1,6 +1,10 @@
 """
 WebUI Control Commands - Manage WebUI background service
 
+⚠️ DEPRECATED: agentos.webui v1 has been archived.
+This command still works but points to the archived version.
+Please migrate to webui-v2.
+
 agentos webui start   - Start WebUI
 agentos webui stop    - Stop WebUI
 agentos webui restart - Restart WebUI
@@ -12,7 +16,18 @@ import click
 from rich import print as rprint
 from rich.table import Table
 
-from agentos.webui.daemon import WebUIDaemon
+# NOTE: Importing from archived location
+import sys
+import os
+
+# NOTE: v1 WebUI is archived. In public releases, it may be absent.
+WebUIDaemon = None
+_WEBUI_IMPORT_ERROR = None
+try:
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../docs/archive/webui-legacy'))
+    from webui.daemon import WebUIDaemon  # type: ignore
+except Exception as e:
+    _WEBUI_IMPORT_ERROR = e
 from agentos.config import load_settings, save_settings
 
 
@@ -55,6 +70,12 @@ def webui_group():
 )
 def start_cmd(host: str, port: int, foreground: bool, skip_checks: bool, auto_fix: bool):
     """Start WebUI service (interactive)"""
+    if WebUIDaemon is None:
+        rprint("[yellow]⚠️  WebUI v1 is not available in this distribution.[/yellow]")
+        rprint("[cyan]Please use webui-v2 (standalone frontend).[/cyan]")
+        if _WEBUI_IMPORT_ERROR:
+            rprint(f"[dim]Details: {_WEBUI_IMPORT_ERROR}[/dim]")
+        return
     from agentos.cli.startup_checker import StartupChecker
 
     settings = load_settings()
@@ -102,6 +123,12 @@ def start_cmd(host: str, port: int, foreground: bool, skip_checks: bool, auto_fi
 @webui_group.command(name="stop")
 def stop_cmd():
     """Stop WebUI service"""
+    if WebUIDaemon is None:
+        rprint("[yellow]⚠️  WebUI v1 is not available in this distribution.[/yellow]")
+        rprint("[cyan]Please use webui-v2 (standalone frontend).[/cyan]")
+        if _WEBUI_IMPORT_ERROR:
+            rprint(f"[dim]Details: {_WEBUI_IMPORT_ERROR}[/dim]")
+        return
     settings = load_settings()
     daemon = WebUIDaemon(host=settings.webui_host, port=settings.webui_port)
 
@@ -123,6 +150,12 @@ def stop_cmd():
 @webui_group.command(name="restart")
 def restart_cmd():
     """Restart WebUI service"""
+    if WebUIDaemon is None:
+        rprint("[yellow]⚠️  WebUI v1 is not available in this distribution.[/yellow]")
+        rprint("[cyan]Please use webui-v2 (standalone frontend).[/cyan]")
+        if _WEBUI_IMPORT_ERROR:
+            rprint(f"[dim]Details: {_WEBUI_IMPORT_ERROR}[/dim]")
+        return
     settings = load_settings()
     daemon = WebUIDaemon(host=settings.webui_host, port=settings.webui_port)
 
@@ -138,6 +171,12 @@ def restart_cmd():
 @webui_group.command(name="status")
 def status_cmd():
     """View WebUI status"""
+    if WebUIDaemon is None:
+        rprint("[yellow]⚠️  WebUI v1 is not available in this distribution.[/yellow]")
+        rprint("[cyan]Please use webui-v2 (standalone frontend).[/cyan]")
+        if _WEBUI_IMPORT_ERROR:
+            rprint(f"[dim]Details: {_WEBUI_IMPORT_ERROR}[/dim]")
+        return
     settings = load_settings()
     daemon = WebUIDaemon(host=settings.webui_host, port=settings.webui_port)
 
@@ -190,6 +229,12 @@ def status_cmd():
 )
 def config_cmd(auto_start: bool, host: str, port: int, show: bool):
     """Configure WebUI settings"""
+    if WebUIDaemon is None:
+        rprint("[yellow]⚠️  WebUI v1 is not available in this distribution.[/yellow]")
+        rprint("[cyan]Please use webui-v2 (standalone frontend).[/cyan]")
+        if _WEBUI_IMPORT_ERROR:
+            rprint(f"[dim]Details: {_WEBUI_IMPORT_ERROR}[/dim]")
+        return
     settings = load_settings()
 
     if show:
