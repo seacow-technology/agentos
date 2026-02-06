@@ -22,6 +22,7 @@ import {
 } from '@mui/icons-material'
 import { Box, Typography, Alert } from '@mui/material'
 import { httpClient } from '@platform/http'
+import { hasToken } from '@platform/auth/adminToken'
 
 interface DiagnosticLink {
   id: string
@@ -84,6 +85,10 @@ export default function SupportPage() {
     setLoading(true)
     setError(null)
     try {
+      if (!hasToken()) {
+        setQuickLinks([])
+        return
+      }
       // Real API call for diagnostic data
       const response = await httpClient.get<{ ok: boolean; data: DiagnosticData }>('/api/support/diagnostics')
 
@@ -163,7 +168,7 @@ export default function SupportPage() {
         setQuickLinks(links)
       }
     } catch (err) {
-      console.error('Failed to load diagnostics:', err)
+      console.warn('Failed to load diagnostics:', err)
       setError(err instanceof Error ? err.message : 'Failed to load diagnostic data')
     } finally {
       setLoading(false)

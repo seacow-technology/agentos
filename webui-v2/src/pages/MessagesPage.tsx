@@ -63,7 +63,8 @@ export default function MessagesPage() {
       setLoading(true)
       try {
         const response = await agentosService.getMessages()
-        setData(response.data)
+        const rows = Array.isArray(response?.data) ? response.data : []
+        setData(rows)
       } catch (err) {
         console.error('Failed to fetch messages:', err)
         setData([])

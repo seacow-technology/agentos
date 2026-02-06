@@ -292,8 +292,8 @@ export default function MemoryPage() {
         />
       }
       emptyState={{
-        title: 'No memory found',
-        description: 'No memory entries have been created yet',
+        title: t(K.page.memory.emptyTitle),
+        description: t(K.page.memory.emptyDescription),
       }}
       pagination={{
         page: 0,

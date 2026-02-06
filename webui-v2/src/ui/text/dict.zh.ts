@@ -105,6 +105,19 @@ export const dictZh: Record<string, string> = {
   'appBar.themeDracula': 'Dracula',
   'appBar.themeNord': 'Nord',
   'appBar.themeMonokai': 'Monokai',
+  'systemStatus.title': '系统状态',
+  'systemStatus.chip.readOnly': '只读',
+  'systemStatus.chip.modeUnknown': '模式未知',
+  'systemStatus.chip.contractDenied': '合约禁用',
+  'systemStatus.msg.modeUnknown': '未识别运行模式，已按只读策略保护写操作。',
+  'systemStatus.msg.writeDisabled': '写操作已被禁用（安全保护）。',
+  'systemStatus.msg.remoteNoToken': '远程暴露模式下缺少 Admin Token，写操作已禁用。',
+  'systemStatus.msg.localLocked': '当前为本地锁定模式，写操作已禁用。',
+  'systemStatus.msg.contractOpUnavailable': '当前合约模板禁用 Config API。',
+  'systemStatus.suggest.title': '建议排查：',
+  'systemStatus.suggest.checkDaemon': '检查 daemon/status 是否正常',
+  'systemStatus.suggest.checkToken': '检查 Admin Token 配置',
+  'systemStatus.suggest.checkModeApi': '检查 mode API 与运行模式配置',
 
   // ============================================
   // Navigation
@@ -178,7 +191,7 @@ export const dictZh: Record<string, string> = {
   // Pages
   // ============================================
   'page.home.title': '首页',
-  'page.home.subtitle': '欢迎使用 AgentOS WebUI v2',
+  'page.home.subtitle': '欢迎使用 AgentOS WebUI',
   'page.home.welcome': '欢迎',
   'page.home.systemStatus': '系统状态',
   'page.home.uptime': '运行时间',
@@ -251,6 +264,7 @@ export const dictZh: Record<string, string> = {
   'page.projects.deleteProject': '删除项目',
   'page.projects.projectList': '项目列表',
   'page.projects.noProjects': '暂无项目，可先创建一个',
+  'page.projects.createFirstProject': '创建第一个项目开始使用',
   'page.projects.columnId': 'ID',
   'page.projects.columnName': '项目名称',
   'page.projects.columnDescription': '描述',
@@ -290,6 +304,8 @@ export const dictZh: Record<string, string> = {
   'page.memory.statusAll': '全部状态',
   'page.memory.statusActive': '活跃',
   'page.memory.statusArchived': '已归档',
+  'page.memory.emptyTitle': '暂无记忆',
+  'page.memory.emptyDescription': '还没有创建任何记忆条目',
 
   // Answers
   'page.answers.title': '答案包',
@@ -570,6 +586,7 @@ export const dictZh: Record<string, string> = {
   'page.models.columnName': '模型名称',
   'page.models.columnProvider': '提供方',
   'page.models.columnType': '类型',
+  'page.models.columnStatus': '状态',
   'page.models.columnContextWindow': '上下文窗口',
   'page.models.columnPricing': '价格',
   'page.models.columnLastUsed': '最后使用',
@@ -718,6 +735,10 @@ export const dictZh: Record<string, string> = {
   'page.providers.executableTipMessage': '使用“检测”按钮自动查找可执行文件，或输入自定义路径并验证。留空则使用自动检测。',
   'page.providers.executableSaving': '保存中...',
   'page.providers.executableSaveConfig': '保存配置',
+  'page.providers.configureExecutable': '配置可执行文件',
+  'page.providers.detectConfigureExecutablePath': '检测并配置可执行文件路径',
+  'page.providers.advancedDiagnostics': '高级诊断',
+  'page.providers.viewAdvancedDiagnostics': '查看高级诊断',
 
   // Extensions
   'page.extensions.title': '扩展',
@@ -1684,6 +1705,12 @@ export const dictZh: Record<string, string> = {
   'page.knowledgeHealth.loadFailed': '知识健康加载失败',
   'page.knowledgeHealth.repairSuccess': '知识图谱修复成功完成',
   'page.knowledgeHealth.repairFailed': '知识图谱修复失败',
+  'page.knowledgeHealth.metricOverallHealthDesc': '总体健康指标',
+  'page.knowledgeHealth.metricStatus': '状态',
+  'page.knowledgeHealth.metricDataQualityIssues': '数据质量问题',
+  'page.knowledgeHealth.metricDataQualityIssuesDesc': '需要关注的问题',
+  'page.knowledgeHealth.metricVectorQuality': '向量质量',
+  'page.knowledgeHealth.metricVectorQualityDesc': '嵌入与向量指标',
 
   // Context
   'page.context.title': '上下文',
@@ -1806,6 +1833,9 @@ export const dictZh: Record<string, string> = {
   'page.datasources.typeApi': 'API',
   'page.datasources.configuration': '配置 (JSON)',
   'page.datasources.configHelp': '可选的 JSON 配置',
+  'page.datasources.metaStatus': '状态',
+  'page.datasources.metaChunks': '分块数',
+  'page.datasources.metaCreated': '创建时间',
 
   // Decision Review
   'page.decisionReview.title': '决策审查',
@@ -2323,6 +2353,9 @@ export const dictZh: Record<string, string> = {
   'page.chatReport.metricWebChannel': 'Web',
   'page.chatReport.metricApiChannel': 'API',
   'page.chatReport.metricCliChannel': 'CLI',
+  'page.chatReport.metricTotalSessions': '总会话数',
+  'page.chatReport.metricActiveSessions': '活跃会话',
+  'page.chatReport.metricEstimatedMessages': '预估消息数',
 
   // Voice
   'page.voice.title': '语音',
@@ -2489,6 +2522,17 @@ export const dictZh: Record<string, string> = {
   'page.brainConsole.metricAvgQueryTime': '平均查询时间',
   'page.brainConsole.metricP95QueryTime': 'P95 查询时间',
   'page.brainConsole.metricP99QueryTime': 'P99 查询时间',
+  'page.brainConsole.metricCodeCoverage': '代码覆盖率',
+  'page.brainConsole.metricDocCoverage': '文档覆盖率',
+  'page.brainConsole.metricDependencyCoverage': '依赖覆盖率',
+  'page.brainConsole.metricTotalFiles': '文件总数',
+  'page.brainConsole.metricCoveredFiles': '已覆盖文件',
+  'page.brainConsole.metricUncoveredFiles': '未覆盖文件',
+  'page.brainConsole.metricBlindSpots': '认知盲区',
+  'page.brainConsole.metricBlindSpotsDesc': 'BrainOS 已知未知的领域',
+  'page.brainConsole.metricTotalBlindSpots': '盲区总数',
+  'page.brainConsole.metricHighSeverity': '高严重度',
+  'page.brainConsole.metricMediumSeverity': '中严重度',
 
   // Health Page - Dashboard
   'page.health.title': '知识健康',
@@ -2689,6 +2733,26 @@ export const dictZh: Record<string, string> = {
   'page.modeMonitor.refreshSuccess': '模式统计刷新成功',
   'page.modeMonitor.refreshFailed': '刷新模式统计失败',
   'page.modeMonitor.loadFailed': '加载模式数据失败',
+  'page.modeMonitor.analyzeComingSoon': '分析功能即将上线',
+  'page.modeMonitor.metricAlertSeverityDistribution': '告警严重度分布',
+  'page.modeMonitor.metricAlertSeverityDistributionDesc': '按严重度统计告警分布',
+  'page.modeMonitor.metricCritical': '严重',
+  'page.modeMonitor.metricAlertStatistics': '告警统计',
+  'page.modeMonitor.metricAlertStatisticsDesc': '模式告警概览',
+  'page.modeMonitor.metricTotalAlerts': '总告警数',
+  'page.modeMonitor.metricRecentAlerts': '近期告警',
+  'page.modeMonitor.metricActiveAlerts': '活跃告警',
+  'page.modeMonitor.metricAlertsByMode': '按模式告警分布',
+  'page.modeMonitor.metricAlertsByModeDesc': '不同模式的告警分布',
+  'page.modeMonitor.metricNoAlerts': '无告警',
+  'page.modeMonitor.recentSuffix': '近期',
+  'page.modeMonitor.needsAttention': '需要关注',
+  'page.modeMonitor.none': '无',
+  'page.modeMonitor.recentAlertsTimeline': '近期告警时间线',
+  'page.modeMonitor.contextLabel': '上下文',
+  'page.modeMonitor.noAlertsAvailable': '暂无告警',
+  'page.modeMonitor.statisticsDetails': '统计详情',
+  'page.modeMonitor.metricDetails': '指标详情',
 
   // Agent Matrix Page - Dashboard
   'page.agentMatrix.configure': '配置',

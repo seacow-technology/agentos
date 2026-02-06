@@ -405,10 +405,10 @@ export default function ProvidersPage() {
 
     return {
       key: 'detect-executable',
-      label: 'Configure Executable',
+      label: t(K.page.providers.configureExecutable),
       variant: 'outlined' as const,
       icon: <SettingsIcon fontSize={ICON_SIZE_SMALL} />,
-      tooltip: 'Detect and configure executable path',
+      tooltip: t(K.page.providers.detectConfigureExecutablePath),
       onClick: () => {
         setExecutableConfigState({
           open: true,
@@ -430,10 +430,10 @@ export default function ProvidersPage() {
 
     return {
       key: 'advanced-diagnostics',
-      label: 'Advanced Diagnostics',
+      label: t(K.page.providers.advancedDiagnostics),
       variant: 'outlined' as const,
       icon: <SettingsIcon fontSize={ICON_SIZE_SMALL} />,
-      tooltip: 'View advanced diagnostics',
+      tooltip: t(K.page.providers.viewAdvancedDiagnostics),
       onClick: () => {
         setAdvancedDiagnosticsState({
           open: true,

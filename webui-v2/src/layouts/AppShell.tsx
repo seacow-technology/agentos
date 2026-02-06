@@ -1,4 +1,4 @@
-import React, { useState, useRef, useLayoutEffect } from 'react'
+import React, { useState, useRef, useLayoutEffect, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   AppBar,
@@ -74,6 +74,7 @@ import { t, K, changeLanguage, getCurrentLanguage } from '@/ui/text'
 import { ThemeToggle, LanguageSwitch, ApiStatus, ApiStatusDialog } from '@/ui'
 import { useApiHealth } from '@/hooks/useApiHealth'
 import { useThemeMode } from '@/contexts/ThemeContext'
+import { appInfo } from '@/platform/config'
 
 interface NavItem {
   label: string
@@ -233,6 +234,16 @@ export default function AppShell() {
     enabled: true,
   })
 
+  useEffect(() => {
+    if (!import.meta.env.DEV) return
+    console.debug('[ApiHealth][AppShell] status changed', {
+      apiStatus,
+      lastCheck: lastCheck ? lastCheck.toISOString() : null,
+      error: error?.message ?? null,
+      hasDetails: !!details,
+    })
+  }, [apiStatus, lastCheck, error, details])
+
   // API Status Dialog state
   const [apiDialogOpen, setApiDialogOpen] = useState(false)
 
@@ -335,7 +346,7 @@ export default function AppShell() {
       {/* Sidebar Header */}
       <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Typography variant="h6" fontWeight="bold">
-          AgentOS v2
+          {appInfo.productName}
         </Typography>
         <Typography variant="caption" color="text.secondary">
           Modern Control Surface
@@ -384,7 +395,7 @@ export default function AppShell() {
       {/* Sidebar Footer */}
       <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
         <Typography variant="caption" color="text.secondary">
-          AgentOS WebUI v2.0
+          {appInfo.webuiName}
         </Typography>
       </Box>
     </>
@@ -662,7 +673,7 @@ export default function AppShell() {
             {/* 🔒 内容最大宽度约束 */}
             <Box sx={{ maxWidth: CONTENT_MAX_WIDTH }}>
               <Typography variant="body2" color="text.secondary">
-                Build: v2.0.0-alpha | AgentOS WebUI v2
+                Build: {appInfo.buildVersion} | Release: {appInfo.releaseVersion} | {appInfo.webuiName}
               </Typography>
             </Box>
           </Paper>

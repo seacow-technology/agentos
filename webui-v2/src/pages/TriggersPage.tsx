@@ -69,9 +69,11 @@ export default function TriggersPage() {
     setError(null)
     try {
       const response = await agentosService.getTriggers()
-      setTriggers(response.data)
+      const rows = Array.isArray(response?.data) ? response.data : []
+      setTriggers(rows)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch triggers')
+      setTriggers([])
     } finally {
       setLoading(false)
     }

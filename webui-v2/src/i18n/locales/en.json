@@ -73,6 +73,27 @@
     "riskTimeline": "Risk Timeline",
     "chatReport": "Chat Report"
   },
+  "systemStatus": {
+    "title": "System status",
+    "chip": {
+      "readOnly": "Read-only",
+      "modeUnknown": "Mode unknown",
+      "contractDenied": "Contract denied"
+    },
+    "msg": {
+      "modeUnknown": "Run mode is unknown; write operations are protected in read-only mode.",
+      "writeDisabled": "Write operations are disabled (safety protection).",
+      "remoteNoToken": "Remote-exposed mode requires an admin token; writes are disabled.",
+      "localLocked": "Local locked mode; writes are disabled.",
+      "contractOpUnavailable": "The current contract template disables the Config API."
+    },
+    "suggest": {
+      "title": "Suggested checks:",
+      "checkDaemon": "Check daemon/status health",
+      "checkToken": "Check admin token configuration",
+      "checkModeApi": "Check mode API and runtime mode config"
+    }
+  },
   "validation": {
     "required": "This field is required",
     "invalidEmail": "Invalid email address",
@@ -456,7 +477,7 @@
       }
     },
     "home": {
-      "title": "Welcome to AgentOS WebUI v2",
+      "title": "Welcome to AgentOS WebUI",
       "subtitle": "Modern control surface for autonomous agents"
     },
     "components": {

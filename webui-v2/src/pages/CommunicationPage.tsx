@@ -22,6 +22,7 @@ import {
   CircularProgress,
 } from '@/ui'
 import { communicationosService } from '@/services/communicationos.service'
+import { hasToken } from '@platform/auth/adminToken'
 
 // ===================================
 // Constants
@@ -56,6 +57,7 @@ export default function CommunicationPage() {
   // API Handlers
   // ===================================
   const loadNetworkMode = useCallback(async () => {
+    if (!hasToken()) return
     try {
       const response = await communicationosService.getNetworkMode()
       if (response?.current_state?.mode) {
@@ -75,6 +77,7 @@ export default function CommunicationPage() {
   }, [])
 
   const loadAuditLogs = useCallback(async () => {
+    if (!hasToken()) return
     setAuditsLoading(true)
     try {
       const response = await communicationosService.listCommunicationAudits({ limit: 50 })
@@ -97,6 +100,7 @@ export default function CommunicationPage() {
   }, [t])
 
   const loadServiceStatus = useCallback(async () => {
+    if (!hasToken()) return
     try {
       const response = await communicationosService.getCommunicationStatus()
       setServiceStatus(response)
@@ -106,6 +110,7 @@ export default function CommunicationPage() {
   }, [])
 
   const loadPolicyConfig = useCallback(async () => {
+    if (!hasToken()) return
     try {
       const response = await communicationosService.getCommunicationPolicy()
       setPolicyConfig(response)
@@ -115,6 +120,7 @@ export default function CommunicationPage() {
   }, [])
 
   const handleRefresh = useCallback(async () => {
+    if (!hasToken()) return
     setLoading(true)
     try {
       await Promise.all([
@@ -162,6 +168,7 @@ export default function CommunicationPage() {
 
   const handleModeChange = useCallback(
     async (newMode: 'OFF' | 'READONLY' | 'ON') => {
+      if (!hasToken()) return
       setModeChanging(true)
       try {
         const response = await communicationosService.setNetworkMode({
@@ -187,6 +194,12 @@ export default function CommunicationPage() {
   // Effects
   // ===================================
   useEffect(() => {
+    if (!hasToken()) {
+      setAuditLogs([])
+      setLoading(false)
+      setAuditsLoading(false)
+      return
+    }
     loadNetworkMode()
     loadAuditLogs()
     loadServiceStatus()

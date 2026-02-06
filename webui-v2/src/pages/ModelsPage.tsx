@@ -231,7 +231,7 @@ export default function ModelsPage() {
             meta={[
               { key: 'id', label: t(K.page.models.columnId), value: model.id },
               { key: 'type', label: t(K.page.models.columnType), value: modelType },
-              { key: 'status', label: 'Status', value: model.status },
+              { key: 'status', label: t(K.page.models.columnStatus), value: model.status },
             ]}
             tags={[model.status]}
             icon={getModelIcon()}

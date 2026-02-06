@@ -68,7 +68,8 @@ export default function DecisionTimelinePage() {
       try {
         const response = await brainosService.listGovernanceDecisions({ limit: 100 })
         // Map GovernanceDecision to DecisionRow for UI
-        const mappedDecisions = response.records.map((d) => ({
+        const records = Array.isArray(response?.records) ? response.records : []
+        const mappedDecisions = records.map((d) => ({
           id: d.decision_id,
           decision: d.decision_type || 'Unknown Decision',
           context: d.seed || '',
@@ -149,7 +150,7 @@ export default function DecisionTimelinePage() {
       field: 'confidence',
       headerName: t('page.decisionTimeline.columnConfidence'),
       width: 120,
-      valueFormatter: (params: any) => `${((params.value as number) * 100).toFixed(0)}%`,
+      valueFormatter: (params: any) => `${((Number(params.value) || 0) * 100).toFixed(0)}%`,
     },
     {
       field: 'status',
@@ -278,7 +279,7 @@ export default function DecisionTimelinePage() {
                 {t(K.page.decisionTimeline.labelConfidence)}
               </Typography>
               <Typography variant="body1">
-                {(selectedDecision.confidence * 100).toFixed(0)}%
+                {((Number(selectedDecision.confidence) || 0) * 100).toFixed(0)}%
               </Typography>
             </Box>
 

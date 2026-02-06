@@ -128,6 +128,10 @@ export default function BrainDashboardPage() {
     return new Intl.NumberFormat('en-US').format(num)
   }
 
+  const asNumber = (value: unknown, fallback = 0): number => {
+    return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+  }
+
   const getStatusLabel = (status: string): string => {
     const statusMap: Record<string, string> = {
       healthy: t('page.brainDashboard.statusHealthy'),
@@ -143,19 +147,19 @@ export default function BrainDashboardPage() {
   const stats = [
     {
       title: t('page.brainDashboard.knowledgeSources'),
-      value: formatNumber(dashboard.knowledge_sources_count),
+      value: formatNumber(asNumber(dashboard.knowledge_sources_count)),
       icon: <StorageIcon />,
       onClick: () => navigate('/sources'),
     },
     {
       title: t('page.brainDashboard.memoryEntries'),
-      value: formatNumber(dashboard.memory_entries_count),
+      value: formatNumber(asNumber(dashboard.memory_entries_count)),
       icon: <MemoryIcon />,
       onClick: () => navigate('/memory-proposals'),
     },
     {
       title: t('page.brainDashboard.avgQueryTime'),
-      value: `${dashboard.avg_query_time}ms`,
+      value: `${asNumber(dashboard.avg_query_time)}ms`,
       icon: <SpeedIcon />,
       onClick: () => navigate('/knowledge-health'),
     },
@@ -169,13 +173,13 @@ export default function BrainDashboardPage() {
         {
           key: 'success_rate',
           label: t('page.brainDashboard.ragSuccessRate'),
-          value: `${dashboard.rag_success_rate.toFixed(1)}%`,
-          valueColor: dashboard.rag_success_rate >= 90 ? 'success.main' : dashboard.rag_success_rate >= 70 ? 'warning.main' : 'error.main'
+          value: `${asNumber(dashboard.rag_success_rate).toFixed(1)}%`,
+          valueColor: asNumber(dashboard.rag_success_rate) >= 90 ? 'success.main' : asNumber(dashboard.rag_success_rate) >= 70 ? 'warning.main' : 'error.main'
         },
         {
           key: 'embedding_calls',
           label: t('page.brainDashboard.embeddingCalls'),
-          value: formatNumber(dashboard.embedding_calls_count)
+          value: formatNumber(asNumber(dashboard.embedding_calls_count))
         },
       ],
     },
@@ -186,13 +190,13 @@ export default function BrainDashboardPage() {
         {
           key: 'coverage',
           label: t('page.brainDashboard.indexCoverage'),
-          value: `${dashboard.index_coverage.toFixed(1)}%`,
-          valueColor: dashboard.index_coverage >= 90 ? 'success.main' : dashboard.index_coverage >= 70 ? 'warning.main' : 'error.main'
+          value: `${asNumber(dashboard.index_coverage).toFixed(1)}%`,
+          valueColor: asNumber(dashboard.index_coverage) >= 90 ? 'success.main' : asNumber(dashboard.index_coverage) >= 70 ? 'warning.main' : 'error.main'
         },
         {
           key: 'size',
           label: t('page.brainDashboard.vectorIndexSize'),
-          value: formatBytes(dashboard.vector_index_size)
+          value: formatBytes(asNumber(dashboard.vector_index_size))
         },
       ],
     },

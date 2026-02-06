@@ -91,12 +91,34 @@ Component Stack:
 ${errorInfo?.componentStack || 'No component stack'}
     `.trim()
 
-    navigator.clipboard.writeText(errorText).then(() => {
-      this.setState({ copied: true })
-      setTimeout(() => {
-        this.setState({ copied: false })
-      }, 2000)
-    })
+    const fallbackCopy = (): boolean => {
+      try {
+        const textarea = document.createElement('textarea')
+        textarea.value = errorText
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.focus()
+        textarea.select()
+        const copied = document.execCommand('copy')
+        document.body.removeChild(textarea)
+        return copied
+      } catch {
+        return false
+      }
+    }
+
+    navigator.clipboard
+      .writeText(errorText)
+      .then(() => true)
+      .catch(() => fallbackCopy())
+      .then((copied) => {
+        if (!copied) return
+        this.setState({ copied: true })
+        setTimeout(() => {
+          this.setState({ copied: false })
+        }, 2000)
+      })
   }
 
   render() {

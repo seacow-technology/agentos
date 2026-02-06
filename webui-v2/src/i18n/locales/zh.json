@@ -73,6 +73,27 @@
     "riskTimeline": "风险时间线",
     "chatReport": "聊天报告"
   },
+  "systemStatus": {
+    "title": "系统状态",
+    "chip": {
+      "readOnly": "只读",
+      "modeUnknown": "模式未知",
+      "contractDenied": "合约禁用"
+    },
+    "msg": {
+      "modeUnknown": "未识别运行模式，已按只读策略保护写操作。",
+      "writeDisabled": "写操作已被禁用（安全保护）。",
+      "remoteNoToken": "远程暴露模式下缺少 Admin Token，写操作已禁用。",
+      "localLocked": "当前为本地锁定模式，写操作已禁用。",
+      "contractOpUnavailable": "当前合约模板禁用 Config API。"
+    },
+    "suggest": {
+      "title": "建议排查：",
+      "checkDaemon": "检查 daemon/status 是否正常",
+      "checkToken": "检查 Admin Token 配置",
+      "checkModeApi": "检查 mode API 与运行模式配置"
+    }
+  },
   "validation": {
     "required": "此字段为必填项",
     "invalidEmail": "无效的邮箱地址",
@@ -486,7 +507,7 @@
       }
     },
     "home": {
-      "title": "欢迎使用 AgentOS WebUI v2",
+      "title": "欢迎使用 AgentOS WebUI",
       "subtitle": "自主智能体的现代化控制面板"
     },
     "components": {

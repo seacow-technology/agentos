@@ -445,7 +445,7 @@ export default function ProjectsPage() {
       }
       emptyState={{
         title: t('page.projects.noProjects'),
-        description: 'Create your first project to get started',
+        description: t(K.page.projects.createFirstProject),
         actions: [
           {
             label: t('page.projects.createProject'),

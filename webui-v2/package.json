@@ -1,8 +1,8 @@
 {
   "name": "agentos-webui-v2",
-  "version": "2.0.0",
+  "version": "3.1.0",
   "type": "module",
-  "description": "AgentOS WebUI v2 - Modern React Control Surface",
+  "description": "AgentOS WebUI - Modern React Control Surface",
   "scripts": {
     "dev": "vite --port 5174 --host",
     "build": "tsc && vite build",

@@ -232,6 +232,9 @@ export const K = {
       typeApi: 'page.datasources.typeApi',
       configuration: 'page.datasources.configuration',
       configHelp: 'page.datasources.configHelp',
+      metaStatus: 'page.datasources.metaStatus',
+      metaChunks: 'page.datasources.metaChunks',
+      metaCreated: 'page.datasources.metaCreated',
     },
         // Home
     home: {
@@ -336,6 +339,7 @@ export const K = {
       typeInfra: 'page.projects.typeInfra',
       typeMonoSubdir: 'page.projects.typeMonoSubdir',
       repoAddedSuccess: 'page.projects.repoAddedSuccess',
+      createFirstProject: 'page.projects.createFirstProject',
     },
 
     // Memory
@@ -360,6 +364,8 @@ export const K = {
       statusAll: 'page.memory.statusAll',
       statusActive: 'page.memory.statusActive',
       statusArchived: 'page.memory.statusArchived',
+      emptyTitle: 'page.memory.emptyTitle',
+      emptyDescription: 'page.memory.emptyDescription',
     },
 
     // Answers
@@ -509,6 +515,7 @@ export const K = {
       columnName: 'page.models.columnName',
       columnProvider: 'page.models.columnProvider',
       columnType: 'page.models.columnType',
+      columnStatus: 'page.models.columnStatus',
       columnContextWindow: 'page.models.columnContextWindow',
       columnPricing: 'page.models.columnPricing',
       columnLastUsed: 'page.models.columnLastUsed',
@@ -661,6 +668,10 @@ export const K = {
       executableTipMessage: 'page.providers.executableTipMessage',
       executableSaving: 'page.providers.executableSaving',
       executableSaveConfig: 'page.providers.executableSaveConfig',
+      configureExecutable: 'page.providers.configureExecutable',
+      detectConfigureExecutablePath: 'page.providers.detectConfigureExecutablePath',
+      advancedDiagnostics: 'page.providers.advancedDiagnostics',
+      viewAdvancedDiagnostics: 'page.providers.viewAdvancedDiagnostics',
     },
 
     // Extensions
@@ -2170,6 +2181,12 @@ export const K = {
       repairSuccess: 'page.knowledgeHealth.repairSuccess',
       repairFailed: 'page.knowledgeHealth.repairFailed',
       exportSuccess: 'page.knowledgeHealth.exportSuccess',
+      metricOverallHealthDesc: 'page.knowledgeHealth.metricOverallHealthDesc',
+      metricStatus: 'page.knowledgeHealth.metricStatus',
+      metricDataQualityIssues: 'page.knowledgeHealth.metricDataQualityIssues',
+      metricDataQualityIssuesDesc: 'page.knowledgeHealth.metricDataQualityIssuesDesc',
+      metricVectorQuality: 'page.knowledgeHealth.metricVectorQuality',
+      metricVectorQualityDesc: 'page.knowledgeHealth.metricVectorQualityDesc',
     },
 
     // Context
@@ -2555,6 +2572,17 @@ export const K = {
       metricAvgQueryTime: 'page.brainConsole.metricAvgQueryTime',
       metricP95QueryTime: 'page.brainConsole.metricP95QueryTime',
       metricP99QueryTime: 'page.brainConsole.metricP99QueryTime',
+      metricCodeCoverage: 'page.brainConsole.metricCodeCoverage',
+      metricDocCoverage: 'page.brainConsole.metricDocCoverage',
+      metricDependencyCoverage: 'page.brainConsole.metricDependencyCoverage',
+      metricTotalFiles: 'page.brainConsole.metricTotalFiles',
+      metricCoveredFiles: 'page.brainConsole.metricCoveredFiles',
+      metricUncoveredFiles: 'page.brainConsole.metricUncoveredFiles',
+      metricBlindSpots: 'page.brainConsole.metricBlindSpots',
+      metricBlindSpotsDesc: 'page.brainConsole.metricBlindSpotsDesc',
+      metricTotalBlindSpots: 'page.brainConsole.metricTotalBlindSpots',
+      metricHighSeverity: 'page.brainConsole.metricHighSeverity',
+      metricMediumSeverity: 'page.brainConsole.metricMediumSeverity',
     },
 
     // Intent Workbench
@@ -2781,6 +2809,26 @@ export const K = {
       refreshSuccess: 'page.modeMonitor.refreshSuccess',
       refreshFailed: 'page.modeMonitor.refreshFailed',
       loadFailed: 'page.modeMonitor.loadFailed',
+      analyzeComingSoon: 'page.modeMonitor.analyzeComingSoon',
+      metricAlertSeverityDistribution: 'page.modeMonitor.metricAlertSeverityDistribution',
+      metricAlertSeverityDistributionDesc: 'page.modeMonitor.metricAlertSeverityDistributionDesc',
+      metricCritical: 'page.modeMonitor.metricCritical',
+      metricAlertStatistics: 'page.modeMonitor.metricAlertStatistics',
+      metricAlertStatisticsDesc: 'page.modeMonitor.metricAlertStatisticsDesc',
+      metricTotalAlerts: 'page.modeMonitor.metricTotalAlerts',
+      metricRecentAlerts: 'page.modeMonitor.metricRecentAlerts',
+      metricActiveAlerts: 'page.modeMonitor.metricActiveAlerts',
+      metricAlertsByMode: 'page.modeMonitor.metricAlertsByMode',
+      metricAlertsByModeDesc: 'page.modeMonitor.metricAlertsByModeDesc',
+      metricNoAlerts: 'page.modeMonitor.metricNoAlerts',
+      recentSuffix: 'page.modeMonitor.recentSuffix',
+      needsAttention: 'page.modeMonitor.needsAttention',
+      none: 'page.modeMonitor.none',
+      recentAlertsTimeline: 'page.modeMonitor.recentAlertsTimeline',
+      contextLabel: 'page.modeMonitor.contextLabel',
+      noAlertsAvailable: 'page.modeMonitor.noAlertsAvailable',
+      statisticsDetails: 'page.modeMonitor.statisticsDetails',
+      metricDetails: 'page.modeMonitor.metricDetails',
     },
 
     // Action Execution Log
@@ -3109,6 +3157,9 @@ export const K = {
       metricWebChannel: 'page.chatReport.metricWebChannel',
       metricApiChannel: 'page.chatReport.metricApiChannel',
       metricCliChannel: 'page.chatReport.metricCliChannel',
+      metricTotalSessions: 'page.chatReport.metricTotalSessions',
+      metricActiveSessions: 'page.chatReport.metricActiveSessions',
+      metricEstimatedMessages: 'page.chatReport.metricEstimatedMessages',
     },
 
     // Voice

@@ -87,7 +87,7 @@ export function installRequestInterceptor(axiosInstance: AxiosInstance): void {
       return config;
     },
     (error: AxiosError) => {
-      console.error('[Platform/HTTP] Request interceptor error:', error);
+      console.warn('[Platform/HTTP] Request interceptor error:', error);
       return Promise.reject(error);
     }
   );
@@ -122,7 +122,7 @@ export function installResponseInterceptor(axiosInstance: AxiosInstance): void {
       const transformedError = transformError(error);
 
       if (import.meta.env.DEV) {
-        console.error('[Platform/HTTP] Response error:', {
+        console.warn('[Platform/HTTP] Response error:', {
           type: transformedError.name,
           code: transformedError.code,
           status: transformedError.status,

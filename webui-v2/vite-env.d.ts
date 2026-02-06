@@ -13,3 +13,8 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+declare const __APP_PRODUCT_NAME__: string
+declare const __APP_WEBUI_NAME__: string
+declare const __APP_RELEASE_VERSION__: string
+declare const __APP_BUILD_VERSION__: string

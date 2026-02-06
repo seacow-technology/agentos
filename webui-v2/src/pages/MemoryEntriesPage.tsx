@@ -64,7 +64,8 @@ export default function MemoryEntriesPage() {
       setLoading(true)
       try {
         const response = await memoryosService.getMemoryEntries()
-        setData(response.data)
+        const rows = Array.isArray(response?.data) ? response.data : []
+        setData(rows)
       } catch (err) {
         console.error('Failed to fetch memory entries:', err)
         setData([])

@@ -55,9 +55,11 @@ export default function UsersPage() {
       setError(null)
       try {
         const response = await agentosService.getUsers()
-        setData(response.data)
+        const rows = Array.isArray(response?.data) ? response.data : []
+        setData(rows)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch users')
+        setData([])
       } finally {
         setLoading(false)
       }

@@ -16,6 +16,7 @@ import { DashboardGrid, StatCard, MetricCard } from '@/ui'
 import { BrainIcon, MemoryIcon, SpeedIcon } from '@/ui/icons'
 import { useTextTranslation, K } from '@/ui/text'
 import { brainosService } from '@/services/brainos.service'
+import { hasToken } from '@platform/auth/adminToken'
 
 /**
  * BrainPage 组件
@@ -42,6 +43,13 @@ export default function BrainPage() {
   // Data Fetching - Real API
   // ===================================
   const fetchData = async () => {
+    if (!hasToken()) {
+      setStats(null)
+      setCoverage(null)
+      setBlindSpots(null)
+      setLoading(false)
+      return
+    }
     setLoading(true)
     setError(null)
     try {
@@ -146,19 +154,19 @@ export default function BrainPage() {
       metrics: [
         {
           key: 'code',
-          label: 'Code Coverage',
+          label: t(K.page.brainConsole.metricCodeCoverage),
           value: `${(coverage.code_coverage * 100).toFixed(1)}%`,
           valueColor: coverage.code_coverage >= 0.7 ? 'success.main' : coverage.code_coverage >= 0.4 ? 'warning.main' : 'error.main'
         },
         {
           key: 'doc',
-          label: 'Doc Coverage',
+          label: t(K.page.brainConsole.metricDocCoverage),
           value: `${(coverage.doc_coverage * 100).toFixed(1)}%`,
           valueColor: coverage.doc_coverage >= 0.7 ? 'success.main' : coverage.doc_coverage >= 0.4 ? 'warning.main' : 'error.main'
         },
         {
           key: 'dep',
-          label: 'Dependency Coverage',
+          label: t(K.page.brainConsole.metricDependencyCoverage),
           value: `${(coverage.dependency_coverage * 100).toFixed(1)}%`,
           valueColor: coverage.dependency_coverage >= 0.7 ? 'success.main' : coverage.dependency_coverage >= 0.4 ? 'warning.main' : 'error.main'
         },
@@ -168,18 +176,18 @@ export default function BrainPage() {
       title: t('page.brainConsole.metricRecentUpdates'),
       description: t('page.brainConsole.metricRecentUpdatesDesc'),
       metrics: [
-        { key: 'total_files', label: 'Total Files', value: coverage.total_files.toString() },
-        { key: 'covered', label: 'Covered Files', value: coverage.covered_files.toString() },
-        { key: 'uncovered', label: 'Uncovered Files', value: coverage.uncovered_files.length.toString() },
+        { key: 'total_files', label: t(K.page.brainConsole.metricTotalFiles), value: coverage.total_files.toString() },
+        { key: 'covered', label: t(K.page.brainConsole.metricCoveredFiles), value: coverage.covered_files.toString() },
+        { key: 'uncovered', label: t(K.page.brainConsole.metricUncoveredFiles), value: coverage.uncovered_files.length.toString() },
       ],
     },
     {
-      title: 'Blind Spots',
-      description: 'Areas where BrainOS knows it doesn\'t know',
+      title: t(K.page.brainConsole.metricBlindSpots),
+      description: t(K.page.brainConsole.metricBlindSpotsDesc),
       metrics: [
-        { key: 'total', label: 'Total Blind Spots', value: blindSpots.total_blind_spots.toString() },
-        { key: 'high', label: 'High Severity', value: blindSpots.by_severity.high.toString(), valueColor: 'error.main' },
-        { key: 'medium', label: 'Medium Severity', value: blindSpots.by_severity.medium.toString(), valueColor: 'warning.main' },
+        { key: 'total', label: t(K.page.brainConsole.metricTotalBlindSpots), value: blindSpots.total_blind_spots.toString() },
+        { key: 'high', label: t(K.page.brainConsole.metricHighSeverity), value: blindSpots.by_severity.high.toString(), valueColor: 'error.main' },
+        { key: 'medium', label: t(K.page.brainConsole.metricMediumSeverity), value: blindSpots.by_severity.medium.toString(), valueColor: 'warning.main' },
       ],
     },
   ] : []

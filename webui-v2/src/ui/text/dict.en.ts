@@ -106,6 +106,19 @@ export const dictEn: Record<string, string> = {
   'appBar.themeDracula': 'Dracula',
   'appBar.themeNord': 'Nord',
   'appBar.themeMonokai': 'Monokai',
+  'systemStatus.title': 'System status',
+  'systemStatus.chip.readOnly': 'Read-only',
+  'systemStatus.chip.modeUnknown': 'Mode unknown',
+  'systemStatus.chip.contractDenied': 'Contract denied',
+  'systemStatus.msg.modeUnknown': 'Run mode is unknown; write operations are protected in read-only mode.',
+  'systemStatus.msg.writeDisabled': 'Write operations are disabled (safety protection).',
+  'systemStatus.msg.remoteNoToken': 'Remote-exposed mode requires an admin token; writes are disabled.',
+  'systemStatus.msg.localLocked': 'Local locked mode; writes are disabled.',
+  'systemStatus.msg.contractOpUnavailable': 'The current contract template disables the Config API.',
+  'systemStatus.suggest.title': 'Suggested checks:',
+  'systemStatus.suggest.checkDaemon': 'Check daemon/status health',
+  'systemStatus.suggest.checkToken': 'Check admin token configuration',
+  'systemStatus.suggest.checkModeApi': 'Check mode API and runtime mode config',
 
   // ============================================
   // Navigation
@@ -179,7 +192,7 @@ export const dictEn: Record<string, string> = {
   // Pages
   // ============================================
   'page.home.title': 'Home',
-  'page.home.subtitle': 'Welcome to AgentOS WebUI v2',
+  'page.home.subtitle': 'Welcome to AgentOS WebUI',
   'page.home.welcome': 'Welcome',
   'page.home.systemStatus': 'System Status',
   'page.home.uptime': 'Uptime',
@@ -250,6 +263,7 @@ export const dictEn: Record<string, string> = {
   'page.projects.deleteProject': 'Delete Project',
   'page.projects.projectList': 'Project List',
   'page.projects.noProjects': 'No projects found',
+  'page.projects.createFirstProject': 'Create your first project to get started',
   'page.projects.columnId': 'ID',
   'page.projects.columnName': 'Project Name',
   'page.projects.columnDescription': 'Description',
@@ -289,6 +303,8 @@ export const dictEn: Record<string, string> = {
   'page.memory.statusAll': 'All Status',
   'page.memory.statusActive': 'Active',
   'page.memory.statusArchived': 'Archived',
+  'page.memory.emptyTitle': 'No memory found',
+  'page.memory.emptyDescription': 'No memory entries have been created yet',
 
   // Answers
   'page.answers.title': 'Answer Packs',
@@ -569,6 +585,7 @@ export const dictEn: Record<string, string> = {
   'page.models.columnName': 'Model Name',
   'page.models.columnProvider': 'Provider',
   'page.models.columnType': 'Type',
+  'page.models.columnStatus': 'Status',
   'page.models.columnContextWindow': 'Context',
   'page.models.columnPricing': 'Pricing',
   'page.models.columnLastUsed': 'Last Used',
@@ -717,6 +734,10 @@ export const dictEn: Record<string, string> = {
   'page.providers.executableTipMessage': 'Use the Detect button to automatically find the executable, or enter a custom path and validate it. Leave empty to use auto-detection.',
   'page.providers.executableSaving': 'Saving...',
   'page.providers.executableSaveConfig': 'Save Configuration',
+  'page.providers.configureExecutable': 'Configure Executable',
+  'page.providers.detectConfigureExecutablePath': 'Detect and configure executable path',
+  'page.providers.advancedDiagnostics': 'Advanced Diagnostics',
+  'page.providers.viewAdvancedDiagnostics': 'View advanced diagnostics',
 
   // Extensions
   'page.extensions.title': 'Extensions',
@@ -1792,6 +1813,12 @@ export const dictEn: Record<string, string> = {
   'page.knowledgeHealth.loadFailed': 'Failed to load knowledge health data',
   'page.knowledgeHealth.repairSuccess': 'Knowledge graph repair completed successfully',
   'page.knowledgeHealth.repairFailed': 'Failed to repair knowledge graph',
+  'page.knowledgeHealth.metricOverallHealthDesc': 'General health indicators',
+  'page.knowledgeHealth.metricStatus': 'Status',
+  'page.knowledgeHealth.metricDataQualityIssues': 'Data Quality Issues',
+  'page.knowledgeHealth.metricDataQualityIssuesDesc': 'Issues requiring attention',
+  'page.knowledgeHealth.metricVectorQuality': 'Vector Quality',
+  'page.knowledgeHealth.metricVectorQualityDesc': 'Embedding and vector metrics',
 
   // Datasources
   'page.datasources.title': 'Data Sources',
@@ -1818,6 +1845,9 @@ export const dictEn: Record<string, string> = {
   'page.datasources.typeApi': 'API',
   'page.datasources.configuration': 'Configuration (JSON)',
   'page.datasources.configHelp': 'Optional JSON configuration',
+  'page.datasources.metaStatus': 'Status',
+  'page.datasources.metaChunks': 'Chunks',
+  'page.datasources.metaCreated': 'Created',
 
   // Context
   'page.context.title': 'Context',
@@ -2450,6 +2480,9 @@ export const dictEn: Record<string, string> = {
   'page.chatReport.metricWebChannel': 'Web',
   'page.chatReport.metricApiChannel': 'API',
   'page.chatReport.metricCliChannel': 'CLI',
+  'page.chatReport.metricTotalSessions': 'Total Sessions',
+  'page.chatReport.metricActiveSessions': 'Active Sessions',
+  'page.chatReport.metricEstimatedMessages': 'Estimated Messages',
 
   // Voice
   'page.voice.title': 'Voice',
@@ -2616,6 +2649,17 @@ export const dictEn: Record<string, string> = {
   'page.brainConsole.metricAvgQueryTime': 'Avg Query Time',
   'page.brainConsole.metricP95QueryTime': 'P95 Query Time',
   'page.brainConsole.metricP99QueryTime': 'P99 Query Time',
+  'page.brainConsole.metricCodeCoverage': 'Code Coverage',
+  'page.brainConsole.metricDocCoverage': 'Doc Coverage',
+  'page.brainConsole.metricDependencyCoverage': 'Dependency Coverage',
+  'page.brainConsole.metricTotalFiles': 'Total Files',
+  'page.brainConsole.metricCoveredFiles': 'Covered Files',
+  'page.brainConsole.metricUncoveredFiles': 'Uncovered Files',
+  'page.brainConsole.metricBlindSpots': 'Blind Spots',
+  'page.brainConsole.metricBlindSpotsDesc': "Areas where BrainOS knows it doesn't know",
+  'page.brainConsole.metricTotalBlindSpots': 'Total Blind Spots',
+  'page.brainConsole.metricHighSeverity': 'High Severity',
+  'page.brainConsole.metricMediumSeverity': 'Medium Severity',
 
   // Health Page - Dashboard
   'page.health.title': 'Health',
@@ -2816,6 +2860,26 @@ export const dictEn: Record<string, string> = {
   'page.modeMonitor.refreshSuccess': 'Mode stats refreshed successfully',
   'page.modeMonitor.refreshFailed': 'Failed to refresh mode stats',
   'page.modeMonitor.loadFailed': 'Failed to load mode data',
+  'page.modeMonitor.analyzeComingSoon': 'Analyze functionality coming soon',
+  'page.modeMonitor.metricAlertSeverityDistribution': 'Alert Severity Distribution',
+  'page.modeMonitor.metricAlertSeverityDistributionDesc': 'Distribution of alerts by severity level',
+  'page.modeMonitor.metricCritical': 'Critical',
+  'page.modeMonitor.metricAlertStatistics': 'Alert Statistics',
+  'page.modeMonitor.metricAlertStatisticsDesc': 'Overview of mode alerts',
+  'page.modeMonitor.metricTotalAlerts': 'Total Alerts',
+  'page.modeMonitor.metricRecentAlerts': 'Recent Alerts',
+  'page.modeMonitor.metricActiveAlerts': 'Active Alerts',
+  'page.modeMonitor.metricAlertsByMode': 'Alerts by Mode',
+  'page.modeMonitor.metricAlertsByModeDesc': 'Alert distribution across different modes',
+  'page.modeMonitor.metricNoAlerts': 'No Alerts',
+  'page.modeMonitor.recentSuffix': 'recent',
+  'page.modeMonitor.needsAttention': 'Needs attention',
+  'page.modeMonitor.none': 'None',
+  'page.modeMonitor.recentAlertsTimeline': 'Recent Alerts Timeline',
+  'page.modeMonitor.contextLabel': 'Context',
+  'page.modeMonitor.noAlertsAvailable': 'No alerts available',
+  'page.modeMonitor.statisticsDetails': 'Statistics Details',
+  'page.modeMonitor.metricDetails': 'Metric Details',
 
   // Agent Matrix Page - Dashboard
   'page.agentMatrix.configure': 'Configure',

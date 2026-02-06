@@ -178,9 +178,14 @@ export default function KnowledgeHealthPage() {
   // Calculate Overall Health Status
   // ===================================
   const getHealthStatus = (): 'success' | 'warning' | 'error' => {
-    if (health.index_health_score >= 80) return 'success'
-    if (health.index_health_score >= 60) return 'warning'
+    const score = Number.isFinite(health.index_health_score) ? health.index_health_score : 0
+    if (score >= 80) return 'success'
+    if (score >= 60) return 'warning'
     return 'error'
+  }
+
+  const safeMetric = (value: unknown): number => {
+    return typeof value === 'number' && Number.isFinite(value) ? value : 0
   }
 
   const getHealthLabel = (): string => {
@@ -196,7 +201,7 @@ export default function KnowledgeHealthPage() {
   const stats = [
     {
       title: t(K.page.knowledgeHealth.indexHealthScore),
-      value: `${health.index_health_score.toFixed(1)}%`,
+      value: `${safeMetric(health.index_health_score).toFixed(1)}%`,
       change: undefined,
       changeType: undefined as any,
       icon: getHealthStatus() === 'success' ? <CheckCircleIcon /> :
@@ -221,27 +226,27 @@ export default function KnowledgeHealthPage() {
   const metrics = [
     {
       title: t(K.page.knowledgeHealth.overallHealth),
-      description: 'General health indicators',
+      description: t(K.page.knowledgeHealth.metricOverallHealthDesc),
       metrics: [
         {
           key: 'status',
-          label: 'Status',
+          label: t(K.page.knowledgeHealth.metricStatus),
           value: getHealthLabel(),
           valueColor: getHealthStatus() === 'success' ? 'success.main' :
                      getHealthStatus() === 'warning' ? 'warning.main' : 'error.main'
         },
         {
           key: 'score',
-          label: 'Health Score',
-          value: `${health.index_health_score.toFixed(1)}%`,
+          label: t(K.page.knowledgeHealth.indexHealthScore),
+          value: `${safeMetric(health.index_health_score).toFixed(1)}%`,
           valueColor: getHealthStatus() === 'success' ? 'success.main' :
                      getHealthStatus() === 'warning' ? 'warning.main' : 'error.main'
         },
       ],
     },
     {
-      title: 'Data Quality Issues',
-      description: 'Issues requiring attention',
+      title: t(K.page.knowledgeHealth.metricDataQualityIssues),
+      description: t(K.page.knowledgeHealth.metricDataQualityIssuesDesc),
       metrics: [
         {
           key: 'stale',
@@ -258,26 +263,26 @@ export default function KnowledgeHealthPage() {
       ],
     },
     {
-      title: 'Vector Quality',
-      description: 'Embedding and vector metrics',
+      title: t(K.page.knowledgeHealth.metricVectorQuality),
+      description: t(K.page.knowledgeHealth.metricVectorQualityDesc),
       metrics: [
         {
           key: 'quality',
           label: t(K.page.knowledgeHealth.embeddingQuality),
-          value: `${health.embedding_quality.toFixed(1)}%`,
-          valueColor: health.embedding_quality >= 80 ? 'success.main' : 'warning.main'
+          value: `${safeMetric(health.embedding_quality).toFixed(1)}%`,
+          valueColor: safeMetric(health.embedding_quality) >= 80 ? 'success.main' : 'warning.main'
         },
         {
           key: 'coverage',
           label: t(K.page.knowledgeHealth.vectorCoverage),
-          value: `${health.vector_coverage.toFixed(1)}%`,
-          valueColor: health.vector_coverage >= 80 ? 'success.main' : 'warning.main'
+          value: `${safeMetric(health.vector_coverage).toFixed(1)}%`,
+          valueColor: safeMetric(health.vector_coverage) >= 80 ? 'success.main' : 'warning.main'
         },
         {
           key: 'accuracy',
           label: t(K.page.knowledgeHealth.retrievalAccuracy),
-          value: `${health.retrieval_accuracy.toFixed(1)}%`,
-          valueColor: health.retrieval_accuracy >= 80 ? 'success.main' : 'warning.main'
+          value: `${safeMetric(health.retrieval_accuracy).toFixed(1)}%`,
+          valueColor: safeMetric(health.retrieval_accuracy) >= 80 ? 'success.main' : 'warning.main'
         },
       ],
     },

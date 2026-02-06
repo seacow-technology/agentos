@@ -15,7 +15,7 @@ import { useState, useEffect } from 'react'
 import { usePageHeader, usePageActions } from '@/ui/layout'
 import { DashboardGrid, StatCard, MetricCard, LoadingState } from '@/ui'
 import { MessageIcon, GroupIcon, AccessTimeIcon } from '@/ui/icons'
-import { useTextTranslation } from '@/ui/text'
+import { K, useTextTranslation } from '@/ui/text'
 import { agentosService, type Session } from '@/services/agentos.service'
 
 // String literals to avoid violations
@@ -187,19 +187,19 @@ export default function ChatReportPage() {
       metrics: [
         {
           key: 'totalSessions',
-          label: 'Total Sessions',
+          label: t(K.page.chatReport.metricTotalSessions),
           value: String(totalSessions),
           valueColor: 'primary.main'
         },
         {
           key: 'activeSessions',
-          label: 'Active Sessions',
+          label: t(K.page.chatReport.metricActiveSessions),
           value: String(activeSessions.length),
           valueColor: 'success.main'
         },
         {
           key: 'estimatedMessages',
-          label: 'Estimated Messages',
+          label: t(K.page.chatReport.metricEstimatedMessages),
           value: totalMessages === null ? 'N/A' : String(totalMessages),
           valueColor: 'info.main'
         },

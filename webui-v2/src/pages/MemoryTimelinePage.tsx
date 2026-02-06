@@ -18,7 +18,7 @@ import { TableShell, FilterBar, TextField, Select, MenuItem, Chip } from '@/ui'
 import { DetailDrawer } from '@/ui/interaction/DetailDrawer'
 import { K, useTextTranslation } from '@/ui/text'
 import { toast } from '@/ui/feedback'
-import { memoryosServiceGen } from '@/services/memoryos.service.gen'
+import { memoryosService } from '@/services/memoryos.service'
 import type { GridColDef } from '@/ui'
 import type { TimelineItem } from '@modules/memoryos'
 
@@ -115,7 +115,7 @@ export default function MemoryTimelinePage() {
     setLoading(true)
     try {
       // Call real API (now returns data directly via wrapper functions)
-      const response = await memoryosServiceGen.getMemoryTimeline({
+      const response = await memoryosService.getMemoryTimeline({
         page: page + 1, // API uses 1-based indexing
         limit: pageSize,
       })

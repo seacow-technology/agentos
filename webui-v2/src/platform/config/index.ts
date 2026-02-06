@@ -5,3 +5,5 @@
  */
 
 export { config, isDev, isProd } from './env';
+export { appInfo } from './appInfo';
+export type { AppInfo } from './appInfo';

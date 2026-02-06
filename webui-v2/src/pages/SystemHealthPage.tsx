@@ -18,6 +18,7 @@ import { K, useText } from '@/ui/text'
 import { systemService, type HealthCheckResponse } from '@/services'
 import { DetailDrawer } from '@/ui/interaction'
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { hasToken } from '@platform/auth/adminToken'
 
 /**
  * SystemHealthPage 组件
@@ -59,6 +60,12 @@ export default function SystemHealthPage() {
   // Data Fetching
   // ===================================
   const loadHealthData = async () => {
+    if (!hasToken()) {
+      setData(null)
+      setError(null)
+      setLoading(false)
+      return
+    }
     try {
       setLoading(true)
       setError(null)

@@ -52,9 +52,11 @@ export default function PluginsPage() {
       setLoading(true)
       try {
         const response = await agentosService.getPlugins()
-        setData(response.data)
+        const rows = Array.isArray(response?.data) ? response.data : []
+        setData(rows)
       } catch (err) {
         console.error('Failed to fetch plugins:', err)
+        setData([])
       } finally {
         setLoading(false)
       }

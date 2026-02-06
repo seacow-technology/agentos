@@ -18,6 +18,7 @@ import { toast } from '@/ui/feedback'
 import { Refresh as RefreshIcon, Lock as LockIcon, Done as DoneIcon, Power as PowerIcon } from '@mui/icons-material'
 import { Box, Alert, Typography, List, ListItem, Chip } from '@mui/material'
 import { systemService, type GetRuntimeInfoResponse } from '@/services'
+import { hasToken } from '@platform/auth/adminToken'
 
 export default function RuntimePage() {
   // ===================================
@@ -58,6 +59,12 @@ export default function RuntimePage() {
   // Data Fetching
   // ===================================
   const loadRuntimeInfo = async () => {
+    if (!hasToken()) {
+      setData(null)
+      setError(null)
+      setLoading(false)
+      return
+    }
     try {
       setLoading(true)
       setError(null)
@@ -79,6 +86,7 @@ export default function RuntimePage() {
   // Fix Permissions Handler
   // ===================================
   const handleFixPermissions = async () => {
+    if (!hasToken()) return
     setFixPermLoading(true)
     setFixPermResult(null)
 
@@ -107,6 +115,7 @@ export default function RuntimePage() {
   // Self-check Handler
   // ===================================
   const handleRunSelfCheck = async () => {
+    if (!hasToken()) return
     setSelfCheckLoading(true)
     setSelfCheckResult(null)
 

@@ -18,7 +18,7 @@ import { TableShell, FilterBar, TextField, Select, MenuItem } from '@/ui'
 import { DetailDrawer } from '@/ui/interaction/DetailDrawer'
 import { K, useTextTranslation } from '@/ui/text'
 import { toast } from '@/ui/feedback'
-import { skillosServiceGen } from '@/services/skillos.service.gen'
+import { skillosService } from '@/services/skillos.service'
 import type { GridColDef } from '@/ui'
 import type { Skill } from '@modules/skillos'
 
@@ -110,13 +110,13 @@ export default function SkillsPage() {
   const loadSkills = useCallback(async () => {
     setLoading(true)
     try {
-      const response = await skillosServiceGen.listSkills({
+      const response = await skillosService.listSkills({
         status: statusFilter === FILTER_ALL ? 'all' : (statusFilter as 'enabled' | 'disabled'),
       })
 
       // Transform Skill to SkillRow
       // Ensure skillsData is always an array (defensive check)
-      const skillsData = Array.isArray(response.data) ? response.data : []
+      const skillsData = Array.isArray(response?.data) ? response.data : []
       const transformedSkills: SkillRow[] = skillsData.map((skill) => ({
         ...skill,
         id: skill.skill_id,

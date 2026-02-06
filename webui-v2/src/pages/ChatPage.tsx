@@ -23,6 +23,7 @@ import { agentosService } from '@/services/agentos.service'
 import { HealthWarningBanner } from '@/components/HealthWarningBanner'
 import { httpClient } from '@platform/http'
 import { useDraftProtection } from '@/hooks/useDraftProtection'
+import { hasToken } from '@platform/auth/adminToken'
 
 export default function ChatPage() {
   // ===================================
@@ -264,6 +265,12 @@ export default function ChatPage() {
   // P0-2: Load All Sessions
   // ===================================
   const loadSessions = useCallback(async () => {
+    if (!hasToken()) {
+      setSessions([])
+      setCurrentSessionId('')
+      setSessionsLoading(false)
+      return
+    }
     // console.log('[ChatPage] 📂 Loading sessions...')
     setSessionsLoading(true)
     try {
@@ -328,6 +335,12 @@ export default function ChatPage() {
   // ✅ Initialize CSRF token and load sessions on mount
   useEffect(() => {
     const initializeApp = async () => {
+      if (!hasToken()) {
+        setSessions([])
+        setCurrentSessionId('')
+        setSessionsLoading(false)
+        return
+      }
       // First, ensure CSRF token is available
       try {
         await agentosService.ensureCSRFToken()
@@ -348,6 +361,7 @@ export default function ChatPage() {
   // P0-3: Session Creation API
   // ===================================
   const handleNewConversation = useCallback(async () => {
+    if (!hasToken()) return
     setLoading(true)
     try {
       // Backend returns SessionResponse directly, not wrapped in { session: ... }
@@ -384,6 +398,7 @@ export default function ChatPage() {
   // ===================================
   const handleSessionClear = useCallback(
     async (sessionId: string) => {
+      if (!hasToken()) return
       try {
         await agentosService.deleteSession(sessionId)
         setSessions((prev) => prev.filter((s) => s.id !== sessionId))
@@ -412,6 +427,7 @@ export default function ChatPage() {
   // P0-5: Session Deletion API (Clear All)
   // ===================================
   const handleClearAll = useCallback(async () => {
+    if (!hasToken()) return
     setClearingAll(true)
     try {
       await agentosService.deleteAllSessions()
@@ -432,6 +448,11 @@ export default function ChatPage() {
   // P0-2: Load messages for a session (extracted logic)
   // ===================================
   const loadMessagesForSession = useCallback(async (sessionId: string) => {
+    if (!hasToken()) {
+      setMessages([])
+      setMessagesLoading(false)
+      return
+    }
     // console.log('[ChatPage] 🔄 Loading messages for session:', sessionId)
     setMessagesLoading(true)
     setMessages([])  // Clear old messages
@@ -548,6 +569,7 @@ export default function ChatPage() {
   // ===================================
   const handleSendMessage = useCallback(
     async (text: string) => {
+      if (!hasToken()) return
       if (!text.trim() || !isConnected) {
         return
       }
@@ -672,6 +694,11 @@ export default function ChatPage() {
 
   // Helper: Load models for specific provider
   const loadModelsForProvider = useCallback(async (targetProvider: string) => {
+    if (!hasToken()) {
+      setModels([])
+      setModel('')
+      return
+    }
     try {
       const modelsResp = await agentosService.getProviderModels(targetProvider)
       const loadedModels = modelsResp.models.map(m => m.id)
@@ -707,6 +734,12 @@ export default function ChatPage() {
   }, [model])
 
   const loadProvidersAndModels = useCallback(async () => {
+    if (!hasToken()) {
+      setProviders([])
+      setModels([])
+      setModel('')
+      return
+    }
     try {
       // ✅ P0: Trigger provider status probe first (to populate cache for health checks)
       // This ensures ChatHealthChecker can find available providers
@@ -774,6 +807,7 @@ export default function ChatPage() {
   useEffect(() => {
     // 启动时执行一次健康检查
     const performStartupHealthCheck = async () => {
+      if (!hasToken()) return
       try {
         const health = await agentosService.checkChatHealth()
         if (!health.is_healthy) {
@@ -799,6 +833,7 @@ export default function ChatPage() {
   // P2: Periodic Health Check (Optional)
   // ===================================
   useEffect(() => {
+    if (!hasToken()) return
     // 每30秒执行一次定时健康检查
     const healthCheckInterval = setInterval(async () => {
       try {

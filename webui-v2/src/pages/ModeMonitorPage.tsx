@@ -133,7 +133,7 @@ export default function ModeMonitorPage() {
 
   const handleAnalyze = () => {
     // TODO: Implement analyze functionality in Phase 7
-    enqueueSnackbar('Analyze functionality coming soon', { variant: 'info' })
+    enqueueSnackbar(t(K.page.modeMonitor.analyzeComingSoon), { variant: 'info' })
   }
 
   // ===================================
@@ -207,7 +207,7 @@ export default function ModeMonitorPage() {
     {
       title: t(K.page.modeMonitor.alertCount),
       value: modeStats?.total_alerts?.toString() || '0',
-      change: `${modeStats?.recent_count || 0} recent`,
+      change: `${modeStats?.recent_count || 0} ${t(K.page.modeMonitor.recentSuffix)}`,
       changeType: INCREASE_TYPE,
       icon: <WarningIcon />,
       detailData: {
@@ -218,9 +218,9 @@ export default function ModeMonitorPage() {
       },
     },
     {
-      title: 'Critical Alerts',
+      title: t(K.page.modeMonitor.alertCriticalCount),
       value: severityBreakdown.critical?.toString() || '0',
-      change: severityBreakdown.critical > 0 ? 'Needs attention' : 'None',
+      change: severityBreakdown.critical > 0 ? t(K.page.modeMonitor.needsAttention) : t(K.page.modeMonitor.none),
       changeType: INCREASE_TYPE,
       icon: <WarningIcon />,
       detailData: {
@@ -229,9 +229,9 @@ export default function ModeMonitorPage() {
       },
     },
     {
-      title: 'Active Alerts',
+      title: t(K.page.modeMonitor.alertActive),
       value: modeAlerts.length.toString(),
-      change: modeAlerts.length > 0 ? `${modeAlerts.length} active` : 'No alerts',
+      change: modeAlerts.length > 0 ? `${modeAlerts.length} ${t(K.common.active).toLowerCase()}` : t(K.page.modeMonitor.metricNoAlerts),
       changeType: INCREASE_TYPE,
       icon: <DashboardIcon />,
       detailData: {
@@ -244,13 +244,13 @@ export default function ModeMonitorPage() {
 
   const metrics = [
     {
-      title: 'Alert Severity Distribution',
-      description: 'Distribution of alerts by severity level',
+      title: t(K.page.modeMonitor.metricAlertSeverityDistribution),
+      description: t(K.page.modeMonitor.metricAlertSeverityDistributionDesc),
       metrics: [
-        { key: 'critical', label: 'Critical', value: severityBreakdown.critical?.toString() || '0', valueColor: 'error.main' },
-        { key: 'error', label: 'Error', value: severityBreakdown.error?.toString() || '0', valueColor: WARNING_COLOR },
-        { key: 'warning', label: 'Warning', value: severityBreakdown.warning?.toString() || '0', valueColor: INFO_COLOR },
-        { key: 'info', label: 'Info', value: severityBreakdown.info?.toString() || '0', valueColor: SUCCESS_COLOR },
+        { key: 'critical', label: t(K.page.modeMonitor.metricCritical), value: severityBreakdown.critical?.toString() || '0', valueColor: 'error.main' },
+        { key: 'error', label: t(K.common.error), value: severityBreakdown.error?.toString() || '0', valueColor: WARNING_COLOR },
+        { key: 'warning', label: t(K.common.warning), value: severityBreakdown.warning?.toString() || '0', valueColor: INFO_COLOR },
+        { key: 'info', label: t(K.common.info), value: severityBreakdown.info?.toString() || '0', valueColor: SUCCESS_COLOR },
       ],
       detailData: {
         severityBreakdown,
@@ -264,12 +264,12 @@ export default function ModeMonitorPage() {
       },
     },
     {
-      title: 'Alert Statistics',
-      description: 'Overview of mode alerts',
+      title: t(K.page.modeMonitor.metricAlertStatistics),
+      description: t(K.page.modeMonitor.metricAlertStatisticsDesc),
       metrics: [
-        { key: 'total', label: 'Total Alerts', value: modeStats?.total_alerts?.toString() || '0', valueColor: PRIMARY_COLOR },
-        { key: 'recent', label: 'Recent Alerts', value: modeStats?.recent_count?.toString() || '0', valueColor: INFO_COLOR },
-        { key: 'active', label: 'Active Alerts', value: modeAlerts.length.toString(), valueColor: modeAlerts.length > 0 ? WARNING_COLOR : SUCCESS_COLOR },
+        { key: 'total', label: t(K.page.modeMonitor.metricTotalAlerts), value: modeStats?.total_alerts?.toString() || '0', valueColor: PRIMARY_COLOR },
+        { key: 'recent', label: t(K.page.modeMonitor.metricRecentAlerts), value: modeStats?.recent_count?.toString() || '0', valueColor: INFO_COLOR },
+        { key: 'active', label: t(K.page.modeMonitor.metricActiveAlerts), value: modeAlerts.length.toString(), valueColor: modeAlerts.length > 0 ? WARNING_COLOR : SUCCESS_COLOR },
       ],
       detailData: {
         stats: modeStats,
@@ -280,8 +280,8 @@ export default function ModeMonitorPage() {
       },
     },
     {
-      title: 'Alerts by Mode',
-      description: 'Alert distribution across different modes',
+      title: t(K.page.modeMonitor.metricAlertsByMode),
+      description: t(K.page.modeMonitor.metricAlertsByModeDesc),
       metrics: Object.keys(alertsByMode).length > 0
         ? Object.entries(alertsByMode).slice(0, 3).map(([mode, count]) => ({
             key: mode,
@@ -290,7 +290,7 @@ export default function ModeMonitorPage() {
             valueColor: INFO_COLOR,
           }))
         : [
-            { key: 'none', label: 'No Alerts', value: '0', valueColor: SUCCESS_COLOR },
+            { key: 'none', label: t(K.page.modeMonitor.metricNoAlerts), value: '0', valueColor: SUCCESS_COLOR },
           ],
       detailData: {
         byMode: alertsByMode,
@@ -434,7 +434,7 @@ export default function ModeMonitorPage() {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <TimelineIcon sx={{ fontSize: 18, color: 'primary.main' }} />
             <Typography variant="caption" color="text.secondary">
-              Recent Alerts Timeline
+              {t(K.page.modeMonitor.recentAlertsTimeline)}
             </Typography>
           </Box>
           {data.alerts && data.alerts.length > 0 ? (
@@ -485,7 +485,7 @@ export default function ModeMonitorPage() {
                   {alert.context && Object.keys(alert.context).length > 0 && (
                     <Box sx={{ mt: 1 }}>
                       <Typography variant="caption" color="text.secondary">
-                        Context:
+                        {t(K.page.modeMonitor.contextLabel)}:
                       </Typography>
                       <Box
                         component="pre"
@@ -509,7 +509,7 @@ export default function ModeMonitorPage() {
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <InfoIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
               <Typography variant="body2" color="text.secondary">
-                No alerts available
+                {t(K.page.modeMonitor.noAlertsAvailable)}
               </Typography>
             </Box>
           )}
@@ -793,7 +793,7 @@ export default function ModeMonitorPage() {
         open={drawerOpen}
         onClose={handleDrawerClose}
         title={drawerContent?.title || ''}
-        subtitle={drawerContent?.type === 'stat' ? 'Statistics Details' : 'Metric Details'}
+        subtitle={drawerContent?.type === 'stat' ? t(K.page.modeMonitor.statisticsDetails) : t(K.page.modeMonitor.metricDetails)}
         width={700}
       >
         {drawerContent && renderDrawerContent()}

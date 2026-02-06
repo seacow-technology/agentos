@@ -16,6 +16,7 @@ import { usePageHeader, usePageActions } from '@/ui/layout'
 import { TableShell, FilterBar } from '@/ui'
 import { useTextTranslation, K } from '@/ui/text'
 import type { GridColDef } from '@/ui'
+import { httpClient } from '@platform/http'
 
 /**
  * Action Type - Aligned with v1 API response
@@ -93,19 +94,19 @@ export default function ActionLogPage() {
       }
 
       // Note: v1 endpoint has doubled prefix: /api/capability/api/capability/actions/log
-      const response = await fetch(`/api/capability/api/capability/actions/log?${params}`)
-      const result = await response.json()
+      const response = await httpClient.get(`/api/capability/api/capability/actions/log?${params}`)
+      const result = response?.data
 
       if (result.ok && result.data) {
-        setActions(result.data.actions || [])
-        setTotal(result.data.pagination?.total || 0)
+        setActions(Array.isArray(result.data.actions) ? result.data.actions : [])
+        setTotal(typeof result.data.pagination?.total === 'number' ? result.data.pagination.total : 0)
       } else {
-        console.error('API error:', result.error || 'Unknown error')
+        console.warn('API error:', result?.error || 'Unknown error')
         setActions([])
         setTotal(0)
       }
     } catch (err) {
-      console.error('Failed to fetch action logs:', err)
+      console.warn('Failed to fetch action logs:', err)
       setActions([])
       setTotal(0)
     } finally {
