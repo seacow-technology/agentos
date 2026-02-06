@@ -1,0 +1,202 @@
+name: windows-installer
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'publish/windows/installer/**'
+      - 'publish/scripts/build_windows.ps1'
+      - 'publish/scripts/smoke_windows.ps1'
+      - 'publish/ci/github/windows-installer.yml'
+      - 'publish/docs/**'
+      - 'os/octopusos/**'
+      - 'pyproject.toml'
+
+jobs:
+  build-install-smoke-uninstall:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Resolve versions
+        id: version
+        shell: pwsh
+        run: |
+          $content = Get-Content pyproject.toml -Raw
+          $m = [regex]::Match($content, '(?m)^version\s*=\s*"([^"]+)"')
+          if (-not $m.Success) { throw 'version parse failed' }
+
+          $octoVersion = $m.Groups[1].Value
+          $m2 = [regex]::Match($octoVersion, '^(\d+)\.(\d+)\.(\d+)')
+          if (-not $m2.Success) { throw "invalid semantic version for MSI derivation: $octoVersion" }
+
+          $msiVersion = "$($m2.Groups[1].Value).$($m2.Groups[2].Value).$($m2.Groups[3].Value)"
+          $channel = 'stable'
+
+          "VERSION=$octoVersion" >> $env:GITHUB_ENV
+          "MSI_VERSION=$msiVersion" >> $env:GITHUB_ENV
+          "CHANNEL=$channel" >> $env:GITHUB_ENV
+
+          Write-Host "octopusos_version=$octoVersion"
+          Write-Host "msi_version=$msiVersion"
+          Write-Host "channel=$channel"
+
+      - name: Install build deps
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyinstaller
+
+      - name: Build bundled runtime (octopusos.exe)
+        shell: pwsh
+        run: |
+          $payload = "publish/windows/installer/payload"
+          New-Item -ItemType Directory -Force -Path $payload | Out-Null
+          pyinstaller --noconfirm --clean --onefile --name octopusos --paths os os/octopusos/cli/main.py
+          Copy-Item dist/octopusos.exe "$payload/octopusos.exe" -Force
+
+      - name: Build MSI (WiX v4)
+        shell: pwsh
+        run: |
+          ./publish/scripts/build_windows.ps1 -Version $env:VERSION -Channel $env:CHANNEL -RuntimeDir "publish/windows/installer/payload" -SkipSmoke
+
+      - name: Locate MSI
+        id: msi
+        shell: pwsh
+        run: |
+          $msi = Get-ChildItem -Path "publish/artifacts/$env:VERSION/windows" -Filter *.msi -Recurse | Select-Object -First 1
+          if (-not $msi) { throw 'MSI artifact not found' }
+          "MSI_PATH=$($msi.FullName)" >> $env:GITHUB_ENV
+
+      - name: Install MSI
+        shell: pwsh
+        run: |
+          $log = "publish/artifacts/$env:VERSION/windows/logs/install.log"
+          New-Item -ItemType Directory -Force -Path (Split-Path $log -Parent) | Out-Null
+          Start-Process msiexec.exe -ArgumentList "/i `"$env:MSI_PATH`" /qn /l*v `"$log`"" -Wait -NoNewWindow
+
+      - name: Run installed smoke
+        shell: pwsh
+        run: |
+          $base = "publish/artifacts/$env:VERSION/windows"
+          ./publish/scripts/smoke_windows.ps1 -Installed -LogFile "$base/logs/smoke-installed.log" -TranscriptFile "$base/evidence/smoke_transcript.txt"
+
+      - name: Collect evidence bundle
+        if: always()
+        shell: pwsh
+        run: |
+          $base = "publish/artifacts/$env:VERSION/windows"
+          $evidenceDir = Join-Path $base 'evidence'
+          $evidenceLogsDir = Join-Path $evidenceDir 'logs'
+          New-Item -ItemType Directory -Force -Path $evidenceDir, $evidenceLogsDir | Out-Null
+
+          # Copy baseline logs and metadata
+          foreach ($p in @('logs/install.log', 'logs/uninstall.log', 'logs/smoke-installed.log', 'manifest.json', 'checksums.sha256')) {
+            $src = Join-Path $base $p
+            if (Test-Path $src) {
+              Copy-Item -Path $src -Destination $evidenceDir -Force
+            }
+          }
+
+          # Always collect doctor and data/log locations
+          try {
+            $doctor = & powershell.exe -NoProfile -Command "octopusos doctor" 2>&1 | Out-String
+            Set-Content -Path (Join-Path $evidenceDir 'doctor.txt') -Value $doctor -Encoding UTF8
+            $fallback = @{
+              running = $null
+              source = 'fallback'
+              reason = 'control-api-not-queried'
+              timestamp = (Get-Date).ToString('s')
+            }
+
+            $dataDirMatch = [regex]::Match($doctor, '(?m)Data dir\s*:\s*(.+)$')
+            $logFileMatch = [regex]::Match($doctor, '(?m)Log file\s*:\s*(.+)$')
+            $tokenFileMatch = [regex]::Match($doctor, '(?m)Control token file\s*:\s*(.+)$')
+
+            if ($dataDirMatch.Success) {
+              $dataDir = $dataDirMatch.Groups[1].Value.Trim()
+              Set-Content -Path (Join-Path $evidenceDir 'data_dir.txt') -Value $dataDir -Encoding UTF8
+              $runtimeLogs = Join-Path $dataDir 'logs'
+              if (Test-Path $runtimeLogs) {
+                Copy-Item -Path "$runtimeLogs\*" -Destination $evidenceLogsDir -Recurse -Force -ErrorAction SilentlyContinue
+              }
+            }
+
+            # Capture daemon status and port diagnostics when daemon/token are available.
+            $ports = @()
+            if ($logFileMatch.Success) {
+              $logFile = $logFileMatch.Groups[1].Value.Trim()
+              if (Test-Path $logFile) {
+                $ports += "log_file=$logFile"
+                $portHints = Get-Content -Path $logFile -Tail 300 | Select-String -Pattern 'port|fallback|preferred' -SimpleMatch
+                foreach ($h in $portHints) { $ports += $h.Line }
+              }
+            }
+
+            if ($tokenFileMatch.Success) {
+              $tokenPath = $tokenFileMatch.Groups[1].Value.Trim()
+              if (Test-Path $tokenPath) {
+                $token = (Get-Content -Path $tokenPath -Raw).Trim()
+                if ($token) {
+                  $statusText = & powershell.exe -NoProfile -Command "octopusos webui status" 2>&1 | Out-String
+                  $urlMatch = [regex]::Match($statusText, '(?m)URL\s*\|\s*(http://[^\s|]+)')
+                  if ($urlMatch.Success) {
+                    $uri = [Uri]$urlMatch.Groups[1].Value.Trim()
+                    $ports += "status_url=$($uri.OriginalString)"
+                    $ports += "status_bound_port=$($uri.Port)"
+                    $headers = @{ 'X-OctopusOS-Token' = $token }
+                    $resp = Invoke-RestMethod -Uri "http://$($uri.Host):$($uri.Port)/api/daemon/status" -Headers $headers -Method Get -TimeoutSec 5
+                    $resp | ConvertTo-Json -Depth 8 | Set-Content -Path (Join-Path $evidenceDir 'daemon_status.json') -Encoding UTF8
+                    $fallback = @{
+                      running = $resp.running
+                      source = 'control_api'
+                      reason = 'ok'
+                      timestamp = (Get-Date).ToString('s')
+                    }
+                    if ($resp.port) { $ports += "api_port=$($resp.port)" }
+                    if ($resp.port_source) { $ports += "api_port_source=$($resp.port_source)" }
+                  }
+                }
+              }
+            }
+
+            if ($ports.Count -eq 0) { $ports += 'no-port-diagnostics-captured' }
+            $ports | Set-Content -Path (Join-Path $evidenceDir 'ports.txt') -Encoding UTF8
+            $fallback | ConvertTo-Json -Depth 4 | Set-Content -Path (Join-Path $evidenceDir 'status_fallback.json') -Encoding UTF8
+          } catch {
+            Set-Content -Path (Join-Path $evidenceDir 'evidence_error.txt') -Value $_.Exception.Message -Encoding UTF8
+            @{
+              running = $null
+              source = 'fallback'
+              reason = 'evidence-collection-error'
+              timestamp = (Get-Date).ToString('s')
+            } | ConvertTo-Json -Depth 4 | Set-Content -Path (Join-Path $evidenceDir 'status_fallback.json') -Encoding UTF8
+            if (-not (Test-Path (Join-Path $evidenceDir 'ports.txt'))) {
+              'ports-unavailable' | Set-Content -Path (Join-Path $evidenceDir 'ports.txt') -Encoding UTF8
+            }
+          }
+
+      - name: Uninstall MSI
+        if: always()
+        shell: pwsh
+        run: |
+          $log = "publish/artifacts/$env:VERSION/windows/logs/uninstall.log"
+          Start-Process msiexec.exe -ArgumentList "/x `"$env:MSI_PATH`" /qn /l*v `"$log`"" -Wait -NoNewWindow
+          $base = "publish/artifacts/$env:VERSION/windows"
+          if (Test-Path "$base/logs/uninstall.log") {
+            Copy-Item -Path "$base/logs/uninstall.log" -Destination "$base/evidence/uninstall.log" -Force
+          }
+
+      - name: Upload artifacts and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer-${{ env.VERSION }}
+          path: |
+            publish/artifacts/${{ env.VERSION }}/windows/**

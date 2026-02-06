@@ -1,0 +1,27 @@
+{
+  "root": "publish/artifacts/<version>/windows/evidence",
+  "required_files": [
+    "smoke_transcript.txt",
+    "install.log",
+    "uninstall.log",
+    "doctor.txt",
+    "ports.txt",
+    "manifest.json",
+    "checksums.sha256",
+    "status_fallback.json"
+  ],
+  "required_dirs": [
+    "logs"
+  ],
+  "optional_files": [
+    "daemon_status.json",
+    "smoke-installed.log"
+  ],
+  "demo_mapping": {
+    "manifest": "manifest.json",
+    "transcript": "smoke_transcript.txt",
+    "status_primary": "daemon_status.json",
+    "status_fallback": "status_fallback.json",
+    "install_log": "install.log"
+  }
+}

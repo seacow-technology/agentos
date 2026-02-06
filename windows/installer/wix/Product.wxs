@@ -1,0 +1,50 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+    Name="OctopusOS"
+    Manufacturer="OctopusOS"
+    Version="$(var.Version)"
+    UpgradeCode="4A07B0C9-046F-4A68-8441-F28925A79F83"
+    Language="1033"
+    Scope="perMachine"
+    InstallerVersion="500"
+  >
+    <SummaryInformation Description="OctopusOS Installer" Manufacturer="OctopusOS" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of OctopusOS is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Property Id="ARPCOMMENTS" Value="OctopusOS $(var.FullVersion) ($(var.Channel))" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="OctopusOS" />
+    </StandardDirectory>
+
+    <Feature Id="MainFeature" Title="OctopusOS" Level="1">
+      <ComponentGroupRef Id="RuntimeFiles" />
+      <ComponentRef Id="PathComponent" />
+    </Feature>
+  </Package>
+
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Component Id="PathComponent" Guid="*">
+        <RegistryValue
+          Root="HKLM"
+          Key="Software\\OctopusOS"
+          Name="InstallDir"
+          Type="string"
+          Value="[INSTALLFOLDER]"
+          KeyPath="yes"
+        />
+        <Environment
+          Id="EnvPath"
+          Name="PATH"
+          Value="[INSTALLFOLDER]"
+          Action="set"
+          Part="last"
+          System="yes"
+          Permanent="no"
+        />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+</Wix>
