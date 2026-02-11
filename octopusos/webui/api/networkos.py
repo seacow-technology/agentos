@@ -12,15 +12,18 @@ from CommunicationOS message_audit.
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Body, Header, HTTPException, Query
 
 from octopusos.core.capabilities.admin_token import validate_admin_token
+from octopusos.core.mcp.cloudflare_discovery import discover_cloudflare_setup
 from octopusos.networkos.capabilities.engine import NetworkCapabilityEngine
 from octopusos.networkos.config_store import NetworkConfigStore, ALLOWED_KEYS
 
 router = APIRouter(prefix="/api/network", tags=["networkos"])
+logger = logging.getLogger(__name__)
 
 
 def _require_admin_token(token: Optional[str]) -> str:
@@ -196,9 +199,29 @@ def _request_network_capability(
 ) -> Dict[str, Any]:
     actor = _require_admin_token(admin_token)
     engine = NetworkCapabilityEngine()
+    logger.info(
+        "[networkos.webui] capability request received capability=%s actor=%s params_keys=%s",
+        capability,
+        actor,
+        sorted(list((params or {}).keys())),
+    )
     res = engine.request_capability(capability=str(capability), params=params or {}, requested_by=actor)
     if not res.get("ok"):
+        logger.warning(
+            "[networkos.webui] capability request failed capability=%s actor=%s error=%s",
+            capability,
+            actor,
+            res.get("error"),
+        )
         raise HTTPException(status_code=400, detail=str(res.get("error") or "request_failed"))
+    request = res.get("request") if isinstance(res.get("request"), dict) else {}
+    logger.info(
+        "[networkos.webui] capability request created capability=%s request_id=%s decision=%s status=%s",
+        capability,
+        request.get("id"),
+        request.get("decision"),
+        request.get("status"),
+    )
     return {"ok": True, **res, "source": "real"}
 
 
@@ -213,6 +236,44 @@ def cloudflare_daemon_status(
     engine = NetworkCapabilityEngine()
     st = engine.cloudflare.daemon_status({}, debug=bool(debug))
     return {"ok": True, "status": st, "source": "real"}
+
+
+@router.post("/cloudflare/daemon/logs/clear")
+def cloudflare_daemon_clear_logs(
+    admin_token: Optional[str] = Header(default=None, alias="X-Admin-Token"),
+) -> Dict[str, Any]:
+    _require_admin_token(admin_token)
+    engine = NetworkCapabilityEngine()
+    data = engine.cloudflare.daemon_clear_logs({})
+    return {"ok": True, **data, "source": "real"}
+
+
+@router.get("/cloudflare/tunnels")
+def cloudflare_tunnels(
+    admin_token: Optional[str] = Header(default=None, alias="X-Admin-Token"),
+) -> Dict[str, Any]:
+    _require_admin_token(admin_token)
+    engine = NetworkCapabilityEngine()
+    data = engine.cloudflare.daemon_list_tunnels({})
+    return {"ok": True, **data, "source": "real"}
+
+
+@router.post("/cloudflare/tunnels/create")
+def cloudflare_tunnels_create(
+    payload: Dict[str, Any] = Body(default={}),
+    admin_token: Optional[str] = Header(default=None, alias="X-Admin-Token"),
+) -> Dict[str, Any]:
+    _require_admin_token(admin_token)
+    params = payload.get("params") if isinstance(payload.get("params"), dict) else {}
+    name = str(params.get("name") or "").strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="name_required")
+    engine = NetworkCapabilityEngine()
+    try:
+        data = engine.cloudflare.daemon_create_tunnel({"name": name})
+    except RuntimeError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    return {"ok": True, **data, "source": "real"}
 
 
 @router.post("/cloudflare/daemon/install")
@@ -231,6 +292,32 @@ def cloudflare_daemon_uninstall(
 ) -> Dict[str, Any]:
     params = payload.get("params") if isinstance(payload.get("params"), dict) else {}
     return _request_network_capability(capability="network.cloudflare.daemon.uninstall", params=params, admin_token=admin_token)
+
+
+@router.post("/cloudflare/cli/install")
+def cloudflare_cli_install(
+    payload: Dict[str, Any] = Body(default={}),
+    admin_token: Optional[str] = Header(default=None, alias="X-Admin-Token"),
+) -> Dict[str, Any]:
+    _require_admin_token(admin_token)
+    params = payload.get("params") if isinstance(payload.get("params"), dict) else {}
+    engine = NetworkCapabilityEngine()
+    res = engine.cloudflare.cli_install(params)
+    if not res.ok:
+        raise HTTPException(status_code=400, detail=str(res.detail or "cli_install_failed"))
+    return {"ok": True, "result": res.to_dict(), "source": "real"}
+
+
+@router.get("/cloudflare/mcp/discover")
+def cloudflare_mcp_discover(
+    account_id: Optional[str] = Query(default=None),
+    admin_token: Optional[str] = Header(default=None, alias="X-Admin-Token"),
+) -> Dict[str, Any]:
+    _require_admin_token(admin_token)
+    result = discover_cloudflare_setup(account_id=account_id)
+    if not result.ok:
+        raise HTTPException(status_code=400, detail=str(result.error or "mcp_discovery_failed"))
+    return {"ok": True, "result": result.to_dict(), "source": "real"}
 
 
 @router.post("/cloudflare/daemon/start")

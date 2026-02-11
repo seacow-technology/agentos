@@ -36,6 +36,7 @@ ROUTER_REGISTRY: tuple[RouterRegistration, ...] = (
     RouterRegistration("octopusos.webui.api.repos"),
     RouterRegistration("octopusos.webui.api.calls"),
     RouterRegistration("octopusos.webui.api.channels", optional=True),
+    RouterRegistration("octopusos.webui.api.bridge", optional=True),
     RouterRegistration("octopusos.webui.api.channels_email", optional=True),
     RouterRegistration("octopusos.webui.api.enterprise_im", optional=True),
     RouterRegistration("octopusos.webui.api.networkos", optional=True),

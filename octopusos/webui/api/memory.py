@@ -1,15 +1,17 @@
-"""Memory proposal API endpoints."""
+"""Memory API endpoints (timeline + proposals)."""
 
 from __future__ import annotations
 
+import json
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, Query, Request, Response
+from pydantic import BaseModel, Field
 
 from octopusos.core.memory.capabilities import PermissionDenied
 from octopusos.core.memory.proposals import get_proposal_service
 from octopusos.core.time import utc_now_ms
+from octopusos.webui.db.memory_db import memory_db_connect
 
 
 router = APIRouter(prefix="/api/memory", tags=["memory"])
@@ -18,6 +20,8 @@ router = APIRouter(prefix="/api/memory", tags=["memory"])
 DEFAULT_PROPOSER = "chat_agent"
 DEFAULT_REVIEWER = "user:admin"
 MS_PER_SECOND = 1000
+MAX_TIMELINE_KEY_LEN = 2048
+MAX_TIMELINE_VALUE_LEN = 8192
 
 
 class ProposeMemoryRequest(BaseModel):
@@ -34,6 +38,31 @@ class ApproveProposalRequest(BaseModel):
 class RejectProposalRequest(BaseModel):
     reviewer_id: Optional[str] = None
     reason: str
+
+
+class MemoryTimelineItem(BaseModel):
+    id: str
+    timestamp: str
+    key: str
+    value: str
+    type: str
+    source: str
+    confidence: float
+    is_active: bool
+    version: int
+    supersedes: Optional[str] = None
+    superseded_by: Optional[str] = None
+    scope: str
+    project_id: Optional[str] = None
+    task_id: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class MemoryTimelineResponse(BaseModel):
+    events: list[MemoryTimelineItem]
+    total: int
+    limit: int
+    offset: int
 
 
 def _to_iso_from_ms(timestamp_ms: Optional[int]) -> str:
@@ -72,6 +101,142 @@ def _proposal_to_response_row(raw: Dict[str, Any]) -> Dict[str, Any]:
             "content": content,
         },
     }
+
+
+def _safe_json_loads(value: Any, fallback: Any) -> Any:
+    if value in (None, ""):
+        return fallback
+    try:
+        return json.loads(value)
+    except Exception:
+        return fallback
+
+
+def _truncate_text(value: Any, max_len: int) -> str:
+    text = str(value or "")
+    if len(text) <= max_len:
+        return text
+    return text[:max_len]
+
+
+def _timeline_source(sources: list[Any]) -> str:
+    # Prefer explicit source type first, then fallback to legacy chat markers.
+    for src in sources:
+        if not isinstance(src, dict):
+            continue
+        source_type = str(src.get("type") or "").strip().lower()
+        if source_type == "chat" and (src.get("message_id") or src.get("session_id")):
+            return "rule_extraction"
+    for src in sources:
+        if isinstance(src, dict) and (src.get("message_id") or src.get("session_id")):
+            return "rule_extraction"
+    return "system"
+
+
+@router.get("/timeline", response_model=MemoryTimelineResponse)
+def memory_timeline(
+    request: Request,
+    response: Response,
+    limit: int = Query(default=50, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+    project_id: Optional[str] = Query(default=None),
+    event_type: Optional[str] = Query(default=None),
+) -> Dict[str, Any]:
+    conn = memory_db_connect()
+    try:
+        response.headers["X-OctopusOS-Data-Store"] = "memoryos"
+        response.headers["X-OctopusOS-Trace"] = "memory_items"
+        table_exists = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'memory_items'"
+        ).fetchone()
+        if not table_exists:
+            return {"events": [], "total": 0, "limit": limit, "offset": offset}
+
+        columns = {str(row["name"]) for row in conn.execute("PRAGMA table_info(memory_items)").fetchall()}
+
+        where: list[str] = []
+        params: list[Any] = []
+
+        if project_id and "project_id" in columns:
+            where.append("project_id = ?")
+            params.append(project_id)
+        if event_type and "type" in columns:
+            where.append("type = ?")
+            params.append(event_type)
+
+        where_sql = f"WHERE {' AND '.join(where)}" if where else ""
+        total_row = conn.execute(
+            f"SELECT COUNT(*) AS c FROM memory_items {where_sql}",
+            params,
+        ).fetchone()
+        total = int((total_row["c"] if total_row else 0) or 0)
+
+        # Stable ordering for pagination and deterministic e2e expectations.
+        order_primary = "created_at" if "created_at" in columns else ("updated_at" if "updated_at" in columns else "id")
+        order_secondary = ", id DESC" if "id" in columns else ""
+        select_cols = [
+            "id",
+            "scope",
+            "type",
+            "content",
+            "sources",
+            "confidence",
+            "project_id",
+            "created_at",
+            "updated_at",
+            "version",
+            "is_active",
+            "supersedes",
+            "superseded_by",
+        ]
+        actual_cols = [c for c in select_cols if c in columns]
+        sql = f"""
+            SELECT {", ".join(actual_cols)}
+            FROM memory_items
+            {where_sql}
+            ORDER BY {order_primary} DESC{order_secondary}
+            LIMIT ? OFFSET ?
+        """
+        rows = conn.execute(sql, [*params, limit, offset]).fetchall()
+
+        events: list[dict[str, Any]] = []
+        for row in rows:
+            row_map = dict(row)
+            content_raw = row_map.get("content")
+            content = _safe_json_loads(content_raw, {})
+            sources = _safe_json_loads(row_map.get("sources"), [])
+            key_value = content.get("key") if isinstance(content, dict) else ""
+            value_value = content.get("value") if isinstance(content, dict) else ""
+            metadata = {
+                "sources": sources,
+                "request_path": str(request.url.path),
+            }
+            if not isinstance(content, dict):
+                metadata["raw_content"] = _truncate_text(content_raw, MAX_TIMELINE_VALUE_LEN)
+            timestamp = str(row_map.get("updated_at") or row_map.get("created_at") or "")
+            events.append(
+                {
+                    "id": str(row_map.get("id") or ""),
+                    "timestamp": timestamp,
+                    "key": _truncate_text(key_value, MAX_TIMELINE_KEY_LEN),
+                    "value": _truncate_text(value_value, MAX_TIMELINE_VALUE_LEN),
+                    "type": str(row_map.get("type") or "-"),
+                    "source": _timeline_source(sources),
+                    "confidence": float(row_map.get("confidence") or 0.0),
+                    "is_active": bool(row_map.get("is_active") if "is_active" in row_map else True),
+                    "version": int(row_map.get("version") or 1),
+                    "supersedes": row_map.get("supersedes"),
+                    "superseded_by": row_map.get("superseded_by"),
+                    "scope": str(row_map.get("scope") or "global"),
+                    "project_id": row_map.get("project_id"),
+                    "task_id": None,
+                    "metadata": metadata,
+                }
+            )
+
+        return {"events": events, "total": total, "limit": limit, "offset": offset}
+    finally:
+        conn.close()
 
 
 @router.post("/propose")

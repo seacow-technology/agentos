@@ -16,6 +16,8 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
+from octopusos.core.chat.router_priority_contract import reserved_stock_symbol_stopwords
+
 
 STOCK_DISCLAIMER = "以下仅为对已发生走势的描述（不预测、不建议、不评价）。"
 STOCK_REFUSAL_TEMPLATE = (
@@ -525,6 +527,7 @@ def _extract_symbol(text: str) -> Optional[str]:
     if us:
         token = us.group(1)
         stop_words = {"trend", "stock", "price", "query", "line", "today", "lookback"}
+        stop_words.update(reserved_stock_symbol_stopwords())
         if token.lower() not in stop_words:
             return token.upper()
     hk_digits = re.search(r"\b(\d{1,4})\s*(?:港股|hk)\b", raw, re.IGNORECASE)

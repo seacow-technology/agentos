@@ -22,6 +22,7 @@ import os
 import sqlite3
 import logging
 import threading
+import atexit
 from pathlib import Path
 from typing import Any, List, Optional, Tuple, Dict
 from contextlib import contextmanager
@@ -32,6 +33,8 @@ logger = logging.getLogger(__name__)
 
 # Thread-local storage for connections
 _thread_local = threading.local()
+_CONNECTIONS_BY_THREAD: Dict[int, sqlite3.Connection] = {}
+_CONNECTIONS_LOCK = threading.Lock()
 
 # Database path (read once from environment)
 _DB_PATH: Optional[str] = None
@@ -127,7 +130,9 @@ def get_db() -> sqlite3.Connection:
             # Don't block connection on migration failure
 
         # Create new connection
-        conn = sqlite3.connect(db_path)
+        # Allow deterministic cleanup from non-owner threads (e.g. test teardown
+        # and threadpool lifecycles) while keeping per-thread connection usage.
+        conn = sqlite3.connect(db_path, check_same_thread=False)
         conn.row_factory = sqlite3.Row
 
         # Apply standard PRAGMA settings
@@ -143,6 +148,8 @@ def get_db() -> sqlite3.Connection:
 
         # Store in thread-local storage
         _thread_local.connection = conn
+        with _CONNECTIONS_LOCK:
+            _CONNECTIONS_BY_THREAD[threading.get_ident()] = conn
 
         logger.debug(f"Created DB connection for thread {threading.current_thread().name}")
 
@@ -165,7 +172,29 @@ def close_db() -> None:
         except Exception as e:
             logger.warning(f"Error closing connection: {e}")
         finally:
+            with _CONNECTIONS_LOCK:
+                _CONNECTIONS_BY_THREAD.pop(threading.get_ident(), None)
             _thread_local.connection = None
+
+
+def close_all_db() -> None:
+    """Close all tracked thread-local database connections.
+
+    Primarily used for test cleanup and interpreter shutdown to prevent leaked
+    sqlite connections from surfacing as ResourceWarning.
+    """
+    with _CONNECTIONS_LOCK:
+        items = list(_CONNECTIONS_BY_THREAD.items())
+        _CONNECTIONS_BY_THREAD.clear()
+
+    for _, conn in items:
+        try:
+            conn.close()
+        except Exception as e:
+            logger.warning(f"Error closing tracked connection: {e}")
+
+    if hasattr(_thread_local, "connection"):
+        _thread_local.connection = None
 
 
 def query_one(sql: str, params: Optional[Tuple[Any, ...]] = None) -> Optional[sqlite3.Row]:
@@ -342,8 +371,8 @@ def reset_db_path(new_path: Optional[str] = None) -> None:
     global _DB_PATH
 
     with _DB_PATH_LOCK:
-        # Close existing connection in current thread
-        close_db()
+        # Close all existing connections before path reset
+        close_all_db()
 
         # Reset path
         _DB_PATH = None
@@ -351,3 +380,6 @@ def reset_db_path(new_path: Optional[str] = None) -> None:
         if new_path:
             _DB_PATH = str(Path(new_path).resolve())
             logger.warning(f"DB path reset to: {_DB_PATH} (test mode)")
+
+
+atexit.register(close_all_db)

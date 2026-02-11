@@ -22,6 +22,11 @@ console = Console()
 logger = logging.getLogger(__name__)
 
 
+def _trace_log(event: str, **fields: object) -> None:
+    payload = {"event": event, **fields}
+    logger.info("memory_store_trace %s", json.dumps(payload, ensure_ascii=False, sort_keys=True))
+
+
 class MemoryService:
     """External memory service for storing and retrieving agent memories."""
 
@@ -98,6 +103,7 @@ class MemoryService:
         conn = self._get_connection()
         cursor = conn.cursor()
         columns = self._get_memory_columns(cursor)
+        store_path = str(Path(self.db_path).resolve())
 
         # Extract conflict detection key
         scope = memory_item["scope"]
@@ -206,7 +212,45 @@ class MemoryService:
             [values_map[col] for col in insert_columns],
         )
 
-        conn.commit()
+        _trace_log(
+            "memory_write_before_commit",
+            memory_id=memory_id,
+            scope=scope,
+            memory_type=mem_type,
+            store_path=store_path,
+            write_count=1,
+        )
+        try:
+            conn.commit()
+            _trace_log(
+                "memory_write_after_commit",
+                memory_id=memory_id,
+                scope=scope,
+                memory_type=mem_type,
+                store_path=store_path,
+                write_count=1,
+                commit_result="success",
+            )
+        except Exception as commit_error:
+            conn.rollback()
+            _trace_log(
+                "memory_write_after_commit",
+                memory_id=memory_id,
+                scope=scope,
+                memory_type=mem_type,
+                store_path=store_path,
+                write_count=1,
+                commit_result="failed",
+                error=str(commit_error),
+            )
+            logger.error(
+                "Memory commit failed: memory_id=%s store_path=%s error=%s",
+                memory_id,
+                store_path,
+                commit_error,
+                exc_info=True,
+            )
+            raise
         conn.close()
 
         return memory_id
@@ -665,13 +709,15 @@ class MemoryService:
 
     def _row_to_dict(self, row: sqlite3.Row) -> dict:
         """Convert database row to MemoryItem dict."""
+        row_keys = set(row.keys())
         result = {
             "id": row["id"],
             "scope": row["scope"],
             "type": row["type"],
             "content": json.loads(row["content"]),
             "tags": json.loads(row["tags"]) if row["tags"] else [],
-            "sources": json.loads(row["sources"]) if row["sources"] else [],
+            # Backward/partial schema compatibility: old rows may not have sources.
+            "sources": json.loads(row["sources"]) if "sources" in row_keys and row["sources"] else [],
             "created_at": row["created_at"],
             "updated_at": row["updated_at"],
             "confidence": row["confidence"],
@@ -839,7 +885,49 @@ class MemoryService:
                 ),
             )
 
-            conn.commit()
+            store_path = str(Path(self.db_path).resolve())
+            _trace_log(
+                "memory_write_before_commit",
+                memory_id=new_id,
+                scope=new_item["scope"],
+                memory_type=new_item["type"],
+                store_path=store_path,
+                write_count=1,
+                conflict_resolution="supersede_old",
+            )
+            try:
+                conn.commit()
+                _trace_log(
+                    "memory_write_after_commit",
+                    memory_id=new_id,
+                    scope=new_item["scope"],
+                    memory_type=new_item["type"],
+                    store_path=store_path,
+                    write_count=1,
+                    conflict_resolution="supersede_old",
+                    commit_result="success",
+                )
+            except Exception as commit_error:
+                conn.rollback()
+                _trace_log(
+                    "memory_write_after_commit",
+                    memory_id=new_id,
+                    scope=new_item["scope"],
+                    memory_type=new_item["type"],
+                    store_path=store_path,
+                    write_count=1,
+                    conflict_resolution="supersede_old",
+                    commit_result="failed",
+                    error=str(commit_error),
+                )
+                logger.error(
+                    "Memory conflict commit failed: memory_id=%s store_path=%s error=%s",
+                    new_id,
+                    store_path,
+                    commit_error,
+                    exc_info=True,
+                )
+                raise
 
             logger.info(
                 f"Conflict resolved: new value wins "

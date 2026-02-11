@@ -58,8 +58,8 @@ packages:
     
     transport: "stdio"
     connection_template:
-      command: "npx"
-      args: ["-y", "@modelcontextprotocol/server-echo"]
+      command: "node"
+      args: ["servers/echo-math-mcp/index.js"]
       env: {}
     
     recommended_trust_tier: "T0"
@@ -177,25 +177,63 @@ packages:
   - package_id: "community/filesystem"
     name: "Filesystem Tools"
     version: "1.2.0"
-    author: "MCP Community"
-    description: "Local filesystem operations (read, write, list)"
+    author: "Model Context Protocol"
+    description: "Reference filesystem server with secure local file operations"
     long_description: |
-      Provides tools for reading, writing, and listing files on the local filesystem.
-      High-risk due to filesystem write capabilities.
+      Official MCP Filesystem reference server.
+      Provides read/write/search/move/list/tree operations for local files and directories.
+      This server has write and delete capabilities and should remain admin-gated.
     
     tools:
       - name: "read_file"
-        description: "Read contents of a file"
+        description: "Read file content (binary/text aware)"
         input_schema:
           type: "object"
           properties:
             path:
               type: "string"
-              description: "File path to read"
+              description: "Path to file"
           required: ["path"]
         side_effects: ["filesystem_read"]
         requires_confirmation: false
-      
+
+      - name: "read_text_file"
+        description: "Read UTF-8 text file"
+        input_schema:
+          type: "object"
+          properties:
+            path:
+              type: "string"
+              description: "Path to text file"
+          required: ["path"]
+        side_effects: ["filesystem_read"]
+        requires_confirmation: false
+
+      - name: "read_media_file"
+        description: "Read media file metadata/content handle"
+        input_schema:
+          type: "object"
+          properties:
+            path:
+              type: "string"
+              description: "Path to media file"
+          required: ["path"]
+        side_effects: ["filesystem_read"]
+        requires_confirmation: false
+
+      - name: "read_multiple_files"
+        description: "Read multiple files in one call"
+        input_schema:
+          type: "object"
+          properties:
+            paths:
+              type: "array"
+              items:
+                type: "string"
+          required: ["paths"]
+        side_effects: ["filesystem_read"]
+        requires_confirmation: false
+
       - name: "write_file"
         description: "Write content to a file"
         input_schema:
@@ -203,26 +241,36 @@ packages:
           properties:
             path:
               type: "string"
-              description: "File path to write"
             content:
               type: "string"
-              description: "Content to write"
           required: ["path", "content"]
         side_effects: ["filesystem_write"]
         requires_confirmation: true
-      
-      - name: "delete_file"
-        description: "Delete a file"
+
+      - name: "edit_file"
+        description: "Edit file using patch-like changes"
         input_schema:
           type: "object"
           properties:
             path:
               type: "string"
-              description: "File path to delete"
-          required: ["path"]
-        side_effects: ["filesystem_delete"]
+            edits:
+              type: "array"
+          required: ["path", "edits"]
+        side_effects: ["filesystem_write"]
         requires_confirmation: true
-      
+
+      - name: "create_directory"
+        description: "Create directory path"
+        input_schema:
+          type: "object"
+          properties:
+            path:
+              type: "string"
+          required: ["path"]
+        side_effects: ["filesystem_write"]
+        requires_confirmation: true
+
       - name: "list_directory"
         description: "List files in a directory"
         input_schema:
@@ -230,12 +278,79 @@ packages:
           properties:
             path:
               type: "string"
-              description: "Directory path"
           required: ["path"]
         side_effects: ["filesystem_read"]
         requires_confirmation: false
-    
-    declared_side_effects: 
+
+      - name: "list_directory_with_sizes"
+        description: "List directory entries with sizes"
+        input_schema:
+          type: "object"
+          properties:
+            path:
+              type: "string"
+          required: ["path"]
+        side_effects: ["filesystem_read"]
+        requires_confirmation: false
+
+      - name: "directory_tree"
+        description: "Get recursive directory tree"
+        input_schema:
+          type: "object"
+          properties:
+            path:
+              type: "string"
+          required: ["path"]
+        side_effects: ["filesystem_read"]
+        requires_confirmation: false
+
+      - name: "move_file"
+        description: "Move or rename file"
+        input_schema:
+          type: "object"
+          properties:
+            source:
+              type: "string"
+            destination:
+              type: "string"
+          required: ["source", "destination"]
+        side_effects: ["filesystem_write", "filesystem_delete"]
+        requires_confirmation: true
+
+      - name: "search_files"
+        description: "Search files by name/content pattern"
+        input_schema:
+          type: "object"
+          properties:
+            path:
+              type: "string"
+            pattern:
+              type: "string"
+          required: ["path", "pattern"]
+        side_effects: ["filesystem_read"]
+        requires_confirmation: false
+
+      - name: "get_file_info"
+        description: "Get file metadata"
+        input_schema:
+          type: "object"
+          properties:
+            path:
+              type: "string"
+          required: ["path"]
+        side_effects: ["filesystem_read"]
+        requires_confirmation: false
+
+      - name: "list_allowed_directories"
+        description: "List configured allowed root directories"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["filesystem_read"]
+        requires_confirmation: false
+
+    declared_side_effects:
       - "filesystem_read"
       - "filesystem_write"
       - "filesystem_delete"
@@ -253,7 +368,373 @@ packages:
     homepage: "https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem"
     repository: "https://github.com/modelcontextprotocol/servers"
     license: "MIT"
-    tags: ["filesystem", "io", "local", "high-risk"]
+    tags: ["filesystem", "reference", "modelcontextprotocol", "local", "high-risk"]
+
+  - package_id: "mcp.reference/everything"
+    name: "MCP Reference Everything"
+    version: "1.0.0"
+    author: "Model Context Protocol"
+    description: "Reference/test server with prompts, resources, and tools"
+    long_description: |
+      Official MCP Everything reference server used for protocol capability testing.
+      Useful for validating client behavior across tools/resources/prompt patterns.
+
+    tools:
+      - name: "echo"
+        description: "Echo input back"
+        input_schema:
+          type: "object"
+          properties:
+            message:
+              type: "string"
+          required: ["message"]
+        side_effects: []
+        requires_confirmation: false
+
+      - name: "get-env"
+        description: "Read selected environment values"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["filesystem_read"]
+        requires_confirmation: false
+
+      - name: "get-sum"
+        description: "Return sum of two values"
+        input_schema:
+          type: "object"
+          properties:
+            a:
+              type: "number"
+            b:
+              type: "number"
+          required: ["a", "b"]
+        side_effects: []
+        requires_confirmation: false
+
+      - name: "simulate-research-query"
+        description: "Run simulated research workflow"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+    declared_side_effects:
+      - "filesystem_read"
+      - "network_read"
+
+    transport: "stdio"
+    connection_template:
+      command: "npx"
+      args: ["-y", "@modelcontextprotocol/server-everything"]
+      env: {}
+
+    recommended_trust_tier: "T1"
+    recommended_quota_profile: "medium"
+    requires_admin_token: false
+
+    homepage: "https://modelcontextprotocol.io/examples"
+    repository: "https://github.com/modelcontextprotocol/servers"
+    license: "MIT"
+    tags: ["reference", "testing", "modelcontextprotocol", "tools", "resources", "prompts"]
+
+  - package_id: "mcp.reference/fetch"
+    name: "MCP Reference Fetch"
+    version: "1.0.0"
+    author: "Model Context Protocol"
+    description: "Web content fetching and conversion for efficient LLM usage"
+    long_description: |
+      Official MCP Fetch reference server.
+      Fetches web content and transforms it for LLM-friendly consumption.
+
+    tools:
+      - name: "fetch"
+        description: "Fetch and normalize content from URL"
+        input_schema:
+          type: "object"
+          properties:
+            url:
+              type: "string"
+          required: ["url"]
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+    declared_side_effects:
+      - "network_read"
+
+    transport: "stdio"
+    connection_template:
+      command: "uvx"
+      args: ["mcp-server-fetch"]
+      env: {}
+
+    recommended_trust_tier: "T2"
+    recommended_quota_profile: "medium"
+    requires_admin_token: false
+
+    homepage: "https://modelcontextprotocol.io/examples"
+    repository: "https://github.com/modelcontextprotocol/servers"
+    license: "MIT"
+    tags: ["reference", "fetch", "web", "network", "modelcontextprotocol"]
+
+  - package_id: "mcp.reference/git"
+    name: "MCP Reference Git"
+    version: "1.0.0"
+    author: "Model Context Protocol"
+    description: "Tools to read, search, and manipulate Git repositories"
+    long_description: |
+      Official MCP Git reference server.
+      Supports status, diffs, branch operations, staging, and commits.
+
+    tools:
+      - name: "git_status"
+        description: "Show repository status"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["filesystem_read", "system_command"]
+        requires_confirmation: false
+
+      - name: "git_diff"
+        description: "Show diff output"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["filesystem_read", "system_command"]
+        requires_confirmation: false
+
+      - name: "git_add"
+        description: "Stage files"
+        input_schema:
+          type: "object"
+          properties:
+            files:
+              type: "array"
+              items:
+                type: "string"
+          required: ["files"]
+        side_effects: ["filesystem_write", "system_command"]
+        requires_confirmation: true
+
+      - name: "git_commit"
+        description: "Create commit"
+        input_schema:
+          type: "object"
+          properties:
+            message:
+              type: "string"
+          required: ["message"]
+        side_effects: ["filesystem_write", "system_command"]
+        requires_confirmation: true
+
+      - name: "git_checkout"
+        description: "Checkout branch/ref"
+        input_schema:
+          type: "object"
+          properties:
+            branch:
+              type: "string"
+          required: ["branch"]
+        side_effects: ["filesystem_write", "system_command"]
+        requires_confirmation: true
+
+    declared_side_effects:
+      - "filesystem_read"
+      - "filesystem_write"
+      - "system_command"
+
+    transport: "stdio"
+    connection_template:
+      command: "uvx"
+      args: ["mcp-server-git"]
+      env: {}
+
+    recommended_trust_tier: "T2"
+    recommended_quota_profile: "tight"
+    requires_admin_token: true
+
+    homepage: "https://modelcontextprotocol.io/examples"
+    repository: "https://github.com/modelcontextprotocol/servers"
+    license: "MIT"
+    tags: ["reference", "git", "scm", "devtools", "modelcontextprotocol"]
+
+  - package_id: "mcp.reference/memory"
+    name: "MCP Reference Memory"
+    version: "1.0.0"
+    author: "Model Context Protocol"
+    description: "Knowledge graph-based persistent memory system"
+    long_description: |
+      Official MCP Memory reference server.
+      Provides CRUD operations over entities, relations, and observations in a memory graph.
+
+    tools:
+      - name: "create_entities"
+        description: "Create graph entities"
+        input_schema:
+          type: "object"
+          properties:
+            entities:
+              type: "array"
+          required: ["entities"]
+        side_effects: ["filesystem_write"]
+        requires_confirmation: true
+
+      - name: "create_relations"
+        description: "Create graph relations"
+        input_schema:
+          type: "object"
+          properties:
+            relations:
+              type: "array"
+          required: ["relations"]
+        side_effects: ["filesystem_write"]
+        requires_confirmation: true
+
+      - name: "add_observations"
+        description: "Append observations to entities"
+        input_schema:
+          type: "object"
+          properties:
+            observations:
+              type: "array"
+          required: ["observations"]
+        side_effects: ["filesystem_write"]
+        requires_confirmation: true
+
+      - name: "read_graph"
+        description: "Read entire memory graph"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["filesystem_read"]
+        requires_confirmation: false
+
+      - name: "search_nodes"
+        description: "Search graph nodes by query"
+        input_schema:
+          type: "object"
+          properties:
+            query:
+              type: "string"
+          required: ["query"]
+        side_effects: ["filesystem_read"]
+        requires_confirmation: false
+
+    declared_side_effects:
+      - "filesystem_read"
+      - "filesystem_write"
+
+    transport: "stdio"
+    connection_template:
+      command: "npx"
+      args: ["-y", "@modelcontextprotocol/server-memory"]
+      env: {}
+
+    recommended_trust_tier: "T1"
+    recommended_quota_profile: "medium"
+    requires_admin_token: true
+
+    homepage: "https://modelcontextprotocol.io/examples"
+    repository: "https://github.com/modelcontextprotocol/servers"
+    license: "MIT"
+    tags: ["reference", "memory", "knowledge-graph", "modelcontextprotocol"]
+
+  - package_id: "mcp.reference/sequential-thinking"
+    name: "MCP Reference Sequential Thinking"
+    version: "1.0.0"
+    author: "Model Context Protocol"
+    description: "Dynamic and reflective problem-solving through thought sequences"
+    long_description: |
+      Official MCP Sequential Thinking reference server.
+      Exposes structured multi-step reasoning helper tool.
+
+    tools:
+      - name: "sequentialthinking"
+        description: "Generate sequential reasoning steps"
+        input_schema:
+          type: "object"
+          properties:
+            thought:
+              type: "string"
+          required: ["thought"]
+        side_effects: []
+        requires_confirmation: false
+
+    declared_side_effects: []
+
+    transport: "stdio"
+    connection_template:
+      command: "npx"
+      args: ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+      env: {}
+
+    recommended_trust_tier: "T0"
+    recommended_quota_profile: "loose"
+    requires_admin_token: false
+
+    homepage: "https://modelcontextprotocol.io/examples"
+    repository: "https://github.com/modelcontextprotocol/servers"
+    license: "MIT"
+    tags: ["reference", "reasoning", "thinking", "modelcontextprotocol"]
+
+  - package_id: "mcp.reference/time"
+    name: "MCP Reference Time"
+    version: "1.0.0"
+    author: "Model Context Protocol"
+    description: "Time and timezone conversion capabilities"
+    long_description: |
+      Official MCP Time reference server.
+      Provides current time and timezone conversion tools.
+
+    tools:
+      - name: "get_current_time"
+        description: "Get current time for timezone"
+        input_schema:
+          type: "object"
+          properties:
+            timezone:
+              type: "string"
+          required: ["timezone"]
+        side_effects: []
+        requires_confirmation: false
+
+      - name: "convert_time"
+        description: "Convert a datetime from one timezone to another"
+        input_schema:
+          type: "object"
+          properties:
+            source_timezone:
+              type: "string"
+            target_timezone:
+              type: "string"
+            datetime:
+              type: "string"
+          required: ["source_timezone", "target_timezone", "datetime"]
+        side_effects: []
+        requires_confirmation: false
+
+    declared_side_effects: []
+
+    transport: "stdio"
+    connection_template:
+      command: "uvx"
+      args: ["mcp-server-time"]
+      env: {}
+
+    recommended_trust_tier: "T0"
+    recommended_quota_profile: "loose"
+    requires_admin_token: false
+
+    homepage: "https://modelcontextprotocol.io/examples"
+    repository: "https://github.com/modelcontextprotocol/servers"
+    license: "MIT"
+    tags: ["reference", "time", "timezone", "utilities", "modelcontextprotocol"]
 
   # ============================================
   # T3: Cloud Service MCPs (Network, API Calls)
@@ -405,85 +886,531 @@ packages:
     license: "MIT"
     tags: ["slack", "communication", "cloud", "notifications"]
 
+  - package_id: "microsoft.teams.mcp"
+    name: "Microsoft Teams MCP"
+    version: "1.0.0"
+    author: "Microsoft Ecosystem"
+    description: "Teams operations via a verified runnable Teams MCP server"
+    long_description: |
+      This package keeps the Microsoft Agent 365 Teams MCP entrypoint in the marketplace,
+      but uses a verified runnable npm MCP server command for reliability.
+      Tool names follow the executable server's schema instead of the docs reference IDs.
+
+    tools:
+      - name: "teams_authenticate"
+        description: "Authenticate Teams access for the MCP session"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_write"]
+        requires_confirmation: true
+
+      - name: "manage_teams"
+        description: "List and manage Teams team-level resources"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_read", "network_write"]
+        requires_confirmation: true
+
+      - name: "manage_channels"
+        description: "List and manage Teams channels"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_read", "network_write"]
+        requires_confirmation: true
+
+      - name: "send_message"
+        description: "Send a Teams message"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_write", "user_notification"]
+        requires_confirmation: true
+
+      - name: "manage_meetings"
+        description: "Read and manage Teams meetings"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_read", "network_write"]
+        requires_confirmation: true
+
+    declared_side_effects:
+      - "network_read"
+      - "network_write"
+      - "user_notification"
+
+    transport: "stdio"
+    connection_template:
+      command: "npx"
+      args: ["-y", "msteams-mcp-server"]
+      env:
+        TEAMS_TENANT_ID: "${TEAMS_TENANT_ID}"
+        TEAMS_CLIENT_ID: "${TEAMS_CLIENT_ID}"
+        TEAMS_CLIENT_SECRET: "${TEAMS_CLIENT_SECRET}"
+
+    recommended_trust_tier: "T3"
+    recommended_quota_profile: "tight"
+    requires_admin_token: true
+
+    homepage: "https://learn.microsoft.com/en-us/microsoft-agent-365/mcp-server-reference/teams"
+    repository: "https://www.npmjs.com/package/msteams-mcp-server"
+    license: "MIT"
+    tags: ["teams", "microsoft", "communication", "meetings", "enterprise", "cloud"]
+
+  - package_id: "microsoft.mail.mcp"
+    name: "Microsoft Mail MCP"
+    version: "1.0.0"
+    author: "Microsoft Ecosystem"
+    description: "Microsoft 365 Mail operations via a verified runnable Graph MCP server"
+    long_description: |
+      This package keeps the Microsoft Agent 365 Mail MCP entrypoint in the marketplace,
+      but binds to a verified runnable Graph MCP server command for operational reliability.
+      Tool names follow the executable server's schema.
+
+    tools:
+      - name: "login"
+        description: "Authenticate to Microsoft 365 Graph"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_write"]
+        requires_confirmation: true
+
+      - name: "list-mail-messages"
+        description: "List mailbox messages"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "get-mail-message"
+        description: "Get mailbox message detail"
+        input_schema:
+          type: "object"
+          properties:
+            messageId:
+              type: "string"
+          required: ["messageId"]
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "create-draft-email"
+        description: "Create email draft"
+        input_schema:
+          type: "object"
+          properties:
+            subject:
+              type: "string"
+          required: ["subject"]
+        side_effects: ["network_write"]
+        requires_confirmation: true
+
+      - name: "send-mail"
+        description: "Send email message"
+        input_schema:
+          type: "object"
+          properties:
+            messageId:
+              type: "string"
+          required: ["messageId"]
+        side_effects: ["network_write", "user_notification"]
+        requires_confirmation: true
+
+    declared_side_effects:
+      - "network_read"
+      - "network_write"
+      - "user_notification"
+
+    transport: "stdio"
+    connection_template:
+      command: "npx"
+      args: ["-y", "@softeria/ms-365-mcp-server"]
+      env:
+        TEAMS_TENANT_ID: "${TEAMS_TENANT_ID}"
+        TEAMS_CLIENT_ID: "${TEAMS_CLIENT_ID}"
+        TEAMS_CLIENT_SECRET: "${TEAMS_CLIENT_SECRET}"
+
+    recommended_trust_tier: "T3"
+    recommended_quota_profile: "tight"
+    requires_admin_token: true
+
+    homepage: "https://learn.microsoft.com/en-us/microsoft-agent-365/mcp-server-reference/mail"
+    repository: "https://www.npmjs.com/package/@softeria/ms-365-mcp-server"
+    license: "MIT"
+    tags: ["microsoft", "mail", "email", "communication", "enterprise", "cloud"]
+
+  - package_id: "microsoft.calendar.mcp"
+    name: "Microsoft Calendar MCP"
+    version: "1.0.0"
+    author: "Microsoft Ecosystem"
+    description: "Microsoft 365 Calendar operations via a verified runnable Graph MCP server"
+    long_description: |
+      This package keeps the Microsoft Agent 365 Calendar MCP entrypoint in the marketplace,
+      but binds to a verified runnable Graph MCP server command for operational reliability.
+      Tool names follow the executable server's schema.
+
+    tools:
+      - name: "login"
+        description: "Authenticate to Microsoft 365 Graph"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_write"]
+        requires_confirmation: true
+
+      - name: "list-calendars"
+        description: "List calendars"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "list-calendar-events"
+        description: "List calendar events"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "create-calendar-event"
+        description: "Create calendar event"
+        input_schema:
+          type: "object"
+          properties:
+            subject:
+              type: "string"
+          required: ["subject"]
+        side_effects: ["network_write", "user_notification"]
+        requires_confirmation: true
+
+      - name: "update-calendar-event"
+        description: "Update calendar event"
+        input_schema:
+          type: "object"
+          properties:
+            eventId:
+              type: "string"
+          required: ["eventId"]
+        side_effects: ["network_write"]
+        requires_confirmation: true
+
+    declared_side_effects:
+      - "network_read"
+      - "network_write"
+      - "user_notification"
+
+    transport: "stdio"
+    connection_template:
+      command: "npx"
+      args: ["-y", "@softeria/ms-365-mcp-server"]
+      env:
+        TEAMS_TENANT_ID: "${TEAMS_TENANT_ID}"
+        TEAMS_CLIENT_ID: "${TEAMS_CLIENT_ID}"
+        TEAMS_CLIENT_SECRET: "${TEAMS_CLIENT_SECRET}"
+
+    recommended_trust_tier: "T3"
+    recommended_quota_profile: "tight"
+    requires_admin_token: true
+
+    homepage: "https://learn.microsoft.com/en-us/microsoft-agent-365/mcp-server-reference/calendar"
+    repository: "https://www.npmjs.com/package/@softeria/ms-365-mcp-server"
+    license: "MIT"
+    tags: ["microsoft", "calendar", "events", "scheduling", "enterprise", "cloud"]
+
+  - package_id: "microsoft.odspremoteserver.mcp"
+    name: "Microsoft ODSP Remote Server MCP"
+    version: "1.0.0"
+    author: "Microsoft Ecosystem"
+    description: "OneDrive/SharePoint file operations via a verified runnable Graph MCP server"
+    long_description: |
+      This package keeps the Microsoft Agent 365 ODSP Remote Server MCP entrypoint.
+      It maps to a runnable Graph MCP server and exposes proven file-oriented tools.
+
+    tools:
+      - name: "login"
+        description: "Authenticate to Microsoft 365 Graph"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_write"]
+        requires_confirmation: true
+
+      - name: "list-folder-files"
+        description: "List files under a folder"
+        input_schema:
+          type: "object"
+          properties:
+            folderPath:
+              type: "string"
+          required: ["folderPath"]
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "upload-file-content"
+        description: "Upload content into OneDrive/SharePoint file"
+        input_schema:
+          type: "object"
+          properties:
+            filePath:
+              type: "string"
+          required: ["filePath"]
+        side_effects: ["network_write"]
+        requires_confirmation: true
+
+      - name: "download-onedrive-file-content"
+        description: "Download file content from OneDrive"
+        input_schema:
+          type: "object"
+          properties:
+            itemId:
+              type: "string"
+          required: ["itemId"]
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "delete-onedrive-file"
+        description: "Delete file from OneDrive"
+        input_schema:
+          type: "object"
+          properties:
+            itemId:
+              type: "string"
+          required: ["itemId"]
+        side_effects: ["network_write"]
+        requires_confirmation: true
+
+    declared_side_effects:
+      - "network_read"
+      - "network_write"
+
+    transport: "stdio"
+    connection_template:
+      command: "npx"
+      args: ["-y", "@softeria/ms-365-mcp-server"]
+      env:
+        TEAMS_TENANT_ID: "${TEAMS_TENANT_ID}"
+        TEAMS_CLIENT_ID: "${TEAMS_CLIENT_ID}"
+        TEAMS_CLIENT_SECRET: "${TEAMS_CLIENT_SECRET}"
+
+    recommended_trust_tier: "T3"
+    recommended_quota_profile: "tight"
+    requires_admin_token: true
+
+    homepage: "https://learn.microsoft.com/en-us/microsoft-agent-365/mcp-server-reference/odspremoteserver"
+    repository: "https://www.npmjs.com/package/@softeria/ms-365-mcp-server"
+    license: "MIT"
+    tags: ["microsoft", "onedrive", "sharepoint", "files", "enterprise", "cloud"]
+
+  - package_id: "microsoft.sharepointlisttools.mcp"
+    name: "Microsoft SharePoint List MCP"
+    version: "1.0.0"
+    author: "Microsoft Ecosystem"
+    description: "SharePoint resource discovery via verified runnable Graph MCP tools"
+    long_description: |
+      This package keeps the Microsoft Agent 365 SharePoint List Tools MCP entrypoint.
+      The runtime tools are mapped to a verified Graph MCP implementation and currently
+      focus on drive/site-style discovery primitives available in that server.
+
+    tools:
+      - name: "login"
+        description: "Authenticate to Microsoft 365 Graph"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_write"]
+        requires_confirmation: true
+
+      - name: "list-drives"
+        description: "List available drives (including SharePoint-backed drives)"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "get-drive-root-item"
+        description: "Get drive root metadata"
+        input_schema:
+          type: "object"
+          properties:
+            driveId:
+              type: "string"
+          required: ["driveId"]
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "list-folder-files"
+        description: "List folder files within drive-backed SharePoint resources"
+        input_schema:
+          type: "object"
+          properties:
+            folderPath:
+              type: "string"
+          required: ["folderPath"]
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+    declared_side_effects:
+      - "network_read"
+      - "network_write"
+
+    transport: "stdio"
+    connection_template:
+      command: "npx"
+      args: ["-y", "@softeria/ms-365-mcp-server"]
+      env:
+        TEAMS_TENANT_ID: "${TEAMS_TENANT_ID}"
+        TEAMS_CLIENT_ID: "${TEAMS_CLIENT_ID}"
+        TEAMS_CLIENT_SECRET: "${TEAMS_CLIENT_SECRET}"
+
+    recommended_trust_tier: "T3"
+    recommended_quota_profile: "tight"
+    requires_admin_token: true
+
+    homepage: "https://learn.microsoft.com/en-us/microsoft-agent-365/mcp-server-reference/sharepointlisttools"
+    repository: "https://www.npmjs.com/package/@softeria/ms-365-mcp-server"
+    license: "MIT"
+    tags: ["microsoft", "sharepoint", "lists", "enterprise", "cloud"]
+
+  - package_id: "microsoft.word.mcp"
+    name: "Microsoft Word MCP"
+    version: "1.0.0"
+    author: "Microsoft Ecosystem"
+    description: "Word document file workflows via verified runnable Graph MCP tools"
+    long_description: |
+      This package keeps the Microsoft Agent 365 Word MCP entrypoint.
+      The runtime tools are mapped to a verified Graph MCP implementation and currently
+      provide Word-document-oriented file workflows through OneDrive/SharePoint storage.
+
+    tools:
+      - name: "login"
+        description: "Authenticate to Microsoft 365 Graph"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_write"]
+        requires_confirmation: true
+
+      - name: "list-folder-files"
+        description: "List Word documents from a folder"
+        input_schema:
+          type: "object"
+          properties:
+            folderPath:
+              type: "string"
+          required: ["folderPath"]
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "download-onedrive-file-content"
+        description: "Download Word document content file"
+        input_schema:
+          type: "object"
+          properties:
+            itemId:
+              type: "string"
+          required: ["itemId"]
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "upload-file-content"
+        description: "Upload or overwrite Word document file content"
+        input_schema:
+          type: "object"
+          properties:
+            filePath:
+              type: "string"
+          required: ["filePath"]
+        side_effects: ["network_write"]
+        requires_confirmation: true
+
+    declared_side_effects:
+      - "network_read"
+      - "network_write"
+
+    transport: "stdio"
+    connection_template:
+      command: "npx"
+      args: ["-y", "@softeria/ms-365-mcp-server"]
+      env:
+        TEAMS_TENANT_ID: "${TEAMS_TENANT_ID}"
+        TEAMS_CLIENT_ID: "${TEAMS_CLIENT_ID}"
+        TEAMS_CLIENT_SECRET: "${TEAMS_CLIENT_SECRET}"
+
+    recommended_trust_tier: "T3"
+    recommended_quota_profile: "tight"
+    requires_admin_token: true
+
+    homepage: "https://learn.microsoft.com/en-us/microsoft-agent-365/mcp-server-reference/word"
+    repository: "https://www.npmjs.com/package/@softeria/ms-365-mcp-server"
+    license: "MIT"
+    tags: ["microsoft", "word", "documents", "enterprise", "cloud"]
+
   - package_id: "aws.mcp"
     name: "AWS MCP"
     version: "0.1.0"
     author: "OctopusOS Team"
-    description: "Query and operate AWS services via MCP tools"
+    description: "Execute and suggest AWS CLI workflows via AWS API MCP tools"
     long_description: |
-      AWS MCP adapter exposing read and operation tools for AWS services.
+      AWS MCP adapter wired to `awslabs.aws-api-mcp-server`.
+      The runtime MCP server currently exposes two generic tools:
+      - `suggest_aws_commands` for command recommendation
+      - `call_aws` for validated execution
       Profile and region are injected from attach config into environment variables.
 
     tools:
-      - name: "aws_sts_get_caller_identity"
-        description: "Get current AWS account identity"
+      - name: "suggest_aws_commands"
+        description: "Suggest likely AWS CLI commands from natural language requests"
         input_schema:
           type: "object"
-          properties: {}
-          required: []
+          properties:
+            query:
+              type: "string"
+          required: ["query"]
         side_effects: ["network_read"]
         requires_confirmation: false
 
-      - name: "aws_s3_list_buckets"
-        description: "List S3 buckets"
+      - name: "call_aws"
+        description: "Execute validated AWS CLI command with structured response"
         input_schema:
           type: "object"
-          properties: {}
-          required: []
-        side_effects: ["network_read"]
-        requires_confirmation: false
+          properties:
+            cli_command:
+              type: "string"
+            max_results:
+              type: "integer"
+          required: ["cli_command"]
+        side_effects: ["network_read", "network_write", "system_command"]
+        requires_confirmation: true
 
-      - name: "aws_ec2_describe_instances"
-        description: "List EC2 instances and instance specs"
+      - name: "get_execution_plan"
+        description: "Generate an execution plan for complex AWS tasks before running commands"
         input_schema:
           type: "object"
-          properties: {}
-          required: []
-        side_effects: ["network_read"]
-        requires_confirmation: false
-
-      - name: "aws_ec2_describe_instance_status"
-        description: "Check EC2 instance runtime and status check health"
-        input_schema:
-          type: "object"
-          properties: {}
-          required: []
-        side_effects: ["network_read"]
-        requires_confirmation: false
-
-      - name: "aws_cloudwatch_get_metric_data"
-        description: "Inspect EC2 load and utilization metrics (CPU/network/disk)"
-        input_schema:
-          type: "object"
-          properties: {}
-          required: []
-        side_effects: ["network_read"]
-        requires_confirmation: false
-
-      - name: "aws_ce_get_cost_and_usage"
-        description: "Check monthly AWS cost and usage"
-        input_schema:
-          type: "object"
-          properties: {}
-          required: []
-        side_effects: ["network_read"]
-        requires_confirmation: false
-
-      - name: "aws_ce_get_cost_breakdown"
-        description: "Explain monthly cost composition by service and usage type"
-        input_schema:
-          type: "object"
-          properties: {}
-          required: []
-        side_effects: ["network_read"]
-        requires_confirmation: false
-
-      - name: "aws_servicequotas_list_services"
-        description: "Check enabled service domains and quota availability"
-        input_schema:
-          type: "object"
-          properties: {}
-          required: []
+          properties:
+            user_task:
+              type: "string"
+          required: ["user_task"]
         side_effects: ["network_read"]
         requires_confirmation: false
 
@@ -499,6 +1426,7 @@ packages:
       env:
         AWS_PROFILE: "{{profile}}"
         AWS_REGION: "{{region}}"
+        EXPERIMENTAL_AGENT_SCRIPTS: "true"
 
     recommended_trust_tier: "T2"
     recommended_quota_profile: "medium"
@@ -508,3 +1436,304 @@ packages:
     repository: "https://github.com/aws"
     license: "Apache-2.0"
     tags: ["aws", "cloud", "devops", "infrastructure"]
+
+  - package_id: "azure.mcp"
+    name: "Azure MCP"
+    version: "0.1.0"
+    author: "OctopusOS Team"
+    description: "Query Azure resources and billing via MCP tools"
+    long_description: |
+      Azure MCP adapter exposing read-focused tools for Azure operations.
+      Subscription and location are injected from attach config into environment variables.
+
+    tools:
+      - name: "azure_subscription_get_context"
+        description: "Get current Azure subscription identity and tenant context"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "azure_vm_list_instances"
+        description: "List Azure VM instances and basic runtime details"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "azure_vm_list_instance_status"
+        description: "Check Azure VM power/runtime status"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "azure_monitor_get_metric_data"
+        description: "Inspect VM CPU/memory/network metrics from Azure Monitor"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "azure_cost_get_cost_and_usage"
+        description: "Check Azure subscription monthly cost and usage"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "azure_cost_get_cost_breakdown"
+        description: "Explain monthly Azure cost composition by service/category"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "azure_subscription_list_locations"
+        description: "List available regions and enabled location capabilities"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+    declared_side_effects:
+      - "network_read"
+      - "network_write"
+      - "system_command"
+
+    transport: "stdio"
+    connection_template:
+      command: "uvx"
+      args: ["azure-mcp-server@latest"]
+      env:
+        AZURE_SUBSCRIPTION: "{{profile}}"
+        AZURE_LOCATION: "{{region}}"
+
+    recommended_trust_tier: "T2"
+    recommended_quota_profile: "medium"
+    requires_admin_token: true
+
+    homepage: "https://azure.microsoft.com"
+    repository: "https://github.com/Azure"
+    license: "MIT"
+    tags: ["azure", "cloud", "devops", "infrastructure"]
+
+  - package_id: "cloudflare.mcp"
+    name: "Cloudflare MCP"
+    version: "0.2.0"
+    author: "Cloudflare"
+    description: "Discover Cloudflare account zones/domains and manage edge resources via MCP"
+    long_description: |
+      Cloudflare official MCP server adapter (`@cloudflare/mcp-server-cloudflare`).
+      This package is used by Network Access to discover account and protected hostnames
+      (read path), and can be reused by other Cloudflare-adjacent workflows.
+
+    tools:
+      - name: "zones_list"
+        description: "List zones (domains) under current Cloudflare account"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "domain_list"
+        description: "List domains available in current Cloudflare account context"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "wrangler_config_get"
+        description: "Read Wrangler configuration from Cloudflare MCP runtime"
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["filesystem_read"]
+        requires_confirmation: false
+
+    declared_side_effects:
+      - "network_read"
+      - "network_write"
+      - "system_command"
+      - "filesystem_read"
+
+    transport: "stdio"
+    connection_template:
+      command: "npx"
+      args: ["-y", "@cloudflare/mcp-server-cloudflare", "run", "{{profile}}"]
+      env:
+        CLOUDFLARE_ACCOUNT_ID: "{{profile}}"
+
+    recommended_trust_tier: "T2"
+    recommended_quota_profile: "medium"
+    requires_admin_token: true
+
+    homepage: "https://developers.cloudflare.com/agents/model-context-protocol/"
+    repository: "https://github.com/cloudflare/mcp-server-cloudflare"
+    license: "Apache-2.0"
+    tags: ["cloudflare", "cloud", "network", "edge", "security"]
+
+  - package_id: "microsoft/playwright-mcp"
+    name: "Playwright MCP"
+    version: "latest"
+    author: "Microsoft"
+    description: "Browser automation MCP for navigation, interaction, and page inspection."
+    long_description: |
+      Playwright MCP server exposes browser automation tools over MCP stdio.
+      This package is suitable for chat-driven browser operations (navigate/click/type/snapshot)
+      while still going through OctopusOS governance, preflight, and explicit enable flow.
+
+    tools:
+      - name: "browser_navigate"
+        description: "Navigate the browser to a target URL."
+        input_schema:
+          type: "object"
+          properties:
+            url:
+              type: "string"
+              description: "Absolute URL to open."
+          required: ["url"]
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "browser_snapshot"
+        description: "Capture current page accessibility snapshot for element refs."
+        input_schema:
+          type: "object"
+          properties:
+            filename:
+              type: "string"
+          required: []
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "browser_click"
+        description: "Click an element by snapshot reference."
+        input_schema:
+          type: "object"
+          properties:
+            ref:
+              type: "string"
+            element:
+              type: "string"
+          required: ["ref"]
+        side_effects: ["network_write"]
+        requires_confirmation: false
+
+      - name: "browser_type"
+        description: "Type text into an editable element."
+        input_schema:
+          type: "object"
+          properties:
+            ref:
+              type: "string"
+            text:
+              type: "string"
+          required: ["ref", "text"]
+        side_effects: ["network_write"]
+        requires_confirmation: false
+
+      - name: "browser_wait_for"
+        description: "Wait for text condition or time delay."
+        input_schema:
+          type: "object"
+          properties:
+            text:
+              type: "string"
+            textGone:
+              type: "string"
+            time:
+              type: "number"
+          required: []
+        side_effects: ["network_read"]
+        requires_confirmation: false
+
+      - name: "browser_take_screenshot"
+        description: "Take viewport or full-page screenshot."
+        input_schema:
+          type: "object"
+          properties:
+            filename:
+              type: "string"
+            fullPage:
+              type: "boolean"
+            type:
+              type: "string"
+          required: ["type"]
+        side_effects: ["filesystem_write"]
+        requires_confirmation: false
+
+      - name: "browser_file_upload"
+        description: "Upload local files through file chooser."
+        input_schema:
+          type: "object"
+          properties:
+            paths:
+              type: "array"
+              items:
+                type: "string"
+          required: []
+        side_effects: ["filesystem_write"]
+        requires_confirmation: false
+
+      - name: "browser_tabs"
+        description: "List, select, create, or close browser tabs."
+        input_schema:
+          type: "object"
+          properties:
+            action:
+              type: "string"
+            index:
+              type: "number"
+          required: ["action"]
+        side_effects: ["network_write"]
+        requires_confirmation: false
+
+      - name: "browser_close"
+        description: "Close the browser session."
+        input_schema:
+          type: "object"
+          properties: {}
+          required: []
+        side_effects: ["system_command"]
+        requires_confirmation: false
+
+    declared_side_effects:
+      - "network_read"
+      - "network_write"
+      - "filesystem_write"
+      - "system_command"
+
+    transport: "stdio"
+    connection_template:
+      command: "npx"
+      args: ["-y", "@playwright/mcp@latest", "--isolated", "--headless"]
+      env: {}
+
+    recommended_trust_tier: "T2"
+    recommended_quota_profile: "tight"
+    requires_admin_token: true
+
+    homepage: "https://github.com/microsoft/playwright-mcp"
+    repository: "https://github.com/microsoft/playwright-mcp"
+    license: "Apache-2.0"
+    tags: ["playwright", "browser", "automation", "testing", "e2e", "official"]

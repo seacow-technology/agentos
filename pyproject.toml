@@ -1,6 +1,6 @@
 [project]
 name = "octopusos"
-version = "3.2.2"
+version = "3.3.0"
 description = "System-level, project-agnostic AI Agent orchestration system"
 requires-python = ">=3.13"
 readme = "README.md"
@@ -74,33 +74,33 @@ build-backend = "hatchling.build"
 # Include all non-.py files within packages
 # This is the KEY setting for static assets to be included in wheel
 include = [
-    "octopusos/**/*.yaml",
-    "octopusos/**/*.yml",
-    "octopusos/**/*.json",
-    "octopusos/**/*.sql",
-    "octopusos/**/*.html",
-    "octopusos/**/*.css",
-    "octopusos/**/*.js",
-    "octopusos/**/*.png",
-    "octopusos/**/*.jpg",
-    "octopusos/**/*.svg",
-    "octopusos/**/*.ico",
-    "octopusos/**/*.woff",
-    "octopusos/**/*.woff2",
-    "octopusos/**/*.ttf",
-    "octopusos/**/*.eot",
-    "octopusos/**/*.map",
-    "octopusos/**/*.min.js",
-    "octopusos/**/*.min.css",
-    "octopusos/**/*.proto",  # gRPC protocol files (v0.2)
-    "memoryos/**/*.yaml",
-    "memoryos/**/*.yml",
-    "memoryos/**/*.json",
+    "os/octopusos/**/*.yaml",
+    "os/octopusos/**/*.yml",
+    "os/octopusos/**/*.json",
+    "os/octopusos/**/*.sql",
+    "os/octopusos/**/*.html",
+    "os/octopusos/**/*.css",
+    "os/octopusos/**/*.js",
+    "os/octopusos/**/*.png",
+    "os/octopusos/**/*.jpg",
+    "os/octopusos/**/*.svg",
+    "os/octopusos/**/*.ico",
+    "os/octopusos/**/*.woff",
+    "os/octopusos/**/*.woff2",
+    "os/octopusos/**/*.ttf",
+    "os/octopusos/**/*.eot",
+    "os/octopusos/**/*.map",
+    "os/octopusos/**/*.min.js",
+    "os/octopusos/**/*.min.css",
+    "os/octopusos/**/*.proto",  # gRPC protocol files (v0.2)
+    "os/memoryos/**/*.yaml",
+    "os/memoryos/**/*.yml",
+    "os/memoryos/**/*.json",
 ]
 
 [tool.hatch.build.targets.wheel]
 # Explicitly list packages (auto-discovery should work, but be explicit)
-packages = ["octopusos", "memoryos"]
+packages = ["os/octopusos", "os/memoryos"]
 
 # CRITICAL: Force-include directories that might not be auto-detected
 # Hatchling force-include syntax: "source_path" = "destination_in_wheel"
@@ -109,8 +109,8 @@ force-include = { "rules" = "rules" }
 [tool.hatch.build.targets.sdist]
 # For sdist, include everything (also respects MANIFEST.in)
 include = [
-    "/octopusos",
-    "/memoryos",
+    "/os/octopusos",
+    "/os/memoryos",
     "/rules",
     "/examples",
     "/scripts/gates",
@@ -143,6 +143,7 @@ addopts = [
     "--strict-markers",
     "--tb=short",
     "-v",
+    "--disable-warnings",
     "-m",
     "not integration and not slow",
 ]
@@ -154,9 +155,14 @@ markers = [
     "slow: Slow tests (> 1s)",
     "network: Tests requiring network access",
 ]
+filterwarnings = [
+    "ignore::pydantic.warnings.PydanticDeprecatedSince20",
+    "ignore:Support for class-based `config` is deprecated.*",
+    "ignore::pytest.PytestUnraisableExceptionWarning",
+]
 
 [tool.coverage.run]
-source = ["octopusos"]
+source = ["os/octopusos"]
 omit = [
     "tests/*",
     "*/tests/*",
@@ -168,8 +174,8 @@ omit = [
     "*/site-packages/*",
     "*/.venv/*",
     "*/venv/*",
-    "octopusos/webui/static/*",
-    "octopusos/webui/templates/*",
+    "os/octopusos/webui/static/*",
+    "os/octopusos/webui/templates/*",
 ]
 branch = true
 parallel = true

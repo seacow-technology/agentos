@@ -80,7 +80,15 @@ def evaluate_write_access(request: Request) -> WriteDecision:
         return WriteDecision(True, "OK", "Write allowed in LOCAL_OPEN", mode, 200)
 
     if mode == "local_locked":
-        return WriteDecision(False, "WRITE_FORBIDDEN", "Writes are disabled in LOCAL_LOCKED mode", mode, 403)
+        if has_valid_token:
+            return WriteDecision(True, "OK", "Write allowed with admin token in LOCAL_LOCKED", mode, 200)
+        return WriteDecision(
+            False,
+            "TOKEN_REQUIRED",
+            "Admin token required for writes in LOCAL_LOCKED mode",
+            mode,
+            401,
+        )
 
     if mode == "remote_exposed":
         if has_valid_token:
@@ -100,4 +108,3 @@ def evaluate_write_access(request: Request) -> WriteDecision:
         mode,
         403,
     )
-

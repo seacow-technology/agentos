@@ -7,6 +7,7 @@ import socket
 import subprocess
 import webbrowser
 from pathlib import Path
+from urllib.parse import urlparse
 
 import click
 import requests
@@ -22,6 +23,8 @@ from octopusos.daemon.service import (
     stop_webui,
     tail_logs,
 )
+from octopusos.networkos.config_store import NetworkConfigStore
+from octopusos.networkos.service import NetworkOSService
 
 
 def _control_base_url() -> str:
@@ -119,6 +122,58 @@ def _start_frontend_dev_server(*, host: str, frontend_port: int, backend_host: s
     return True, public_origin
 
 
+def _parse_target_port(target: str) -> int | None:
+    raw = str(target or "").strip()
+    if not raw:
+        return None
+    try:
+        parsed = urlparse(raw if "://" in raw else f"http://{raw}")
+        if parsed.port:
+            return int(parsed.port)
+    except Exception:
+        return None
+    return None
+
+
+def _resolve_bridge_cloudflare_proxy(*, backend_host: str, backend_port: int) -> str | None:
+    # 1) Prefer configured canonical hostname from NetworkOS config.
+    try:
+        cfg = NetworkConfigStore().resolve_cloudflare_config()
+        hostname = str((cfg.get("network.cloudflare.hostname").value if cfg.get("network.cloudflare.hostname") else "") or "").strip()  # type: ignore[union-attr]
+        if hostname:
+            return f"https://{hostname}"
+    except Exception:
+        pass
+
+    # 2) Fallback to enabled/running Cloudflare tunnel entries targeting current backend.
+    try:
+        service = NetworkOSService()
+        for tunnel in service.list_tunnels():
+            if str(tunnel.provider).strip().lower() != "cloudflare":
+                continue
+            if not bool(tunnel.is_enabled):
+                continue
+            t_port = _parse_target_port(tunnel.local_target)
+            if t_port is not None and int(t_port) != int(backend_port):
+                continue
+            host = str(tunnel.public_hostname or "").strip()
+            if host:
+                return f"https://{host}"
+    except Exception:
+        pass
+    return None
+
+
+def _print_runtime_endpoints(*, frontend_url: str | None, backend_url: str, backend_host: str, backend_port: int, log_file: str) -> None:
+    if frontend_url:
+        rprint(f"[green]frontend started: {frontend_url}[/green]")
+    rprint(f"[green]started backend: {backend_url}[/green]")
+    bridge_url = _resolve_bridge_cloudflare_proxy(backend_host=backend_host, backend_port=backend_port)
+    if bridge_url:
+        rprint(f"[green]bridge proxy (cloudflare): {bridge_url}[/green]")
+    rprint(f"[dim]log file: {log_file}[/dim]")
+
+
 @click.group(name="webui", invoke_without_command=True)
 @click.pass_context
 def webui_group(ctx: click.Context) -> None:
@@ -172,9 +227,13 @@ def _start_webui_stack(
         if not ok:
             rprint("[red]frontend failed to start[/red]")
             raise click.Abort()
-        rprint(f"[green]frontend started: {frontend_url}[/green]")
-    rprint(f"[green]started backend: {result.status.url}[/green]")
-    rprint(f"[dim]log file: {result.status.log_file}[/dim]")
+    _print_runtime_endpoints(
+        frontend_url=frontend_url,
+        backend_url=result.status.url,
+        backend_host=actual_host,
+        backend_port=result.status.port,
+        log_file=str(result.status.log_file),
+    )
     if open_browser:
         webbrowser.open(frontend_url or result.status.url)
 
@@ -249,6 +308,13 @@ def restart_cmd(
             resp = _control_post("/restart", timeout=2.0)
             if resp.ok:
                 rprint("[green]restarting[/green]")
+                _print_runtime_endpoints(
+                    frontend_url=None,
+                    backend_url=status.url,
+                    backend_host=str(getattr(status, "host", "127.0.0.1")),
+                    backend_port=int(getattr(status, "port", 8080)),
+                    log_file=str(getattr(status, "log_file", "")),
+                )
                 if open_browser:
                     webbrowser.open(status.url)
                 return

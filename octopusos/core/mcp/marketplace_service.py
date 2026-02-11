@@ -24,7 +24,12 @@ def _make_server_id(package_id: str, profile: str) -> str:
     return f"mcp_{_sanitize_component(package_id)}_{_sanitize_component(profile)}"
 
 
-def _extract_command(connection_template: Dict[str, Any]) -> List[str]:
+def _extract_command(
+    connection_template: Dict[str, Any],
+    *,
+    profile: str,
+    region: Optional[str],
+) -> List[str]:
     command_value = connection_template.get("command")
     args = connection_template.get("args") or []
 
@@ -35,10 +40,54 @@ def _extract_command(connection_template: Dict[str, Any]) -> List[str]:
     else:
         raise ValueError("connection_template.command is required")
 
-    cmd.extend(str(item) for item in args)
+    rendered_args: List[str] = []
+    for item in args:
+        rendered = _render_env_template(item, profile=profile, region=region)
+        if rendered is not None:
+            rendered_args.append(rendered)
+
+    cmd.extend(rendered_args)
     if not cmd:
         raise ValueError("MCP command cannot be empty")
     return cmd
+
+
+def _catalog_requires(package_id: str) -> List[str]:
+    if package_id == "aws.mcp":
+        return ["aws-cli"]
+    if package_id == "azure.mcp":
+        return ["azure-cli"]
+    if package_id == "cloudflare.mcp":
+        return ["wrangler-auth"]
+    return []
+
+
+def _apply_cloud_attach_env(
+    *,
+    package_id: str,
+    env: Dict[str, str],
+    profile: str,
+    region: Optional[str],
+) -> None:
+    if package_id == "aws.mcp":
+        env["AWS_PROFILE"] = profile
+        if region:
+            env["AWS_REGION"] = region
+        else:
+            env.pop("AWS_REGION", None)
+        return
+
+    if package_id == "azure.mcp":
+        env["AZURE_SUBSCRIPTION"] = profile
+        if region:
+            env["AZURE_LOCATION"] = region
+        else:
+            env.pop("AZURE_LOCATION", None)
+        return
+
+    if package_id == "cloudflare.mcp":
+        env["CLOUDFLARE_ACCOUNT_ID"] = profile
+        return
 
 
 def _render_env_template(value: Any, *, profile: str, region: Optional[str]) -> Optional[str]:
@@ -105,7 +154,7 @@ def list_catalog(
             "description": item["description"],
             "trust_tier": item["recommended_trust_tier"],
             "declared_side_effects": item["declared_side_effects"],
-            "requires": ["aws-cli"] if item["package_id"] == "aws.mcp" else [],
+            "requires": _catalog_requires(item["package_id"]),
         }
         for item in items
     ]
@@ -161,17 +210,13 @@ def attach_package(
     if custom_config:
         connection.update(custom_config)
 
-    command = _extract_command(connection)
+    command = _extract_command(connection, profile=profile, region=region)
     env: Dict[str, str] = {}
     for key, value in (connection.get("env") or {}).items():
         rendered = _render_env_template(value, profile=profile, region=region)
         if rendered is not None:
             env[str(key)] = rendered
-    env["AWS_PROFILE"] = profile
-    if region:
-        env["AWS_REGION"] = region
-    else:
-        env.pop("AWS_REGION", None)
+    _apply_cloud_attach_env(package_id=package_id, env=env, profile=profile, region=region)
     env["OCTOPUSOS_MCP_PACKAGE_ID"] = package_id
     env["OCTOPUSOS_MCP_ATTACHED_AT"] = _utc_iso()
 

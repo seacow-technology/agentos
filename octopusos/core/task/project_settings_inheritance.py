@@ -65,11 +65,14 @@ class ProjectSettingsInheritance:
         Returns:
             Project object or None if not found
         """
+        conn = None
+        owns_connection = False
         try:
             if self.db_path:
                 import sqlite3
                 conn = sqlite3.connect(str(self.db_path))
                 conn.row_factory = sqlite3.Row
+                owns_connection = True
             else:
                 conn = get_db()
 
@@ -93,14 +96,15 @@ class ProjectSettingsInheritance:
             # Create Project object (repos can be empty for this use case)
             project = Project.from_db_row(project_data, repos=[])
 
-            # Do NOT close: get_db() returns shared thread-local connection
-            # conn.close()  # REMOVED
-
             return project
 
         except Exception as e:
             logger.error(f"Failed to load project {project_id}: {e}", exc_info=True)
             return None
+        finally:
+            # Close only explicitly created connections; keep shared get_db() open.
+            if owns_connection and conn is not None:
+                conn.close()
 
     def get_effective_runner(self, task: Task, project: Optional[Project] = None) -> Optional[str]:
         """Determine effective runner for task execution

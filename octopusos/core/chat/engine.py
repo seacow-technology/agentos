@@ -8,6 +8,7 @@ import os
 import threading
 from types import SimpleNamespace
 from pathlib import Path
+import asyncio
 
 from octopusos.core.chat.service import ChatService
 from octopusos.core.chat.context_builder import ContextBuilder, ContextBudget
@@ -37,7 +38,14 @@ from octopusos.core.chat.rate_limiter import rate_limiter, dedup_checker
 from octopusos.core.chat.response_guardian import check_response_with_guardian
 from octopusos.core.chat.stream_gate import StreamGateDecision
 from octopusos.core.chat.hold_controller import HoldController
-from octopusos.core.chat.tool_dispatch import try_handle_aws_via_mcp, try_handle_dbops_via_skillos
+from octopusos.core.chat.tool_dispatch import (
+    try_handle_aws_via_mcp,
+    try_handle_azure_via_mcp,
+    try_handle_dbops_via_skillos,
+)
+from octopusos.core.chat.router_priority_contract import (
+    validate_router_priority_contract_runtime,
+)
 from octopusos.core.chat.stock_analysis import (
     STOCK_DISCLAIMER,
     STOCK_REFUSAL_TEMPLATE,
@@ -86,6 +94,8 @@ from octopusos.core.capabilities.external_facts import (
 from octopusos.core.capabilities.external_facts.provider_store import ExternalFactsProviderStore
 from octopusos.core.evidence import enforce_evidence, normalize_evidence_refs
 from octopusos.core.executor.audit_logger import AuditLogger
+from octopusos.core.mcp.client import MCPClient
+from octopusos.core.mcp.config import MCPConfigManager, MCPServerConfig
 
 # Import and register all slash commands
 from octopusos.core.chat.handlers import (
@@ -154,6 +164,8 @@ class ChatEngine:
         self.hold_controller = HoldController()
         self._hold_jobs_lock = threading.RLock()
         self._hold_jobs: Dict[str, Dict[str, Any]] = {}
+        self._router_model_override = str(os.getenv("OCTOPUSOS_ROUTER_MODEL") or "").strip()
+        self._cached_router_model: Optional[str] = None
 
         # Initialize InfoNeedClassifier
         self.info_need_classifier = InfoNeedClassifier(
@@ -191,6 +203,11 @@ class ChatEngine:
             }
         )
         logger.info("ChatEngine initialized with MultiIntentSplitter")
+
+        # Router contract validation guards routing priority regressions.
+        if self._truthy(os.getenv("OCTOPUSOS_VALIDATE_ROUTER_PRIORITY_CONTRACT", "1")):
+            validate_router_priority_contract_runtime()
+            logger.info("Router priority contract validated")
 
         # Register built-in slash commands
         self._register_commands()
@@ -320,6 +337,15 @@ class ChatEngine:
             return self._execute_command(session_id, command, args, remaining, stream)
 
         # 2c. Hard-route company research requests to stable fact-only brief.
+        tool_intent_dispatch = self._try_handle_tool_intent(
+            session_id=session_id,
+            user_input=user_input,
+            stream=stream,
+        )
+        if tool_intent_dispatch is not None:
+            return tool_intent_dispatch
+
+        # 2c. Hard-route company research requests to stable fact-only brief.
         company_research_request = parse_company_research_request(user_input)
         if company_research_request is not None:
             session = self.chat_service.get_session(session_id)
@@ -430,7 +456,32 @@ class ChatEngine:
                 "context": {},
             }
 
-        # 2f. Check for multi-intent splitting (Task #25)
+        # 2f. Fast path: Azure read-only dispatch via enabled Azure MCP server.
+        azure_dispatch = try_handle_azure_via_mcp(user_input)
+        if azure_dispatch and azure_dispatch.get("handled"):
+            response_content = str(azure_dispatch.get("message") or "")
+            assistant_message = self.chat_service.add_message(
+                session_id=session_id,
+                role="assistant",
+                content=response_content,
+                metadata={
+                    "dispatch": "azure_mcp",
+                    "blocked": bool(azure_dispatch.get("blocked")),
+                },
+            )
+            if stream:
+                def azure_generator():
+                    yield response_content
+                return azure_generator()
+            return {
+                "message_id": assistant_message.message_id,
+                "content": response_content,
+                "role": "assistant",
+                "metadata": assistant_message.metadata,
+                "context": {},
+            }
+
+        # 2g. Check for multi-intent splitting (Task #25)
         try:
             if self.multi_intent_splitter.should_split(user_input):
                 logger.info("Multi-intent detected, processing with splitter")
@@ -529,8 +580,42 @@ class ChatEngine:
             # Return a stream generator
             return self._stream_response(session_id, context_pack, model_route)
         else:
-            response_content, response_metadata = self._invoke_model(context_pack, model_route, session_id)
             session_mode = str(session.metadata.get("conversation_mode") or "chat").lower()
+            model_tools = self._build_mcp_model_tools(conversation_mode=session_mode)
+            generate_kwargs: Dict[str, Any] = {}
+            if model_tools:
+                generate_kwargs["tools"] = model_tools
+                generate_kwargs["tool_choice"] = "auto"
+            response_content, response_metadata = self._invoke_model(
+                context_pack,
+                model_route,
+                session_id,
+                extra_generate_kwargs=generate_kwargs or None,
+            )
+            tool_loop_result = self._run_native_tool_loop(
+                session_id=session_id,
+                user_input=user_input,
+                context_pack=context_pack,
+                model_route=model_route,
+                response_content=response_content,
+                response_metadata=response_metadata or {},
+            )
+            if tool_loop_result is not None:
+                response_content, response_metadata = tool_loop_result
+            maybe_tool_call = self._intercept_tool_call_payload_for_chat(
+                session_id=session_id,
+                user_input=user_input,
+                response_content=response_content,
+                context={
+                    "conversation_mode": session_mode,
+                    "execution_phase": session.metadata.get("execution_phase"),
+                    "task_id": session.task_id,
+                    "locale": session.metadata.get("locale"),
+                    "timezone": session.metadata.get("timezone"),
+                },
+            )
+            if maybe_tool_call is not None:
+                return maybe_tool_call
             maybe_intercepted = self._intercept_raw_action_payload_for_chat(
                 session_id=session_id,
                 user_input=user_input,
@@ -1174,7 +1259,7 @@ class ChatEngine:
                 from octopusos.core.chat.adapters import get_adapter
 
                 # Use a fast local model for classification
-                adapter = get_adapter("ollama", "qwen2.5:14b")
+                adapter = get_adapter("ollama", self._resolve_router_model())
 
                 # Format as messages
                 messages = [{"role": "user", "content": prompt}]
@@ -1199,6 +1284,38 @@ class ChatEngine:
                 })
 
         return llm_callable
+
+    def _resolve_router_model(self) -> str:
+        if self._router_model_override:
+            return self._router_model_override
+        if self._cached_router_model:
+            return self._cached_router_model
+        try:
+            import requests
+            from octopusos.providers.registry import ProviderRegistry
+
+            registry = ProviderRegistry.get_instance()
+            endpoint = None
+            for provider in registry.list_all():
+                if provider.id.startswith("ollama:") or provider.id == "ollama":
+                    endpoint = str(getattr(provider, "endpoint", "") or "").strip()
+                    if endpoint:
+                        break
+            endpoint = endpoint or "http://127.0.0.1:11434"
+            resp = requests.get(f"{endpoint.rstrip('/')}/api/tags", timeout=5)
+            resp.raise_for_status()
+            models = resp.json().get("models", [])
+            if isinstance(models, list) and models:
+                first = models[0]
+                if isinstance(first, dict):
+                    model_name = str(first.get("name") or first.get("model") or "").strip()
+                    if model_name:
+                        self._cached_router_model = model_name
+                        return model_name
+        except Exception:
+            pass
+        self._cached_router_model = "qwen2.5:14b"
+        return self._cached_router_model
 
     def _handle_ambient_state(
         self,
@@ -1737,6 +1854,7 @@ class ChatEngine:
                     "execution_phase": context.get("execution_phase"),
                     "result_type": "stock_query_refusal",
                     "intent_type": "stock.query",
+                    "why_stock_route": "stock_query_parser_match",
                     "payload": {
                         "symbol": symbol,
                         "market": market,
@@ -1792,6 +1910,7 @@ class ChatEngine:
                 "execution_phase": context.get("execution_phase"),
                 "result_type": "query_fact",
                 "intent_type": "stock.query",
+                "why_stock_route": "stock_query_parser_match",
                 "fact_kind": "stock",
                 "fact_status": data_status,
                 "fact_as_of": data_as_of,
@@ -1875,6 +1994,7 @@ class ChatEngine:
             "execution_phase": context.get("execution_phase"),
             "result_type": "query_fact",
             "intent_type": "stock.query",
+            "why_stock_route": "stock_query_parser_match",
             "fact_kind": "stock",
             "fact_status": "ok",
             "fact_as_of": data_as_of,
@@ -2300,7 +2420,7 @@ class ChatEngine:
         try:
             from octopusos.core.chat.adapters import get_adapter
 
-            adapter = get_adapter("ollama", "qwen2.5:14b")
+            adapter = get_adapter("ollama", self._resolve_router_model())
             prompt = (
                 "You are an intent router for external facts.\n"
                 f"Supported kinds: {', '.join(SUPPORTED_FACT_KINDS)}.\n"
@@ -2365,6 +2485,9 @@ class ChatEngine:
         company_research = parse_company_research_request(message)
         if company_research is not None:
             return company_research
+        if self._detect_tool_intent(message) is not None:
+            # Explicit tool intent must never be hijacked by stock/fact parsers.
+            return None
         stock_query = self._detect_stock_query_request(message)
         if stock_query is not None:
             return stock_query
@@ -2372,6 +2495,494 @@ class ChatEngine:
         if llm_result:
             return llm_result
         return self._detect_external_fact_request(message)
+
+    def _detect_tool_intent(self, message: str) -> Optional[Dict[str, Any]]:
+        text = str(message or "").strip()
+        if not text:
+            return None
+
+        patterns = (
+            "使用工具",
+            "调用工具",
+            "tool call",
+            "tool_call",
+            "必填参数",
+            "请直接执行",
+            "use tool",
+        )
+        lowered = text.lower()
+        if not any(token in text or token in lowered for token in patterns):
+            return None
+
+        tool_name = ""
+        params: Dict[str, Any] = {}
+        reason = "explicit_tool_intent_keywords"
+
+        # Structured payload style.
+        try:
+            payload = json.loads(text)
+            if isinstance(payload, dict):
+                target = str(payload.get("target") or payload.get("tool") or "").strip()
+                if target:
+                    tool_name = target
+                    reason = "structured_tool_intent_payload"
+                raw_params = payload.get("params")
+                if isinstance(raw_params, dict):
+                    params = raw_params
+        except Exception:
+            pass
+
+        if not tool_name:
+            json_match = re.search(r'"target"\s*:\s*"([^"]+)"', text, re.IGNORECASE)
+            if json_match:
+                tool_name = json_match.group(1).strip()
+                reason = "inline_target_field"
+
+        if not tool_name:
+            # e.g. 使用工具“echo” / use tool echo
+            match = re.search(r"(?:使用工具|调用工具|use tool)\s*[“\"']?([a-zA-Z0-9_.-]+)[”\"']?", text, re.IGNORECASE)
+            if match:
+                tool_name = match.group(1).strip()
+
+        if not tool_name and "echo" in lowered:
+            tool_name = "echo"
+
+        if not tool_name:
+            return None
+
+        if not params:
+            params = {}
+        return {
+            "tool_name": tool_name,
+            "params": params,
+            "reason": reason,
+        }
+
+    def _collect_enabled_mcp_servers(self) -> List[MCPServerConfig]:
+        manager = MCPConfigManager()
+        servers = list(manager.get_enabled_servers())
+        normalized: List[MCPServerConfig] = []
+        repo_root = Path(__file__).resolve().parents[4]
+        local_echo_server = repo_root / "servers" / "echo-math-mcp" / "index.js"
+        for server in servers:
+            command = list(server.command or [])
+            package_id = str((server.env or {}).get("OCTOPUSOS_MCP_PACKAGE_ID") or "")
+            if (
+                package_id == "octopusos.official/echo-math"
+                and any("@modelcontextprotocol/server-echo" in str(v) for v in command)
+                and local_echo_server.exists()
+            ):
+                normalized.append(
+                    MCPServerConfig(
+                        **{
+                            **server.model_dump(),
+                            "command": ["node", str(local_echo_server)],
+                        }
+                    )
+                )
+                continue
+            normalized.append(server)
+        return normalized
+
+    def _build_mcp_model_tools(self, *, conversation_mode: str) -> List[Dict[str, Any]]:
+        mode = str(conversation_mode or "chat").lower()
+        if mode not in {"chat", "discussion"}:
+            return []
+        servers = self._collect_enabled_mcp_servers()
+        if not servers:
+            return []
+        tools_out: List[Dict[str, Any]] = []
+        seen_names: set[str] = set()
+        for server in servers:
+            try:
+                tools = asyncio.run(self._probe_server_tools(server))
+            except Exception:
+                continue
+            for tool in tools:
+                name = str(tool.get("name") or "").strip()
+                if not name or name in seen_names:
+                    continue
+                seen_names.add(name)
+                description = str(tool.get("description") or "")
+                params_schema = tool.get("inputSchema") if isinstance(tool.get("inputSchema"), dict) else {}
+                if not isinstance(params_schema, dict):
+                    params_schema = {}
+                # OpenAI-compatible function tool schema.
+                tools_out.append(
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": name,
+                            "description": description,
+                            "parameters": params_schema or {"type": "object", "properties": {}},
+                        },
+                    }
+                )
+        return tools_out
+
+    async def _probe_server_tools(self, server: MCPServerConfig) -> List[Dict[str, Any]]:
+        client = MCPClient(server)
+        try:
+            await client.connect()
+            return await client.list_tools()
+        finally:
+            try:
+                await client.disconnect()
+            except Exception:
+                pass
+
+    def _find_tool_and_server(
+        self,
+        *,
+        tool_name: str,
+        servers: List[MCPServerConfig],
+    ) -> Optional[Dict[str, Any]]:
+        desired = str(tool_name or "").strip().lower()
+        if not desired:
+            return None
+        package_filtered = [
+            server
+            for server in servers
+            if desired in str((server.env or {}).get("OCTOPUSOS_MCP_PACKAGE_ID") or "").lower()
+        ]
+        candidates = package_filtered if package_filtered else servers
+        for server in candidates:
+            try:
+                tools = asyncio.run(self._probe_server_tools(server))
+            except Exception:
+                continue
+            for tool in tools:
+                name = str(tool.get("name") or "")
+                if name.lower() == desired:
+                    return {"server": server, "tool_schema": tool}
+        return None
+
+    @staticmethod
+    def _coerce_tool_params(tool_schema: Dict[str, Any], params: Dict[str, Any], user_input: str) -> Dict[str, Any]:
+        output = dict(params or {})
+        input_schema = tool_schema.get("inputSchema") if isinstance(tool_schema, dict) else {}
+        if not isinstance(input_schema, dict):
+            input_schema = {}
+        required = input_schema.get("required") if isinstance(input_schema.get("required"), list) else []
+        properties = input_schema.get("properties") if isinstance(input_schema.get("properties"), dict) else {}
+
+        if "message" in required and "message" not in output:
+            output["message"] = user_input
+        elif len(required) == 1:
+            key = str(required[0])
+            if key not in output and properties.get(key, {}).get("type") == "string":
+                output[key] = user_input
+        return output
+
+    def _invoke_mcp_tool(
+        self,
+        *,
+        server: MCPServerConfig,
+        tool_schema: Dict[str, Any],
+        tool_name: str,
+        params: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        _ = tool_schema
+        async def _call() -> Dict[str, Any]:
+            client = MCPClient(server)
+            try:
+                await client.connect()
+                result = await client.call_tool(tool_name, params)
+                return {"ok": True, "result": result}
+            except Exception as exc:
+                return {"ok": False, "error": str(exc)}
+            finally:
+                try:
+                    await client.disconnect()
+                except Exception:
+                    pass
+
+        return asyncio.run(_call())
+
+    def _execute_tool_intent_once(
+        self,
+        *,
+        session_id: str,
+        intent: Dict[str, Any],
+        user_input: str,
+    ) -> Dict[str, Any]:
+        tool_name = str(intent.get("tool_name") or "").strip()
+        servers = self._collect_enabled_mcp_servers()
+        if not servers:
+            return {
+                "ok": False,
+                "reason_code": "MCP_NO_ENABLED_SERVERS",
+                "tool_name": tool_name,
+                "error": "No MCP server is enabled",
+                "why_tool_route": str(intent.get("reason") or ""),
+            }
+
+        match = self._find_tool_and_server(tool_name=tool_name, servers=servers)
+        if match is None:
+            return {
+                "ok": False,
+                "reason_code": "MCP_TOOL_NOT_FOUND",
+                "tool_name": tool_name,
+                "error": "Tool unavailable on enabled MCP servers",
+                "why_tool_route": str(intent.get("reason") or ""),
+            }
+
+        server: MCPServerConfig = match["server"]
+        tool_schema: Dict[str, Any] = match["tool_schema"]
+        resolved_params = self._coerce_tool_params(tool_schema, intent.get("params") or {}, user_input)
+        invoke_result = self._invoke_mcp_tool(
+            server=server,
+            tool_schema=tool_schema,
+            tool_name=tool_name,
+            params=resolved_params,
+        )
+        payload = {
+            "ok": bool(invoke_result.get("ok")),
+            "tool_name": tool_name,
+            "server_id": server.id,
+            "tool_params": resolved_params,
+            "tool_result": invoke_result.get("result"),
+            "error": invoke_result.get("error"),
+            "why_tool_route": str(intent.get("reason") or ""),
+        }
+        if not payload["ok"]:
+            payload["reason_code"] = "MCP_TOOL_EXEC_FAILED"
+
+        try:
+            log_audit_event(
+                event_type="mcp_tool_call",
+                task_id=None,
+                level="info" if payload["ok"] else "warn",
+                metadata={
+                    "session_id": session_id,
+                    "server_id": server.id,
+                    "tool_name": tool_name,
+                    "params": resolved_params,
+                    "ok": payload["ok"],
+                    "error": payload["error"],
+                },
+            )
+        except Exception:
+            pass
+        return payload
+
+    def _run_native_tool_loop(
+        self,
+        *,
+        session_id: str,
+        user_input: str,
+        context_pack: Any,
+        model_route: str,
+        response_content: str,
+        response_metadata: Dict[str, Any],
+    ) -> Optional[tuple[str, Dict[str, Any]]]:
+        tool_calls = response_metadata.get("tool_calls") if isinstance(response_metadata, dict) else None
+        if not isinstance(tool_calls, list) or not tool_calls:
+            return None
+
+        executed_calls: List[Dict[str, Any]] = []
+        tool_messages: List[Dict[str, Any]] = []
+        assistant_tool_calls: List[Dict[str, Any]] = []
+
+        for raw_call in tool_calls:
+            if not isinstance(raw_call, dict):
+                continue
+            name = str(raw_call.get("name") or "").strip()
+            if not name:
+                continue
+            args = raw_call.get("arguments")
+            if not isinstance(args, dict):
+                args = {}
+            intent = {"tool_name": name, "params": args, "reason": "model_native_tool_call"}
+            exec_payload = self._execute_tool_intent_once(
+                session_id=session_id,
+                intent=intent,
+                user_input=user_input,
+            )
+            executed_calls.append(exec_payload)
+
+            call_id = str(raw_call.get("id") or f"call_{name}")
+            arguments_json = str(raw_call.get("arguments_json") or json.dumps(args, ensure_ascii=False))
+            assistant_tool_calls.append(
+                {
+                    "id": call_id,
+                    "type": "function",
+                    "function": {
+                        "name": name,
+                        "arguments": arguments_json,
+                    },
+                }
+            )
+            tool_content = (
+                json.dumps(exec_payload.get("tool_result") or {}, ensure_ascii=False)
+                if exec_payload.get("ok")
+                else json.dumps({"error": exec_payload.get("error")}, ensure_ascii=False)
+            )
+            tool_messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": call_id,
+                    "name": name,
+                    "content": tool_content,
+                }
+            )
+
+        if not executed_calls:
+            return None
+
+        followup_messages: List[Dict[str, Any]] = list(context_pack.messages)
+        followup_messages.append(
+            {
+                "role": "assistant",
+                "content": response_content or "",
+                "tool_calls": assistant_tool_calls,
+            }
+        )
+        followup_messages.extend(tool_messages)
+
+        followup_content, followup_metadata = self._invoke_model(
+            context_pack=context_pack,
+            model_route=model_route,
+            session_id=session_id,
+            messages_override=followup_messages,
+            extra_generate_kwargs={"tool_choice": "none"},
+        )
+        merged_metadata = dict(followup_metadata or {})
+        merged_metadata["decision_action"] = "tool_call"
+        merged_metadata["tool_loop"] = {
+            "native": True,
+            "calls": executed_calls,
+        }
+        return followup_content, merged_metadata
+
+    def _try_handle_tool_intent(
+        self,
+        *,
+        session_id: str,
+        user_input: str,
+        stream: bool,
+    ) -> Optional[Dict[str, Any]]:
+        intent = self._detect_tool_intent(user_input)
+        if intent is None:
+            return None
+        return self._dispatch_tool_intent(
+            session_id=session_id,
+            intent=intent,
+            user_input=user_input,
+            stream=stream,
+        )
+
+    def _dispatch_tool_intent(
+        self,
+        *,
+        session_id: str,
+        intent: Dict[str, Any],
+        user_input: str,
+        stream: bool,
+    ) -> Dict[str, Any]:
+        tool_name = str(intent.get("tool_name") or "").strip()
+        exec_payload = self._execute_tool_intent_once(
+            session_id=session_id,
+            intent=intent,
+            user_input=user_input,
+        )
+        if exec_payload.get("ok"):
+            content = json.dumps(exec_payload.get("tool_result") or {}, ensure_ascii=False)
+            metadata = {
+                "dispatch": "tool_intent",
+                "handled": True,
+                "decision_action": "tool_call",
+                "tool_name": tool_name,
+                "server_id": exec_payload.get("server_id"),
+                "tool_params": exec_payload.get("tool_params") or {},
+                "why_tool_route": str(intent.get("reason") or ""),
+            }
+        else:
+            reason_code = str(exec_payload.get("reason_code") or "")
+            if reason_code == "MCP_NO_ENABLED_SERVERS":
+                content = f"Detected explicit tool request for `{tool_name}`, but no MCP server is enabled."
+            elif reason_code == "MCP_TOOL_NOT_FOUND":
+                content = f"Detected explicit tool request for `{tool_name}`, but the tool is unavailable on enabled MCP servers."
+            else:
+                content = (
+                    f"Detected explicit tool request for `{tool_name}`, but execution failed: "
+                    f"{exec_payload.get('error')}"
+                )
+            metadata = {
+                "dispatch": "tool_intent",
+                "handled": False,
+                "decision_action": "tool_call",
+                "tool_name": tool_name,
+                "server_id": exec_payload.get("server_id"),
+                "tool_params": exec_payload.get("tool_params") or {},
+                "reason_code": reason_code or "MCP_TOOL_EXEC_FAILED",
+                "error": exec_payload.get("error"),
+                "why_tool_route": str(intent.get("reason") or ""),
+            }
+
+        assistant_message = self.chat_service.add_message(
+            session_id=session_id,
+            role="assistant",
+            content=content,
+            metadata=metadata,
+        )
+        if stream:
+            def tool_generator():
+                yield content
+            return tool_generator()
+        return {
+            "message_id": assistant_message.message_id,
+            "content": content,
+            "role": "assistant",
+            "metadata": assistant_message.metadata,
+            "context": {},
+        }
+
+    def _parse_tool_call_payload(self, content: str) -> Optional[Dict[str, Any]]:
+        text = str(content or "").strip()
+        if not text:
+            return None
+        try:
+            payload = json.loads(text)
+        except Exception:
+            return None
+        if not isinstance(payload, dict):
+            return None
+
+        action = str(payload.get("action") or "").strip().lower()
+        target = str(payload.get("target") or payload.get("tool") or "").strip()
+        if action not in {"tool_call", ""}:
+            return None
+        if not target:
+            return None
+        raw_params = payload.get("params")
+        params = raw_params if isinstance(raw_params, dict) else {}
+        return {
+            "tool_name": target,
+            "params": params,
+            "reason": "model_tool_call_payload",
+        }
+
+    def _intercept_tool_call_payload_for_chat(
+        self,
+        *,
+        session_id: str,
+        user_input: str,
+        response_content: str,
+        context: Dict[str, Any],
+    ) -> Optional[Dict[str, Any]]:
+        mode = str(context.get("conversation_mode") or "chat").lower()
+        if mode not in {"chat", "discussion"}:
+            return None
+        intent = self._parse_tool_call_payload(response_content)
+        if intent is None:
+            return None
+        return self._dispatch_tool_intent(
+            session_id=session_id,
+            intent=intent,
+            user_input=user_input,
+            stream=False,
+        )
 
     @staticmethod
     def _parse_fx_pair_from_text(text: str) -> tuple[str, str]:
@@ -2398,7 +3009,7 @@ class ChatEngine:
             from octopusos.core.chat.adapters import get_adapter
             from octopusos.core.capabilities.external_facts.intent_plan import parse_intent_plan_payload
 
-            adapter = get_adapter("ollama", "qwen2.5:14b")
+            adapter = get_adapter("ollama", self._resolve_router_model())
             prompt = (
                 "You are an execution planner for external facts.\n"
                 "Return STRICT JSON only with fields: "
@@ -2623,7 +3234,7 @@ class ChatEngine:
         try:
             from octopusos.core.chat.adapters import get_adapter
 
-            adapter = get_adapter("ollama", "qwen2.5:14b")
+            adapter = get_adapter("ollama", self._resolve_router_model())
             sample_points = points[-12:]
             prompt = (
                 "You are a financial analyst.\n"
@@ -3802,7 +4413,10 @@ class ChatEngine:
         self,
         context_pack: Any,
         model_route: str = "local",
-        session_id: Optional[str] = None
+        session_id: Optional[str] = None,
+        *,
+        messages_override: Optional[List[Dict[str, Any]]] = None,
+        extra_generate_kwargs: Optional[Dict[str, Any]] = None,
     ) -> tuple[str, Dict[str, Any]]:
         """Invoke model to get response
 
@@ -3848,7 +4462,7 @@ class ChatEngine:
                     pass
                 return f"⚠️ Context integrity validation failed: {detail}", {"context_integrity_blocked": True}
 
-            messages = context_pack.messages
+            messages = messages_override if messages_override is not None else context_pack.messages
 
             # Determine provider and model from session metadata (with fallback)
             provider = None
@@ -3880,7 +4494,8 @@ class ChatEngine:
                 messages=messages,
                 temperature=0.7,
                 max_tokens=2000,
-                stream=False
+                stream=False,
+                **(extra_generate_kwargs or {}),
             )
 
             # Task #4: Capture external info declarations from LLM response

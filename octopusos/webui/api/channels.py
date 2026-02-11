@@ -4,6 +4,7 @@ This router provides a real implementation for:
 - Channel marketplace listing (manifests)
 - Channel config (including default model route/provider/model)
 - Connect/status/qr for local QR channels (whatsapp_web)
+- Webhook bridging for channels that expose handle_webhook() (e.g., teams/imessage)
 - Per-peer bindings and model switching without reconnecting WhatsApp
 """
 
@@ -12,13 +13,43 @@ from __future__ import annotations
 import hashlib
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Body, Header, HTTPException, Query
+from fastapi import APIRouter, Body, Header, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
 
 from octopusos.core.capabilities.admin_token import validate_admin_token
 from octopusos.communicationos.runtime import get_communication_runtime
 from octopusos.webui.api.compat_state import audit_event, db_connect, ensure_schema
 
 router = APIRouter(prefix="/api", tags=["channels"])
+
+
+async def _handle_bridge_webhook(*, channel_id: str, request: Request) -> JSONResponse:
+    rt = get_communication_runtime()
+    try:
+        rt.ensure_adapter_started(channel_id)
+    except Exception as e:
+        return JSONResponse(status_code=200, content={"ok": False, "error": f"adapter_not_ready:{e}"})
+
+    state = rt._adapters.get(channel_id)  # type: ignore[attr-defined]
+    if not state:
+        return JSONResponse(status_code=200, content={"ok": False, "error": "adapter_not_running"})
+
+    adapter = state.adapter
+    if not hasattr(adapter, "handle_webhook"):
+        return JSONResponse(status_code=501, content={"ok": False, "error": "webhook_not_supported"})
+
+    body = await request.body()
+    headers = {k.lower(): v for k, v in request.headers.items()}
+
+    try:
+        code, resp = adapter.handle_webhook(headers=headers, body_bytes=body)
+        if isinstance(resp, dict):
+            resp.setdefault("source", "real")
+        return JSONResponse(status_code=int(code), content=resp)
+    except PermissionError as e:
+        return JSONResponse(status_code=403, content={"ok": False, "error": str(e)})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"ok": False, "error": f"webhook_failed:{e}"})
 
 
 def _require_admin_token(token: Optional[str]) -> str:
@@ -260,3 +291,18 @@ def send_message_tool(
         conn.close()
 
     return {"ok": True, "queued": True, "source": "real"}
+
+
+@router.post("/channels/teams/webhook")
+async def teams_webhook(request: Request) -> JSONResponse:
+    return await _handle_bridge_webhook(channel_id="teams", request=request)
+
+
+@router.post("/channels/imessage/webhook")
+async def imessage_webhook(request: Request) -> JSONResponse:
+    return await _handle_bridge_webhook(channel_id="imessage", request=request)
+
+
+@router.post("/channels/{channel_id}/webhook")
+async def generic_bridge_webhook(channel_id: str, request: Request) -> JSONResponse:
+    return await _handle_bridge_webhook(channel_id=channel_id, request=request)

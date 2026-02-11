@@ -14,7 +14,7 @@ from typing import Optional, Union
 # kb: 知识库索引
 # skill: 技能定义与执行历史
 # device_binding: M3 device credential + audit store (isolated from message_audit)
-ALLOWED_COMPONENTS = {"octopusos", "memoryos", "brainos", "communicationos", "networkos", "appos", "kb", "skill", "device_binding"}
+ALLOWED_COMPONENTS = {"octopusos", "memoryos", "brainos", "communicationos", "networkos", "bridgeos", "appos", "kb", "skill", "device_binding"}
 
 def octopusos_home() -> Path:
     """强制使用 ~/.octopusos（Windows也如此）"""

@@ -20,6 +20,15 @@ from octopusos.core.runtime.dependency_installer import ensure_aws_cli_if_needed
 
 router = APIRouter(prefix="/api", tags=["mcp-servers"])
 
+MICROSOFT_MCP_PACKAGES = {
+    "microsoft.teams.mcp",
+    "microsoft.mail.mcp",
+    "microsoft.calendar.mcp",
+    "microsoft.odspremoteserver.mcp",
+    "microsoft.sharepointlisttools.mcp",
+    "microsoft.word.mcp",
+}
+
 
 class EnableRequest(BaseModel):
     auto_install: bool = Field(default=True)
@@ -29,6 +38,10 @@ class EnableRequest(BaseModel):
 class ConfigureRequest(BaseModel):
     profile: Optional[str] = Field(default=None)
     region: Optional[str] = Field(default=None)
+    tenant_id: Optional[str] = Field(default=None)
+    client_id: Optional[str] = Field(default=None)
+    client_secret: Optional[str] = Field(default=None)
+    bot_app_id: Optional[str] = Field(default=None)
 
 
 def _refresh_capabilities() -> None:
@@ -50,15 +63,47 @@ def _mask_env(env: Dict[str, str]) -> Dict[str, str]:
 
 def _server_payload(server) -> Dict[str, Any]:
     env = dict(server.env or {})
+    package_id = env.get("OCTOPUSOS_MCP_PACKAGE_ID")
+    aws_profile = env.get("AWS_PROFILE")
+    aws_region = env.get("AWS_REGION")
+    azure_subscription = env.get("AZURE_SUBSCRIPTION")
+    azure_location = env.get("AZURE_LOCATION")
+    teams_tenant_id = env.get("TEAMS_TENANT_ID")
+    teams_client_id = env.get("TEAMS_CLIENT_ID")
+    teams_bot_app_id = env.get("TEAMS_BOT_APP_ID")
+    teams_has_client_secret = bool(env.get("TEAMS_CLIENT_SECRET"))
+    microsoft_tenant_id = teams_tenant_id
+    microsoft_client_id = teams_client_id
+    microsoft_bot_app_id = teams_bot_app_id
+    microsoft_has_client_secret = teams_has_client_secret
+
+    cloud_profile = aws_profile
+    cloud_region = aws_region
+    if package_id == "azure.mcp":
+        cloud_profile = azure_subscription
+        cloud_region = azure_location
+
     return {
         "server_id": server.id,
         "enabled": server.enabled,
         "type": server.transport,
         "command": server.command[0] if server.command else "",
         "args": server.command[1:] if len(server.command) > 1 else [],
-        "package_id": env.get("OCTOPUSOS_MCP_PACKAGE_ID"),
-        "aws_profile": env.get("AWS_PROFILE"),
-        "aws_region": env.get("AWS_REGION"),
+        "package_id": package_id,
+        "aws_profile": aws_profile,
+        "aws_region": aws_region,
+        "azure_subscription": azure_subscription,
+        "azure_location": azure_location,
+        "teams_tenant_id": teams_tenant_id,
+        "teams_client_id": teams_client_id,
+        "teams_bot_app_id": teams_bot_app_id,
+        "teams_has_client_secret": teams_has_client_secret,
+        "microsoft_tenant_id": microsoft_tenant_id,
+        "microsoft_client_id": microsoft_client_id,
+        "microsoft_bot_app_id": microsoft_bot_app_id,
+        "microsoft_has_client_secret": microsoft_has_client_secret,
+        "cloud_profile": cloud_profile,
+        "cloud_region": cloud_region,
         "env_summary": _mask_env(env),
     }
 
@@ -218,20 +263,43 @@ def configure_mcp_server(server_id: str, payload: ConfigureRequest) -> Dict[str,
         raise HTTPException(status_code=404, detail="server not found")
 
     package_id = (server.env or {}).get("OCTOPUSOS_MCP_PACKAGE_ID")
-    if package_id != "aws.mcp":
-        raise HTTPException(status_code=400, detail="config update currently supported for aws.mcp only")
+    if package_id not in {"aws.mcp", "azure.mcp", *MICROSOFT_MCP_PACKAGES}:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "config update currently supported for aws.mcp, azure.mcp, "
+                "microsoft.teams.mcp, microsoft.mail.mcp, microsoft.calendar.mcp, "
+                "microsoft.odspremoteserver.mcp, microsoft.sharepointlisttools.mcp, and microsoft.word.mcp"
+            ),
+        )
 
     env_patch: Dict[str, str] = {}
     if payload.profile is not None:
         profile = payload.profile.strip()
         if not profile:
             raise HTTPException(status_code=400, detail="profile cannot be empty")
-        env_patch["AWS_PROFILE"] = profile
+        if package_id == "aws.mcp":
+            env_patch["AWS_PROFILE"] = profile
+        else:
+            env_patch["AZURE_SUBSCRIPTION"] = profile
 
     if payload.region is not None:
         region = payload.region.strip()
         # empty region is treated as clearing explicit region override.
-        env_patch["AWS_REGION"] = region
+        if package_id == "aws.mcp":
+            env_patch["AWS_REGION"] = region
+        elif package_id == "azure.mcp":
+            env_patch["AZURE_LOCATION"] = region
+
+    if package_id in MICROSOFT_MCP_PACKAGES:
+        if payload.tenant_id is not None:
+            env_patch["TEAMS_TENANT_ID"] = payload.tenant_id.strip()
+        if payload.client_id is not None:
+            env_patch["TEAMS_CLIENT_ID"] = payload.client_id.strip()
+        if payload.client_secret is not None:
+            env_patch["TEAMS_CLIENT_SECRET"] = payload.client_secret.strip()
+        if payload.bot_app_id is not None:
+            env_patch["TEAMS_BOT_APP_ID"] = payload.bot_app_id.strip()
 
     updated = manager.update_server(server_id, {"env": env_patch})
     return {"ok": True, "server": _server_payload(updated), "source": "real"}

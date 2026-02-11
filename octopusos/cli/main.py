@@ -87,6 +87,7 @@ from octopusos.cli.web import web_cmd
 from octopusos.cli.webui_control import webui_group
 from octopusos.cli.logs import logs_cmd
 from octopusos.cli.auth import auth_group
+from octopusos.cli.imessage_bridge import imessage_bridge_group
 
 # Import v0.4 Project-Aware Task OS commands
 from octopusos.cli.commands.project_v31 import project_v31_group
@@ -129,6 +130,7 @@ cli.add_command(web_cmd, name="web")
 cli.add_command(webui_group, name="webui")
 cli.add_command(logs_cmd, name="logs")
 cli.add_command(auth_group, name="auth")
+cli.add_command(imessage_bridge_group, name="imessage-bridge")
 
 # Register v0.4 Project-Aware Task OS commands
 cli.add_command(project_v31_group, name="project-v31")

@@ -12,10 +12,11 @@ class ChatModelAdapter:
 
     def generate(
         self,
-        messages: List[Dict[str, str]],
+        messages: List[Dict[str, Any]],
         temperature: float = 0.7,
         max_tokens: int = 2000,
-        stream: bool = False
+        stream: bool = False,
+        **kwargs: Any,
     ) -> tuple[str, Dict[str, Any]]:
         """Generate response from messages
 
@@ -36,7 +37,7 @@ class ChatModelAdapter:
 
     def generate_stream(
         self,
-        messages: List[Dict[str, str]],
+        messages: List[Dict[str, Any]],
         temperature: float = 0.7,
         max_tokens: int = 2000
     ) -> Iterator[str]:
@@ -135,10 +136,11 @@ class OllamaChatAdapter(ChatModelAdapter):
     
     def generate(
         self,
-        messages: List[Dict[str, str]],
+        messages: List[Dict[str, Any]],
         temperature: float = 0.7,
         max_tokens: int = 2000,
-        stream: bool = False
+        stream: bool = False,
+        **kwargs: Any,
     ) -> tuple[str, Dict[str, Any]]:
         """Generate response using Ollama"""
         try:
@@ -148,43 +150,124 @@ class OllamaChatAdapter(ChatModelAdapter):
             return "⚠️ Error: requests library required for Ollama", {}
 
         try:
-            url = f"{self.host}/api/chat"
-            payload = {
-                "model": self.model,
+            return self._chat_generate(
+                requests=requests,
+                model=self.model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+
+        except Exception as e:
+            # Some local Ollama-compatible deployments may not expose /api/chat.
+            # Retry once with /api/generate for better compatibility.
+            if "404" in str(e):
+                try:
+                    fallback_url = f"{self.host}/api/generate"
+                    response = requests.post(
+                        fallback_url,
+                        json={
+                            "model": self.model,
+                            "prompt": self._messages_to_prompt(messages),
+                            "stream": False,
+                            "options": {
+                                "temperature": temperature,
+                                "num_predict": max_tokens,
+                            },
+                        },
+                        timeout=60,
+                    )
+                    response.raise_for_status()
+                    result = response.json()
+                    content = str(result.get("response") or "").strip()
+                    done_reason = result.get("done_reason")
+                    return content, {
+                        "truncated": done_reason == "length",
+                        "finish_reason": done_reason,
+                        "tokens_used": result.get("eval_count"),
+                    }
+                except Exception as fallback_error:
+                    auto_model = self._detect_first_available_model(requests)
+                    if auto_model and auto_model != self.model:
+                        try:
+                            return self._chat_generate(
+                                requests=requests,
+                                model=auto_model,
+                                messages=messages,
+                                temperature=temperature,
+                                max_tokens=max_tokens,
+                            )
+                        except Exception as auto_model_error:
+                            logger.error(
+                                "Ollama generation failed (chat+generate+model-fallback): %s",
+                                auto_model_error,
+                            )
+                            return f"⚠️ Ollama error: {str(auto_model_error)}", {}
+                    logger.error(f"Ollama generation failed (chat+generate fallback): {fallback_error}")
+                    return f"⚠️ Ollama error: {str(fallback_error)}", {}
+
+            logger.error(f"Ollama generation failed: {e}")
+            return f"⚠️ Ollama error: {str(e)}", {}
+
+    def _messages_to_prompt(self, messages: List[Dict[str, Any]]) -> str:
+        lines: List[str] = []
+        for m in messages:
+            role = str(m.get("role") or "user").strip()
+            content = str(m.get("content") or "").strip()
+            if not content:
+                continue
+            lines.append(f"{role}: {content}")
+        return "\n".join(lines) if lines else "user: "
+
+    def _chat_generate(
+        self,
+        *,
+        requests: Any,
+        model: str,
+        messages: List[Dict[str, Any]],
+        temperature: float,
+        max_tokens: int,
+    ) -> tuple[str, Dict[str, Any]]:
+        response = requests.post(
+            f"{self.host}/api/chat",
+            json={
+                "model": model,
                 "messages": messages,
                 "stream": False,
                 "options": {
                     "temperature": temperature,
-                    "num_predict": max_tokens
-                }
-            }
+                    "num_predict": max_tokens,
+                },
+            },
+            timeout=60,
+        )
+        response.raise_for_status()
+        result = response.json()
+        content = result.get("message", {}).get("content", "")
+        done_reason = result.get("done_reason")
+        return content, {
+            "truncated": done_reason == "length",
+            "finish_reason": done_reason,
+            "tokens_used": result.get("eval_count"),
+        }
 
-            response = requests.post(url, json=payload, timeout=60)
-            response.raise_for_status()
-
-            result = response.json()
-            content = result.get("message", {}).get("content", "")
-
-            # Check for truncation
-            # Ollama uses "done_reason" field: "stop" or "length"
-            done_reason = result.get("done_reason")
-            truncated = done_reason == "length"
-
-            metadata = {
-                "truncated": truncated,
-                "finish_reason": done_reason,
-                "tokens_used": result.get("eval_count")  # Ollama returns token count here
-            }
-
-            return content, metadata
-
-        except Exception as e:
-            logger.error(f"Ollama generation failed: {e}")
-            return f"⚠️ Ollama error: {str(e)}", {}
+    def _detect_first_available_model(self, requests: Any) -> Optional[str]:
+        try:
+            resp = requests.get(f"{self.host}/api/tags", timeout=8)
+            resp.raise_for_status()
+            models = resp.json().get("models", [])
+            if not isinstance(models, list) or not models:
+                return None
+            first = models[0]
+            if isinstance(first, dict):
+                return str(first.get("name") or first.get("model") or "").strip() or None
+            return None
+        except Exception:
+            return None
 
     def generate_stream(
         self,
-        messages: List[Dict[str, str]],
+        messages: List[Dict[str, Any]],
         temperature: float = 0.7,
         max_tokens: int = 2000
     ) -> Iterator[str]:
@@ -285,10 +368,11 @@ class OpenAIChatAdapter(ChatModelAdapter):
     
     def generate(
         self,
-        messages: List[Dict[str, str]],
+        messages: List[Dict[str, Any]],
         temperature: float = 0.7,
         max_tokens: int = 2000,
-        stream: bool = False
+        stream: bool = False,
+        **kwargs: Any,
     ) -> tuple[str, Dict[str, Any]]:
         """Generate response using OpenAI"""
         try:
@@ -310,15 +394,24 @@ class OpenAIChatAdapter(ChatModelAdapter):
 
             client = openai.OpenAI(**client_kwargs)
 
+            request_kwargs: Dict[str, Any] = {
+                "model": self.model,
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "stream": False,
+            }
+            if kwargs.get("tools"):
+                request_kwargs["tools"] = kwargs.get("tools")
+            if kwargs.get("tool_choice") is not None:
+                request_kwargs["tool_choice"] = kwargs.get("tool_choice")
+
             response = client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                stream=False
+                **request_kwargs
             )
 
-            content = response.choices[0].message.content
+            message = response.choices[0].message
+            content = message.content or ""
 
             # Check for truncation
             # OpenAI uses "finish_reason": "stop", "length", "content_filter", etc.
@@ -330,6 +423,33 @@ class OpenAIChatAdapter(ChatModelAdapter):
                 "finish_reason": finish_reason,
                 "tokens_used": response.usage.completion_tokens if hasattr(response, 'usage') else None
             }
+            tool_calls = []
+            raw_tool_calls = getattr(message, "tool_calls", None) or []
+            if not isinstance(raw_tool_calls, list):
+                try:
+                    raw_tool_calls = list(raw_tool_calls)
+                except Exception:
+                    raw_tool_calls = []
+            for call in raw_tool_calls:
+                try:
+                    arguments_json = call.function.arguments or "{}"
+                    import json
+                    try:
+                        arguments = json.loads(arguments_json) if arguments_json else {}
+                    except Exception:
+                        arguments = {}
+                    tool_calls.append(
+                        {
+                            "id": str(getattr(call, "id", "") or ""),
+                            "name": str(call.function.name or ""),
+                            "arguments": arguments if isinstance(arguments, dict) else {},
+                            "arguments_json": arguments_json,
+                        }
+                    )
+                except Exception:
+                    continue
+            if tool_calls:
+                metadata["tool_calls"] = tool_calls
 
             return content, metadata
 
@@ -339,7 +459,7 @@ class OpenAIChatAdapter(ChatModelAdapter):
     
     def generate_stream(
         self,
-        messages: List[Dict[str, str]],
+        messages: List[Dict[str, Any]],
         temperature: float = 0.7,
         max_tokens: int = 2000
     ) -> Iterator[str]:
@@ -455,21 +575,20 @@ def get_adapter(provider: str, model: Optional[str] = None) -> ChatModelAdapter:
             else:
                 # No instance specified - find any available ollama instance
                 from octopusos.providers.base import ProviderState
-                import asyncio
                 all_providers = registry.list_all()
+                first_ollama_endpoint = None
                 for p in all_providers:
                     if p.id.startswith("ollama:") or p.id == "ollama":
+                        if first_ollama_endpoint is None and hasattr(p, "endpoint"):
+                            first_ollama_endpoint = p.endpoint
                         status = p.get_cached_status()
-                        if not status:
-                            try:
-                                status = asyncio.run(p.probe())
-                            except:
-                                continue
-
                         if status and status.state == ProviderState.READY:
                             base_url = p.endpoint
                             logger.info(f"Auto-selected ollama instance: {p.id} at {base_url}")
                             break
+                if not base_url and first_ollama_endpoint:
+                    base_url = first_ollama_endpoint
+                    logger.info(f"Selected ollama instance without cached status: {base_url}")
 
             if not base_url:
                 base_url = "http://127.0.0.1:11434"

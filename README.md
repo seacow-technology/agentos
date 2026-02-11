@@ -72,6 +72,27 @@ graph TB
 - 🔒 Security policies and audit system
 - 📊 64 files, complete communication infrastructure
 
+##### BridgeOS Compatibility Matrix Template (English)
+
+Use this template when onboarding any new bridge-based IM channel.
+
+| Field | Description | Example |
+|---|---|---|
+| `channel_id` | Stable channel identifier in CommunicationOS | `line` |
+| `bridge_profile_id` | BridgeOS profile id bound to the channel | `f8a6f8d1-...` |
+| `bridge_base_url` | Bridge endpoint base URL (stored in BridgeOS profile) | `http://127.0.0.1:17002` |
+| `send_path` | Outbound bridge send API path | `/api/im/send` |
+| `inbound_webhook_path` | OctopusOS inbound webhook path | `/api/channels/line/webhook` |
+| `webhook_auth` | Accepted auth mechanism | `X-Bridge-Token` or `Authorization: Bearer` |
+| `session_scope` | Session keying strategy | `user_conversation` |
+| `inbound_fields` | Required inbound mapping fields | `message_id`, `text`, `conversation_key`, `user_key` |
+| `outbound_fields` | Required outbound payload fields | `to`, `text`, `channel_id`, `session_id` |
+| `capabilities` | Declared channel capabilities | `inbound_text`, `outbound_text`, `threaded_conversations` |
+| `policy_defaults` | Security defaults | `chat_only`, `allow_execute=false`, `rate_limit_per_minute=30` |
+| `network_exposure` | External proxy strategy | `NetworkOS + Cloudflare capability request` |
+| `risk_tier` | Integration risk tier for governance | `A` / `B` / `C` |
+| `compliance_notes` | Data residency, retention, consent notes | `region-bound storage; token encrypted` |
+
 #### ⭐ NEW: NetworkOS
 **Network Service Management**
 - 🌐 Network service orchestration

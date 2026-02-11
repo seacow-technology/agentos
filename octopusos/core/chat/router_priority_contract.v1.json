@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "description": "Chat router priority contract to prevent parser hijacking tool intents.",
+  "principles": [
+    "tool_intent MUST be evaluated before any external-facts detection",
+    "explicit tool requests MUST NOT be routed to stock parsing"
+  ],
+  "groups": [
+    {
+      "group_id": "tool_intent",
+      "priority": 10,
+      "required": true,
+      "matchers": ["detect_tool_intent"],
+      "notes": "Any explicit tool request must short-circuit here."
+    },
+    {
+      "group_id": "company_research",
+      "priority": 20,
+      "required": true,
+      "matchers": ["parse_company_research_request"]
+    },
+    {
+      "group_id": "dbops_skill_dispatch",
+      "priority": 30,
+      "required": true,
+      "matchers": ["try_handle_dbops_via_skillos"]
+    },
+    {
+      "group_id": "aws_azure_fastpath",
+      "priority": 35,
+      "required": true,
+      "matchers": ["try_handle_aws_via_mcp", "try_handle_azure_via_mcp"]
+    },
+    {
+      "group_id": "external_facts_stock",
+      "priority": 40,
+      "required": true,
+      "matchers": ["detect_stock_query"],
+      "notes": "Must never run before tool_intent."
+    },
+    {
+      "group_id": "external_facts_any",
+      "priority": 50,
+      "required": true,
+      "matchers": ["resolve_external_fact_request"]
+    }
+  ],
+  "hard_rules": [
+    {"before": "tool_intent", "after": "external_facts_stock"},
+    {"before": "tool_intent", "after": "external_facts_any"}
+  ],
+  "reserved_tokens": {
+    "stock_symbol_stopwords": ["echo", "tool", "call", "help", "execute"]
+  }
+}

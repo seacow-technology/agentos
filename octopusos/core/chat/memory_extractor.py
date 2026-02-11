@@ -17,6 +17,7 @@ from __future__ import annotations
 import re
 import uuid
 import logging
+import json
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
@@ -24,6 +25,11 @@ from octopusos.core.chat.models_base import ChatMessage
 from octopusos.core.time import utc_now_iso
 
 logger = logging.getLogger(__name__)
+
+
+def _trace_log(event: str, **fields: Any) -> None:
+    payload = {"event": event, **fields}
+    logger.info("memory_extract_trace %s", json.dumps(payload, ensure_ascii=False, sort_keys=True))
 
 
 @dataclass
@@ -494,13 +500,48 @@ async def extract_and_store_async(
         Number of memories extracted and stored
     """
     extractor = get_extractor()
+    store_path = str(getattr(memory_service, "db_path", "unknown"))
+    _trace_log(
+        "memory_extract_start",
+        session_id=session_id,
+        message_id=message.message_id,
+        role=message.role,
+        store_path=store_path,
+    )
 
-    # Check negative cases first
+    # Check policy/guard cases first
+    if message.role != "user":
+        _trace_log(
+            "memory_extract_skipped",
+            session_id=session_id,
+            message_id=message.message_id,
+            role=message.role,
+            reason_code="non_user_role",
+            store_path=store_path,
+        )
+        return 0
+
     if extractor.is_negative_case(message):
+        _trace_log(
+            "memory_extract_skipped",
+            session_id=session_id,
+            message_id=message.message_id,
+            role=message.role,
+            reason_code="negative_pattern_matched",
+            store_path=store_path,
+        )
         return 0
 
     # Extract memories
     memories = extractor.extract_and_log(message, session_id, project_id)
+    _trace_log(
+        "memory_extract_rules_done",
+        session_id=session_id,
+        message_id=message.message_id,
+        role=message.role,
+        extracted_count=len(memories),
+        store_path=store_path,
+    )
 
     # Store each memory
     stored_count = 0
@@ -512,4 +553,14 @@ async def extract_and_store_async(
         except Exception as e:
             logger.error(f"Failed to store memory: {e}", exc_info=True)
 
+    _trace_log(
+        "memory_extract_end",
+        session_id=session_id,
+        message_id=message.message_id,
+        role=message.role,
+        extracted_count=len(memories),
+        stored_count=stored_count,
+        filtered_count=max(0, len(memories) - stored_count),
+        store_path=store_path,
+    )
     return stored_count

@@ -33,6 +33,11 @@ def _generate_ulid() -> str:
     return str(ULID())
 
 
+def _trace_log(event: str, **fields: Any) -> None:
+    payload = {"event": event, **fields}
+    logger.info("chat_trace %s", json.dumps(payload, ensure_ascii=False, sort_keys=True))
+
+
 def validate_message_role(role: str) -> str:
     """
     Validate and normalize message role.
@@ -774,6 +779,16 @@ class ChatService:
             # Fetch and return the created message
             message = self.get_message(message_id)
             self._record_message_to_session_async(message)
+            if role == "user":
+                _trace_log(
+                    "chat_message_received",
+                    session_id=session_id,
+                    message_id=message.message_id,
+                    role=role,
+                    turn_id=metadata.get("turn_id") or effective_idempotency_key,
+                    request_id=metadata.get("request_id"),
+                    trace_id=metadata.get("trace_id"),
+                )
 
             return message
 
@@ -1234,6 +1249,14 @@ class ChatService:
                         from octopusos.core.memory.service import MemoryService
 
                         memory_service = MemoryService()
+                        store_path = str(Path(memory_service.db_path).resolve())
+                        _trace_log(
+                            "memory_extract_triggered",
+                            session_id=message.session_id,
+                            message_id=message.message_id,
+                            role=message.role,
+                            store_path=store_path,
+                        )
 
                         # Run extraction
                         count = loop.run_until_complete(extract_and_store_async(
@@ -1249,8 +1272,17 @@ class ChatService:
                                 f"Memory extraction completed: "
                                 f"message_id={message.message_id}, extracted={count}"
                             )
+                        _trace_log(
+                            "memory_extract_completed",
+                            session_id=message.session_id,
+                            message_id=message.message_id,
+                            role=message.role,
+                            extracted=count,
+                            store_path=store_path,
+                        )
 
-                            # Emit audit event for observability
+                        # Emit audit event for observability
+                        if count > 0:
                             try:
                                 from octopusos.core.capabilities.audit import emit_audit_event
 

@@ -18,6 +18,7 @@ import hashlib
 import json
 import secrets
 import sqlite3
+from contextlib import contextmanager
 import uuid
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
@@ -167,11 +168,15 @@ class DeviceStore:
                 conn.execute("ALTER TABLE device_requests ADD COLUMN poll_secret_hash TEXT")
             conn.commit()
 
-    def _connect(self) -> sqlite3.Connection:
+    @contextmanager
+    def _connect(self):
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
-        return conn
+        try:
+            yield conn
+        finally:
+            conn.close()
 
     def create_pairing_code(self, ttl_sec: int = 60) -> Dict[str, Any]:
         code = _rand_urlsafe(16)

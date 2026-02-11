@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import time
 import concurrent.futures
 from datetime import datetime, timezone
@@ -10,9 +12,11 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 from uuid import uuid4
 
-from fastapi import APIRouter, Header, HTTPException, Query
+from fastapi import APIRouter, Header, HTTPException, Query, Request, Response
+from pydantic import BaseModel, Field
 
 from octopusos.core.capabilities.admin_token import validate_admin_token
+from octopusos.webui.db.memory_db import memory_db_connect, memory_db_path
 from octopusos.webui.api.compat_state import (
     audit_event,
     db_connect,
@@ -27,6 +31,28 @@ from octopusos.webui.api.compat_state import (
 )
 
 router = APIRouter(prefix="/api", tags=["compat"])
+
+
+class MemoryEntryResponse(BaseModel):
+    id: Optional[str] = None
+    scope: Optional[str] = None
+    type: Optional[str] = None
+    content: Dict[str, Any] = Field(default_factory=dict)
+    tags: list[Any] = Field(default_factory=list)
+    sources: list[Any] = Field(default_factory=list)
+    confidence: Optional[float] = None
+    project_id: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
+class MemoryEntriesResponse(BaseModel):
+    entries: list[MemoryEntryResponse]
+    total: int
+    limit: int
+    offset: int = 0
+    source: str = "compat"
+    store_path: Optional[str] = None
 
 
 def _table_exists(conn, table_name: str) -> bool:
@@ -1699,9 +1725,157 @@ def trust_trajectory(subject_id: str) -> Dict[str, Any]:
     return _ok({"subject_id": subject_id, "points": []})
 
 
-@router.get("/memory/entries")
-def memory_entries(limit: int = Query(default=50, ge=1, le=500)) -> Dict[str, Any]:
-    return _ok({"entries": [], "total": 0, "limit": limit})
+@router.get(
+    "/memory/entries",
+    response_model=MemoryEntriesResponse,
+    response_model_exclude_none=True,
+)
+def memory_entries(
+    request: Request,
+    response: Response,
+    limit: int = Query(default=50, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+    debug: int = Query(default=0),
+) -> Any:
+    conn = memory_db_connect()
+    try:
+        response.headers["X-OctopusOS-Data-Store"] = "memoryos"
+        response.headers["X-OctopusOS-Compat"] = "1"
+
+        debug_enabled = (
+            bool(debug)
+            or request.headers.get("X-OctopusOS-Debug") == "1"
+            or os.getenv("OCTOPUSOS_DEBUG", "").strip() in {"1", "true", "TRUE", "yes", "on"}
+        )
+
+        table_exists = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'memory_items'"
+        ).fetchone()
+        if not table_exists:
+            etag_value = hashlib.sha1("0|none".encode("utf-8")).hexdigest()
+            etag = f'W/"{etag_value}"'
+            response.headers["ETag"] = etag
+            if request.headers.get("If-None-Match") == etag:
+                return Response(
+                    status_code=304,
+                    headers={
+                        "ETag": etag,
+                        "X-OctopusOS-Data-Store": "memoryos",
+                        "X-OctopusOS-Compat": "1",
+                    },
+                )
+            out = _ok(
+                {
+                    "entries": [],
+                    "total": 0,
+                    "limit": limit,
+                    "offset": offset,
+                }
+            )
+            if debug_enabled:
+                out["store_path"] = str(memory_db_path())
+            return out
+
+        columns = {
+            str(row["name"])
+            for row in conn.execute("PRAGMA table_info(memory_items)").fetchall()
+        }
+
+        def _col_expr(col: str, alias: str | None = None) -> str:
+            final_alias = alias or col
+            if col in columns:
+                return f"{col} AS {final_alias}"
+            return f"NULL AS {final_alias}"
+
+        total = int(conn.execute("SELECT COUNT(*) AS c FROM memory_items").fetchone()["c"] or 0)
+        latest_updated_at: Optional[str] = None
+        if "updated_at" in columns:
+            row = conn.execute("SELECT MAX(updated_at) AS m FROM memory_items").fetchone()
+            latest_updated_at = str(row["m"]) if row and row["m"] is not None else None
+        elif "created_at" in columns:
+            row = conn.execute("SELECT MAX(created_at) AS m FROM memory_items").fetchone()
+            latest_updated_at = str(row["m"]) if row and row["m"] is not None else None
+
+        etag_seed = f"{total}|{latest_updated_at or 'none'}"
+        etag_value = hashlib.sha1(etag_seed.encode("utf-8")).hexdigest()
+        etag = f'W/"{etag_value}"'
+        response.headers["ETag"] = etag
+        if request.headers.get("If-None-Match") == etag:
+            return Response(
+                status_code=304,
+                headers={
+                    "ETag": etag,
+                    "X-OctopusOS-Data-Store": "memoryos",
+                    "X-OctopusOS-Compat": "1",
+                },
+            )
+
+        rows = conn.execute(
+            f"""
+            SELECT
+              {_col_expr("id")},
+              {_col_expr("scope")},
+              {_col_expr("type")},
+              {_col_expr("content")},
+              {_col_expr("tags")},
+              {_col_expr("sources")},
+              {_col_expr("confidence")},
+              {_col_expr("project_id")},
+              {_col_expr("created_at")},
+              {_col_expr("updated_at")}
+            FROM memory_items
+            ORDER BY created_at DESC
+            LIMIT ? OFFSET ?
+            """,
+            (limit, offset),
+        ).fetchall()
+
+        entries: list[dict[str, Any]] = []
+        for row in rows:
+            content_raw = row["content"]
+            tags_raw = row["tags"]
+            sources_raw = row["sources"]
+            try:
+                content = json.loads(content_raw) if content_raw else {}
+            except Exception:
+                content = {"raw": str(content_raw)}
+            try:
+                tags = json.loads(tags_raw) if tags_raw else []
+            except Exception:
+                tags = []
+            try:
+                sources = json.loads(sources_raw) if sources_raw else []
+            except Exception:
+                sources = []
+
+            entries.append(
+                {
+                    "id": row["id"],
+                    "scope": row["scope"],
+                    "type": row["type"],
+                    "content": content,
+                    "tags": tags,
+                    "sources": sources,
+                    "confidence": row["confidence"],
+                    "project_id": row["project_id"],
+                    "created_at": row["created_at"],
+                    "updated_at": row["updated_at"],
+                }
+            )
+
+        out = _ok(
+            {
+                "entries": entries,
+                "total": total,
+                "limit": limit,
+                "offset": offset,
+            }
+        )
+        if debug_enabled:
+            out["store_path"] = str(memory_db_path())
+        return out
+    finally:
+        conn.close()
 
 
 @router.get("/capability/dashboard/stats")

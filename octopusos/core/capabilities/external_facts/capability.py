@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 from .evidence_store import EvidenceStore
 from .extractors import FxSnippetExtractor, WeatherSnippetExtractor
@@ -77,7 +77,7 @@ class ExternalFactsCapability:
         provider = self._providers.get(kind)
         now_iso = context.get("now_iso") or utc_now_iso()
         effective_policy = self._ensure_policy_sources(kind, policy)
-        custom_result = await self._resolve_custom_provider_result(
+        custom_result, provider_diag = await self._resolve_custom_provider_result(
             kind=kind,
             query=query,
             context={**context, "now_iso": now_iso},
@@ -85,7 +85,14 @@ class ExternalFactsCapability:
         if custom_result is not None:
             result = custom_result
         elif provider is None:
-            result = self._unavailable(kind, query, now_iso)
+            result = self._unavailable(
+                kind,
+                query,
+                now_iso,
+                reason=str(provider_diag.get("reason_code") or "no_provider_configured"),
+                provider_id=str(provider_diag.get("provider_id") or ""),
+                http_status=provider_diag.get("http_status"),
+            )
         else:
             result = await provider.resolve(query=query, context={**context, "now_iso": now_iso})
         normalized = self.validate_and_normalize(
@@ -333,7 +340,19 @@ class ExternalFactsCapability:
             or f"I can collect materials for {normalized.kind}, but I can't verify a structured value yet.",
         )
 
-    def _unavailable(self, kind: FactKind, query: str, now_iso: str) -> LegacyFactResult:
+    def _unavailable(
+        self,
+        kind: FactKind,
+        query: str,
+        now_iso: str,
+        *,
+        reason: str = "no_provider_configured",
+        provider_id: str = "",
+        http_status: Optional[int] = None,
+    ) -> LegacyFactResult:
+        reason_code = reason or "provider_unavailable"
+        provider_hint = f" (provider={provider_id})" if provider_id else ""
+        status_hint = f", http_status={http_status}" if isinstance(http_status, int) else ""
         if kind == "weather":
             return LegacyFactResult(
                 kind="weather",
@@ -347,7 +366,7 @@ class ExternalFactsCapability:
                     "I can't fetch reliable real-time weather data right now. "
                     "I can retry shortly."
                 ),
-                confidence_reason="provider_unavailable",
+                confidence_reason=reason_code,
             )
         if self._capability_id_for_kind(kind) == "exchange_rate":
             return LegacyFactResult(
@@ -362,7 +381,27 @@ class ExternalFactsCapability:
                     "I can't fetch a reliable live FX quote right now. "
                     "Tell me a pair like AUD/USD and I can retry."
                 ),
-                confidence_reason="provider_unavailable",
+                confidence_reason=reason_code,
+            )
+        if reason_code == "no_provider_configured":
+            fallback_text = (
+                f"I can search and verify {kind} materials, but no structured provider is configured yet."
+            )
+        elif reason_code == "rate_limited":
+            fallback_text = (
+                f"I found configured providers for {kind}, but they are currently rate-limited{provider_hint}{status_hint}."
+            )
+        elif reason_code == "auth_failed":
+            fallback_text = (
+                f"I found configured providers for {kind}, but authentication failed{provider_hint}{status_hint}."
+            )
+        elif reason_code == "invalid_request":
+            fallback_text = (
+                f"I found configured providers for {kind}, but the request was rejected{provider_hint}{status_hint}."
+            )
+        else:
+            fallback_text = (
+                f"I found configured providers for {kind}, but they are currently unavailable{provider_hint}{status_hint}."
             )
         return LegacyFactResult(
             kind=kind,
@@ -370,12 +409,10 @@ class ExternalFactsCapability:
             data=GenericFactData(query=query),
             as_of=now_iso,
             confidence="low",
-            sources=[SourceRef(name="none", type="api", retrieved_at=now_iso)],
+            sources=[SourceRef(name=provider_id or "none", type="api", retrieved_at=now_iso)],
             render_hint="text",
-            fallback_text=(
-                f"I can search and verify {kind} materials, but no structured provider is configured yet."
-            ),
-            confidence_reason="provider_unavailable",
+            fallback_text=fallback_text,
+            confidence_reason=reason_code,
         )
 
     @staticmethod
@@ -482,15 +519,23 @@ class ExternalFactsCapability:
         kind: FactKind,
         query: str,
         context: Dict[str, Any],
-    ) -> Optional[LegacyFactResult]:
+    ) -> Tuple[Optional[LegacyFactResult], Dict[str, Any]]:
+        diagnostics: Dict[str, Any] = {
+            "has_provider": False,
+            "reason_code": "no_provider_configured",
+            "provider_id": "",
+            "http_status": None,
+        }
         # Prefer connector bindings first so runtime follows explicit capability/item bindings.
         binding_result = await self._resolve_binding_first(kind=kind, query=query, context=context)
         if binding_result is not None:
-            return binding_result
+            return binding_result, diagnostics
 
         providers = self._provider_store.list_enabled_for_kind(kind)
         if not providers:
-            return None
+            return None, diagnostics
+        diagnostics["has_provider"] = True
+        diagnostics["reason_code"] = "provider_unavailable"
         for provider in providers:
             try:
                 result = await self._configured_provider.resolve(
@@ -500,10 +545,21 @@ class ExternalFactsCapability:
                     provider=provider,
                 )
                 if result is not None and result.status in {"ok", "partial", "unavailable"}:
-                    return result
-            except Exception:
+                    return result, diagnostics
+            except Exception as exc:
+                diagnostics["provider_id"] = str(provider.get("provider_id") or "")
+                status_code = int(getattr(exc, "code")) if isinstance(getattr(exc, "code", None), int) else None
+                diagnostics["http_status"] = status_code
+                if status_code == 429:
+                    diagnostics["reason_code"] = "rate_limited"
+                elif status_code in {401, 403}:
+                    diagnostics["reason_code"] = "auth_failed"
+                elif status_code == 404:
+                    diagnostics["reason_code"] = "invalid_request"
+                else:
+                    diagnostics["reason_code"] = "provider_unavailable"
                 continue
-        return None
+        return None, diagnostics
 
     async def _resolve_binding_first(
         self,

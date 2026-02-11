@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://octopusos.dev/schemas/router_priority_contract.v1.schema.json",
+  "title": "Router Priority Contract v1",
+  "type": "object",
+  "required": ["version", "description", "principles", "groups", "hard_rules", "reserved_tokens"],
+  "properties": {
+    "version": {"type": "integer", "const": 1},
+    "description": {"type": "string", "minLength": 1},
+    "principles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "groups": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["group_id", "priority", "required", "matchers"],
+        "properties": {
+          "group_id": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+          "priority": {"type": "integer", "minimum": 0, "maximum": 1000},
+          "required": {"type": "boolean"},
+          "matchers": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string", "minLength": 1}
+          },
+          "notes": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "hard_rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["before", "after"],
+        "properties": {
+          "before": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+          "after": {"type": "string", "pattern": "^[a-z0-9_]+$"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "reserved_tokens": {
+      "type": "object",
+      "required": ["stock_symbol_stopwords"],
+      "properties": {
+        "stock_symbol_stopwords": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

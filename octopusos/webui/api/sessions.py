@@ -293,6 +293,19 @@ async def add_message(session_id: str, request: Request) -> JSONResponse:
     else:
         idempotency_key = ulid()
 
+    request_id = request.headers.get("X-Request-ID") or request.headers.get("x-request-id")
+    trace_id = (
+        request.headers.get("X-Trace-ID")
+        or request.headers.get("x-trace-id")
+        or request.headers.get("traceparent")
+    )
+    if isinstance(request_id, str) and request_id.strip() and "request_id" not in safe_metadata:
+        safe_metadata["request_id"] = request_id.strip()
+    if isinstance(trace_id, str) and trace_id.strip() and "trace_id" not in safe_metadata:
+        safe_metadata["trace_id"] = trace_id.strip()
+    if role == "user" and "turn_id" not in safe_metadata:
+        safe_metadata["turn_id"] = idempotency_key
+
     message = chat_service.add_message(
         session_id=session_id,
         role=role,

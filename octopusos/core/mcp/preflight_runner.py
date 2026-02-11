@@ -31,15 +31,39 @@ def run_preflight_for_server(server_cfg: MCPServerConfig) -> PreflightReport:
     warnings: List[str] = []
 
     if package_id != "aws.mcp":
-        has_cmd = bool(server_cfg.command and len(server_cfg.command) > 0)
+        cmd0 = server_cfg.command[0] if server_cfg.command else ""
+        cmd_path = shutil.which(cmd0) if cmd0 and not cmd0.startswith("/") else (cmd0 if cmd0 else None)
+        has_cmd = bool(cmd0 and cmd_path)
         checks.append(
             PreflightCheck(
                 name="command_present",
                 ok=has_cmd,
-                details=f"command={server_cfg.command}",
+                details=f"command={server_cfg.command}, path={cmd_path}",
             )
         )
-        return PreflightReport(ok=has_cmd, checks=checks, planned_actions=actions, warnings=warnings)
+        npm_ok = True
+        npm_detail = "not_npm_command"
+        if server_cfg.command and server_cfg.command[0] in {"npx", "npm"}:
+            package_name = ""
+            for item in server_cfg.command[1:]:
+                token = str(item)
+                if token.startswith("@") or "/" in token:
+                    package_name = token
+                    break
+            if package_name:
+                code, out, err = _run(["npm", "view", package_name, "version"], timeout_s=15)
+                npm_ok = code == 0 and bool((out or "").strip())
+                npm_detail = out or err or f"exit={code}"
+            else:
+                npm_detail = "package_arg_not_found"
+        checks.append(
+            PreflightCheck(
+                name="npm_package_exists",
+                ok=npm_ok,
+                details=npm_detail,
+            )
+        )
+        return PreflightReport(ok=has_cmd and npm_ok, checks=checks, planned_actions=actions, warnings=warnings)
 
     cmd0 = server_cfg.command[0] if server_cfg.command else ""
     cmd_path = shutil.which(cmd0) if cmd0 and not cmd0.startswith("/") else (cmd0 if cmd0 else None)
