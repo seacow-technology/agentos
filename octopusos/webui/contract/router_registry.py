@@ -16,6 +16,7 @@ class RouterRegistration:
     module: str
     attr: str = "router"
     include_prefix: str | None = None
+    optional: bool = False
 
 
 # Single explicit mount list used by both runtime app and contract app.
@@ -34,20 +35,20 @@ ROUTER_REGISTRY: tuple[RouterRegistration, ...] = (
     RouterRegistration("octopusos.webui.api.tasks"),
     RouterRegistration("octopusos.webui.api.repos"),
     RouterRegistration("octopusos.webui.api.calls"),
-    RouterRegistration("octopusos.webui.api.channels"),
-    RouterRegistration("octopusos.webui.api.channels_email"),
-    RouterRegistration("octopusos.webui.api.enterprise_im"),
-    RouterRegistration("octopusos.webui.api.networkos"),
+    RouterRegistration("octopusos.webui.api.channels", optional=True),
+    RouterRegistration("octopusos.webui.api.channels_email", optional=True),
+    RouterRegistration("octopusos.webui.api.enterprise_im", optional=True),
+    RouterRegistration("octopusos.webui.api.networkos", optional=True),
     RouterRegistration("octopusos.webui.api.device_binding"),
     RouterRegistration("octopusos.webui.api.mobile_chat"),
     RouterRegistration("octopusos.webui.api.compat_models"),
     RouterRegistration("octopusos.webui.api.compat_v031"),
     RouterRegistration("octopusos.webui.api.compat_extensions"),
     RouterRegistration("octopusos.webui.api.compat_content"),
-    RouterRegistration("octopusos.webui.api.mcp_marketplace"),
+    RouterRegistration("octopusos.webui.api.mcp_marketplace", optional=True),
     RouterRegistration("octopusos.webui.api.mcp_servers"),
-    RouterRegistration("octopusos.webui.api.mcp_email"),
-    RouterRegistration("octopusos.webui.api.mcp_email_oauth"),
+    RouterRegistration("octopusos.webui.api.mcp_email", optional=True),
+    RouterRegistration("octopusos.webui.api.mcp_email_oauth", optional=True),
     RouterRegistration("octopusos.webui.api.compat_bulk"),
     RouterRegistration("octopusos.webui.api.external_facts_replay"),
     RouterRegistration("octopusos.webui.api.external_facts_policy"),
@@ -74,7 +75,8 @@ ROUTER_REGISTRY: tuple[RouterRegistration, ...] = (
 )
 
 CONTRACT_ONLY_ROUTER_REGISTRY: tuple[RouterRegistration, ...] = (
-    # OpenAPI declaration-only router to keep contract snapshot aligned with runtime config endpoints.
+    # OpenAPI declaration-only router to keep contract snapshot
+    # aligned with runtime config endpoints.
     RouterRegistration("octopusos.webui.contract.routers.config_contract"),
 )
 
@@ -90,10 +92,27 @@ def _get_router(mod: ModuleType, attr: str) -> APIRouter:
     return router
 
 
-def iter_registered_routers(include_contract_only: bool = False) -> Iterable[tuple[RouterRegistration, APIRouter]]:
+def _is_missing_split_dependency(exc: ModuleNotFoundError) -> bool:
+    missing_name = (getattr(exc, "name", "") or "").strip()
+    return (
+        missing_name.startswith("octopusos.networkos")
+        or missing_name.startswith("octopusos.communicationos")
+        or missing_name == "networkos"
+        or missing_name == "communicationos"
+    )
+
+
+def iter_registered_routers(
+    include_contract_only: bool = False,
+) -> Iterable[tuple[RouterRegistration, APIRouter]]:
     entries = ROUTER_REGISTRY + (CONTRACT_ONLY_ROUTER_REGISTRY if include_contract_only else ())
     for entry in entries:
-        module = _load_module(entry.module)
+        try:
+            module = _load_module(entry.module)
+        except ModuleNotFoundError as exc:
+            if entry.optional and _is_missing_split_dependency(exc):
+                continue
+            raise
         yield entry, _get_router(module, entry.attr)
 
 
@@ -106,10 +125,22 @@ def discover_api_router_modules() -> set[str]:
     api_dir = Path(__file__).resolve().parents[1] / "api"
     discovered: set[str] = set()
     for py in api_dir.glob("*.py"):
-        if py.name.startswith("_") or py.stem in {"__init__", "compat_state", "providers_errors", "providers_models", "providers_lifecycle", "validation"}:
+        if py.name.startswith("_") or py.stem in {
+            "__init__",
+            "compat_state",
+            "providers_errors",
+            "providers_models",
+            "providers_lifecycle",
+            "validation",
+        }:
             continue
         module_path = f"octopusos.webui.api.{py.stem}"
-        mod = _load_module(module_path)
+        try:
+            mod = _load_module(module_path)
+        except ModuleNotFoundError as exc:
+            if _is_missing_split_dependency(exc):
+                continue
+            raise
         if isinstance(getattr(mod, "router", None), APIRouter):
             discovered.add(module_path)
     return discovered

@@ -1,6 +1,6 @@
 [project]
 name = "octopusos"
-version = "3.2.0"
+version = "3.2.1"
 description = "System-level, project-agnostic AI Agent orchestration system"
 requires-python = ">=3.13"
 readme = "README.md"
@@ -32,7 +32,6 @@ dependencies = [
     "duckduckgo-search>=6.3.11",  # Web search functionality (DuckDuckGo)
     "beautifulsoup4>=4.12.0",
     "lxml>=5.0.0",
-    "webrtcvad>=2.0.10",  # Voice Activity Detection (VAD)
     "numpy>=1.24.0",  # Required for audio processing
     "PyNaCl>=1.5.0",  # Ed25519 signature verification for Discord
     "grpcio>=1.60.0",  # gRPC for Voice Worker Sidecar (v0.2)
@@ -47,6 +46,7 @@ dev = [
     "ruff>=0.8.5",
 ]
 voice = [
+    "webrtcvad>=2.0.10",  # Voice Activity Detection (VAD)
     "faster-whisper>=1.0.0; python_version < '3.14'",
 ]
 vector = [

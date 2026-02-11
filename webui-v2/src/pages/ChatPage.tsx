@@ -36,6 +36,49 @@ const DEFAULT_CONVERSATION_MODE: ConversationMode = 'chat'
 const DEFAULT_EXECUTION_PHASE: ExecutionPhase = 'planning'
 const REPLY_RECOVERY_TIMEOUT_MS = 120000
 
+function isPlaceholderLastError(value: unknown): boolean {
+  if (value == null) return true
+  const normalized = String(value).trim().toLowerCase()
+  return normalized === '' || normalized === '-' || normalized === 'none' || normalized === 'null' || normalized === 'undefined' || normalized === 'n/a'
+}
+
+function evaluateDaemonHealth(health: any): { healthy: boolean; issues: string[]; hints: string[] } {
+  const issues: string[] = []
+  const hints: string[] = []
+
+  // Highest-priority signal: explicit ok flag.
+  if (typeof health?.ok === 'boolean') {
+    if (health.ok) return { healthy: true, issues, hints }
+    issues.push('Daemon reported ok=false')
+    if (!isPlaceholderLastError(health?.last_error)) {
+      hints.push(String(health?.last_error))
+    }
+    return { healthy: false, issues, hints }
+  }
+
+  // Secondary explicit signal.
+  if (typeof health?.running === 'boolean') {
+    if (health.running) return { healthy: true, issues, hints }
+    issues.push('Daemon reported running=false')
+    if (!isPlaceholderLastError(health?.last_error)) {
+      hints.push(String(health?.last_error))
+    }
+    return { healthy: false, issues, hints }
+  }
+
+  const status = typeof health?.status === 'string' ? health.status.trim().toLowerCase() : ''
+  if (status === 'error' || status === 'failed' || status === 'down' || status === 'stopped' || status === 'unhealthy') {
+    issues.push(`Daemon status=${status}`)
+    if (!isPlaceholderLastError(health?.last_error)) {
+      hints.push(String(health?.last_error))
+    }
+    return { healthy: false, issues, hints }
+  }
+
+  // No explicit negative signal: treat as healthy to avoid false positives.
+  return { healthy: true, issues, hints }
+}
+
 function normalizeConversationMode(value: unknown): ConversationMode {
   const allowed: ConversationMode[] = ['chat', 'discussion', 'plan', 'development', 'task']
   return typeof value === 'string' && allowed.includes(value as ConversationMode)
@@ -1155,13 +1198,13 @@ export default function ChatPage() {
       // ✅ 后台异步检查健康状态（不阻塞消息发送）
       systemService.daemonStatusApiDaemonStatusGet()
         .then((health: any) => {
-          const healthy = Boolean(health?.running ?? health?.ok ?? true)
-          if (!healthy) {
+          const evaluation = evaluateDaemonHealth(health)
+          if (!evaluation.healthy) {
             // 仅在健康检查失败时显示警告（不阻止消息发送）
             setHealthWarning({
               show: true,
-              issues: ['Daemon not healthy'],
-              hints: []
+              issues: evaluation.issues.length > 0 ? evaluation.issues : ['Daemon not healthy'],
+              hints: evaluation.hints
             })
           }
         })
@@ -1447,16 +1490,14 @@ export default function ChatPage() {
     const performStartupHealthCheck = async () => {
       try {
         const health = await systemService.daemonStatusApiDaemonStatusGet()
-        const isHealthy = Boolean(health?.running ?? health?.ok ?? true)
-        const issues = isHealthy ? [] : ['Daemon not healthy']
-        const hints: string[] = []
+        const evaluation = evaluateDaemonHealth(health)
 
-        if (!isHealthy) {
-          console.warn('[ChatPage] ⚠️ Startup health check failed:', health.issues)
+        if (!evaluation.healthy) {
+          console.warn('[ChatPage] ⚠️ Startup health check failed:', evaluation.issues)
           setHealthWarning({
             show: true,
-            issues,
-            hints,
+            issues: evaluation.issues.length > 0 ? evaluation.issues : ['Daemon not healthy'],
+            hints: evaluation.hints,
           })
         } else {
           // console.log('[ChatPage] ✅ Startup health check passed')
@@ -1478,13 +1519,13 @@ export default function ChatPage() {
     const healthCheckInterval = setInterval(async () => {
       try {
         const health = await systemService.daemonStatusApiDaemonStatusGet()
-        const isHealthy = Boolean(health?.running ?? health?.ok ?? true)
-        if (!isHealthy) {
+        const evaluation = evaluateDaemonHealth(health)
+        if (!evaluation.healthy) {
           console.warn('[ChatPage] ⚠️ Periodic health check failed')
           setHealthWarning({
             show: true,
-            issues: ['Daemon not healthy'],
-            hints: []
+            issues: evaluation.issues.length > 0 ? evaluation.issues : ['Daemon not healthy'],
+            hints: evaluation.hints
           })
         }
       } catch (error) {

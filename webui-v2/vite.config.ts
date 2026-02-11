@@ -4,7 +4,14 @@ import fs from 'fs'
 import path from 'path'
 
 const VERSION_FILE = path.resolve(__dirname, '..', '..', 'VERSION')
-const releaseVersion = fs.readFileSync(VERSION_FILE, 'utf-8').trim() || '0.0'
+const releaseVersion = (() => {
+  try {
+    if (!fs.existsSync(VERSION_FILE)) return '0.0'
+    return fs.readFileSync(VERSION_FILE, 'utf-8').trim() || '0.0'
+  } catch {
+    return '0.0'
+  }
+})()
 const buildVersion = releaseVersion
 const productName = 'OctopusOS'
 const webuiName = 'OctopusOS WebUI'
