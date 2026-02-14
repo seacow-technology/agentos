@@ -8,6 +8,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import Iterable, List
 
+import sys
 from fastapi import APIRouter
 
 
@@ -23,9 +24,12 @@ class RouterRegistration:
 # All API routers must be registered here.
 ROUTER_REGISTRY: tuple[RouterRegistration, ...] = (
     RouterRegistration("octopusos.webui.api.admin_token"),
+    RouterRegistration("octopusos.webui.api.action_log", optional=True),
     RouterRegistration("octopusos.webui.api.frontdesk"),
     RouterRegistration("octopusos.webui.api.agents"),
     RouterRegistration("octopusos.webui.api.dispatch"),
+    RouterRegistration("octopusos.webui.api.decision_timeline"),
+    RouterRegistration("octopusos.webui.api.action_log"),
     RouterRegistration("octopusos.webui.api.sessions"),
     RouterRegistration("octopusos.webui.api.work"),
     RouterRegistration("octopusos.webui.api.providers"),
@@ -36,10 +40,12 @@ ROUTER_REGISTRY: tuple[RouterRegistration, ...] = (
     RouterRegistration("octopusos.webui.api.repos"),
     RouterRegistration("octopusos.webui.api.calls"),
     RouterRegistration("octopusos.webui.api.channels", optional=True),
+    RouterRegistration("octopusos.webui.api.channels_teams", optional=True),
     RouterRegistration("octopusos.webui.api.bridge", optional=True),
     RouterRegistration("octopusos.webui.api.channels_email", optional=True),
     RouterRegistration("octopusos.webui.api.enterprise_im", optional=True),
     RouterRegistration("octopusos.webui.api.networkos", optional=True),
+    RouterRegistration("octopusos.webui.api.federation"),
     RouterRegistration("octopusos.webui.api.device_binding"),
     RouterRegistration("octopusos.webui.api.mobile_chat"),
     RouterRegistration("octopusos.webui.api.compat_models"),
@@ -51,6 +57,15 @@ ROUTER_REGISTRY: tuple[RouterRegistration, ...] = (
     RouterRegistration("octopusos.webui.api.mcp_email", optional=True),
     RouterRegistration("octopusos.webui.api.mcp_email_oauth", optional=True),
     RouterRegistration("octopusos.webui.api.compat_bulk"),
+    RouterRegistration("octopusos.webui.api.shell"),
+    RouterRegistration("octopusos.webui.api.hosts"),
+    RouterRegistration("octopusos.webui.api.keychain"),
+    RouterRegistration("octopusos.webui.api.known_hosts"),
+    RouterRegistration("octopusos.webui.api.connections"),
+    RouterRegistration("octopusos.webui.api.sftp"),
+    RouterRegistration("octopusos.webui.api.logs"),
+    RouterRegistration("octopusos.webui.api.execution_aliases"),
+    RouterRegistration("octopusos.webui.api.ssh_provider_config"),
     RouterRegistration("octopusos.webui.api.external_facts_replay"),
     RouterRegistration("octopusos.webui.api.external_facts_policy"),
     RouterRegistration("octopusos.webui.api.external_facts_providers"),
@@ -64,6 +79,8 @@ ROUTER_REGISTRY: tuple[RouterRegistration, ...] = (
     RouterRegistration("octopusos.webui.api.work_items"),
     RouterRegistration("octopusos.webui.api.transparency"),
     RouterRegistration("octopusos.webui.api.changelog"),
+    RouterRegistration("octopusos.webui.api.docs_wiki", optional=True),
+    RouterRegistration("octopusos.webui.api.teams_wiki", optional=True),
     RouterRegistration("octopusos.webui.api.streams"),
     RouterRegistration("octopusos.webui.api.preview"),
     RouterRegistration("octopusos.webui.api.daemon_control"),
@@ -148,6 +165,11 @@ def discover_api_router_modules() -> set[str]:
 
 
 def registry_consistency_errors() -> List[str]:
+    # In PyInstaller onefile builds, the source tree (.py files) is not available on disk in a
+    # way that supports Path-based discovery. The router registry is the source of truth there.
+    if bool(getattr(sys, "frozen", False)) or bool(getattr(sys, "_MEIPASS", None)):
+        return []
+
     discovered = discover_api_router_modules()
     mounted = mounted_module_paths()
     missing = sorted(discovered - mounted)

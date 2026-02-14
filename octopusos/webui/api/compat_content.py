@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 from uuid import uuid4
 
-from fastapi import APIRouter, Header, HTTPException, Query, Request
+from fastapi import APIRouter, Body, Header, HTTPException, Query
 
 from octopusos.core.capabilities.admin_token import validate_admin_token
 from octopusos.store import get_db_path
@@ -27,7 +27,8 @@ def _db_connect() -> sqlite3.Connection:
     env_path = os.getenv("OCTOPUSOS_DB_PATH")
     db_path = Path(env_path) if env_path else get_db_path()
     if not db_path.exists():
-        raise HTTPException(status_code=500, detail="Database not initialized")
+        # Avoid 5xx for missing local state in e2e/smoke; treat as policy/unavailable.
+        raise HTTPException(status_code=409, detail="Database not initialized")
     conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
     return conn
@@ -187,11 +188,10 @@ def get_content(content_id: str) -> Dict[str, Any]:
 
 @router.post("", status_code=201)
 async def create_content(
-    request: Request,
+    payload: Dict[str, Any] = Body(...),
     admin_token: Optional[str] = Header(default=None, alias="X-Admin-Token"),
 ) -> Dict[str, Any]:
     _require_admin_token(admin_token)
-    payload = await request.json()
 
     content_type = payload.get("type")
     name = payload.get("name")

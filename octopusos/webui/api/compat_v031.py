@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 from uuid import uuid4
 
-from fastapi import APIRouter, Header, HTTPException, Query, Request
+from fastapi import APIRouter, Body, Header, HTTPException, Query
 
 from octopusos.core.capabilities.admin_token import validate_admin_token
 from octopusos.core.projects.factory import ensure_project_path
@@ -151,11 +151,10 @@ def list_projects(
 
 @router.post("/projects", status_code=201)
 async def create_project(
-    request: Request,
+    payload: Dict[str, Any] = Body(...),
     admin_token: Optional[str] = Header(default=None, alias="X-Admin-Token"),
 ) -> Dict[str, Any]:
     actor = _require_admin_token(admin_token)
-    payload = await request.json()
     name = payload.get("name")
     if not name:
         raise HTTPException(status_code=400, detail="name is required")
@@ -163,11 +162,11 @@ async def create_project(
     conn = _db_connect()
     try:
         if not _table_exists(conn, "projects"):
-            raise HTTPException(status_code=500, detail="projects table missing")
+            raise HTTPException(status_code=409, detail="projects table missing")
         cols = _table_columns(conn, "projects")
         id_col = "project_id" if "project_id" in cols else "id" if "id" in cols else None
         if id_col is None:
-            raise HTTPException(status_code=500, detail="project id column missing")
+            raise HTTPException(status_code=409, detail="project id column missing")
 
         project_id = f"proj_{uuid4().hex[:12]}"
         now = _now_iso()
@@ -293,16 +292,15 @@ def list_project_repos(
 @router.post("/projects/{project_id}/repos", status_code=201)
 async def create_project_repo(
     project_id: str,
-    request: Request,
+    payload: Dict[str, Any] = Body(...),
     admin_token: Optional[str] = Header(default=None, alias="X-Admin-Token"),
 ) -> Dict[str, Any]:
     actor = _require_admin_token(admin_token)
-    payload = await request.json()
     conn = _db_connect()
     try:
         table = "project_repos" if _table_exists(conn, "project_repos") else "repos" if _table_exists(conn, "repos") else None
         if table is None:
-            raise HTTPException(status_code=500, detail="repos table missing")
+            raise HTTPException(status_code=409, detail="repos table missing")
         cols = _table_columns(conn, table)
         repo_id = f"repo_{uuid4().hex[:12]}"
         now = _now_iso()
@@ -394,19 +392,18 @@ def list_tasks(
 
 @router.post("/tasks", status_code=201)
 async def create_task(
-    request: Request,
+    payload: Dict[str, Any] = Body(...),
     admin_token: Optional[str] = Header(default=None, alias="X-Admin-Token"),
 ) -> Dict[str, Any]:
     actor = _require_admin_token(admin_token)
-    payload = await request.json()
     conn = _db_connect()
     try:
         if not _table_exists(conn, "tasks"):
-            raise HTTPException(status_code=500, detail="tasks table missing")
+            raise HTTPException(status_code=409, detail="tasks table missing")
         cols = _table_columns(conn, "tasks")
         id_col = "task_id" if "task_id" in cols else "id" if "id" in cols else None
         if id_col is None:
-            raise HTTPException(status_code=500, detail="task id column missing")
+            raise HTTPException(status_code=409, detail="task id column missing")
 
         task_id = f"task_{uuid4().hex[:12]}"
         now = _now_iso()

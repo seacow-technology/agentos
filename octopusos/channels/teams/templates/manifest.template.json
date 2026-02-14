@@ -1,0 +1,46 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.25/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.25",
+  "version": "__VERSION__",
+  "id": "__APP_ID__",
+  "name": {
+    "short": "__APP_SHORT_NAME__",
+    "full": "__APP_NAME__"
+  },
+  "description": {
+    "short": "__APP_DESC__",
+    "full": "__APP_DESC__"
+  },
+  "developer": {
+    "name": "SEACOW TECHNOLOGY PTY. LTD.",
+    "websiteUrl": "https://octopusos.dev",
+    "privacyUrl": "https://octopusos.dev/privacy",
+    "termsOfUseUrl": "https://octopusos.dev/terms"
+  },
+  "icons": {
+    "outline": "outline.png",
+    "color": "color.png"
+  },
+  "accentColor": "#003B6F",
+  "bots": [
+    {
+      "botId": "__BOT_ID__",
+      "scopes": ["personal", "team", "groupChat"],
+      "supportsFiles": false,
+      "isNotificationOnly": false,
+      "commandLists": [
+        {
+          "scopes": ["personal", "team", "groupChat"],
+          "commands": [
+            {
+              "title": "help",
+              "description": "Show available commands"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "permissions": ["identity", "messageTeamMembers"],
+  "validDomains": ["__VALID_DOMAIN__"]
+}

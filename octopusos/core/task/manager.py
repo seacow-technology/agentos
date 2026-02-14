@@ -530,7 +530,7 @@ class TaskManager:
             status: Optional new status (if provided, will be updated together with exit_reason)
         """
         # Validate exit_reason
-        valid_reasons = ['done', 'max_iterations', 'blocked', 'fatal_error', 'user_cancelled', 'timeout', 'unknown']
+        valid_reasons = ['done', 'paused', 'max_iterations', 'blocked', 'fatal_error', 'user_cancelled', 'timeout', 'unknown']
         if exit_reason not in valid_reasons:
             logger.warning(f"Invalid exit_reason '{exit_reason}', setting to 'unknown'")
             exit_reason = 'unknown'

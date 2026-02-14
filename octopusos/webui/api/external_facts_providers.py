@@ -64,7 +64,11 @@ async def upsert_provider(
     admin_token: Optional[str] = Header(default=None, alias="X-Admin-Token"),
 ):
     _require_admin_token(admin_token)
-    item = _store.upsert(payload)
+    try:
+        item = _store.upsert(payload)
+    except ValueError as exc:
+        # Treat validation errors as client errors (OpenAPI smoke should never see 5xx here).
+        raise HTTPException(status_code=422, detail=str(exc))
     return {"ok": True, "data": item}
 
 

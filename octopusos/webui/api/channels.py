@@ -11,6 +11,8 @@ This router provides a real implementation for:
 from __future__ import annotations
 
 import hashlib
+import json
+import logging
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Body, Header, HTTPException, Query, Request
@@ -18,9 +20,40 @@ from fastapi.responses import JSONResponse
 
 from octopusos.core.capabilities.admin_token import validate_admin_token
 from octopusos.communicationos.runtime import get_communication_runtime
+from octopusos.channels.teams.store import TeamsConnectionStore
 from octopusos.webui.api.compat_state import audit_event, db_connect, ensure_schema
 
 router = APIRouter(prefix="/api", tags=["channels"])
+logger = logging.getLogger(__name__)
+
+
+def _extract_teams_tenant_id(activity: Dict[str, Any]) -> str:
+    """
+    Extract Teams tenant id from a Bot Framework activity payload.
+
+    Teams activities commonly include tenant id in one of:
+    - channelData.tenant.id
+    - channelData.tenantId
+    - conversation.tenantId
+    """
+    channel_data = activity.get("channelData") or {}
+    if isinstance(channel_data, dict):
+        tenant = channel_data.get("tenant") or {}
+        if isinstance(tenant, dict):
+            v = str(tenant.get("id") or "").strip()
+            if v:
+                return v
+        v = str(channel_data.get("tenantId") or "").strip()
+        if v:
+            return v
+
+    conv = activity.get("conversation") or {}
+    if isinstance(conv, dict):
+        v = str(conv.get("tenantId") or "").strip()
+        if v:
+            return v
+
+    return ""
 
 
 async def _handle_bridge_webhook(*, channel_id: str, request: Request) -> JSONResponse:
@@ -50,6 +83,64 @@ async def _handle_bridge_webhook(*, channel_id: str, request: Request) -> JSONRe
         return JSONResponse(status_code=403, content={"ok": False, "error": str(e)})
     except Exception as e:
         return JSONResponse(status_code=500, content={"ok": False, "error": f"webhook_failed:{e}"})
+
+
+def _extract_teams_tenant_id(activity: Dict[str, Any]) -> str:
+    if not isinstance(activity, dict):
+        return ""
+    channel_data = activity.get("channelData")
+    if isinstance(channel_data, dict):
+        tenant_obj = channel_data.get("tenant")
+        if isinstance(tenant_obj, dict):
+            tenant_id = str(tenant_obj.get("id") or "").strip()
+            if tenant_id:
+                return tenant_id
+        tenant_id = str(channel_data.get("tenantId") or "").strip()
+        if tenant_id:
+            return tenant_id
+    conversation = activity.get("conversation")
+    if isinstance(conversation, dict):
+        tenant_id = str(conversation.get("tenantId") or "").strip()
+        if tenant_id:
+            return tenant_id
+    return ""
+
+
+def _resolve_teams_tenant_id(activity: Dict[str, Any]) -> str:
+    tenant_id = _extract_teams_tenant_id(activity)
+    if tenant_id:
+        return tenant_id
+    # Some Teams system activities can omit tenant metadata; in single-tenant
+    # local deployments fallback to the only connected org to avoid false 403s.
+    try:
+        store = TeamsConnectionStore()
+        connected = [x for x in store.list_connections() if x.status != "Disconnected"]
+        if len(connected) == 1:
+            return str(connected[0].tenant_id or "").strip()
+    except Exception:
+        return ""
+    return ""
+
+
+def _audit_teams_tenant_reject(*, reason: str, tenant_id: str, channel_id: str) -> None:
+    conn = db_connect()
+    try:
+        ensure_schema(conn)
+        audit_event(
+            conn,
+            event_type="teams_webhook_rejected",
+            endpoint="/api/channels/teams/webhook",
+            actor="system",
+            payload={
+                "reason": reason,
+                "tenant_id": tenant_id,
+                "channel_id": channel_id,
+            },
+            result={"ok": False},
+        )
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def _require_admin_token(token: Optional[str]) -> str:
@@ -295,7 +386,48 @@ def send_message_tool(
 
 @router.post("/channels/teams/webhook")
 async def teams_webhook(request: Request) -> JSONResponse:
-    return await _handle_bridge_webhook(channel_id="teams", request=request)
+    body = await request.body()
+    try:
+        activity = json.loads(body.decode("utf-8") or "{}")
+    except Exception:
+        activity = {}
+    channel_id = str(activity.get("channelId") or "").strip().lower() if isinstance(activity, dict) else ""
+    if channel_id == "msteams":
+        activity_type = str(activity.get("type") or "").strip() if isinstance(activity, dict) else ""
+        tenant_id = _resolve_teams_tenant_id(activity)
+        logger.info("teams_webhook_inbound type=%s tenant_id=%s", activity_type or "unknown", tenant_id or "missing")
+        if not tenant_id:
+            _audit_teams_tenant_reject(reason="missing_tenant_id", tenant_id="", channel_id=channel_id)
+            return JSONResponse(status_code=403, content={"ok": False, "error": "unknown_tenant"})
+        store = TeamsConnectionStore()
+        if not store.has_connection(tenant_id):
+            _audit_teams_tenant_reject(reason="unknown_tenant", tenant_id=tenant_id, channel_id=channel_id)
+            return JSONResponse(status_code=403, content={"ok": False, "error": "unknown_tenant", "tenant_id": tenant_id})
+        request.state.teams_tenant_id = tenant_id
+
+    rt = get_communication_runtime()
+    try:
+        rt.ensure_adapter_started("teams")
+    except Exception as e:
+        return JSONResponse(status_code=200, content={"ok": False, "error": f"adapter_not_ready:{e}"})
+
+    state = rt._adapters.get("teams")  # type: ignore[attr-defined]
+    if not state:
+        return JSONResponse(status_code=200, content={"ok": False, "error": "adapter_not_running"})
+
+    adapter = state.adapter
+    headers = {k.lower(): v for k, v in request.headers.items()}
+    try:
+        code, resp = adapter.handle_webhook(headers=headers, body_bytes=body)
+        if isinstance(resp, dict):
+            resp.setdefault("source", "real")
+            if getattr(request.state, "teams_tenant_id", None):
+                resp.setdefault("tenant_id", str(request.state.teams_tenant_id))
+        return JSONResponse(status_code=int(code), content=resp)
+    except PermissionError as e:
+        return JSONResponse(status_code=403, content={"ok": False, "error": str(e)})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"ok": False, "error": f"webhook_failed:{e}"})
 
 
 @router.post("/channels/imessage/webhook")

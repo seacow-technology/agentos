@@ -52,6 +52,10 @@ from octopusos.core.growth.actionable_kb import ActionableKBService
 from octopusos.core.growth.evidence import EvidenceGate
 from octopusos.core.growth.failure_pipeline import build_failure_summary
 from octopusos.jobs.brain_consume_failure_event import consume_failure_event
+from octopusos.core.executor_dry.open_plan_builder import OpenPlanBuilder
+from octopusos.core.schemas import OpenPlan as SchemaOpenPlan
+from octopusos.core.schemas import ModeSelection as SchemaModeSelection
+from octopusos.core.schemas import validate_open_plan as validate_open_plan_structure
 
 logger = logging.getLogger(__name__)
 
@@ -311,6 +315,14 @@ class TaskRunner:
                     self.task_manager.update_task_exit_reason(task_id, exit_reason)
                     break
 
+                # User-paused tasks: exit cleanly without changing status.
+                if task.status == "paused":
+                    logger.info(f"Task {task_id} is paused; exiting runner loop")
+                    exit_reason = "paused"
+                    # Record exit_reason for observability, but do not change status.
+                    self.task_manager.update_task_exit_reason(task_id, exit_reason)
+                    break
+
                 # 4. Check if task is in terminal state
                 if task.status in ["succeeded", "failed", "canceled", "blocked"]:
                     logger.info(f"Task {task_id} is in terminal state: {task.status}")
@@ -469,68 +481,131 @@ class TaskRunner:
             except Exception as e:
                 logger.error(f"Failed to emit phase_enter event: {e}")
 
-            if self.use_real_pipeline:
-                # Use real ModePipelineRunner
-                try:
-                    nl_request = metadata.nl_request or "Execute task"
+            # WebUI contract requires a real open_plan with steps. Prefer OpenPlanBuilder
+            # (structured output from LLM), optionally backed by a local OpenAI-compatible server.
+            nl_request = metadata.nl_request or task.title or "Execute task"
+            try:
+                plan_model = os.getenv("OCTOPUSOS_OPEN_PLAN_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
+                base_url = os.getenv("OPENAI_BASE_URL") or None
 
-                    # Task #9: Use LLM cache if recovery enabled
-                    if self.enable_recovery and self.llm_cache:
-                        pipeline_result = self._generate_plan_with_cache(task, nl_request)
-                    else:
-                        pipeline_result = self._generate_plan_direct(task, nl_request)
-                    
-                    # Check pipeline result
-                    if pipeline_result.overall_status != "success":
-                        self._log_audit(task.task_id, "error", f"Pipeline failed: {pipeline_result.summary}")
-                        return "failed"
-                    
-                    self._log_audit(task.task_id, "info", f"Pipeline completed: {pipeline_result.summary}")
+                selection = SchemaModeSelection(
+                    primary_mode="planning",
+                    pipeline=["planning", "implementation"],
+                    confidence=0.9,
+                    reason="webui open_plan (plan-then-execute)",
+                )
 
-                    # P2-C1: Save open_plan proposal as artifact
-                    self._save_open_plan_artifact(task.task_id, pipeline_result)
+                t0 = time.monotonic()
+                self.task_manager.add_audit(
+                    task_id=task.task_id,
+                    event_type="OPEN_PLAN_LLM_REQUEST",
+                    level="info",
+                    payload={
+                        "provider": "openai_compat" if base_url else "openai",
+                        "base_url": base_url,
+                        "model": plan_model,
+                    },
+                )
+                builder = OpenPlanBuilder(model=plan_model, base_url=base_url)
+                plan_obj: SchemaOpenPlan = builder.build(goal=nl_request, mode_selection=selection, context={
+                    "task_id": task.task_id,
+                    "repo_path": str(self.repo_path),
+                })
+                latency_ms = int((time.monotonic() - t0) * 1000)
 
-                    # PR-C: Extract work_items from pipeline result
-                    work_items = self._extract_work_items(task.task_id, pipeline_result)
+                # Minimal structural validation (business validation happens separately).
+                validate_open_plan_structure(plan_obj)
 
-                except Exception as e:
-                    logger.error(f"Pipeline execution failed: {e}", exc_info=True)
-                    self._log_audit(task.task_id, "error", f"Pipeline error: {str(e)}")
+                plan_dict = plan_obj.to_dict()
+                plan_dict.setdefault("metadata", {})
+                plan_dict["metadata"].update({
+                    "task_id": task.task_id,
+                    "provider": "openai_compat" if base_url else "openai",
+                    "base_url": base_url,
+                    "model": plan_model,
+                    "llm_latency_ms": latency_ms,
+                })
+
+                # Deterministic E2E hook: append a high-risk approval step so the UI flow can
+                # prove "auto-pause -> approve -> resume" with real runner state transitions.
+                if os.getenv("OCTOPUSOS_E2E_DETERMINISTIC") == "1":
+                    steps = plan_dict.get("steps")
+                    if isinstance(steps, list):
+                        steps.append({
+                            "id": "E2E_RISK",
+                            "intent": "E2E: trigger high-risk pause checkpoint",
+                            "proposed_actions": [
+                                {
+                                    "kind": "rule",
+                                    "payload": {
+                                        "constraint": "HIGH_RISK: requires human approval to proceed",
+                                        "scope": "execution",
+                                        "enforcement": "pause",
+                                    },
+                                },
+                                {
+                                    "kind": "note",
+                                    "payload": {"message": "E2E-only step to validate risk pause UX."},
+                                },
+                            ],
+                            "success_criteria": ["User approved and execution resumed"],
+                            "risks": ["E2E-only"],
+                        })
+
+                # Persist open_plan and record lineage/audit.
+                self._save_open_plan_dict_artifact(task.task_id, plan_dict)
+
+                # Keep simple aggregate latency stats on task metadata for /live.
+                if not task.metadata:
+                    task.metadata = {}
+                task.metadata["llm_latency_ms_avg"] = float(latency_ms)
+                task.metadata["llm_latency_ms_p95"] = float(latency_ms)
+                self._update_task_metadata(task.task_id, task.metadata)
+
+                self.task_manager.add_audit(
+                    task_id=task.task_id,
+                    event_type="OPEN_PLAN_LLM_RESPONSE",
+                    level="info",
+                    payload={
+                        "model": plan_model,
+                        "latency_ms": latency_ms,
+                        "steps": len(plan_dict.get("steps") or []),
+                    },
+                )
+            except Exception as e:
+                # Default behavior: fail planning if LLM isn't available.
+                # Allow opt-out for local dev with OCTOPUSOS_ALLOW_SIM_PLAN=1.
+                if os.getenv("OCTOPUSOS_ALLOW_SIM_PLAN") == "1":
+                    sim_plan = {
+                        "goal": nl_request,
+                        "mode_selection": {
+                            "primary_mode": "planning",
+                            "pipeline": ["planning", "implementation"],
+                            "confidence": 0.1,
+                            "reason": f"simulation fallback: {type(e).__name__}",
+                        },
+                        "steps": [
+                            {
+                                "id": "S1",
+                                "intent": "Simulated plan (LLM unavailable)",
+                                "proposed_actions": [{"kind": "note", "payload": {"message": str(e)}}],
+                                "success_criteria": ["N/A"],
+                            }
+                        ],
+                        "artifacts": [],
+                        "metadata": {"task_id": task.task_id, "simulated": True},
+                    }
+                    self._save_open_plan_dict_artifact(task.task_id, sim_plan)
+                    self.task_manager.add_audit(
+                        task_id=task.task_id,
+                        event_type="OPEN_PLAN_SIMULATED",
+                        level="warn",
+                        payload={"error": str(e)},
+                    )
+                else:
+                    logger.error(f"OpenPlanBuilder failed: {e}", exc_info=True)
+                    self._log_audit(task.task_id, "error", f"Planning failed: {str(e)}")
                     return "failed"
-            else:
-                # Simulation mode
-                time.sleep(2)
-                # P2-C1: Save open_plan artifact for deterministic simulation
-                from types import SimpleNamespace
-                pipeline_result = SimpleNamespace(
-                    overall_status="success",
-                    summary="simulation: open_plan generated",
-                    stage_results=None
-                )
-                self._save_open_plan_artifact(task.task_id, pipeline_result)
-                # Record open_plan lineage for simulation parity
-                self.task_manager.add_lineage(
-                    task_id=task.task_id,
-                    kind="open_plan",
-                    ref_id="open_plan",
-                    phase="planning",
-                    metadata={"source": "simulation"}
-                )
-                # Add minimal pipeline/execution_request lineage for timeline parity
-                self.task_manager.add_lineage(
-                    task_id=task.task_id,
-                    kind="pipeline",
-                    ref_id="pipeline_simulation",
-                    phase="planning",
-                    metadata={"source": "simulation"}
-                )
-                self.task_manager.add_lineage(
-                    task_id=task.task_id,
-                    kind="execution_request",
-                    ref_id="exec_simulation",
-                    phase="planning",
-                    metadata={"source": "simulation"}
-                )
             
             # RED LINE (P0-2): Pause can ONLY happen at open_plan checkpoint
             run_mode_str = metadata.run_mode.value
@@ -588,6 +663,16 @@ class TaskRunner:
                 )
             except Exception as e:
                 logger.error(f"Failed to emit phase_enter event: {e}")
+
+            # Prefer executing OpenPlan steps if present.
+            plan = self._load_open_plan_dict(task.task_id)
+            if plan and isinstance(plan.get("steps"), list) and plan.get("steps"):
+                try:
+                    return self._execute_open_plan(task, plan)
+                except Exception as e:
+                    logger.error(f"OpenPlan execution failed: {e}", exc_info=True)
+                    self._log_audit(task.task_id, "error", f"OpenPlan execution failed: {str(e)}")
+                    return "failed"
 
             # PR-C: Check if work_items exist in metadata
             work_items_data = task.metadata.get("work_items")
@@ -892,6 +977,31 @@ class TaskRunner:
             logger.error(f"Failed to save open_plan artifact: {e}", exc_info=True)
             self._log_audit(task_id, "warn", f"Failed to save open_plan artifact: {str(e)}")
             # Don't fail the task if artifact save fails (non-critical)
+
+    def _save_open_plan_dict_artifact(self, task_id: str, plan_dict: Dict[str, Any]) -> None:
+        """Save OpenPlan (dict) to artifacts store and record lineage.
+
+        WebUI relies on this artifact for "Plan Review" UI.
+        """
+        artifacts_dir = Path("store/artifacts") / task_id
+        artifacts_dir.mkdir(parents=True, exist_ok=True)
+
+        artifact_path = artifacts_dir / "open_plan.json"
+        artifact_path.write_text(json.dumps(plan_dict, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+        relative_path = f"artifacts/{task_id}/open_plan.json"
+        self.task_manager.add_lineage(
+            task_id=task_id,
+            kind="open_plan",
+            ref_id=relative_path,
+            phase="planning",
+            metadata={
+                "artifact_kind": "open_plan",
+                "file_size": artifact_path.stat().st_size,
+                "generated_at": utc_now_iso(),
+            },
+        )
+        self._log_audit(task_id, "info", f"open_plan.saved: {relative_path}")
     
     def _load_open_plan_artifact(self, task_id: str) -> Optional[Dict[str, Any]]:
         """Load open_plan artifact from store
@@ -913,6 +1023,157 @@ class TaskRunner:
         except Exception as e:
             logger.error(f"Failed to load open_plan artifact: {e}", exc_info=True)
             return None
+
+    def _load_open_plan_dict(self, task_id: str) -> Optional[Dict[str, Any]]:
+        """Load OpenPlan dict (preferred WebUI contract)."""
+        try:
+            artifact_path = Path("store/artifacts") / task_id / "open_plan.json"
+            if not artifact_path.exists():
+                return None
+            return json.loads(artifact_path.read_text(encoding="utf-8"))
+        except Exception:
+            return None
+
+    def _execute_open_plan(self, task: Task, plan: Dict[str, Any]) -> str:
+        """Execute OpenPlan steps in a safe, auditable way.
+
+        Current MVP behavior:
+        - Emits STEP_STARTED / STEP_COMPLETED audits
+        - Writes file actions into a task-scoped output directory (never touches repo source files)
+        - Supports "high risk" pause by honoring rule actions with constraint containing "HIGH_RISK"
+        """
+        steps = plan.get("steps") if isinstance(plan.get("steps"), list) else []
+        total = len(steps)
+        if total == 0:
+            return "verifying"
+
+        md = task.metadata or {}
+        idx = md.get("exec_step_index")
+        if not isinstance(idx, int) or idx < 0:
+            idx = 0
+
+        if idx >= total:
+            md["steps_done"] = total
+            self._update_task_metadata(task.task_id, md)
+            return "verifying"
+
+        step = steps[idx]
+        step_id = str(step.get("id") or f"S{idx+1}")
+        intent = str(step.get("intent") or "")
+        proposed_actions = step.get("proposed_actions") if isinstance(step.get("proposed_actions"), list) else []
+
+        # High-risk pause gate (v2): rule constraint includes "HIGH_RISK"
+        needs_high_risk_approval = False
+        for a in proposed_actions:
+            if not isinstance(a, dict):
+                continue
+            if a.get("kind") != "rule":
+                continue
+            payload = a.get("payload") if isinstance(a.get("payload"), dict) else {}
+            constraint = str(payload.get("constraint") or "")
+            if "HIGH_RISK" in constraint.upper():
+                needs_high_risk_approval = True
+                break
+
+        approved_for = md.get("high_risk_approved_for_step")
+        if needs_high_risk_approval and approved_for != idx:
+            md["pause_reason"] = f"High-risk step requires approval: {step_id}"
+            md["pause_checkpoint"] = "high_risk_action"
+            md["pending_step_index"] = idx
+            self._update_task_metadata(task.task_id, md)
+            self.task_manager.add_audit(
+                task_id=task.task_id,
+                event_type="HIGH_RISK_PAUSE_REQUESTED",
+                level="warn",
+                payload={"step_index": idx, "step_id": step_id, "intent": intent},
+            )
+            return "awaiting_approval"
+
+        self.task_manager.add_audit(
+            task_id=task.task_id,
+            event_type="STEP_STARTED",
+            level="info",
+            payload={"step_index": idx, "step_id": step_id, "intent": intent},
+        )
+
+        out_dir = Path("output") / "task_runs" / task.task_id / "steps" / f"{idx:03d}_{step_id}"
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        for a in proposed_actions:
+            if not isinstance(a, dict):
+                continue
+            kind = str(a.get("kind") or "")
+            payload = a.get("payload") if isinstance(a.get("payload"), dict) else {}
+
+            if kind == "note":
+                self.task_manager.add_audit(
+                    task_id=task.task_id,
+                    event_type="STEP_NOTE",
+                    level="info",
+                    payload={"step_index": idx, "message": payload.get("message")},
+                )
+                continue
+
+            if kind == "file":
+                op = str(payload.get("operation") or "").lower()
+                if op in {"create", "update"}:
+                    rel = str(payload.get("path") or "output.txt").lstrip("/").replace("..", "_")
+                    safe_path = out_dir / rel
+                    safe_path.parent.mkdir(parents=True, exist_ok=True)
+                    intent_hint = str(payload.get("intent") or intent or "generated by OpenPlan")
+                    content_hint = str(payload.get("content_hint") or "")
+                    safe_path.write_text(
+                        f"# {intent_hint}\n\n{content_hint}\n",
+                        encoding="utf-8",
+                    )
+                    self.task_manager.add_audit(
+                        task_id=task.task_id,
+                        event_type="FILE_WRITTEN",
+                        level="info",
+                        payload={
+                            "step_index": idx,
+                            "original_path": payload.get("path"),
+                            "safe_path": str(safe_path),
+                            "operation": op,
+                        },
+                    )
+                else:
+                    self.task_manager.add_audit(
+                        task_id=task.task_id,
+                        event_type="FILE_ACTION_SKIPPED",
+                        level="warn",
+                        payload={"step_index": idx, "operation": op, "path": payload.get("path")},
+                    )
+                continue
+
+            # Unknown kinds are recorded but not executed in MVP.
+            self.task_manager.add_audit(
+                task_id=task.task_id,
+                event_type="ACTION_SKIPPED",
+                level="warn",
+                payload={"step_index": idx, "kind": kind},
+            )
+
+        # Mark step completed.
+        idx_next = idx + 1
+        md["exec_step_index"] = idx_next
+        md["steps_done"] = idx_next
+        md.pop("pending_step_index", None)
+        md.pop("pause_reason", None)
+        md.pop("pause_checkpoint", None)
+        self._update_task_metadata(task.task_id, md)
+
+        self.task_manager.add_audit(
+            task_id=task.task_id,
+            event_type="STEP_COMPLETED",
+            level="info",
+            payload={"step_index": idx, "step_id": step_id},
+        )
+
+        # Continue execution until steps complete; the runner loop will call us again.
+        if idx_next >= total:
+            return "verifying"
+        return "executing"
     
     def _record_execution_artifacts(self, task_id: str, execution_result: Dict[str, Any]):
         """Record execution artifacts to lineage

@@ -1,6 +1,6 @@
 """Chat Engine - Orchestrates message sending, context building, and model invocation"""
 
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Set
 import logging
 import json
 import re
@@ -262,19 +262,30 @@ class ChatEngine:
             source="chat_engine",
         )
 
+        session = self.chat_service.get_session(session_id)
+        capability_gate = self._resolve_bot_capability_gate(
+            session_metadata=session.metadata or {},
+            user_input=user_input,
+        )
+        slash_input = str(capability_gate.get("slash_input") or user_input)
+        allow_mcp = bool(capability_gate.get("allow_mcp"))
+        allow_skill = bool(capability_gate.get("allow_skill"))
+        allow_ext = bool(capability_gate.get("allow_ext"))
+        allow_web = bool(capability_gate.get("allow_web"))
+
         # 2. Check if it's an extension slash command first
-        if self.slash_command_router.is_slash_command(user_input):
-            route = self.slash_command_router.route(user_input)
+        if self.slash_command_router.is_slash_command(slash_input):
+            route = self.slash_command_router.route(slash_input)
 
             if route is None:
                 # Command not found - check if it's a built-in command
-                command, args, remaining = parse_command(user_input)
+                command, args, remaining = parse_command(slash_input)
                 if command:
                     # It's a built-in command
                     return self._execute_command(session_id, command, args, remaining, stream)
                 else:
                     # Unknown command - return helpful error
-                    error_response = build_command_not_found_response(user_input.split()[0])
+                    error_response = build_command_not_found_response(slash_input.split()[0])
                     error_message = error_response['message']
 
                     # Save error message
@@ -327,35 +338,132 @@ class ChatEngine:
                     }
 
             else:
+                if capability_gate.get("strict_gate") and not allow_ext:
+                    blocked_message = self._capability_gate_hint()
+                    assistant_message = self.chat_service.add_message(
+                        session_id=session_id,
+                        role="assistant",
+                        content=blocked_message,
+                        metadata={
+                            "capability_gate_blocked": True,
+                            "required_prefix": "@ext",
+                            "channel_id": capability_gate.get("channel_id") or "",
+                        },
+                    )
+                    if stream:
+                        def blocked_generator():
+                            yield blocked_message
+                        return blocked_generator()
+                    return {
+                        "message_id": assistant_message.message_id,
+                        "content": blocked_message,
+                        "role": "assistant",
+                        "metadata": assistant_message.metadata,
+                        "context": {},
+                    }
                 # Route to extension capability
                 return self._execute_extension_command(session_id, route, stream)
 
         # 2b. Check if it's a built-in slash command
-        command, args, remaining = parse_command(user_input)
+        command, args, remaining = parse_command(slash_input)
 
         if command:
             return self._execute_command(session_id, command, args, remaining, stream)
 
-        # 2c. Hard-route company research requests to stable fact-only brief.
-        tool_intent_dispatch = self._try_handle_tool_intent(
-            session_id=session_id,
-            user_input=user_input,
-            stream=stream,
+        low_latency_policy = self._resolve_low_latency_policy(
+            session_metadata=session.metadata or {},
+            user_input=str(capability_gate.get("input_for_policy") or slash_input),
         )
-        if tool_intent_dispatch is not None:
-            return tool_intent_dispatch
+        effective_user_input = str(low_latency_policy.get("effective_user_input") or slash_input)
+        can_use_mcp = allow_mcp
+        can_use_skill = allow_skill
+        can_use_ext = allow_ext
+        can_use_external = allow_web and (not low_latency_policy.get("offline_only"))
+        if capability_gate.get("strict_gate") and not effective_user_input.strip():
+            hint = self._capability_gate_hint()
+            assistant_message = self.chat_service.add_message(
+                session_id=session_id,
+                role="assistant",
+                content=hint,
+                metadata={"capability_gate_blocked": True, "reason": "empty_after_prefix"},
+            )
+            if stream:
+                def hint_generator():
+                    yield hint
+                return hint_generator()
+            return {
+                "message_id": assistant_message.message_id,
+                "content": hint,
+                "role": "assistant",
+                "metadata": assistant_message.metadata,
+                "context": {},
+            }
+
+        if capability_gate.get("strict_gate") and not can_use_mcp and self._detect_tool_intent(effective_user_input):
+            hint = self._capability_gate_hint()
+            assistant_message = self.chat_service.add_message(
+                session_id=session_id,
+                role="assistant",
+                content=hint,
+                metadata={"capability_gate_blocked": True, "required_prefix": "@mcp"},
+            )
+            if stream:
+                def mcp_hint_generator():
+                    yield hint
+                return mcp_hint_generator()
+            return {
+                "message_id": assistant_message.message_id,
+                "content": hint,
+                "role": "assistant",
+                "metadata": assistant_message.metadata,
+                "context": {},
+            }
+        if low_latency_policy.get("policy_applied"):
+            log_audit_event(
+                event_type="USER_BEHAVIOR_SIGNAL",
+                task_id=session.task_id,
+                level="info",
+                metadata={
+                    "signal_type": "channel_policy_applied",
+                    "session_id": session_id,
+                    "policy_applied": low_latency_policy.get("policy_applied"),
+                    "blocked_capabilities": list(low_latency_policy.get("blocked_capabilities") or []),
+                    "channel_id": session.metadata.get("channel_id"),
+                },
+            )
+            logger.info(
+                "Low-latency policy applied",
+                extra={
+                    "session_id": session_id,
+                    "policy_applied": low_latency_policy.get("policy_applied"),
+                    "blocked_capabilities": low_latency_policy.get("blocked_capabilities"),
+                },
+            )
+
+        # 2c. MCP tool-intent route (explicitly enabled by @mcp in strict bot mode).
+        if can_use_mcp:
+            tool_intent_dispatch = self._try_handle_tool_intent(
+                session_id=session_id,
+                user_input=effective_user_input,
+                stream=stream,
+            )
+            if tool_intent_dispatch is not None:
+                return tool_intent_dispatch
 
         # 2c. Hard-route company research requests to stable fact-only brief.
-        company_research_request = parse_company_research_request(user_input)
+        company_research_request = (
+            None
+            if not can_use_external
+            else parse_company_research_request(effective_user_input)
+        )
         if company_research_request is not None:
-            session = self.chat_service.get_session(session_id)
             classification = SimpleNamespace(
                 info_need_type=SimpleNamespace(value="external_fact_uncertain"),
                 confidence_level=SimpleNamespace(value="high"),
             )
             return self._handle_company_research_request(
                 session_id=session_id,
-                message=user_input,
+                message=effective_user_input,
                 classification=classification,
                 context={
                     "session_id": session_id,
@@ -371,124 +479,125 @@ class ChatEngine:
             )
 
         # 2d. Fast path: DB ops dispatch via SkillOS -> DBOpsBridge.
-        session_for_dbops = self.chat_service.get_session(session_id)
-        dbops_metadata = session_for_dbops.metadata or {}
-        dbops_dispatch = try_handle_dbops_via_skillos(
-            user_input,
-            session_context={
-                "session_id": session_id,
-                "task_id": session_for_dbops.task_id,
-                "actor": "chat",
-                "pending_action": dbops_metadata.get("dbops_pending_action"),
-            },
-        )
-        if dbops_dispatch and dbops_dispatch.get("handled"):
-            metadata_patch: Dict[str, Any] = {}
-            if dbops_dispatch.get("pending_action_clear"):
-                metadata_patch["dbops_pending_action"] = None
-            pending_set = dbops_dispatch.get("pending_action_set")
-            if isinstance(pending_set, dict):
-                metadata_patch["dbops_pending_action"] = pending_set
-            if metadata_patch:
-                self.chat_service.update_session_metadata(session_id, metadata_patch)
-
-            response_content = str(dbops_dispatch.get("message") or "")
-            assistant_message = self.chat_service.add_message(
-                session_id=session_id,
-                role="assistant",
-                content=response_content,
-                metadata={
-                    "dispatch": "db_ops",
-                    "blocked": bool(dbops_dispatch.get("blocked")),
-                    "dbops_result": dbops_dispatch.get("dbops_result"),
-                    "ui": dbops_dispatch.get("ui"),
-                    "missing": dbops_dispatch.get("missing"),
+        if can_use_skill:
+            dbops_metadata = session.metadata or {}
+            dbops_dispatch = try_handle_dbops_via_skillos(
+                effective_user_input,
+                session_context={
+                    "session_id": session_id,
+                    "task_id": session.task_id,
+                    "actor": "chat",
+                    "pending_action": dbops_metadata.get("dbops_pending_action"),
                 },
             )
-            if stream:
-                def dbops_generator():
-                    yield response_content
-                return dbops_generator()
-            return {
-                "message_id": assistant_message.message_id,
-                "content": response_content,
-                "role": "assistant",
-                "metadata": assistant_message.metadata,
-                "context": {},
-            }
+            if dbops_dispatch and dbops_dispatch.get("handled"):
+                metadata_patch: Dict[str, Any] = {}
+                if dbops_dispatch.get("pending_action_clear"):
+                    metadata_patch["dbops_pending_action"] = None
+                pending_set = dbops_dispatch.get("pending_action_set")
+                if isinstance(pending_set, dict):
+                    metadata_patch["dbops_pending_action"] = pending_set
+                if metadata_patch:
+                    self.chat_service.update_session_metadata(session_id, metadata_patch)
+
+                response_content = str(dbops_dispatch.get("message") or "")
+                assistant_message = self.chat_service.add_message(
+                    session_id=session_id,
+                    role="assistant",
+                    content=response_content,
+                    metadata={
+                        "dispatch": "db_ops",
+                        "blocked": bool(dbops_dispatch.get("blocked")),
+                        "dbops_result": dbops_dispatch.get("dbops_result"),
+                        "ui": dbops_dispatch.get("ui"),
+                        "missing": dbops_dispatch.get("missing"),
+                    },
+                )
+                if stream:
+                    def dbops_generator():
+                        yield response_content
+                    return dbops_generator()
+                return {
+                    "message_id": assistant_message.message_id,
+                    "content": response_content,
+                    "role": "assistant",
+                    "metadata": assistant_message.metadata,
+                    "context": {},
+                }
 
         # 2e. Fast path: AWS read-only dispatch via enabled AWS MCP server.
-        session_for_aws = self.chat_service.get_session(session_id)
-        session_metadata = session_for_aws.metadata or {}
-        aws_dispatch = try_handle_aws_via_mcp(
-            user_input,
-            session_context={"pending_action": session_metadata.get("aws_pending_action")},
-        )
-        if aws_dispatch and aws_dispatch.get("handled"):
-            metadata_patch: Dict[str, Any] = {}
-            if aws_dispatch.get("pending_action_clear"):
-                metadata_patch["aws_pending_action"] = None
-            pending_set = aws_dispatch.get("pending_action_set")
-            if isinstance(pending_set, dict):
-                metadata_patch["aws_pending_action"] = pending_set
-            if metadata_patch:
-                self.chat_service.update_session_metadata(session_id, metadata_patch)
-
-            response_content = str(aws_dispatch.get("message") or "")
-            assistant_message = self.chat_service.add_message(
-                session_id=session_id,
-                role="assistant",
-                content=response_content,
-                metadata={
-                    "dispatch": "aws_mcp",
-                    "blocked": bool(aws_dispatch.get("blocked")),
-                },
+        if can_use_mcp:
+            session_metadata = session.metadata or {}
+            aws_dispatch = try_handle_aws_via_mcp(
+                effective_user_input,
+                session_context={"pending_action": session_metadata.get("aws_pending_action")},
             )
-            if stream:
-                def aws_generator():
-                    yield response_content
-                return aws_generator()
-            return {
-                "message_id": assistant_message.message_id,
-                "content": response_content,
-                "role": "assistant",
-                "metadata": assistant_message.metadata,
-                "context": {},
-            }
+            if aws_dispatch and aws_dispatch.get("handled"):
+                metadata_patch: Dict[str, Any] = {}
+                if aws_dispatch.get("pending_action_clear"):
+                    metadata_patch["aws_pending_action"] = None
+                pending_set = aws_dispatch.get("pending_action_set")
+                if isinstance(pending_set, dict):
+                    metadata_patch["aws_pending_action"] = pending_set
+                if metadata_patch:
+                    self.chat_service.update_session_metadata(session_id, metadata_patch)
+
+                response_content = str(aws_dispatch.get("message") or "")
+                assistant_message = self.chat_service.add_message(
+                    session_id=session_id,
+                    role="assistant",
+                    content=response_content,
+                    metadata={
+                        "dispatch": "aws_mcp",
+                        "blocked": bool(aws_dispatch.get("blocked")),
+                    },
+                )
+                if stream:
+                    def aws_generator():
+                        yield response_content
+                    return aws_generator()
+                return {
+                    "message_id": assistant_message.message_id,
+                    "content": response_content,
+                    "role": "assistant",
+                    "metadata": assistant_message.metadata,
+                    "context": {},
+                }
 
         # 2f. Fast path: Azure read-only dispatch via enabled Azure MCP server.
-        azure_dispatch = try_handle_azure_via_mcp(user_input)
-        if azure_dispatch and azure_dispatch.get("handled"):
-            response_content = str(azure_dispatch.get("message") or "")
-            assistant_message = self.chat_service.add_message(
-                session_id=session_id,
-                role="assistant",
-                content=response_content,
-                metadata={
-                    "dispatch": "azure_mcp",
-                    "blocked": bool(azure_dispatch.get("blocked")),
-                },
-            )
-            if stream:
-                def azure_generator():
-                    yield response_content
-                return azure_generator()
-            return {
-                "message_id": assistant_message.message_id,
-                "content": response_content,
-                "role": "assistant",
-                "metadata": assistant_message.metadata,
-                "context": {},
-            }
+        if can_use_mcp:
+            azure_dispatch = try_handle_azure_via_mcp(effective_user_input)
+            if azure_dispatch and azure_dispatch.get("handled"):
+                response_content = str(azure_dispatch.get("message") or "")
+                assistant_message = self.chat_service.add_message(
+                    session_id=session_id,
+                    role="assistant",
+                    content=response_content,
+                    metadata={
+                        "dispatch": "azure_mcp",
+                        "blocked": bool(azure_dispatch.get("blocked")),
+                    },
+                )
+                if stream:
+                    def azure_generator():
+                        yield response_content
+                    return azure_generator()
+                return {
+                    "message_id": assistant_message.message_id,
+                    "content": response_content,
+                    "role": "assistant",
+                    "metadata": assistant_message.metadata,
+                    "context": {},
+                }
 
         # 2g. Check for multi-intent splitting (Task #25)
         try:
-            if self.multi_intent_splitter.should_split(user_input):
+            if self.multi_intent_splitter.should_split(effective_user_input):
                 logger.info("Multi-intent detected, processing with splitter")
                 # Process as multi-intent
                 import asyncio
                 return asyncio.run(self._process_multi_intent(
-                    message=user_input,
+                    message=effective_user_input,
                     session_id=session_id,
                     stream=stream
                 ))
@@ -497,7 +606,6 @@ class ChatEngine:
             logger.warning(f"Multi-intent processing failed: {e}, falling back to single intent")
 
         # 3. Classify message to determine action (TASK 5 Integration)
-        session = self.chat_service.get_session(session_id)
         classification_result = None
 
         # Build context dict for classification handlers
@@ -508,80 +616,91 @@ class ChatEngine:
             "task_id": session.task_id
         }
 
-        try:
-            import asyncio
-            # Classify the message
-            classification_result = asyncio.run(self.info_need_classifier.classify(user_input))
+        if can_use_external:
+            try:
+                import asyncio
+                # Classify the message
+                classification_result = asyncio.run(self.info_need_classifier.classify(effective_user_input))
 
-            logger.info(
-                f"Message classified: type={classification_result.info_need_type.value}, "
-                f"action={classification_result.decision_action.value}, "
-                f"confidence={classification_result.confidence_level.value}"
-            )
-
-            # Route based on classification decision
-            if classification_result.decision_action == DecisionAction.LOCAL_CAPABILITY:
-                llm_fact_request = self._resolve_external_fact_request(
-                    user_input,
-                    classification_context,
+                logger.info(
+                    f"Message classified: type={classification_result.info_need_type.value}, "
+                    f"action={classification_result.decision_action.value}, "
+                    f"confidence={classification_result.confidence_level.value}"
                 )
-                if llm_fact_request:
-                    rerouted_context = dict(classification_context)
-                    rerouted_context["external_fact_request"] = llm_fact_request
-                    logger.info(
-                        "Re-routing LOCAL_CAPABILITY to external facts via LLM intent resolution",
-                        extra={"session_id": session_id, "kind": llm_fact_request.get("kind")},
+
+                # Route based on classification decision
+                if classification_result.decision_action == DecisionAction.LOCAL_CAPABILITY:
+                    llm_fact_request = self._resolve_external_fact_request(
+                        effective_user_input,
+                        classification_context,
                     )
-                    return self._handle_external_info_need(
-                        session_id,
-                        user_input,
-                        classification_result,
-                        rerouted_context,
-                        stream,
-                    )
-                # Handle ambient state queries or local deterministic operations
-                return self._handle_ambient_state(session_id, user_input, classification_result, classification_context, stream)
+                    if llm_fact_request:
+                        rerouted_context = dict(classification_context)
+                        rerouted_context["external_fact_request"] = llm_fact_request
+                        logger.info(
+                            "Re-routing LOCAL_CAPABILITY to external facts via LLM intent resolution",
+                            extra={"session_id": session_id, "kind": llm_fact_request.get("kind")},
+                        )
+                        return self._handle_external_info_need(
+                            session_id,
+                            effective_user_input,
+                            classification_result,
+                            rerouted_context,
+                            stream,
+                        )
+                    # Handle ambient state queries or local deterministic operations
+                    return self._handle_ambient_state(session_id, effective_user_input, classification_result, classification_context, stream)
 
-            elif classification_result.decision_action == DecisionAction.REQUIRE_COMM:
-                # Requires external information
-                return self._handle_external_info_need(session_id, user_input, classification_result, classification_context, stream)
+                elif classification_result.decision_action == DecisionAction.REQUIRE_COMM:
+                    # Requires external information
+                    return self._handle_external_info_need(session_id, effective_user_input, classification_result, classification_context, stream)
 
-            elif classification_result.decision_action == DecisionAction.SUGGEST_COMM:
-                # Can answer but suggest verification
-                return self._handle_with_comm_suggestion(session_id, user_input, classification_result, classification_context, stream)
+                elif classification_result.decision_action == DecisionAction.SUGGEST_COMM:
+                    # Can answer but suggest verification
+                    return self._handle_with_comm_suggestion(session_id, effective_user_input, classification_result, classification_context, stream)
 
-            # DecisionAction.DIRECT_ANSWER - continue to normal flow
-            logger.info("Direct answer mode - proceeding with normal message flow")
+                # DecisionAction.DIRECT_ANSWER - continue to normal flow
+                logger.info("Direct answer mode - proceeding with normal message flow")
 
-        except Exception as e:
-            # Classification failed - fallback to normal flow
-            logger.warning(f"Classification failed, falling back to direct answer: {e}", exc_info=True)
+            except Exception as e:
+                # Classification failed - fallback to normal flow
+                logger.warning(f"Classification failed, falling back to direct answer: {e}", exc_info=True)
 
         # 5. Normal message - build context
         rag_enabled = session.metadata.get("rag_enabled", True)
         
         context_pack = self.context_builder.build(
             session_id=session_id,
-            user_input=user_input,
+            user_input=effective_user_input,
             rag_enabled=rag_enabled,
             memory_enabled=True
         )
         context_pack = self._apply_context_integrity_gate(
             context_pack=context_pack,
             session=session,
-            user_input=user_input,
+            user_input=effective_user_input,
         )
 
         # 6. Route to model
         model_route = session.metadata.get("model_route", "local")
 
         # 7. Get response from model
+        unlock_degraded_reason = ""
         if stream:
             # Return a stream generator
             return self._stream_response(session_id, context_pack, model_route)
         else:
             session_mode = str(session.metadata.get("conversation_mode") or "chat").lower()
-            model_tools = self._build_mcp_model_tools(conversation_mode=session_mode)
+            model_tools: List[Dict[str, Any]] = []
+            if can_use_mcp:
+                explicit_unlock = low_latency_policy.get("policy_applied") == "LOW_LATENCY_EXPLICIT_WEB_UNLOCK"
+                if explicit_unlock:
+                    model_tools, unlock_degraded_reason = self._build_mcp_model_tools_best_effort(
+                        conversation_mode=session_mode,
+                        probe_timeout_s=float(os.getenv("OCTOPUSOS_IMESSAGE_WEB_UNLOCK_TIMEOUT_S", "5") or "5"),
+                    )
+                else:
+                    model_tools = self._build_mcp_model_tools(conversation_mode=session_mode)
             generate_kwargs: Dict[str, Any] = {}
             if model_tools:
                 generate_kwargs["tools"] = model_tools
@@ -592,44 +711,48 @@ class ChatEngine:
                 session_id,
                 extra_generate_kwargs=generate_kwargs or None,
             )
-            tool_loop_result = self._run_native_tool_loop(
-                session_id=session_id,
-                user_input=user_input,
-                context_pack=context_pack,
-                model_route=model_route,
-                response_content=response_content,
-                response_metadata=response_metadata or {},
+            tool_loop_result = None
+            if can_use_mcp:
+                tool_loop_result = self._run_native_tool_loop(
+                    session_id=session_id,
+                    user_input=effective_user_input,
+                    context_pack=context_pack,
+                    model_route=model_route,
+                    response_content=response_content,
+                    response_metadata=response_metadata or {},
             )
             if tool_loop_result is not None:
                 response_content, response_metadata = tool_loop_result
-            maybe_tool_call = self._intercept_tool_call_payload_for_chat(
-                session_id=session_id,
-                user_input=user_input,
-                response_content=response_content,
-                context={
-                    "conversation_mode": session_mode,
-                    "execution_phase": session.metadata.get("execution_phase"),
-                    "task_id": session.task_id,
-                    "locale": session.metadata.get("locale"),
-                    "timezone": session.metadata.get("timezone"),
-                },
-            )
-            if maybe_tool_call is not None:
-                return maybe_tool_call
-            maybe_intercepted = self._intercept_raw_action_payload_for_chat(
-                session_id=session_id,
-                user_input=user_input,
-                response_content=response_content,
-                context={
-                    "conversation_mode": session_mode,
-                    "execution_phase": session.metadata.get("execution_phase"),
-                    "task_id": session.task_id,
-                    "locale": session.metadata.get("locale"),
-                    "timezone": session.metadata.get("timezone"),
-                },
-            )
-            if maybe_intercepted is not None:
-                return maybe_intercepted
+            if can_use_mcp:
+                maybe_tool_call = self._intercept_tool_call_payload_for_chat(
+                    session_id=session_id,
+                    user_input=effective_user_input,
+                    response_content=response_content,
+                    context={
+                        "conversation_mode": session_mode,
+                        "execution_phase": session.metadata.get("execution_phase"),
+                        "task_id": session.task_id,
+                        "locale": session.metadata.get("locale"),
+                        "timezone": session.metadata.get("timezone"),
+                    },
+                )
+                if maybe_tool_call is not None:
+                    return maybe_tool_call
+            if can_use_ext:
+                maybe_intercepted = self._intercept_raw_action_payload_for_chat(
+                    session_id=session_id,
+                    user_input=effective_user_input,
+                    response_content=response_content,
+                    context={
+                        "conversation_mode": session_mode,
+                        "execution_phase": session.metadata.get("execution_phase"),
+                        "task_id": session.task_id,
+                        "locale": session.metadata.get("locale"),
+                        "timezone": session.metadata.get("timezone"),
+                    },
+                )
+                if maybe_intercepted is not None:
+                    return maybe_intercepted
             response_content, sanitize_metadata = self._sanitize_chat_tool_plan_output(
                 response_content=response_content,
                 context={
@@ -637,6 +760,11 @@ class ChatEngine:
                     "execution_phase": session.metadata.get("execution_phase"),
                 },
             )
+            if unlock_degraded_reason:
+                response_content = (
+                    "联网暂时不可用，我先基于本地知识回答；你也可以稍后再试 @web。\n\n"
+                    f"{response_content}".strip()
+                )
             response_content, evidence_metadata = self._apply_evidence_requirement(
                 session_id=session_id,
                 response_content=response_content,
@@ -662,6 +790,20 @@ class ChatEngine:
             if sanitize_metadata:
                 message_metadata.update(sanitize_metadata)
             message_metadata.update(evidence_metadata)
+            if low_latency_policy.get("policy_applied"):
+                message_metadata["policy_applied"] = low_latency_policy["policy_applied"]
+                message_metadata["blocked_capabilities"] = list(low_latency_policy.get("blocked_capabilities") or [])
+            if capability_gate.get("strict_gate"):
+                message_metadata["capability_gate"] = {
+                    "strict": True,
+                    "allow_mcp": bool(can_use_mcp),
+                    "allow_skill": bool(can_use_skill),
+                    "allow_ext": bool(allow_ext),
+                    "allow_web": bool(allow_web),
+                }
+            if unlock_degraded_reason:
+                message_metadata["unlock_fallback_reason"] = unlock_degraded_reason
+                message_metadata["unlock_fallback_offline"] = True
 
             assistant_message = self.chat_service.add_message(
                 session_id=session_id,
@@ -2620,6 +2762,59 @@ class ChatEngine:
                 )
         return tools_out
 
+    def _build_mcp_model_tools_best_effort(
+        self,
+        *,
+        conversation_mode: str,
+        probe_timeout_s: float,
+    ) -> tuple[List[Dict[str, Any]], str]:
+        mode = str(conversation_mode or "chat").lower()
+        if mode not in {"chat", "discussion"}:
+            return [], ""
+        servers = self._collect_enabled_mcp_servers()
+        if not servers:
+            return [], "mcp_no_enabled_servers"
+        tools_out: List[Dict[str, Any]] = []
+        seen_names: set[str] = set()
+        timeout_count = 0
+        error_count = 0
+        timeout_budget = max(0.2, float(probe_timeout_s))
+        for server in servers:
+            try:
+                tools = asyncio.run(
+                    asyncio.wait_for(self._probe_server_tools(server), timeout=timeout_budget)
+                )
+            except asyncio.TimeoutError:
+                timeout_count += 1
+                continue
+            except Exception:
+                error_count += 1
+                continue
+            for tool in tools:
+                name = str(tool.get("name") or "").strip()
+                if not name or name in seen_names:
+                    continue
+                seen_names.add(name)
+                description = str(tool.get("description") or "")
+                params_schema = tool.get("inputSchema") if isinstance(tool.get("inputSchema"), dict) else {}
+                if not isinstance(params_schema, dict):
+                    params_schema = {}
+                tools_out.append(
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": name,
+                            "description": description,
+                            "parameters": params_schema or {"type": "object", "properties": {}},
+                        },
+                    }
+                )
+
+        degraded_reason = ""
+        if not tools_out and (timeout_count > 0 or error_count > 0):
+            degraded_reason = "mcp_probe_timeout" if timeout_count > 0 else "mcp_probe_error"
+        return tools_out, degraded_reason
+
     async def _probe_server_tools(self, server: MCPServerConfig) -> List[Dict[str, Any]]:
         client = MCPClient(server)
         try:
@@ -3812,6 +4007,134 @@ class ChatEngine:
         if isinstance(value, str):
             return value.lower() in ('true', '1', 'yes', 'enabled')
         return bool(value)
+
+    @staticmethod
+    def _strip_web_unlock_tokens(user_input: str) -> str:
+        text = str(user_input or "")
+        stripped = re.sub(
+            r"^\s*(?:@web|web:|联网[:：])(?:\s+|\n+)?",
+            "",
+            text,
+            count=1,
+            flags=re.IGNORECASE,
+        )
+        return stripped.strip()
+
+    def _bot_capability_gate_enabled(self) -> bool:
+        return self._truthy(os.getenv("OCTOPUSOS_CHANNEL_BOT_STRICT_CAPABILITY_GATE", "1"))
+
+    @staticmethod
+    def _extract_capability_prefixes(user_input: str) -> Dict[str, Any]:
+        text = str(user_input or "")
+        prefixes: Set[str] = set()
+        i = 0
+        n = len(text)
+
+        while i < n:
+            # Skip leading whitespace between prefixes.
+            while i < n and text[i].isspace():
+                i += 1
+            if i >= n or text[i] != "@":
+                break
+            j = i + 1
+            while j < n and (text[j].isalnum() or text[j] in {"_", "-"}):
+                j += 1
+            token = text[i:j].lower()
+            if token not in {"@mcp", "@skill", "@ext", "@web"}:
+                break
+            prefixes.add(token)
+            i = j
+
+        remaining = text[i:].strip()
+        input_for_policy = remaining
+        if "@web" in prefixes:
+            input_for_policy = f"@web {remaining}".strip()
+        return {
+            "prefixes": prefixes,
+            "remaining": remaining,
+            "input_for_policy": input_for_policy,
+        }
+
+    def _resolve_bot_capability_gate(self, *, session_metadata: Dict[str, Any], user_input: str) -> Dict[str, Any]:
+        channel_id = str((session_metadata or {}).get("channel_id") or "").strip().lower()
+        is_channel_bot = bool(channel_id)
+        strict_gate = is_channel_bot and self._bot_capability_gate_enabled()
+
+        parsed = self._extract_capability_prefixes(user_input)
+        prefixes: Set[str] = set(parsed["prefixes"])
+        remaining = str(parsed["remaining"] or "")
+        input_for_policy = str(parsed["input_for_policy"] or remaining)
+
+        if not strict_gate:
+            return {
+                "strict_gate": False,
+                "channel_id": channel_id,
+                "slash_input": str(user_input or ""),
+                "input_for_policy": str(user_input or ""),
+                "allow_mcp": True,
+                "allow_skill": True,
+                "allow_ext": True,
+                "allow_web": True,
+                "prefixes": prefixes,
+            }
+
+        return {
+            "strict_gate": True,
+            "channel_id": channel_id,
+            "slash_input": remaining,
+            "input_for_policy": input_for_policy,
+            "allow_mcp": "@mcp" in prefixes,
+            "allow_skill": "@skill" in prefixes,
+            "allow_ext": "@ext" in prefixes,
+            "allow_web": "@web" in prefixes,
+            "prefixes": prefixes,
+        }
+
+    @staticmethod
+    def _capability_gate_hint() -> str:
+        return (
+            "当前是 Safe mode（默认）：只使用本地推理与记忆，不自动联网或调用外部能力。\n"
+            "如需开启请在消息前加前缀：@mcp / @skill / @ext；如需联网检索可用 @web。"
+        )
+
+    def _resolve_low_latency_policy(self, *, session_metadata: Dict[str, Any], user_input: str) -> Dict[str, Any]:
+        channel_id = str((session_metadata or {}).get("channel_id") or "").strip().lower()
+        # Only apply this policy for bot-mode sessions (identified by channel_id).
+        if not channel_id:
+            return {
+                "offline_only": False,
+                "policy_applied": "",
+                "blocked_capabilities": [],
+                "effective_user_input": user_input,
+            }
+
+        low_latency_mode = self._truthy((session_metadata or {}).get("low_latency_mode"))
+        if not low_latency_mode:
+            return {
+                "offline_only": False,
+                "policy_applied": "",
+                "blocked_capabilities": [],
+                "effective_user_input": user_input,
+            }
+
+        raw_text = str(user_input or "")
+        explicit_unlock = bool(
+            re.match(r"^\s*(?:@web|web:|联网[:：])(?=\s|\n|$)", raw_text, flags=re.IGNORECASE)
+        )
+        if explicit_unlock:
+            return {
+                "offline_only": False,
+                "policy_applied": "LOW_LATENCY_EXPLICIT_WEB_UNLOCK",
+                "blocked_capabilities": [],
+                "effective_user_input": self._strip_web_unlock_tokens(raw_text) or raw_text,
+            }
+
+        return {
+            "offline_only": True,
+            "policy_applied": "LOW_LATENCY_OFFLINE",
+            "blocked_capabilities": ["networkos", "mcp_probe", "mcp_tool_call", "external_facts"],
+            "effective_user_input": raw_text,
+        }
 
     def _is_auto_comm_enabled(self, session_id: str, context: Dict[str, Any]) -> bool:
         """Check if auto-comm is enabled for this session

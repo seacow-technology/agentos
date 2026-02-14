@@ -32,6 +32,10 @@ class CLISettings:
     webui_host: str = "127.0.0.1"  # WebUI 绑定主机
     webui_port: int = 8080  # WebUI 端口
 
+    # Interactive REPL defaults (codex/claude style)
+    interactive_use_real_pipeline: bool = True  # 默认用真实 pipeline（而不是模拟）
+    interactive_current_task_id: Optional[str] = None  # REPL current/focus task
+
     # 新增：Mode-Model 绑定
     mode_model_bindings: Dict[str, str] = field(default_factory=dict)
     
@@ -72,6 +76,8 @@ class CLISettings:
             webui_auto_start=data.get("webui_auto_start", True),
             webui_host=data.get("webui_host", "127.0.0.1"),
             webui_port=data.get("webui_port", 8080),
+            interactive_use_real_pipeline=data.get("interactive_use_real_pipeline", True),
+            interactive_current_task_id=data.get("interactive_current_task_id"),
             mode_model_bindings=data.get("mode_model_bindings", {}),
             model_invocation_configs=data.get("model_invocation_configs", {}),
             model_credentials=data.get("model_credentials", {}),

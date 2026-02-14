@@ -344,8 +344,8 @@ To exempt new files:
 
 For questions or issues with the datetime gate:
 
-- Open an issue: [GitHub Issues](https://github.com/seacow-technology/octopusos/issues)
-- Discussion: [GitHub Discussions](https://github.com/seacow-technology/octopusos/discussions)
+- Open an issue: [GitHub Issues](https://github.com/octopusos/octopusos/issues)
+- Discussion: [GitHub Discussions](https://github.com/octopusos/octopusos/discussions)
 - Email: dev@seacow.tech
 
 ---

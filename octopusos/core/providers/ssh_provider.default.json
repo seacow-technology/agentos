@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "ssh_provider": {
+    "provider": "probe",
+    "allow_real": false,
+    "mcp_profile": null
+  }
+}
+

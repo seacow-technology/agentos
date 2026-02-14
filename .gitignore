@@ -6,3 +6,5 @@ __pycache__/
 .coverage
 *.bak
 *.backup
+artifacts/
+*.py[cod]

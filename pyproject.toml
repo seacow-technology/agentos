@@ -1,6 +1,6 @@
 [project]
 name = "octopusos"
-version = "3.3.0"
+version = "3.4.0"
 description = "System-level, project-agnostic AI Agent orchestration system"
 requires-python = ">=3.13"
 readme = "README.md"
@@ -62,6 +62,8 @@ postgres = [
 [project.scripts]
 octopusos = "octopusos.cli.main:cli"
 memoryos = "memoryos.cli.main:cli"
+octoctl = "octopusos.tools.octoctl.cli:main"
+octopus-manager = "octopusos.manager.__main__:main"
 
 [build-system]
 requires = ["hatchling"]

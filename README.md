@@ -4,7 +4,7 @@
 
 **A Production-Grade AI Agent Operating System**
 
-[![Version](https://img.shields.io/badge/version-2.1.0-blue)](https://github.com/seacow-technology/octopusos/releases/tag/v2.1.0)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue)](https://github.com/octopusos/octopusos/releases/tag/v2.1.0)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-2234-success)](#testing)
 [![Python](https://img.shields.io/badge/python-3.13+-blue)](https://www.python.org)
@@ -107,7 +107,7 @@ Use this template when onboarding any new bridge-based IM channel.
 - 🔐 Sandboxed runtime environment
 - 📊 10 files
 
-[📖 Read Full v2.1.0 Release Notes →](https://github.com/seacow-technology/octopusos/releases/tag/v2.1.0)
+[📖 Read Full v2.1.0 Release Notes →](https://github.com/octopusos/octopusos/releases/tag/v2.1.0)
 
 ---
 
@@ -163,7 +163,7 @@ OctopusOS is structured as **7 interconnected operating systems**, each responsi
 
 #### Windows (GA Installer)
 
-1. Download the latest Windows MSI from [Releases](https://github.com/seacow-technology/octopusos/releases).
+1. Download the latest Windows MSI from [Releases](https://github.com/octopusos/octopusos/releases).
 2. Install the MSI.
 3. Open a new PowerShell and run:
 
@@ -180,7 +180,7 @@ Packaged installer distribution for macOS/Linux is planned. Use developer setup 
 
 ```bash
 # Clone the repository
-git clone https://github.com/seacow-technology/octopusos.git
+git clone https://github.com/octopusos/octopusos.git
 cd octopusos
 
 # Create virtual environment
@@ -611,7 +611,7 @@ We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) 
 
 ```bash
 # Clone repository
-git clone https://github.com/seacow-technology/octopusos.git
+git clone https://github.com/octopusos/octopusos.git
 cd octopusos
 
 # Install development dependencies
@@ -661,8 +661,8 @@ Release requires Business Journeys streak evidence. See: `docs/release/journeys_
 
 ## 📞 Community & Support
 
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/seacow-technology/octopusos/issues)
-- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/seacow-technology/octopusos/discussions)
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/octopusos/octopusos/issues)
+- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/octopusos/octopusos/discussions)
 - 💬 **Community Chat**: Coming soon
 - 📧 **Email**: Coming soon
 - 🌐 **Website**: Coming soon
