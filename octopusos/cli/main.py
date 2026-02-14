@@ -43,22 +43,17 @@ def cli(ctx, web):
         if not is_ok and message:
             print_schema_warning(message)
 
-    # Auto-start WebUI if enabled (skip for web and webui commands)
-    if ctx.invoked_subcommand not in ("init", "migrate", "web", "webui", None):
-        try:
-            settings = load_settings()
-            if settings.webui_auto_start:
-                from octopusos.daemon.service import start_webui
-
-                start_webui(host=settings.webui_host, preferred_port=settings.webui_port)
-        except Exception:
-            # Silently fail - WebUI is optional
-            pass
-    
     # If no subcommand provided, enter interactive mode
     if ctx.invoked_subcommand is None:
-        from octopusos.cli.interactive import interactive_main
-        interactive_main()
+        # Only enter REPL when attached to a TTY. This makes `octopusos` safe
+        # for scripting and prevents accidental hangs in non-interactive contexts.
+        if sys.stdin.isatty() and sys.stdout.isatty():
+            from octopusos.cli.interactive import interactive_main
+
+            interactive_main()
+        else:
+            click.echo(ctx.get_help())
+            ctx.exit(1)
 
 
 # Import subcommands

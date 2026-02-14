@@ -112,6 +112,7 @@ class ProviderRegistry:
         from octopusos.providers.local_llamacpp import LlamaCppProvider
         from octopusos.providers.cloud_openai import OpenAIProvider
         from octopusos.providers.cloud_anthropic import AnthropicProvider
+        from octopusos.providers.cloud_openai_compatible import OpenAICompatibleCloudProvider
 
         # Get configuration managers
         providers_config = self._get_providers_config_manager()
@@ -124,6 +125,16 @@ class ProviderRegistry:
             "llamacpp": LlamaCppProvider,
             "openai": OpenAIProvider,
             "anthropic": AnthropicProvider,
+            # OpenAI-compatible cloud vendors
+            "google": OpenAICompatibleCloudProvider,
+            "meta": OpenAICompatibleCloudProvider,
+            "deepseek": OpenAICompatibleCloudProvider,
+            "amazon": OpenAICompatibleCloudProvider,
+            "alibaba_cloud": OpenAICompatibleCloudProvider,
+            "zai": OpenAICompatibleCloudProvider,
+            "moonshot": OpenAICompatibleCloudProvider,
+            "microsoft": OpenAICompatibleCloudProvider,
+            "xai": OpenAICompatibleCloudProvider,
         }
 
         # Register all configured provider instances
@@ -131,7 +142,19 @@ class ProviderRegistry:
 
         # Separate local and cloud providers
         local_provider_ids = ["ollama", "lmstudio", "llamacpp"]
-        cloud_provider_ids = ["openai", "anthropic"]
+        cloud_provider_ids = [
+            "openai",
+            "anthropic",
+            "google",
+            "meta",
+            "deepseek",
+            "amazon",
+            "alibaba_cloud",
+            "zai",
+            "moonshot",
+            "microsoft",
+            "xai",
+        ]
 
         for prov_config in all_configs:
             # CRITICAL: Only register LOCAL providers from providers.json
@@ -200,3 +223,30 @@ class ProviderRegistry:
             logger.info("Registered cloud provider: anthropic")
         except Exception as e:
             logger.error(f"Failed to register anthropic: {e}")
+
+        # OpenAI-compatible vendor stubs (base_url typically configured by user)
+        vendor_defaults = {
+            "google": "",
+            "meta": "",
+            "deepseek": "https://api.deepseek.com/v1",
+            "amazon": "",
+            "alibaba_cloud": "",
+            "zai": "",
+            "moonshot": "https://api.moonshot.cn/v1",
+            "microsoft": "",
+            "xai": "https://api.x.ai/v1",
+        }
+
+        for vendor_id, default_endpoint in vendor_defaults.items():
+            try:
+                self.register(
+                    provider_classes[vendor_id](
+                        provider_id=vendor_id,
+                        config_manager=cloud_config,
+                        endpoint=default_endpoint,
+                        instance_id="default",
+                    )
+                )
+                logger.info(f"Registered cloud provider: {vendor_id}")
+            except Exception as e:
+                logger.error(f"Failed to register {vendor_id}: {e}")

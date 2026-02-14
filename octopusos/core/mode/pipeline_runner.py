@@ -118,8 +118,9 @@ class ModePipelineRunner:
         """
         pipeline_id = f"pipeline_{uuid.uuid4().hex[:12]}"
         started_at = utc_now_iso()
-        
+
         # Task-Driven: Create or resolve task
+        created_task_here = False
         if not task_id:
             task = self.task_manager.create_task(
                 title=f"Pipeline: {nl_input[:50]}...",
@@ -127,6 +128,7 @@ class ModePipelineRunner:
                 created_by="pipeline_runner"
             )
             task_id = task.task_id
+            created_task_here = True
         
         # Create task context
         task_context = TaskContext(task_id=task_id, session_id=session_id)
@@ -193,9 +195,16 @@ class ModePipelineRunner:
             overall_status = "partial"
         
         finished_at = utc_now_iso()
-        
-        # Update task status
-        self.task_manager.update_task_status(task_id, overall_status)
+
+        # IMPORTANT:
+        # - If we created the task here, mark it terminal for convenience.
+        # - If the task_id was provided (e.g., TaskRunner uses pipeline as a sub-step),
+        #   DO NOT update task.status here, or we'll corrupt the caller's state machine.
+        if created_task_here:
+            self.task_manager.update_task_status(
+                task_id,
+                "succeeded" if overall_status == "success" else "failed",
+            )
         self.task_manager.add_lineage(
             task_id=task_id,
             kind="pipeline",

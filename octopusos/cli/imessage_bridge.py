@@ -53,6 +53,12 @@ def imessage_bridge_group() -> None:
     show_default=True,
     help="Allow self-sent iMessage rows (single-account self-chat mode, with echo suppression).",
 )
+@click.option(
+    "--auto-delete-self-mirror/--no-auto-delete-self-mirror",
+    default=False,
+    show_default=True,
+    help="DANGER: delete mirrored self-chat inbound rows from Messages DB after suppression (best effort).",
+)
 @click.option("--verbose", is_flag=True, help="Enable verbose logs.")
 def run_cmd(
     listen_host: str,
@@ -64,6 +70,7 @@ def run_cmd(
     state_file: str,
     bootstrap_latest: bool,
     allow_from_me: bool,
+    auto_delete_self_mirror: bool,
     verbose: bool,
 ) -> None:
     """Start local iMessage bridge service."""
@@ -81,6 +88,7 @@ def run_cmd(
         state_file=Path(state_file).expanduser(),
         bootstrap_latest=bool(bootstrap_latest),
         allow_from_me=bool(allow_from_me),
+        auto_delete_self_mirror=bool(auto_delete_self_mirror),
     )
     click.echo(f"starting imessage bridge on http://{cfg.listen_host}:{cfg.listen_port}")
     click.echo(f"webhook -> {cfg.webhook_url}")
@@ -89,6 +97,7 @@ def run_cmd(
     else:
         click.echo("bridge token disabled")
     click.echo(f"allow_from_me={'yes' if cfg.allow_from_me else 'no'}")
+    click.echo(f"auto_delete_self_mirror={'yes' if cfg.auto_delete_self_mirror else 'no'}")
     try:
         run_bridge(cfg)
     except KeyboardInterrupt:

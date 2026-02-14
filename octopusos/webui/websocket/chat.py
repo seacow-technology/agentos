@@ -1520,21 +1520,40 @@ async def handle_task_command(session_id: str, content: str, metadata: Dict[str,
         )
         return
 
-    service = TaskService()
-    task = service.create_draft_task(
+    # WebUI/Chat unified semantics: create -> planning -> awaiting_approval (default).
+    # Chat should not auto-execute.
+    from octopusos.core.task import TaskManager
+    from octopusos.core.runner.task_runner import TaskRunner
+    import threading
+    from pathlib import Path
+    import os
+
+    tm = TaskManager()
+    task = tm.create_task(
         title=title,
         session_id=session_id,
         created_by="chat",
-        metadata={"source": "chat"},
+        metadata={"source": "chat", "nl_request": title, "run_mode": "assisted"},
     )
 
-    launched = launch_task_async(task.task_id, actor="chat_launcher")
+    def _run_planning():
+        runner = TaskRunner(
+            task_manager=tm,
+            repo_path=Path(os.getenv("OCTOPUSOS_REPO_ROOT") or ".").resolve(),
+            policy_path=Path(os.getenv("OCTOPUSOS_POLICY_PATH")).resolve() if os.getenv("OCTOPUSOS_POLICY_PATH") else None,
+            use_real_pipeline=False,
+        )
+        runner.run_task(task.task_id)
+
+    thread = threading.Thread(target=_run_planning, name=f"chat-task-planner-{task.task_id[:12]}", daemon=True)
+    thread.start()
+    launched = True
 
     await manager.send_message(
         session_id,
         {
             "type": "message.system",
-            "content": "Task created and launched" if launched else "Task created",
+            "content": "Task created (planning). Approve to execute." if launched else "Task created",
             "metadata": {"task_id": task.task_id, "auto_launched": launched, "source": "real"},
         },
     )

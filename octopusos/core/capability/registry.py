@@ -23,6 +23,7 @@ Performance Targets:
 import sqlite3
 import json
 import logging
+import os
 from typing import Dict, List, Optional, Set
 from functools import lru_cache
 from datetime import datetime, timedelta
@@ -97,8 +98,13 @@ class CapabilityRegistry:
 
         self.db_path = db_path
         self._definitions: Dict[str, CapabilityDefinition] = {}
+        # Execution alias map is the SoT for WebUI execution surfaces (SSH/SFTP/shell/logs).
+        # Keep this separate from the v3 "27 atomic capabilities" list.
+        self._execution_alias_index: Dict[str, str] = {}
         self._cache_enabled = True
         self._cache_ttl_seconds = 60
+        self._execution_alias_meta: Dict[str, Dict[str, object]] = {}
+        self._execution_alias_source: Dict[str, str] = {}
 
         # Ensure schema exists
         self._ensure_schema()
@@ -108,6 +114,13 @@ class CapabilityRegistry:
         # Keep singleton in sync for callers using get_capability_registry()
         if CapabilityRegistry._instance is None or CapabilityRegistry._instance.db_path != self.db_path:
             CapabilityRegistry._instance = self
+
+        # Execution alias resolution is independently loadable (does not require schema migrations).
+        # Keep it best-effort and never fail registry initialization.
+        try:
+            self.load_execution_aliases()
+        except Exception as e:
+            logger.warning(f"Failed to load execution aliases: {e}")
 
     @classmethod
     def get_instance(cls, db_path: Optional[str] = None) -> "CapabilityRegistry":
@@ -276,6 +289,207 @@ class CapabilityRegistry:
 
         conn.commit()
         conn.close()
+
+    # ===================================================================
+    # Execution Alias Resolution (builtin < file < db)
+    # ===================================================================
+
+    @staticmethod
+    def _builtin_execution_aliases() -> Dict[str, Dict[str, object]]:
+        # Single stable default, same as execution_aliases.default.json
+        return {
+            "ssh.exec": {
+                "capability_id": "action.network.call",
+                "requires_trust": True,
+                "requires_confirm": False,
+                "source": "builtin",
+            },
+            "sftp.transfer": {
+                "capability_id": "action.file.write",
+                "requires_trust": True,
+                "requires_confirm": True,
+                "source": "builtin",
+            },
+            "local.shell": {
+                "capability_id": "action.execute",
+                "requires_trust": False,
+                "requires_confirm": False,
+                "source": "builtin",
+            },
+            "logs.query": {
+                "capability_id": "evidence.query",
+                "requires_trust": False,
+                "requires_confirm": False,
+                "source": "builtin",
+            },
+        }
+
+    @staticmethod
+    def _default_execution_aliases_path() -> Path:
+        return Path(__file__).with_name("execution_aliases.default.json")
+
+    def _read_execution_aliases_file(self) -> Dict[str, Dict[str, object]]:
+        path = (os.getenv("OCTO_EXECUTION_ALIASES_PATH") or "").strip()
+        p = Path(path) if path else self._default_execution_aliases_path()
+        if not p.exists():
+            return {}
+        raw = json.loads(p.read_text(encoding="utf-8"))
+        if not isinstance(raw, dict):
+            raise ValueError("execution aliases file must be a JSON object")
+        if int(raw.get("version") or 0) != 1:
+            raise ValueError("execution aliases file version must be 1")
+        aliases = raw.get("aliases")
+        if not isinstance(aliases, list):
+            raise ValueError("execution aliases file must contain 'aliases' list")
+
+        out: Dict[str, Dict[str, object]] = {}
+        for item in aliases:
+            if not isinstance(item, dict):
+                continue
+            alias = str(item.get("alias") or "").strip()
+            capability_id = str(item.get("capability_id") or "").strip()
+            if not alias or not capability_id:
+                continue
+            out[alias] = {
+                "capability_id": capability_id,
+                "requires_trust": bool(item.get("requires_trust", False)),
+                "requires_confirm": bool(item.get("requires_confirm", False)),
+                "source": "file",
+            }
+        return out
+
+    def _read_execution_aliases_db(self) -> Dict[str, Dict[str, object]]:
+        # DB layer is optional: if table doesn't exist, treat as empty.
+        conn = None
+        try:
+            conn = self._get_connection()
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='execution_aliases'"
+            )
+            if cur.fetchone() is None:
+                return {}
+
+            rows = cur.execute(
+                "SELECT alias, capability_id, requires_trust, requires_confirm FROM execution_aliases"
+            ).fetchall()
+            out: Dict[str, Dict[str, object]] = {}
+            for r in rows:
+                try:
+                    alias = str(r["alias"]).strip()
+                    cap_id = str(r["capability_id"]).strip()
+                    if not alias or not cap_id:
+                        continue
+                    out[alias] = {
+                        "capability_id": cap_id,
+                        "requires_trust": bool(int(r["requires_trust"] or 0)),
+                        "requires_confirm": bool(int(r["requires_confirm"] or 0)),
+                        "source": "db",
+                    }
+                except Exception:
+                    continue
+            return out
+        finally:
+            if conn is not None:
+                conn.close()
+
+    def load_execution_aliases(self) -> None:
+        """Load execution aliases with priority: builtin < file < db.
+
+        Contract:
+        - Invalid inputs are ignored (and logged) rather than crashing startup.
+        - If a higher-priority source is invalid, it does not erase the last-known-good map.
+        """
+        # Ensure definitions are present for validation.
+        if not self._definitions:
+            try:
+                self.load_definitions()
+            except Exception as e:
+                logger.warning(f"Cannot validate execution aliases without v3 definitions: {e}")
+
+        base = self._builtin_execution_aliases()
+        merged: Dict[str, Dict[str, object]] = dict(base)
+
+        # file overrides builtin
+        try:
+            for k, v in self._read_execution_aliases_file().items():
+                merged[k] = v
+        except Exception as e:
+            logger.warning(f"Failed to load execution aliases from file: {e}")
+
+        # db overrides file
+        try:
+            for k, v in self._read_execution_aliases_db().items():
+                merged[k] = v
+        except Exception as e:
+            logger.warning(f"Failed to load execution aliases from db: {e}")
+
+        # Validate: only keep aliases pointing to known v3 capability_ids.
+        valid_index: Dict[str, str] = {}
+        valid_meta: Dict[str, Dict[str, object]] = {}
+        valid_source: Dict[str, str] = {}
+        for alias, cfg in merged.items():
+            cap_id = str(cfg.get("capability_id") or "").strip()
+            if not cap_id:
+                continue
+            if self._definitions and cap_id not in self._definitions:
+                logger.warning(
+                    f"Invalid execution alias mapping ignored: {alias} -> {cap_id} (unknown v3 capability_id)"
+                )
+                continue
+            valid_index[alias] = cap_id
+            valid_meta[alias] = {
+                "requires_trust": bool(cfg.get("requires_trust", False)),
+                "requires_confirm": bool(cfg.get("requires_confirm", False)),
+            }
+            valid_source[alias] = str(cfg.get("source") or "builtin")
+
+        # Only swap in after successful merge+validate to keep last-known-good.
+        self._execution_alias_index = valid_index
+        self._execution_alias_meta = valid_meta
+        self._execution_alias_source = valid_source
+
+    def resolve_execution_alias(self, execution_alias: str) -> Optional[Dict[str, object]]:
+        alias = str(execution_alias or "").strip()
+        if not alias:
+            return None
+        if not self._execution_alias_index:
+            self.load_execution_aliases()
+        cap_id = self._execution_alias_index.get(alias)
+        if not cap_id:
+            return None
+        meta = self._execution_alias_meta.get(alias) or {}
+        return {
+            "alias": alias,
+            "capability_id": cap_id,
+            "requires_trust": bool(meta.get("requires_trust", False)),
+            "requires_confirm": bool(meta.get("requires_confirm", False)),
+            "source": self._execution_alias_source.get(alias, "builtin"),
+        }
+
+    def get_execution_definition(self, execution_alias: str) -> Optional[CapabilityDefinition]:
+        resolved = self.resolve_execution_alias(execution_alias)
+        if not resolved:
+            return None
+        cap_id = str(resolved.get("capability_id") or "").strip()
+        if not cap_id:
+            return None
+        if not self._definitions:
+            try:
+                self.load_definitions()
+            except Exception:
+                return None
+        return self._definitions.get(cap_id)
+
+    def get_execution_meta(self, execution_alias: str) -> Dict[str, object]:
+        resolved = self.resolve_execution_alias(execution_alias)
+        if not resolved:
+            return {}
+        return {
+            "requires_trust": bool(resolved.get("requires_trust", False)),
+            "requires_confirm": bool(resolved.get("requires_confirm", False)),
+            "source": str(resolved.get("source") or "builtin"),
+        }
 
         logger.info(f"Loaded {loaded_count} capability definitions into registry")
 

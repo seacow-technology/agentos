@@ -79,7 +79,7 @@ We welcome:
 
 ### Finding Work
 
-- Check [Issues](https://github.com/seacow-technology/octopusos/issues) labeled `good first issue`
+- Check [Issues](https://github.com/octopusos/octopusos/issues) labeled `good first issue`
 - Look for `help wanted` labels
 - Review the [roadmap](docs/ROADMAP.md) for planned features
 
@@ -535,15 +535,15 @@ tests/unit/communicationos/channels/your_channel/
 ### Questions about Adapters?
 
 - 📖 Read the full spec: [CHANNEL_ADAPTER_SPECIFICATION_V1.md](docs/CHANNEL_ADAPTER_SPECIFICATION_V1.md)
-- 💬 Ask in [Discussions](https://github.com/seacow-technology/octopusos/discussions)
-- 🐛 Report issues: [GitHub Issues](https://github.com/seacow-technology/octopusos/issues)
+- 💬 Ask in [Discussions](https://github.com/octopusos/octopusos/discussions)
+- 🐛 Report issues: [GitHub Issues](https://github.com/octopusos/octopusos/issues)
 
 ---
 
 ## Questions?
 
-- 💬 Open a [Discussion](https://github.com/seacow-technology/octopusos/discussions)
-- 🐛 Report bugs via [Issues](https://github.com/seacow-technology/octopusos/issues)
+- 💬 Open a [Discussion](https://github.com/octopusos/octopusos/discussions)
+- 🐛 Report bugs via [Issues](https://github.com/octopusos/octopusos/issues)
 - 📧 Email: dev@seacow.tech (replace with actual contact)
 
 ---

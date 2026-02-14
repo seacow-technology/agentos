@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "aliases": [
+    {
+      "alias": "ssh.exec",
+      "capability_id": "action.network.call",
+      "requires_trust": true,
+      "requires_confirm": false
+    },
+    {
+      "alias": "sftp.transfer",
+      "capability_id": "action.file.write",
+      "requires_trust": true,
+      "requires_confirm": true
+    },
+    {
+      "alias": "local.shell",
+      "capability_id": "action.execute",
+      "requires_trust": false,
+      "requires_confirm": false
+    },
+    {
+      "alias": "logs.query",
+      "capability_id": "evidence.query",
+      "requires_trust": false,
+      "requires_confirm": false
+    }
+  ]
+}
+

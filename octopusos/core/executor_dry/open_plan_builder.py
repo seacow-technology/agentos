@@ -32,7 +32,12 @@ class OpenPlanBuilder:
     allowing AI to freely decompose tasks into steps and actions.
     """
     
-    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4o-mini"):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: str = "gpt-4o-mini",
+        base_url: Optional[str] = None,
+    ):
         """
         Initialize OpenPlanBuilder
         
@@ -43,9 +48,11 @@ class OpenPlanBuilder:
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         if not self.api_key:
             raise ValueError("OPENAI_API_KEY not set")
-        
-        self.client = OpenAI(api_key=self.api_key)
-        self.model = model
+
+        self.base_url = (base_url or os.getenv("OPENAI_BASE_URL") or "").strip() or None
+        # Support OpenAI-compatible local servers (LM Studio / llama.cpp / etc.)
+        self.client = OpenAI(api_key=self.api_key, base_url=self.base_url) if self.base_url else OpenAI(api_key=self.api_key)
+        self.model = model or os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
     
     def build(
         self,
