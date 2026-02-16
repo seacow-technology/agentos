@@ -1,0 +1,59 @@
+{
+  "kind": "ui",
+  "metrics": {
+    "model": "gpt-4o",
+    "raw_tokens": 1119,
+    "optimized_tokens": 277,
+    "reduction_rate": 0.7524575513851653,
+    "reduction_percent": 75.24575513851653,
+    "raw_bytes": 3375,
+    "optimized_bytes": 798,
+    "bytes_removed": 2577
+  },
+  "structured": {
+    "console_summary": [],
+    "network_summary": [
+      {
+        "signature": "## <n>. Console / Network 清洁度结论",
+        "count": 1,
+        "examples": [
+          "## 5. Console / Network 清洁度结论"
+        ]
+      },
+      {
+        "signature": "- 4xx / 5xx: `<n>`",
+        "count": 1,
+        "examples": [
+          "  - 4xx / 5xx: `0`"
+        ]
+      },
+      {
+        "signature": "- WS 异常: `<n>`",
+        "count": 1,
+        "examples": [
+          "  - WS 异常: `0`"
+        ]
+      }
+    ],
+    "page_errors": [
+      "- 现象: 控制台业务 warning：`[Platform/HTTP] No CSRF token found in cookie. Request may fail.`",
+      "- 修复: 在 `apps/webui/src/platform/http/interceptors.ts` 中增加 CSRF 自动预取逻辑（首次缺失时请求 `/api/csrf-token`，成功后再注入 `X-CSRF-Token`）",
+      "- 阻断: 2.7 CSRF 缺失业务 warning",
+      "- `apps/webui/src/platform/http/interceptors.ts`（CSRF 自动预取修复）",
+      "- error: `0`",
+      "- 原因: 唯一业务级告警已从根因修复（CSRF 自动预取），并通过全量顺序回归验证。"
+    ]
+  },
+  "metadata": {
+    "raw_sha256": "6b41371c79a5f2fc325c24299c7509feabaeabd7eeb254698633ee495087d601",
+    "stacktrace_removed_lines": 0,
+    "source": {
+      "source_path": "/Users/pangge/PycharmProjects/AgentOS/reports/webui_playwright_full_audit.md",
+      "kind": "md_report"
+    }
+  },
+  "raw_sha256": "6b41371c79a5f2fc325c24299c7509feabaeabd7eeb254698633ee495087d601",
+  "optimized_sha256": "dc843f91428902ed567691d7a165898880d3b512d462cc6fdc8fa4796695cfe3",
+  "raw_preview": "# WebUI Playwright Full Audit Report\n\n## 1. 测试环境\n- Commit: `62f25c8652957a97397b6ae6731a51a2bf0b4965`\n- 执行时间: `2026-02-10 01:14:39 AEDT`\n- 启动方式（真实链路）: `uv run octopusos webui start`\n- 启动结果:\n  - frontend: `http://127.0.0.1:50983`\n  - backend: `http://127.0.0.1:8080`\n- Admin Token: `OCTOPUSOS_ADMIN_TOKEN` 已注入并用于页面写操作\n- startup_checker 执行记录:\n  - 命令: `uv run python -c \"from octopusos.cli.startup_checker import StartupChecker; print(StartupChecker(auto_fix=True).prepare_database())\"`\n  - 结果: `STARTUP_CHECKER_OK=True`\n  - memory proposals API 验证: `GET /api/memory/proposals?page=1&limit=25` 返回 `200`（`{\"proposals\":[],\"total\":0}`）\n\n## 2. 路由清单（逐条）\n- ✅ 2.1 App Shell / Global (`/`)\n- ✅ 2.2 Dashboard (`/overview`)\n- ✅ 2.3 Memory Proposals (`/memory-proposals`)\n- ✅ 2.4 Review Queue (`/review-queue`)\n- ✅ 2.5 Action Log (`/action-log`)\n- ✅ 2.6 External Facts Providers (`/external-facts/providers`)\n- ✅ 2.7 External Facts Policy / Schema (`/external-facts/policy`, `/facts/schema`)\n- ✅ 2.8 Connectors (`/connectors`)\n- ✅ 2.9 Coding / Work / Chat / Frontdesk (`/chat`, `/chat/work`, `/coding`)\n- ✅ 2.10 Settings / Environments / System (`/config`, `/runtime`, `/system-health`)\n\n## 3. 发现的问题（已修复）\n- 问题 1（阻断",
+  "optimized_preview": "## UI / Playwright Summary\n- error_roots:\n  - - 现象: 控制台业务 warning：`[Platform/HTTP] No CSRF token found in cookie. Request may fail.`\n  - - 修复: 在 `apps/webui/src/platform/http/interceptors.ts` 中增加 CSRF 自动预取逻辑（首次缺失时请求 `/api/csrf-token`，成功后再注入 `X-CSRF-Token`）\n  - - 阻断: 2.7 CSRF 缺失业务 warning\n  - - `apps/webui/src/platform/http/interceptors.ts`（CSRF 自动预取修复）\n  - - error: `0`\n  - - 原因: 唯一业务级告警已从根因修复（CSRF 自动预取），并通过全量顺序回归验证。\n\n## Network (Grouped)\n- x1: ## <n>. Console / Network 清洁度结论\n  - ## 5. Console / Network 清洁度结论\n- x1: - 4xx / 5xx: `<n>`\n  -   - 4xx / 5xx: `0`\n- x1: - WS 异常: `<n>`\n  -   - WS 异常: `0`\n"
+}

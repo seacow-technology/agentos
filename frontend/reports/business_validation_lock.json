@@ -1,0 +1,55 @@
+{
+  "tasks": [
+    {
+      "task_id": "B_DESKTOP_001",
+      "portal": "desktop",
+      "module_bucket": "product_shell/modes",
+      "title": "Product Shell: Chat/Work/Coding modes",
+      "status": "done",
+      "priority": 100,
+      "notes": "Implemented embed tabs in product-dist and /console basename support."
+    },
+    {
+      "task_id": "B_DESKTOP_002",
+      "portal": "desktop",
+      "module_bucket": "console/embed",
+      "title": "Console embedding hardening",
+      "status": "done",
+      "priority": 90,
+      "notes": "Fixed /console assets resolution and BrowserRouter basename."
+    },
+    {
+      "task_id": "B_DESKTOP_003",
+      "portal": "desktop",
+      "module_bucket": "aws_ops",
+      "title": "AWS Ops entry + chat handoff",
+      "status": "done",
+      "priority": 80,
+      "notes": "Added /aws in WebUI + product shell tab + session handoff."
+    },
+    {
+      "task_id": "B_DESKTOP_004",
+      "portal": "desktop",
+      "module_bucket": "projects",
+      "title": "Project management entry in product shell",
+      "status": "done",
+      "priority": 70,
+      "notes": "Product shell embeds /projects."
+    },
+    {
+      "task_id": "B_DESKTOP_005",
+      "portal": "desktop",
+      "module_bucket": "playwright_smoke",
+      "title": "Playwright smoke for product shell + embedded console",
+      "status": "done",
+      "priority": 60,
+      "scope": "Add a minimal playwright smoke that boots backend + serves proxy, then verifies Product Shell tabs can load embedded console routes without 404 console errors.",
+      "acceptance": "A single command produces deterministic PASS/FAIL and stores evidence under frontend/reports/e2e_endpoint_evidence/B_DESKTOP_005.json.",
+      "hints": "Prefer CLI-first using existing apps/webui e2e harness or add a small Node harness to start runtime + proxy.",
+      "worker": "pangge",
+      "claimed_at": "2026-02-15T23:42:03.173322+00:00",
+      "updated_at": "2026-02-15T23:42:19.729043+00:00",
+      "notes": "PASS"
+    }
+  ]
+}

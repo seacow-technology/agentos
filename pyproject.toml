@@ -1,6 +1,6 @@
 [project]
 name = "octopusos"
-version = "3.4.0"
+version = "3.5.0"
 description = "System-level, project-agnostic AI Agent orchestration system"
 requires-python = ">=3.13"
 readme = "README.md"
@@ -36,6 +36,7 @@ dependencies = [
     "PyNaCl>=1.5.0",  # Ed25519 signature verification for Discord
     "grpcio>=1.60.0",  # gRPC for Voice Worker Sidecar (v0.2)
     "grpcio-tools>=1.60.0",  # gRPC protocol compiler for Voice Worker (v0.2)
+    "tiktoken>=0.9.0",  # Real tokenizer for context optimization metrics
 ]
 
 [project.optional-dependencies]

@@ -1,0 +1,51 @@
+{
+  "versions": [
+    {
+      "key": "2026-02-16",
+      "title": "2026-02-16: WebUI Product Surface Refresh, Context Optimizer v2, and LLM Usage/Price Observability",
+      "outline": [
+        "WebUI/product surface refresh: new product API surface + AWS ops/provider pricing/model/chat UI updates",
+        "Context optimizer v1/v2 delivered: rule pipelines, budget allocation, context pack/signature/semantic validation",
+        "LLM observability expansion: usage events + model pricing persistence with new DB migrations",
+        "Desktop packaging updated with product-dist resources and Electron integration path refresh"
+      ],
+      "md_path": "docs/changelog/lang/en/2026-02-16.md"
+    },
+    {
+      "key": "2026-02-12",
+      "title": "2026-02-12: Providers Cloud Multi-Config, Governance Trust Gate (Phase 1.8), and Compat Surface Expansion",
+      "outline": [
+        "Governance trust baseline: seeded Phase 1.8 gate requires cross_strong closure with evidence artifacts",
+        "Decision timeline hardened: allowlist enums + invariants; stable event semantics for audit linkage",
+        "Providers upgrade: local vs cloud split, cloud multi-config UX, model catalog/OpenAI-compatible adapters",
+        "Compat/bulk expansion + regenerated WebUI API clients from updated OpenAPI snapshot",
+        "New API surfaces: federation + capability dashboard stats, plus tests and E2E updates"
+      ],
+      "md_path": "docs/changelog/lang/en/2026-02-12.md"
+    },
+    {
+      "key": "2026-02-11",
+      "title": "2026-02-11: BridgeOS + MCP Expansion, Cloudflare Operations, and Release Hardening",
+      "outline": [
+        "BridgeOS introduced: profiles/bindings/events + runtime resolution",
+        "Bridge channel catalog expanded (iMessage + Line/Meta/Viber/Matrix/Google/Mattermost/Rocket.Chat/Zulip/WeChat/WeCom/Kakao)",
+        "Network Access: Cloudflare MCP discovery + daemon/tunnel operations + logs clear",
+        "WebUI UX hardening: bridge profile dialog, setup wizard, global button tooltips, i18n coverage",
+        "Release/QA hardening: full regression gates + 3.2.0/3.2.1/3.2.2 stabilization track"
+      ],
+      "md_path": "docs/changelog/lang/en/2026-02-11.md"
+    },
+    {
+      "key": "2026-02-10",
+      "title": "2026-02-10: Proactive Work Modes + Transparency",
+      "outline": [
+        "Phase 1: Event ledger + SessionWriter (Gate-1)",
+        "Phase 2: State cards + Inbox delivery (Gate-2)",
+        "Phase 3: Chat injection pipeline + UI guards (Gate-3, Gate-3.1)",
+        "Phase 4: Work/Tasks + safe auto-exec + transparency export (Gate-4)",
+        "Rollbacks: inbox_only for injection; work.mode.global for behavior matrix"
+      ],
+      "md_path": "docs/changelog/lang/en/2026-02-10.md"
+    }
+  ]
+}

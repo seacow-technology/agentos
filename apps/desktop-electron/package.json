@@ -1,0 +1,83 @@
+{
+  "name": "octopusos-desktop-electron",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OctopusOS Desktop Shell (Electron) - all-in-one launcher with tray + bundled sidecars",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "npm run build && electron .",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder",
+    "lint": "node -c dist/main.js || true"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/express": "^4.17.21",
+    "electron": "^32.2.0",
+    "electron-builder": "^24.13.3",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "http-proxy-middleware": "^3.0.0"
+  },
+  "build": {
+    "appId": "com.octopusos.desktop",
+    "productName": "OctopusOS",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**",
+      "assets/**"
+    ],
+    "asar": true,
+    "extraResources": [
+      {
+        "from": "resources/webui-dist",
+        "to": "webui-dist",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "resources/product-dist",
+        "to": "product-dist",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "binaries",
+        "to": "binaries",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "mac": {
+      "icon": "assets/icon.icns",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.productivity",
+      "minimumSystemVersion": "13.0"
+    },
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        "nsis"
+      ]
+    },
+    "linux": {
+      "icon": "assets/icon.png",
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility"
+    }
+  }
+}

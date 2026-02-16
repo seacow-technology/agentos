@@ -1,0 +1,246 @@
+{
+  "generated_at_ms": 1771106264946,
+  "ruleset_version": "v2.0",
+  "top_signatures": [
+    {
+      "signature": "cli:cli_log:885ea15793afed91",
+      "kind": "cli",
+      "count": 24,
+      "last_seen_ms": 1771106264552
+    },
+    {
+      "signature": "cli:cli_log:tail",
+      "kind": "cli",
+      "count": 24,
+      "last_seen_ms": 1771106264554
+    },
+    {
+      "signature": "cli:cli_log:errors",
+      "kind": "cli",
+      "count": 24,
+      "last_seen_ms": 1771106264557
+    },
+    {
+      "signature": "ui:6961170704b2a918",
+      "kind": "ui",
+      "count": 24,
+      "last_seen_ms": 1771106264734
+    },
+    {
+      "signature": "ui:tail",
+      "kind": "ui",
+      "count": 24,
+      "last_seen_ms": 1771106264736
+    },
+    {
+      "signature": "tool:mcp:255b804efcfa4956",
+      "kind": "tool",
+      "count": 23,
+      "last_seen_ms": 1771106264890
+    },
+    {
+      "signature": "tool:session_run_events:tail10",
+      "kind": "tool",
+      "count": 22,
+      "last_seen_ms": 1771106264891
+    },
+    {
+      "signature": "tool:session_run_events:tail20",
+      "kind": "tool",
+      "count": 22,
+      "last_seen_ms": 1771106264892
+    },
+    {
+      "signature": "tool:session_run_events:tail30",
+      "kind": "tool",
+      "count": 22,
+      "last_seen_ms": 1771106264894
+    },
+    {
+      "signature": "tool:session_run_events:tail40",
+      "kind": "tool",
+      "count": 22,
+      "last_seen_ms": 1771106264895
+    },
+    {
+      "signature": "tool:session_run_events:tail50",
+      "kind": "tool",
+      "count": 22,
+      "last_seen_ms": 1771106264896
+    },
+    {
+      "signature": "cli:cli_inline:5b3fb9eb6558bc9d",
+      "kind": "cli",
+      "count": 1,
+      "last_seen_ms": 1771106257077
+    },
+    {
+      "signature": "cli:cli_inline:tail",
+      "kind": "cli",
+      "count": 1,
+      "last_seen_ms": 1771106257080
+    },
+    {
+      "signature": "cli:cli_inline:errors",
+      "kind": "cli",
+      "count": 1,
+      "last_seen_ms": 1771106257081
+    }
+  ],
+  "proposals": [
+    {
+      "type": "NEW_NOISE_PATTERN",
+      "signature": "cli:cli_log:885ea15793afed91",
+      "kind": "cli",
+      "count": 24,
+      "suggestion": "Consider default grouping or dropping repeated entries of this signature."
+    },
+    {
+      "type": "NEW_POINTER_RULE",
+      "signature": "cli:cli_log:885ea15793afed91",
+      "kind": "cli",
+      "count": 24,
+      "suggestion": "Add/expand pointer locator rules for this signature to enable selective expansion."
+    },
+    {
+      "type": "NEW_NOISE_PATTERN",
+      "signature": "cli:cli_log:tail",
+      "kind": "cli",
+      "count": 24,
+      "suggestion": "Consider default grouping or dropping repeated entries of this signature."
+    },
+    {
+      "type": "NEW_POINTER_RULE",
+      "signature": "cli:cli_log:tail",
+      "kind": "cli",
+      "count": 24,
+      "suggestion": "Add/expand pointer locator rules for this signature to enable selective expansion."
+    },
+    {
+      "type": "NEW_NOISE_PATTERN",
+      "signature": "cli:cli_log:errors",
+      "kind": "cli",
+      "count": 24,
+      "suggestion": "Consider default grouping or dropping repeated entries of this signature."
+    },
+    {
+      "type": "NEW_POINTER_RULE",
+      "signature": "cli:cli_log:errors",
+      "kind": "cli",
+      "count": 24,
+      "suggestion": "Add/expand pointer locator rules for this signature to enable selective expansion."
+    },
+    {
+      "type": "NEW_NOISE_PATTERN",
+      "signature": "ui:6961170704b2a918",
+      "kind": "ui",
+      "count": 24,
+      "suggestion": "Consider default grouping or dropping repeated entries of this signature."
+    },
+    {
+      "type": "NEW_POINTER_RULE",
+      "signature": "ui:6961170704b2a918",
+      "kind": "ui",
+      "count": 24,
+      "suggestion": "Add/expand pointer locator rules for this signature to enable selective expansion."
+    },
+    {
+      "type": "NEW_NOISE_PATTERN",
+      "signature": "ui:tail",
+      "kind": "ui",
+      "count": 24,
+      "suggestion": "Consider default grouping or dropping repeated entries of this signature."
+    },
+    {
+      "type": "NEW_POINTER_RULE",
+      "signature": "ui:tail",
+      "kind": "ui",
+      "count": 24,
+      "suggestion": "Add/expand pointer locator rules for this signature to enable selective expansion."
+    },
+    {
+      "type": "NEW_NOISE_PATTERN",
+      "signature": "tool:mcp:255b804efcfa4956",
+      "kind": "tool",
+      "count": 23,
+      "suggestion": "Consider default grouping or dropping repeated entries of this signature."
+    },
+    {
+      "type": "NEW_POINTER_RULE",
+      "signature": "tool:mcp:255b804efcfa4956",
+      "kind": "tool",
+      "count": 23,
+      "suggestion": "Add/expand pointer locator rules for this signature to enable selective expansion."
+    },
+    {
+      "type": "NEW_NOISE_PATTERN",
+      "signature": "tool:session_run_events:tail10",
+      "kind": "tool",
+      "count": 22,
+      "suggestion": "Consider default grouping or dropping repeated entries of this signature."
+    },
+    {
+      "type": "NEW_POINTER_RULE",
+      "signature": "tool:session_run_events:tail10",
+      "kind": "tool",
+      "count": 22,
+      "suggestion": "Add/expand pointer locator rules for this signature to enable selective expansion."
+    },
+    {
+      "type": "NEW_NOISE_PATTERN",
+      "signature": "tool:session_run_events:tail20",
+      "kind": "tool",
+      "count": 22,
+      "suggestion": "Consider default grouping or dropping repeated entries of this signature."
+    },
+    {
+      "type": "NEW_POINTER_RULE",
+      "signature": "tool:session_run_events:tail20",
+      "kind": "tool",
+      "count": 22,
+      "suggestion": "Add/expand pointer locator rules for this signature to enable selective expansion."
+    },
+    {
+      "type": "NEW_NOISE_PATTERN",
+      "signature": "tool:session_run_events:tail30",
+      "kind": "tool",
+      "count": 22,
+      "suggestion": "Consider default grouping or dropping repeated entries of this signature."
+    },
+    {
+      "type": "NEW_POINTER_RULE",
+      "signature": "tool:session_run_events:tail30",
+      "kind": "tool",
+      "count": 22,
+      "suggestion": "Add/expand pointer locator rules for this signature to enable selective expansion."
+    },
+    {
+      "type": "NEW_NOISE_PATTERN",
+      "signature": "tool:session_run_events:tail40",
+      "kind": "tool",
+      "count": 22,
+      "suggestion": "Consider default grouping or dropping repeated entries of this signature."
+    },
+    {
+      "type": "NEW_POINTER_RULE",
+      "signature": "tool:session_run_events:tail40",
+      "kind": "tool",
+      "count": 22,
+      "suggestion": "Add/expand pointer locator rules for this signature to enable selective expansion."
+    },
+    {
+      "type": "NEW_NOISE_PATTERN",
+      "signature": "tool:session_run_events:tail50",
+      "kind": "tool",
+      "count": 22,
+      "suggestion": "Consider default grouping or dropping repeated entries of this signature."
+    },
+    {
+      "type": "NEW_POINTER_RULE",
+      "signature": "tool:session_run_events:tail50",
+      "kind": "tool",
+      "count": 22,
+      "suggestion": "Add/expand pointer locator rules for this signature to enable selective expansion."
+    }
+  ]
+}

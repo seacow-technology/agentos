@@ -1,0 +1,42 @@
+{
+  "kind": "tool",
+  "metrics": {
+    "model": "gpt-4o",
+    "raw_tokens": 15611,
+    "optimized_tokens": 306,
+    "reduction_rate": 0.9803984369995516,
+    "reduction_percent": 98.03984369995517,
+    "raw_bytes": 48209,
+    "optimized_bytes": 859,
+    "bytes_removed": 47350
+  },
+  "structured": {
+    "top_signatures": [
+      [
+        "message.delta",
+        71
+      ],
+      [
+        "message.end",
+        5
+      ],
+      [
+        "message.start",
+        4
+      ]
+    ]
+  },
+  "metadata": {
+    "raw_sha256": "4398bcabba88c99d91a2c09ec894e9839e6aec5c83eea247d0cf9db152b7b192",
+    "format": "jsonl",
+    "events_parsed": 80,
+    "source": {
+      "source_path": "/Users/pangge/.octopusos/store/octopusos/db.sqlite",
+      "kind": "sqlite.session_run_events.tail80"
+    }
+  },
+  "raw_sha256": "4398bcabba88c99d91a2c09ec894e9839e6aec5c83eea247d0cf9db152b7b192",
+  "optimized_sha256": "651ba433aa0e26d4db90c39212a9032f994b9f3247a02161d9397144ccda49ae",
+  "raw_preview": "{\"type\": \"message.delta\", \"session_id\": \"01KH64ES2EJX2K5010237MRSKE\", \"run_id\": \"run_1d4337c41e014397ad301c4abe26731f\", \"message_id\": \"msg_d1f0c1c8a6dc4ea39fa2a73312e385f6\", \"seq\": 2, \"delta\": \"{\\\"content\\\": [{\\\"type\\\": \\\"text\\\", \\\"text\\\": \\\"### Result\\\\n\\\\\\\"pw-mcp-1770812560554:Example Domain\\\\\\\"\\\\n### Ran Playwright code\\\\n```js\\\\nawait (async (page) => { await page.goto('https://example.com'); return 'pw-mcp-1770812560554:' + (await page.title()); })(page);\\\\n```\\\\n### Page\\\\n- Page URL: https://example.com/\\\\n- Page Title: Example Domain\\\\n- Console: 1 errors, 0 warnings\\\\n### Events\\\\n- New console entries: ../../../../var/folders/cm/cw7cby1x0t52gcdk4_9rg35r0000gn/T/playwright-mcp-output/1770812562259/console-2026-02-11T12-22-44-083Z.log#L1\\\\n- [ERROR] Failed to load resource: the server respon... status of 404 () @ https://example.com/favicon.ico:0\\\"}]}\", \"content\": \"{\\\"content\\\": [{\\\"type\\\": \\\"text\\\", \\\"text\\\": \\\"### Result\\\\n\\\\\\\"pw-mcp-1770812560554:Example Domain\\\\\\\"\\\\n### Ran Playwright code\\\\n```js\\\\nawait (async (page) => { await page.goto('https://example.com'); return 'pw-mcp-1770812560554:' + (await page.title()); })(page);\\\\n```\\\\n### Page\\\\n- Page URL: https://exam",
+  "optimized_preview": "Tool Trace Summary (jsonl)\n- events_total: 80\n- grouped:\n  - x71: message.delta\n  - x5: message.end\n  - x4: message.start\n- first_event_excerpt:\n{\"type\": \"message.delta\", \"session_id\": \"01KH64ES2EJX2K5010237MRSKE\", \"run_id\": \"run_1d4337c41e014397ad301c4abe26731f\", \"message_id\": \"msg_d1f0c1c8a6dc4ea39fa2a73312e385f6\", \"delta\": \"{\\\"content\\\": [{\\\"type\\\": \\\"text\\\", \\\"text\\\": \\\"### Result\\\\n\\\\\\\"pw-mcp-1770812560554:Example Domain\\\\\\\"\\\\n### Ran Playwright code\\\\n```js\\\\nawait (async (page) => { await page.goto('https://exampl... <truncated len=651 sha256=e643967ce3d8>\", \"content\": \"{\\\"content\\\": [{\\\"type\\\": \\\"text\\\", \\\"text\\\": \\\"### Result\\\\n\\\\\\\"pw-mcp-1770812560554:Example Domain\\\\\\\"\\\\n### Ran Playwright code\\\\n```js\\\\nawait (async (page) => { await page.goto('https://exampl... <truncated len=651 sha256=e643967ce3d8>\", \"metadata\": {\"source\": \"real\"}}\n"
+}

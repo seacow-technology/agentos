@@ -1,0 +1,27 @@
+{
+  "tasks": [
+    {
+      "task_id": "K_DESKTOP_001",
+      "portal": "desktop",
+      "module_bucket": "aws_mcp",
+      "title": "AWS MCP backend readiness (profiles, cost explain, ops commands)",
+      "status": "todo",
+      "priority": 50,
+      "scope": "Verify /api/mcp/aws/profiles and AWS MCP dispatch works end-to-end from Chat. If backend gaps exist, surface them in UI with clear disable + reason and mark BLOCKED with evidence.",
+      "acceptance": "Evidence JSON includes actual /api/mcp/aws/* responses (ok/failed + reason) and any 4xx/5xx from invoked calls.",
+      "hints": "Backend endpoints live under os/octopusos/webui/api/mcp_servers.py and aws dispatch under os/octopusos/core/chat/tool_dispatch/aws_mcp_dispatch.py."
+    },
+    {
+      "task_id": "K_DESKTOP_002",
+      "portal": "desktop",
+      "module_bucket": "product_api",
+      "title": "Product API /api/product endpoints parity",
+      "status": "todo",
+      "priority": 40,
+      "scope": "Ensure product shell endpoints used by resources/product-dist/app.js exist and are stable: /api/product/tasks, /api/product/actions/run, /api/product/tasks/{id}/plan, /evidence, /replay.",
+      "acceptance": "No 404/500 from product endpoints during normal usage; errors become actionable UI messages.",
+      "hints": "Backend lives in os/octopusos/webui/api/product.py."
+    }
+  ]
+}
+

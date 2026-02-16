@@ -1,0 +1,27 @@
+{
+  "name": "octopusos",
+  "version": "1.0.0",
+  "description": "OctopusOS - Multi-Agent Operating System",
+  "private": true,
+  "scripts": {
+    "dev:v1": "python -m octopusos.cli.web --port 8080 --reload",
+    "dev:v2": "cd apps/webui && npm run dev",
+    "dev:ui": "bash scripts/dev-ui.sh",
+    "install:v2": "cd apps/webui && npm install",
+    "build:v2": "cd apps/webui && npm run build",
+    "desktop:electron:sync-webui": "bash apps/desktop-electron/scripts/sync-webui-dist.sh",
+    "desktop:electron:prepare": "bash apps/desktop-electron/scripts/prepare-sidecars.sh",
+    "desktop:electron:dev": "npm --prefix apps/desktop-electron run dev",
+    "desktop:electron:dist": "npm --prefix apps/desktop-electron run dist",
+    "desktop:smoke:B_DESKTOP_005": "node frontend/scripts/B_DESKTOP_005_smoke.js",
+    "desktop:smoke:C_DESKTOP_001": "node frontend/scripts/C_DESKTOP_001_smoke.js",
+    "runtime:publish": "bash scripts/desktop/publish_runtime_repo.sh",
+    "build": "npm run build:v2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.58.2"
+  }
+}

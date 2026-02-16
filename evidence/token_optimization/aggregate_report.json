@@ -1,0 +1,14 @@
+{
+  "model": "gpt-4o",
+  "cli_reduction_percent": 99.86186110762276,
+  "ui_reduction_percent": 75.24575513851653,
+  "tool_reduction_percent": 98.03984369995517,
+  "weighted_average_percent": 99.54372407523155,
+  "raw_tokens_total": 175990,
+  "optimized_tokens_total": 803,
+  "reports": {
+    "cli": "cli_report.json",
+    "ui": "ui_report.json",
+    "tool": "tool_report.json"
+  }
+}

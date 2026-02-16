@@ -1,0 +1,36 @@
+{
+  "schema_version": "product.timeline.v1",
+  "generated_at": "2026-02-15T09:39:26.110907+00:00",
+  "steps": [
+    {
+      "step": "structure",
+      "ok": true,
+      "error": null,
+      "duration_ms": 256
+    },
+    {
+      "step": "todo_fixme",
+      "ok": true,
+      "error": null,
+      "duration_ms": 2412
+    },
+    {
+      "step": "dependency_risk",
+      "ok": true,
+      "error": null,
+      "duration_ms": 1
+    },
+    {
+      "step": "git_hotspots",
+      "ok": true,
+      "error": null,
+      "duration_ms": 3017
+    },
+    {
+      "step": "secret_risk",
+      "ok": true,
+      "error": null,
+      "duration_ms": 1251
+    }
+  ]
+}

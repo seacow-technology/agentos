@@ -1,0 +1,201 @@
+{
+  "kind": "cli",
+  "metrics": {
+    "model": "gpt-4o",
+    "raw_tokens": 159260,
+    "optimized_tokens": 220,
+    "reduction_rate": 0.9986186110762275,
+    "reduction_percent": 99.86186110762276,
+    "raw_bytes": 419632,
+    "optimized_bytes": 942,
+    "bytes_removed": 418690
+  },
+  "structured": {
+    "command": "cli_log",
+    "exit_code": null,
+    "duration_ms": null,
+    "warnings_count": 47,
+    "errors": {
+      "error_lines_count": 6,
+      "error_lines_tail": [
+        "2026-02-12 17:52:21,938 - octopusos.core.communication.service - ERROR - Communication error: Web search backend is disabled in open-source runtime. Install internal extension and configure WEB_SEARCH_EXTENSION_ENTRYPOINT.",
+        "Traceback (most recent call last):",
+        "2026-02-12 17:52:21,944 - octopusos.core.communication.service - ERROR - Communication error: Web search backend is disabled in open-source runtime. Install internal extension and configure WEB_SEARCH_EXTENSION_ENTRYPOINT.",
+        "Traceback (most recent call last):",
+        "2026-02-12 17:52:21,946 - octopusos.core.communication.service - ERROR - Communication error: Web search backend is disabled in open-source runtime. Install internal extension and configure WEB_SEARCH_EXTENSION_ENTRYPOINT.",
+        "2026-02-13 03:05:53,382 - octopusos.core.chat.memory_extractor - ERROR - Failed to store memory: no such column: is_active"
+      ]
+    },
+    "failed_tests": {
+      "failed_tests_count": 0,
+      "failed_tests": [],
+      "failed_tests_truncated": false
+    },
+    "git_status": {
+      "git_status_format": "porcelain",
+      "changed_files_count": 35,
+      "changed_files": [
+        {
+          "status": "  ",
+          "path": "result = await connector.execute(operation, request.params)"
+        },
+        {
+          "status": "  ",
+          "path": "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+        },
+        {
+          "status": "  ",
+          "path": "return await self._search(params)"
+        },
+        {
+          "status": "  ",
+          "path": "^^^^^^^^^^^^^^^^^^^^^^^^^^"
+        },
+        {
+          "status": "  ",
+          "path": "raw_results = await self._search_bing(query, max_results, language)"
+        },
+        {
+          "status": "  ",
+          "path": "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+        },
+        {
+          "status": "  ",
+          "path": "return await self._search_html_engine(\"bing\", query, max_results, language)"
+        },
+        {
+          "status": "  ",
+          "path": "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+        },
+        {
+          "status": "  ",
+          "path": "raise APIError("
+        },
+        {
+          "status": "  ",
+          "path": "...<2 lines>..."
+        },
+        {
+          "status": "  ",
+          "path": ")"
+        },
+        {
+          "status": "  ",
+          "path": "result = await connector.execute(operation, request.params)"
+        },
+        {
+          "status": "  ",
+          "path": "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+        },
+        {
+          "status": "  ",
+          "path": "return await self._search(params)"
+        },
+        {
+          "status": "  ",
+          "path": "^^^^^^^^^^^^^^^^^^^^^^^^^^"
+        },
+        {
+          "status": "  ",
+          "path": "raw_results = await self._search_bing(query, max_results, language)"
+        },
+        {
+          "status": "  ",
+          "path": "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+        },
+        {
+          "status": "  ",
+          "path": "return await self._search_html_engine(\"bing\", query, max_results, language)"
+        },
+        {
+          "status": "  ",
+          "path": "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+        },
+        {
+          "status": "  ",
+          "path": "raise APIError("
+        },
+        {
+          "status": "  ",
+          "path": "...<2 lines>..."
+        },
+        {
+          "status": "  ",
+          "path": ")"
+        },
+        {
+          "status": "  ",
+          "path": "memory_id = memory_service.upsert(agent_id, memory)"
+        },
+        {
+          "status": "  ",
+          "path": "resolved_id = self._resolve_conflict("
+        },
+        {
+          "status": "  ",
+          "path": "existing=existing,"
+        },
+        {
+          "status": "  ",
+          "path": "conn=conn"
+        },
+        {
+          "status": "  ",
+          "path": "cursor.execute(\"\"\""
+        },
+        {
+          "status": "  ",
+          "path": "~~~~~~~~~~~~~~^^^^"
+        },
+        {
+          "status": "  ",
+          "path": "UPDATE memory_items"
+        },
+        {
+          "status": "  ",
+          "path": "^^^^^^^^^^^^^^^^^^^"
+        },
+        {
+          "status": "  ",
+          "path": "...<3 lines>..."
+        },
+        {
+          "status": "  ",
+          "path": "WHERE id = ?"
+        },
+        {
+          "status": "  ",
+          "path": "^^^^^^^^^^^^"
+        },
+        {
+          "status": "  ",
+          "path": "\"\"\", (new_id, superseded_at, old_id))"
+        },
+        {
+          "status": "  ",
+          "path": "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+        }
+      ],
+      "changed_files_truncated": false
+    }
+  },
+  "metadata": {
+    "raw_sha256": "7e3d9ad3aaa159f497cba83774e77e29d41e2bbd589e1f605a276d1e6836692f",
+    "lines_raw": 4075,
+    "lines_after_strip_ansi": 4075,
+    "lines_after_progress_drop": 4075,
+    "lines_after_dedup": 3977,
+    "progress_removed_lines": 0,
+    "dedup_removed_lines": 98,
+    "dedup_unique_lines": 3936,
+    "dedup_total_lines": 4075,
+    "source": {
+      "source_path": "/Users/pangge/PycharmProjects/AgentOS/reports/teams_deploy/webui_restart.log",
+      "kind": "cli_log"
+    }
+  },
+  "raw_sha256": "7e3d9ad3aaa159f497cba83774e77e29d41e2bbd589e1f605a276d1e6836692f",
+  "optimized_sha256": "cd6b9147a99ad1da4a434de5bfae36041fc3304f101d115f993c3c7e7e5f0dab",
+  "raw_preview": "2026-02-12 17:35:15,371 - octopusos.core.db.registry_db - INFO - DB path initialized from storage.paths: /Users/pangge/.octopusos/store/octopusos/db.sqlite\n2026-02-12 17:35:15,381 - octopusos.store.migrator - INFO - Current version: v100, Available migrations: 90, Pending: 0\n2026-02-12 17:35:15,381 - octopusos.store.migrator - INFO - No pending migrations\nINFO:     Started server process [62696]\nINFO:     Waiting for application startup.\n2026-02-12 17:35:16,344 - octopusos.webui.app - INFO - Cleared runtime environment override: runtime.web_search_extension_entrypoint -> WEB_SEARCH_EXTENSION_ENTRYPOINT (source=default)\n2026-02-12 17:35:16,347 - octopusos.communicationos.registry - INFO - Loaded channel manifest: mattermost (Mattermost)\n2026-02-12 17:35:16,348 - octopusos.core.db.writer - INFO - Background writer thread started\n2026-02-12 17:35:16,348 - octopusos.core.db.writer - INFO - SQLiteWriter initialized: db_path=/Users/pangge/.octopusos/store/octopusos/db.sqlite, busy_timeout=30000ms, max_retry=8\n2026-02-12 17:35:16,348 - octopusos.communicationos.registry - INFO - Loaded channel manifest: telegram (Telegram Bot)\n2026-02-12 17:35:16,350 - octopusos.communicationos.registry -",
+  "optimized_preview": "## CLI Execution Summary\n- command: cli_log\n- warnings_count: 47\n\n## Error Tail\n2026-02-12 17:52:21,938 - octopusos.core.communication.service - ERROR - Communication error: Web search backend is disabled in open-source runtime. Install internal extension and configure WEB_SEARCH_EXTENSION_ENTRYPOINT.\nTraceback (most recent call last):\n2026-02-12 17:52:21,944 - octopusos.core.communication.service - ERROR - Communication error: Web search backend is disabled in open-source runtime. Install internal extension and configure WEB_SEARCH_EXTENSION_ENTRYPOINT.\nTraceback (most recent call last):\n2026-02-12 17:52:21,946 - octopusos.core.communication.service - ERROR - Communication error: Web search backend is disabled in open-source runtime. Install internal extension and configure WEB_SEARCH_EXTENSION_ENTRYPOINT.\n2026-02-13 03:05:53,382 - octopusos.core.chat.memory_extractor - ERROR - Failed to store memory: no such column: is_active\n"
+}

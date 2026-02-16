@@ -1,10 +1,303 @@
+# Python compiled files and cache (NOT source .py files!)
 __pycache__/
-*.py[cod]
+*.py[cod]      # .pyc, .pyo, .pyd only - NOT .py files
+*$py.class
+*.so
+.Python
+
+# Python distribution
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Generated build/export artifacts (do not commit)
+/output/
+/octopusos-runtime/
+/apps/desktop-electron/release/
+/apps/desktop-electron/dist/
+/apps/desktop-electron/out/
+
+# Local vendor repos (kept as separate git repos on disk)
+/homebrew/
+
+# IMPORTANT: Explicitly track all Python source files
+# Uncomment below if needed to force-include source files
+# !*.py
+# !octopusos/**/*.py
+# !tests/**/*.py
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# uv
+.uv/
+uv.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Testing
 .pytest_cache/
-.ruff_cache/
-.mypy_cache/
 .coverage
-*.bak
-*.backup
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Coverage reports (dual coverage model)
+coverage-scope.xml
+coverage-project.xml
+htmlcov-scope/
+htmlcov-project/
+.coverage.scope
+.coverage.project
+
+# Runtime data
+store/registry.sqlite
+store/*.db
+store/*.sqlite-shm
+store/*.sqlite-wal
+/reports/**
+!reports/
+reports/growth_release_gate_report.json
+reports/growth_release_gate_report.md
+reports/growth_release_gate_pytest.log
+!reports/e2e_api_smoke_report.md
+!reports/webui_full_audit_report.md
+!reports/agentic_pipeline_evidence.md
+!reports/agentic_pipeline_evidence.json
 artifacts/
-*.py[cod]
+queue/*.task.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+/logs/archive/
+
+# Temporary database files
+*.db-shm
+*.db-wal
+*.db.bak*
+/tmp/*.db
+/tmp/*.sqlite
+
+# Test output files (should be in tests/manual/)
+/test_*.py
+/test_*.html
+/demo_*.html
+/test_*.db
+/test_*.json
+
+# SQL scripts (should be in scripts/migrations/)
+/*.sql
+
+# Tool scripts in root (should be in scripts/tools/)
+/benchmark_*.py
+/check_*.py
+/create_*.py
+/debug_*.py
+/demo_*.py
+/extract_*.py
+/replace_*.py
+/reverse_*.py
+/verify_*.py
+/run_*.py
+/quick_*.py
+
+# Documentation in root (should be in docs/)
+/A2_*.md
+/ACCEPTANCE_*.md
+/ARCHITECTURE_*.md
+/AUTOCOMPLETE_*.md
+/BACKLOG_*.md
+/BLIND_*.md
+/BOUNDARY_*.md
+/BRAINOS_*.md
+/BROWSER_*.md
+/BUGFIX_*.md
+/CACHE_*.md
+/CAPABILITY_*.md
+/CARD_*.md
+/CHINESE_*.md
+/CODE_*.md
+/COMPATIBILITY_*.md
+/COMPLETE_*.md
+/CONTRIBUTING.md.backup
+/COVERAGE_*.md
+/CROSS_*.md
+/CSS_*.md
+/CURRENT_*.md
+/DELIVERABLES_*.md
+/DESKTOP_*.md
+/DOCUMENTATION_*.md
+/DUAL_*.md
+/EMOJI_*.md
+/EXECUTION_*.md
+/EXTENSION_*.md
+/FEATURE_*.md
+/FINAL_*.md
+/FK_*.md
+/GATE_*.md
+/GOVERNANCE_*.md
+/HANDOFF_*.md
+/HOW_*.md
+/HTML_*.md
+/ICON_*.md
+/IMPLEMENTATION_*.md
+/JS_*.md
+/MANIFESTO_*.md
+/MATERIAL_*.md
+/MODAL_*.md
+/MODE_*.md
+/MODEL_*.md
+/MODELS_*.md
+/NEXT_*.md
+/NO_*.md
+/OTHER_*.md
+/P0*.md
+/P1*.md
+/P2*.md
+/PHASE*.md
+/PORT_*.md
+/POSTMAN_*.md
+/PR_*.md
+/PROJECT_*.md
+/PROVIDER_*.md
+/PYTHON_*.md
+/QUICK_*.md
+/RELEASE_*.md
+/REPLACEMENT_*.md
+/RESTART_*.md
+/REVERSE_*.md
+/RUNNER_*.md
+/SCOPE_*.md
+/SEMANTIC_*.md
+/SLASH_*.md
+/STARTUP_*.md
+/TASK_*.md
+/TASK*.md
+/TEMPLATE_*.md
+/TEST_*.md
+/TIMEOUT_*.md
+/TITLE_*.md
+/TOKEN_*.md
+/UI_*.md
+/VERIFICATION_*.md
+/VISUAL_*.md
+/WEBSOCKET_*.md
+/WEBUI_*.md
+/WRITER_*.md
+/*.txt
+!/VERSION
+!requirements*.txt
+
+# Public release directory (track governance docs only)
+publish/*
+!publish/README.md
+!publish/docs/
+publish/docs/*
+!publish/docs/TEST_MATRIX.md
+!publish/docs/RELEASE_CHECKLIST.md
+!publish/docs/INSTALLER_SPEC.md
+!publish/docs/BREW_SPEC.md
+!publish/docs/PATH_RULES.md
+!publish/docs/EVIDENCE_BUNDLE.md
+!publish/docs/evidence_schema.json
+!publish/src/
+publish/src/*
+!publish/src/README.md
+!publish/scripts/
+publish/scripts/*
+!publish/scripts/build_windows.ps1
+!publish/scripts/smoke_windows.ps1
+!publish/windows/
+publish/windows/*
+!publish/windows/installer/
+publish/windows/installer/*
+!publish/windows/installer/README.md
+!publish/windows/installer/build.ps1
+!publish/windows/installer/smoke.ps1
+!publish/windows/installer/wix/
+publish/windows/installer/wix/*
+!publish/windows/installer/wix/Product.wxs
+!publish/windows/installer/wix/Package.en-us.wxl
+!publish/ci/
+publish/ci/*
+!publish/ci/github/
+publish/ci/github/*
+!publish/ci/github/windows-installer.yml
+publish/artifacts/
+publish/**/dist/
+publish/**/build/
+publish/.git/
+.octopusos/
+.octopusos/
+.brainos/
+.history/
+.pytest_cache/
+__pycache__/
+*.pyc
+node_modules/
+.venv/
+.venv-test/
+.venv_packaging/
+venv_py312/
+venv_py313/
+outputs/logs/
+reports/htmlcov/
+reports/test-reports/
+artifacts/dist/
+tmp/
+.env
+output/mobile-smoke/
+output/api-smoke/
+output/playwright/
+.playwright-cli/
+test-results/
+.pytest_cache/
+
+# Long-run evidence (runtime-generated, do not commit)
+frontend/reports/e2e_endpoint_evidence/
+
+# Desktop-electron: generated WebUI static build synced for packaging (do not commit)
+apps/desktop-electron/resources/webui-dist/
+!tests/publish/
+!tests/publish/**
+# WebUI generated test artifacts
+apps/webui/playwright-report/
+apps/webui/test-results/
+apps/webui/test-results.json
+
+# Design contract generated artifacts (P0 governance rule)
+outputs/design_contracts/**
+design-system/adapters/generated/**
+
+# Optional golden baselines (explicitly opt-in)
+!outputs/design_contracts/
+!outputs/design_contracts/.keep
+!design-system/adapters/generated/
+!design-system/adapters/generated/.keep
+
+# Runtime run artifacts for /coding deliver pipeline
+workspace/runs/**

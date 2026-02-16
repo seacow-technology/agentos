@@ -1,0 +1,64 @@
+{
+  "tasks": [
+    {
+      "task_id": "C_DESKTOP_001",
+      "portal": "desktop",
+      "module_bucket": "commercial/product_shell_navigation",
+      "title": "Commercial Scenario: Product Shell tabs (Chat/Work/Coding/Projects/AWS/Tasks) load via embedded Console",
+      "status": "done",
+      "priority": 100,
+      "scope": "Verify Product Shell can switch between Chat/Work/Coding/Projects/AWS/Tasks without 404s, console errors, or broken assets. Embedded console must render without duplicate nav chrome.",
+      "acceptance": "Run Playwright smoke against the running Desktop stack. Capture network + console evidence to frontend/reports/e2e_endpoint_evidence/C_DESKTOP_001.json and mark PASS only if 0 4xx/5xx (excluding favicon) and 0 console errors on each tab.",
+      "hints": "Product shell is apps/desktop-electron/resources/product-dist/app.js. Embedded Console is under /console/* with ?embed=1.",
+      "worker": "pangge",
+      "claimed_at": "2026-02-15T23:23:10.610101+00:00",
+      "updated_at": "2026-02-15T23:23:59.901377+00:00",
+      "notes": "PASS"
+    },
+    {
+      "task_id": "C_DESKTOP_002",
+      "portal": "desktop",
+      "module_bucket": "commercial/aws_ops",
+      "title": "Commercial Scenario: AWS Ops page creates a chat session with aws context and hands off to Chat",
+      "status": "done",
+      "priority": 90,
+      "scope": "On /aws: profiles list loads; region required; quick action creates session, posts first message, navigates to /chat and focuses the session.",
+      "acceptance": "Evidence includes: GET /api/mcp/aws/profiles result, POST /api/sessions result, POST /api/sessions/{id}/messages result. Store in frontend/reports/e2e_endpoint_evidence/C_DESKTOP_002.json.",
+      "hints": "WebUI page is apps/webui/src/pages/AwsOpsPage.tsx.",
+      "worker": "pangge",
+      "claimed_at": "2026-02-15T23:23:59.901911+00:00",
+      "updated_at": "2026-02-15T23:24:02.823860+00:00",
+      "notes": "PASS"
+    },
+    {
+      "task_id": "C_DESKTOP_003",
+      "portal": "desktop",
+      "module_bucket": "commercial/projects",
+      "title": "Commercial Scenario: Projects CRUD in embedded Console works end-to-end (read-only safe path first)",
+      "status": "done",
+      "priority": 80,
+      "scope": "Open /projects in embedded mode and ensure list loads. If create requires admin token, UI must prompt clearly and not crash. Prefer exercising list + view flows first.",
+      "acceptance": "Evidence includes: GET /api/projects response (200) and any subsequent 4xx/5xx. Store in frontend/reports/e2e_endpoint_evidence/C_DESKTOP_003.json.",
+      "hints": "ProjectsPage uses octopusosService.listProjectsApiProjectsGet.",
+      "worker": "pangge",
+      "claimed_at": "2026-02-15T23:26:12.405651+00:00",
+      "updated_at": "2026-02-15T23:26:15.754790+00:00",
+      "notes": "PASS"
+    },
+    {
+      "task_id": "C_DESKTOP_004",
+      "portal": "desktop",
+      "module_bucket": "commercial/task_replay_evidence",
+      "title": "Commercial Scenario: Product tasks list + plan/evidence/replay modals render and downloads work",
+      "status": "done",
+      "priority": 70,
+      "scope": "From Product Shell Tasks tab: open Plan/Evidence/Replay for a task, verify modal renders, and download URLs are reachable (200) when present.",
+      "acceptance": "Evidence includes: GET /api/product/tasks, GET /api/product/tasks/{id}/plan, GET /api/product/tasks/{id}/evidence, GET /api/product/tasks/{id}/replay, and any /download/* responses. Store in frontend/reports/e2e_endpoint_evidence/C_DESKTOP_004.json.",
+      "hints": "Backend lives in os/octopusos/webui/api/product.py.",
+      "worker": "pangge",
+      "claimed_at": "2026-02-15T23:24:08.998643+00:00",
+      "updated_at": "2026-02-15T23:24:12.778165+00:00",
+      "notes": "PASS"
+    }
+  ]
+}

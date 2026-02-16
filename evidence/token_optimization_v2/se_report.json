@@ -1,0 +1,113 @@
+{
+  "generated_at_ms": 1771106264945,
+  "items": [
+    {
+      "scenario": "cli_heavy",
+      "variant": "raw_full",
+      "raw_tokens": 159260,
+      "base_pack_tokens": 159260,
+      "expansion_tokens": 0,
+      "total_tokens": 159260,
+      "saved_percent": 0.0,
+      "expansion_count": 0,
+      "avg_expansion_tokens": 0.0,
+      "root_cause_identified": true
+    },
+    {
+      "scenario": "cli_heavy",
+      "variant": "pack_only",
+      "raw_tokens": 159260,
+      "base_pack_tokens": 431,
+      "expansion_tokens": 0,
+      "total_tokens": 431,
+      "saved_percent": 99.729,
+      "expansion_count": 0,
+      "avg_expansion_tokens": 0.0,
+      "root_cause_identified": true
+    },
+    {
+      "scenario": "cli_heavy",
+      "variant": "pack_plus_expansion",
+      "raw_tokens": 159260,
+      "base_pack_tokens": 431,
+      "expansion_tokens": 666,
+      "total_tokens": 1097,
+      "saved_percent": 99.311,
+      "expansion_count": 2,
+      "avg_expansion_tokens": 333.0,
+      "root_cause_identified": true
+    },
+    {
+      "scenario": "ui_heavy",
+      "variant": "raw_full",
+      "raw_tokens": 287725,
+      "base_pack_tokens": 287725,
+      "expansion_tokens": 0,
+      "total_tokens": 287725,
+      "saved_percent": 0.0,
+      "expansion_count": 0,
+      "avg_expansion_tokens": 0.0,
+      "root_cause_identified": true
+    },
+    {
+      "scenario": "ui_heavy",
+      "variant": "pack_only",
+      "raw_tokens": 287725,
+      "base_pack_tokens": 1315,
+      "expansion_tokens": 0,
+      "total_tokens": 1315,
+      "saved_percent": 99.543,
+      "expansion_count": 0,
+      "avg_expansion_tokens": 0.0,
+      "root_cause_identified": true
+    },
+    {
+      "scenario": "ui_heavy",
+      "variant": "pack_plus_expansion",
+      "raw_tokens": 287725,
+      "base_pack_tokens": 1315,
+      "expansion_tokens": 328,
+      "total_tokens": 1643,
+      "saved_percent": 99.429,
+      "expansion_count": 1,
+      "avg_expansion_tokens": 328.0,
+      "root_cause_identified": true
+    },
+    {
+      "scenario": "tool_heavy",
+      "variant": "raw_full",
+      "raw_tokens": 15611,
+      "base_pack_tokens": 15611,
+      "expansion_tokens": 0,
+      "total_tokens": 15611,
+      "saved_percent": 0.0,
+      "expansion_count": 0,
+      "avg_expansion_tokens": 0.0,
+      "root_cause_identified": true
+    },
+    {
+      "scenario": "tool_heavy",
+      "variant": "pack_only",
+      "raw_tokens": 15611,
+      "base_pack_tokens": 109,
+      "expansion_tokens": 0,
+      "total_tokens": 109,
+      "saved_percent": 99.302,
+      "expansion_count": 0,
+      "avg_expansion_tokens": 0.0,
+      "root_cause_identified": true
+    },
+    {
+      "scenario": "tool_heavy",
+      "variant": "pack_plus_expansion",
+      "raw_tokens": 15611,
+      "base_pack_tokens": 109,
+      "expansion_tokens": 790,
+      "total_tokens": 899,
+      "saved_percent": 94.241,
+      "expansion_count": 3,
+      "avg_expansion_tokens": 263.333,
+      "root_cause_identified": true
+    }
+  ]
+}

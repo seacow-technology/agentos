@@ -1,0 +1,51 @@
+{
+  "versions": [
+    {
+      "key": "2026-02-16",
+      "title": "2026-02-16：WebUI 产品面刷新、Context Optimizer v2、LLM 用量与价格可观测性",
+      "outline": [
+        "WebUI/产品面升级：新增 product API，补齐 AWS 运维入口与 Provider/Model/Chat 关键 UI 变更",
+        "交付 Context Optimizer v1/v2：规则链路 + 预算分配 + context pack/签名/语义校验",
+        "扩展 LLM 可观测性：新增 usage events 与 model pricing 持久化（含数据库迁移）",
+        "桌面端打包切入 product-dist，并同步 Electron 集成路径"
+      ],
+      "md_path": "docs/changelog/lang/zh/2026-02-16.md"
+    },
+    {
+      "key": "2026-02-12",
+      "title": "2026-02-12：云端 Providers 多配置、Governance 信任闸门 (Phase 1.8) 与兼容面扩展",
+      "outline": [
+        "Governance 信任基线：seeded Phase 1.8 闸门要求 cross_strong 闭环并产出证据包",
+        "Decision timeline 加固：allowlist 枚举集中化 + 不变量校验；稳定事件语义支撑审计关联",
+        "Providers 升级：本地/云端拆分，云端多配置 UX，模型目录与 OpenAI compatible 适配",
+        "Compat/bulk 扩展 + 基于 OpenAPI 快照重生 WebUI 客户端",
+        "新增 API 面：federation + capability dashboard stats，并补齐测试与 E2E"
+      ],
+      "md_path": "docs/changelog/lang/zh/2026-02-12.md"
+    },
+    {
+      "key": "2026-02-11",
+      "title": "2026-02-11：BridgeOS + MCP 扩展、Cloudflare 运维与发布加固",
+      "outline": [
+        "新增 BridgeOS：profiles/bindings/events 与运行时解析",
+        "bridge 渠道目录扩展（iMessage + Line/Meta/Viber/Matrix/Google/Mattermost/Rocket.Chat/Zulip/微信/企微/Kakao）",
+        "Network Access：Cloudflare MCP 发现 + daemon/tunnel 运维 + 日志清空",
+        "WebUI 体验加固：Bridge Profile 弹窗、wizard 引导、全局按钮 tooltip、i18n 补齐",
+        "发布与测试加固：full regression 闸门 + 3.2.0/3.2.1/3.2.2 稳定化"
+      ],
+      "md_path": "docs/changelog/lang/zh/2026-02-11.md"
+    },
+    {
+      "key": "2026-02-10",
+      "title": "2026-02-10: 主动工作模式与透明化",
+      "outline": [
+        "Phase 1: 事件账本 + 单写者 (Gate-1)",
+        "Phase 2: 状态卡 + Inbox 投递 (Gate-2)",
+        "Phase 3: 插话管道 + UI 防护 (Gate-3, Gate-3.1)",
+        "Phase 4: Work/Tasks + 安全自动执行 + 透明导出 (Gate-4)",
+        "回滚: 注入 inbox_only；全局 work.mode.global"
+      ],
+      "md_path": "docs/changelog/lang/zh/2026-02-10.md"
+    }
+  ]
+}

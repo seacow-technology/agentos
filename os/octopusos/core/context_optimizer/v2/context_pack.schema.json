@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://octopusos.local/schemas/context_pack.schema.json",
+  "title": "Context Pack (v2)",
+  "type": "object",
+  "required": ["version", "generated_at_ms", "ruleset_version", "source", "tier_0_tldr", "tier_1_facts", "tier_2_excerpts", "tier_3_pointers"],
+  "properties": {
+    "version": { "type": "string", "const": "v2.0" },
+    "generated_at_ms": { "type": "integer", "minimum": 0 },
+    "ruleset_version": { "type": "string" },
+    "source": {
+      "type": "object",
+      "required": ["kind", "ref", "raw_sha256"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["cli", "ui", "tool"] },
+        "ref": { "type": "object" },
+        "raw_sha256": { "type": "string" }
+      }
+    },
+    "tier_0_tldr": { "type": "string", "maxLength": 4000 },
+    "tier_1_facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "channel", "severity", "value_score", "signature", "data", "evidence_ptrs"],
+        "properties": {
+          "id": { "type": "string" },
+          "channel": { "type": "string", "enum": ["cli", "ui", "tool"] },
+          "severity": { "type": "string", "enum": ["error", "warn", "info"] },
+          "value_score": { "type": "number", "minimum": 0, "maximum": 100 },
+          "signature": { "type": "string" },
+          "data": { "type": "object" },
+          "evidence_ptrs": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "tier_2_excerpts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "pointer_id", "excerpt", "hash"],
+        "properties": {
+          "id": { "type": "string" },
+          "pointer_id": { "type": "string" },
+          "excerpt": { "type": "string" },
+          "hash": { "type": "string" }
+        }
+      }
+    },
+    "tier_3_pointers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "source_kind", "source_ref", "locator", "preview", "estimated_tokens", "hash"],
+        "properties": {
+          "id": { "type": "string" },
+          "source_kind": { "type": "string", "enum": ["file", "sqlite", "artifact", "trace"] },
+          "source_ref": { "type": "object" },
+          "locator": { "type": "object" },
+          "preview": { "type": "string", "maxLength": 400 },
+          "estimated_tokens": { "type": "integer", "minimum": 0 },
+          "hash": { "type": "string" }
+        }
+      }
+    }
+  }
+}
+

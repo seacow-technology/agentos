@@ -1,0 +1,1041 @@
+{
+  "schema_version": "product.analyze_repo.v1",
+  "generated_at": "2026-02-15T09:39:26.110517+00:00",
+  "runtime_version": "3.4.0",
+  "analysis_ms": 6939,
+  "ui_task_ref": "p_smoke",
+  "repo": {
+    "path": ".",
+    "name": ""
+  },
+  "structure": {
+    "signals": {
+      "package.json": true,
+      "pyproject.toml": true,
+      "requirements.txt": false,
+      "Cargo.toml": false,
+      "go.mod": false,
+      "docker-compose.yml": true
+    },
+    "top_extensions": [
+      [
+        ".md",
+        1702
+      ],
+      [
+        ".pyc",
+        1654
+      ],
+      [
+        ".py",
+        1125
+      ],
+      [
+        ".json",
+        140
+      ],
+      [
+        ".png",
+        100
+      ],
+      [
+        ".txt",
+        60
+      ],
+      [
+        ".sample",
+        42
+      ],
+      [
+        "<noext>",
+        41
+      ],
+      [
+        ".sh",
+        30
+      ],
+      [
+        ".html",
+        25
+      ],
+      [
+        ".css",
+        19
+      ],
+      [
+        ".js",
+        12
+      ]
+    ],
+    "entrypoints": [],
+    "truncated": true
+  },
+  "todo_fixme": {
+    "count": 141,
+    "items": [
+      {
+        "file": "tree.txt",
+        "line": 182,
+        "text": "\u2502\u00a0\u00a0     \u2502\u00a0\u00a0 \u2514\u2500\u2500 todo.txt"
+      },
+      {
+        "file": "tasks/aws_mcp_chat_todo.md",
+        "line": 1,
+        "text": "# AWS MCP Chat Capability TODO"
+      },
+      {
+        "file": "tests/gate_verification_phase_b.py",
+        "line": 121,
+        "text": "is_stub = any(word in source.lower() for word in [\"placeholder\", \"not implemented\", \"todo\", \"raise notimplementederror\"])"
+      },
+      {
+        "file": "tests/gate_verification_phase_b.py",
+        "line": 149,
+        "text": "is_stub = any(word in source.lower() for word in [\"placeholder\", \"not implemented\", \"todo\", \"raise notimplementederror\"])"
+      },
+      {
+        "file": "tests/gate_verification_phase_b.py",
+        "line": 468,
+        "text": "[\"raise notimplementederror\", \"todo\", \"placeholder\"])"
+      },
+      {
+        "file": "tests/unit/core/chat/test_chat_engine_multi_intent.py",
+        "line": 293,
+        "text": "# Currently returns as-is (TODO: implement resolution)"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 119,
+        "text": "todo_id = todo_store.create_todo(\"  Todo with spaces  \")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 122,
+        "text": "assert todos[0]['text'] == \"Todo with spaces\""
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 131,
+        "text": "todo_store.create_todo(\"Todo 1\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 132,
+        "text": "todo_store.create_todo(\"Todo 2\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 133,
+        "text": "todo_store.create_todo(\"Todo 3\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 152,
+        "text": "todo_id1 = todo_store.create_todo(\"Todo 1\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 153,
+        "text": "todo_id2 = todo_store.create_todo(\"Todo 2\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 185,
+        "text": "todo_id = todo_store.create_todo(\"Todo to complete\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 201,
+        "text": "todo_id = todo_store.create_todo(\"Todo to delete\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 215,
+        "text": "todo_id1 = todo_store.create_todo(\"Todo 1\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 216,
+        "text": "todo_id2 = todo_store.create_todo(\"Todo 2\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 217,
+        "text": "todo_id3 = todo_store.create_todo(\"Todo 3\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 241,
+        "text": "todo_id1 = todo_store.create_todo(\"Todo 1\", list_name=\"work\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 242,
+        "text": "todo_id2 = todo_store.create_todo(\"Todo 2\", list_name=\"work\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 243,
+        "text": "todo_id3 = todo_store.create_todo(\"Todo 3\", list_name=\"personal\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 257,
+        "text": "todo_id1 = todo_store.create_todo(\"Todo 1\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 258,
+        "text": "todo_id2 = todo_store.create_todo(\"Todo 2\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 350,
+        "text": "app.add_todo(\"Todo\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 359,
+        "text": "personal_assistant.add_todo(\"Todo 1\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 360,
+        "text": "personal_assistant.add_todo(\"Todo 2\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 381,
+        "text": "todo_id = personal_assistant.add_todo(\"Todo 1\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 382,
+        "text": "personal_assistant.add_todo(\"Todo 2\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 401,
+        "text": "todo_id = personal_assistant.add_todo(\"Todo to complete\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 422,
+        "text": "todo_id = personal_assistant.add_todo(\"Todo to delete\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 443,
+        "text": "personal_assistant.add_todo(\"Todo 1\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 444,
+        "text": "todo_id2 = personal_assistant.add_todo(\"Todo 2\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 521,
+        "text": "todo_id = app.add_todo(f\"Todo {i}\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 576,
+        "text": "todo_id = personal_assistant.add_todo(f\"Todo {i}\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 605,
+        "text": "app1.add_todo(\"Persistent todo\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 613,
+        "text": "assert todos[0]['text'] == \"Persistent todo\""
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 621,
+        "text": "todo_id1 = app1.add_todo(\"Todo 1\")"
+      },
+      {
+        "file": "tests/unit/appos/test_personal_assistant.py",
+        "line": 622,
+        "text": "app1.add_todo(\"Todo 2\")"
+      },
+      {
+        "file": "tests/unit/appos/__pycache__/test_personal_assistant.cpython-313-pytest-9.0.2.pyc",
+        "line": 351,
+        "text": "u\u001b\u0000\u0000\u0000\u6d4b\u8bd5\u521b\u5efa\u65f6\u53bb\u9664\u7a7a\u683cz\u0014  Todo with spaces  r\u0002\u0000\u0000\u0000rz\u0000\u0000\u0000z\u0010Todo with spacesr'\u0000\u0000\u0000r{\u0000\u0000\u0000r|\u0000\u0000\u0000r}\u0000\u0000\u0000rv\u0000\u0000\u0000N)\u0007r\u0000\u0000\u0000r\u0000\u0000\u0000r1\u0000\u0000\u0000r2\u0000\u0000\u0000r6\u0000\u0000\u0000r7\u0000\u0000\u0000r8\u0000\u0000\u0000\tr9\u0000\u0000\u0000r\u0017\u0000\u0000\u0000ro\u0000\u0000\u0000rt\u0000\u0000\u0000r[\u0000\u0000\u0000r<\u0000\u0000\u0000r\\\u0000\u0000\u0000r?\u0000\u0000\u0000r\u0000\u0000\u0000s\t\u0000\u0000\u0000         r\u0013\u0000\u0000\u0000\"test_create_todo_strips_whites"
+      },
+      {
+        "file": "tests/unit/appos/__pycache__/test_personal_assistant.cpython-313-pytest-9.0.2.pyc",
+        "line": 408,
+        "text": "u\u0018\u0000\u0000\u0000\u6d4b\u8bd5\u83b7\u53d6\u591a\u4e2a\u5f85\u529e\u0006Todo 1\u0006Todo 2\u0006Todo 3\u0003\u0000\u0000\u0000r'\u0000\u0000\u0000rr\u0000\u0000\u0000rs\u0000\u0000\u0000rt\u0000\u0000\u0000ru\u0000\u0000\u0000rw\u0000\u0000\u0000rx\u0000\u0000\u0000Nr\u0000\u0000\u0000r\u0000\u0000\u0000s\b\u0000\u0000\u0000        r\u0013\u0000\u0000\u0000\u0017test_get_todos_multiple)TestTodoStoreCRUD.test_get_todos_multiple\u0000\u0000\u0000s\u0000\u0000\u0000\u0000\b\u0012\b"
+      },
+      {
+        "file": "tests/unit/appos/__pycache__/test_personal_assistant.cpython-313-pytest-9.0.2.pyc",
+        "line": 589,
+        "text": ")\u0011\u0012\u0000\u0000\u0000\u6d4b\u8bd5\u5b8c\u6210\u5f85\u529e\u0010Todo to completer\u0002\u0000\u0000\u0000r\u0000\u0000\u0000Tr\u0000\u0000\u0000r\u0000\u0000\u0000r|\u0000\u0000\u0000r}\u0000\u0000\u0000rv\u0000\u0000\u0000N"
+      },
+      {
+        "file": "tests/unit/appos/__pycache__/test_personal_assistant.cpython-313-pytest-9.0.2.pyc",
+        "line": 611,
+        "text": "u\u0012\u0000\u0000\u0000\u6d4b\u8bd5\u5220\u9664\u5f85\u529ez\u000eTodo to deleter\u0002\u0000\u0000\u0000r'\u0000\u0000\u0000rr\u0000\u0000\u0000rs\u0000\u0000\u0000rt\u0000\u0000\u0000ru\u0000\u0000\u0000rw\u0000\u0000\u0000rx\u0000\u0000\u0000N"
+      },
+      {
+        "file": "tests/unit/appos/__pycache__/test_personal_assistant.cpython-313-pytest-9.0.2.pyc",
+        "line": 1477,
+        "text": "\u0000\u0000\u0000\u6d4b\u8bd5\u591a\u6b21\u542f\u52a8\u505c\u6b62\u5faa\u73afr\u0006\u0001\u0000\u0000r\u001b\u0000\u0000\u0000r\u0000\u0000\u0000Tr\u0000\u0000\u0000r\u0016\u0001\u0000\u0000r\"\u0000\u0000\u0000rF\u0000\u0000\u0000r/\u0000\u0000\u0000r0\u0000\u0000\u0000N\u0005Todo r\u0002\u0000\u0000\u0000rl\u0000\u0000\u0000rn\u0000\u0000\u0000ro\u0000\u0000\u0000rp\u0000\u0000\u0000rW\u0000\u0000\u0000r-\u0000\u0000\u0000F)\u000er\u0004\u0000\u0000\u0000\u0005ranger \u0000\u0000\u0000r\u0017\u0001\u0000\u0000r1\u0000\u0000\u0000r2\u0000\u0000\u0000r3\u0000\u0000\u0000r4\u0000\u0000\u0000r5\u0000\u0000\u0000r6\u0000\u0000\u0000r7\u0000\u0000\u0000r8\u0000\u0000\u0000r!\u0001\u0000\u0000r!\u0000\u0000\u0000)\u000er9\u0000\u0000\u0000r\u0014\u0000\u0000\u0000r\"\u0000\u0000\u0000\u0001ir:\u0000\u0000\u0000r<\u0000\u0000\u0000r;\u0000\u0000\u0000rM\u0000\u0000\u0000r=\u0000\u0000\u0000r>\u0000"
+      },
+      {
+        "file": "tests/unit/appos/__pycache__/test_personal_assistant.cpython-313-pytest-9.0.2.pyc",
+        "line": 1780,
+        "text": "=\u0001p[U\u0003R\u0007\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00005\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000g\u000e)\u0015u!\u0000\u0000\u0000\u6d4b\u8bd5\u8de8\u5b9e\u4f8b\u7684\u6570\u636e\u6301\u4e45\u5316\u0004app1\tinstance1z\u000fPersistent todo\u0004app2\tinstance2rq\u0000\u0000\u0000r'\u0000\u0000\u0000rr\u0000\u0000\u0000rs\u0000\u0000\u0000rt\u0000\u0000\u0000ru\u0000\u0000\u0000rw\u0000\u0000\u0000rx\u0000\u0000\u0000Nr\u0002\u0000\u0000\u0000rz\u0000\u0000\u0000r{\u0000\u0000\u0000r|\u0000\u0000\u0000r}\u0000\u0000\u0000rv\u0000\u0000\u0000)\u000er\u0004\u0000\u0000\u0000r \u0000\u0000\u0000r!\u0001\u0000\u0000r!\u0000\u0000\u0000r\"\u0001\u0000\u0000rs\u0000\u0000\u0000r1\u0000\u0000\u0000r2\u0000\u0000\u0000r3\u0000\u0000"
+      },
+      {
+        "file": "tests/unit/appos/__pycache__/test_personal_assistant.cpython-314-pytest-9.0.2.pyc",
+        "line": 443,
+        "text": "u\u001b\u0000\u0000\u0000\u6d4b\u8bd5\u521b\u5efa\u65f6\u53bb\u9664\u7a7a\u683cz\u0014  Todo with spaces  ro\u0000\u0000\u0000z\u0010Todo with spacesrN\u0000\u0000\u0000r'\u0000\u0000\u0000rp\u0000\u0000\u0000rl\u0000\u0000\u0000Nr,\u0000\u0000\u0000ry\u0000\u0000\u0000)\u0007r}\u0000\u0000\u0000r~\u0000\u0000\u0000r.\u0000\u0000\u0000r/\u0000\u0000\u0000r3\u0000\u0000\u0000r4\u0000\u0000\u0000r5\u0000\u0000\u0000\tr6\u0000\u0000\u0000r\u0015\u0000\u0000\u0000ri\u0000\u0000\u0000rk\u0000\u0000\u0000rV\u0000\u0000\u0000r9\u0000\u0000\u0000rW\u0000\u0000\u0000r<\u0000\u0000\u0000r\u0000\u0000\u0000s\t\u0000\u0000\u0000&&       r\u0011\u0000\u0000\u0000\"test_create_todo_strips_whit"
+      },
+      {
+        "file": "tests/unit/appos/__pycache__/test_personal_assistant.cpython-314-pytest-9.0.2.pyc",
+        "line": 520,
+        "text": "#\u0000)\u000fu\u0018\u0000\u0000\u0000\u6d4b\u8bd5\u83b7\u53d6\u591a\u4e2a\u5f85\u529e\u0006Todo 1\u0006Todo 2\u0006Todo 3r$\u0000\u0000\u0000rj\u0000\u0000\u0000rN\u0000\u0000\u0000rk\u0000\u0000\u0000rO\u0000\u0000\u0000rl\u0000\u0000\u0000rm\u0000\u0000\u0000rn\u0000\u0000\u0000Nr,\u0000\u0000\u0000rw\u0000\u0000\u0000r\u0000\u0000\u0000r\u0000\u0000\u0000s\b\u0000\u0000\u0000&&      r\u0011\u0000\u0000\u0000\u0017test_get_todos_multiple)TestTodoStoreCRUD.test_get_todos_multiple\u0000\u0000\u0000s\u0000\u0000\u0000\u0000\b\u0012\b"
+      },
+      {
+        "file": "tests/unit/appos/__pycache__/test_personal_assistant.cpython-314-pytest-9.0.2.pyc",
+        "line": 749,
+        "text": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\\\u0006\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000P\u000e\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000!\u0000V\b4\u0001\u0000\u0000\u0000\u0000\u0000\u00004\u0001\u0000\u0000\u0000\u0000\u0000\u0000h\u0001R\b;\u0001p\u0004;\u0001reR\b#\u0000)\u0011\u0012\u0000\u0000\u0000\u6d4b\u8bd5\u5b8c\u6210\u5f85\u529e\u0010Todo to completers\u0000\u0000\u0000TrN\u0000\u0000\u0000r'\u0000\u0000\u0000rp\u0000\u0000\u0000rl\u0000\u0000\u0000N"
+      },
+      {
+        "file": "tests/unit/appos/__pycache__/test_personal_assistant.cpython-314-pytest-9.0.2.pyc",
+        "line": 788,
+        "text": "u\u0012\u0000\u0000\u0000\u6d4b\u8bd5\u5220\u9664\u5f85\u529ez\u000eTodo to deleter$\u0000\u0000\u0000rj\u0000\u0000\u0000rN\u0000\u0000\u0000rk\u0000\u0000\u0000rO\u0000\u0000\u0000rl\u0000\u0000\u0000rm\u0000\u0000\u0000rn\u0000\u0000\u0000Nr,\u0000\u0000\u0000rw\u0000\u0000\u0000"
+      },
+      {
+        "file": "tests/unit/appos/__pycache__/test_personal_assistant.cpython-314-pytest-9.0.2.pyc",
+        "line": 1959,
+        "text": "\u0000\u0000\u0000\u6d4b\u8bd5\u591a\u6b21\u542f\u52a8\u505c\u6b62\u5faa\u73afr\u0000\u0000\u0000r\u0019\u0000\u0000\u0000Tr$\u0000\u0000\u0000r \u0000\u0000\u0000r&\u0000\u0000\u0000r'\u0000\u0000\u0000r)\u0000\u0000\u0000r*\u0000\u0000\u0000r+\u0000\u0000\u0000N\u0005Todo ri\u0000\u0000\u0000rO\u0000\u0000\u0000rQ\u0000\u0000\u0000r(\u0000\u0000\u0000Frz\u0000\u0000\u0000r"
+      },
+      {
+        "file": "tests/unit/appos/__pycache__/test_personal_assistant.cpython-314-pytest-9.0.2.pyc",
+        "line": 2313,
+        "text": ";\u0001r[V\u0003P\u0007\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00004\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u001f\u0000R\u000e#\u0000)\u0015u!\u0000\u0000\u0000\u6d4b\u8bd5\u8de8\u5b9e\u4f8b\u7684\u6570\u636e\u6301\u4e45\u5316\u0004app1\tinstance1z\u000fPersistent todo\u0004app2\tinstance2r$\u0000\u0000\u0000rj\u0000\u0000\u0000rN\u0000\u0000\u0000rk\u0000\u0000\u0000rO\u0000\u0000\u0000rl\u0000\u0000\u0000rm\u0000\u0000\u0000rn\u0000\u0000\u0000Nro\u0000\u0000\u0000r'\u0000\u0000\u0000rp\u0000\u0000\u0000r,\u0000\u0000\u0000rw\u0000\u0000\u0000ry\u0000\u0000\u0000)\u000er\u0002\u0000\u0000\u0000r"
+      },
+      {
+        "file": "tests/unit/api/test_frontdesk_api.py",
+        "line": 111,
+        "text": "assert data[\"meta\"][\"intent\"] == \"TODO\""
+      },
+      {
+        "file": "tests/unit/api/test_frontdesk_api.py",
+        "line": 166,
+        "text": "json={\"text\": \"@frontend_engineer todo\", \"scope\": {\"type\": \"global\"}},"
+      },
+      {
+        "file": "tests/unit/webui/api/test_brain_api.py",
+        "line": 12,
+        "text": "8. test_build - Build requires admin (TODO)"
+      },
+      {
+        "file": "tests/core/capabilities/test_quota.py",
+        "line": 233,
+        "text": "# TODO: \u5b9e\u73b0\u6570\u636e\u5e93\u6301\u4e45\u5316\u540e\u6dfb\u52a0\u8bfb\u53d6\u6d4b\u8bd5"
+      },
+      {
+        "file": "tests/integration/communicationos/EMAIL_TEST_REPORT.md",
+        "line": 558,
+        "text": "- Add attachment support (currently TODO)"
+      },
+      {
+        "file": "tests/integration/communicationos/EMAIL_TEST_REPORT.md",
+        "line": 574,
+        "text": "1. **Attachments**: Not yet implemented (marked as TODO)"
+      },
+      {
+        "file": "tests/fixtures/multi_repo_project/remotes/repoB.git/hooks/sendemail-validate.sample",
+        "line": 22,
+        "text": "# Replace the TODO placeholders with appropriate checks according to your"
+      },
+      {
+        "file": "tests/fixtures/multi_repo_project/remotes/repoB.git/hooks/sendemail-validate.sample",
+        "line": 27,
+        "text": "# TODO: Replace with appropriate checks (e.g. spell checking)."
+      },
+      {
+        "file": "tests/fixtures/multi_repo_project/remotes/repoB.git/hooks/sendemail-validate.sample",
+        "line": 35,
+        "text": "# TODO: Replace with appropriate checks for this patch"
+      },
+      {
+        "file": "tests/fixtures/multi_repo_project/remotes/repoB.git/hooks/sendemail-validate.sample",
+        "line": 41,
+        "text": "# TODO: Replace with appropriate checks for the whole series"
+      },
+      {
+        "file": "tests/fixtures/multi_repo_project/remotes/repoC.git/hooks/sendemail-validate.sample",
+        "line": 22,
+        "text": "# Replace the TODO placeholders with appropriate checks according to your"
+      },
+      {
+        "file": "tests/fixtures/multi_repo_project/remotes/repoC.git/hooks/sendemail-validate.sample",
+        "line": 27,
+        "text": "# TODO: Replace with appropriate checks (e.g. spell checking)."
+      },
+      {
+        "file": "tests/fixtures/multi_repo_project/remotes/repoC.git/hooks/sendemail-validate.sample",
+        "line": 35,
+        "text": "# TODO: Replace with appropriate checks for this patch"
+      },
+      {
+        "file": "tests/fixtures/multi_repo_project/remotes/repoC.git/hooks/sendemail-validate.sample",
+        "line": 41,
+        "text": "# TODO: Replace with appropriate checks for the whole series"
+      },
+      {
+        "file": "tests/fixtures/multi_repo_project/remotes/repoA.git/hooks/sendemail-validate.sample",
+        "line": 22,
+        "text": "# Replace the TODO placeholders with appropriate checks according to your"
+      },
+      {
+        "file": "tests/fixtures/multi_repo_project/remotes/repoA.git/hooks/sendemail-validate.sample",
+        "line": 27,
+        "text": "# TODO: Replace with appropriate checks (e.g. spell checking)."
+      },
+      {
+        "file": "tests/fixtures/multi_repo_project/remotes/repoA.git/hooks/sendemail-validate.sample",
+        "line": 35,
+        "text": "# TODO: Replace with appropriate checks for this patch"
+      },
+      {
+        "file": "tests/fixtures/multi_repo_project/remotes/repoA.git/hooks/sendemail-validate.sample",
+        "line": 41,
+        "text": "# TODO: Replace with appropriate checks for the whole series"
+      },
+      {
+        "file": "tests/webui/test_chat_websocket.py",
+        "line": 402,
+        "text": "# TODO: Implement when FastAPI test infrastructure is ready"
+      },
+      {
+        "file": "tests/webui/test_chat_websocket.py",
+        "line": 408,
+        "text": "# TODO: Implement when FastAPI test infrastructure is ready"
+      },
+      {
+        "file": "tests/webui/test_chat_websocket.py",
+        "line": 414,
+        "text": "# TODO: Implement when ChatEngine mock is ready"
+      },
+      {
+        "file": "tests/webui/test_h8_rapid_messages.py",
+        "line": 207,
+        "text": "# TODO: Implement WebSocket client call"
+      },
+      {
+        "file": "tests/webui/test_h8_rapid_messages.py",
+        "line": 216,
+        "text": "# TODO: Implement session switch"
+      },
+      {
+        "file": "tests/webui/test_provider_status_api.py",
+        "line": 342,
+        "text": "# TODO: Implement when FastAPI test infrastructure is ready"
+      },
+      {
+        "file": "tests/webui/test_provider_status_api.py",
+        "line": 349,
+        "text": "# TODO: Implement performance test"
+      },
+      {
+        "file": "tests/performance/test_webui_stability.py",
+        "line": 124,
+        "text": "memory_mb=0,  # TODO: Implement memory tracking"
+      },
+      {
+        "file": "tests/performance/test_webui_stability.py",
+        "line": 125,
+        "text": "cpu_percent=0,  # TODO: Implement CPU tracking"
+      },
+      {
+        "file": "tests/e2e/voice/README.md",
+        "line": 324,
+        "text": "## TODO"
+      },
+      {
+        "file": "tests/e2e/voice/test_voice_v02_golden_path.py",
+        "line": 341,
+        "text": "# TODO: Implement barge-in test"
+      },
+      {
+        "file": "tests/e2e/voice/test_voice_v02_golden_path.py",
+        "line": 365,
+        "text": "# TODO: Implement performance test"
+      },
+      {
+        "file": "docs/TASK17_PROPOSE_WORKFLOW_IMPLEMENTATION_REPORT.md",
+        "line": 576,
+        "text": "# TODO: Integrate with notification system"
+      },
+      {
+        "file": "docs/CHANNEL_ADAPTER_SPECIFICATION_V1.md",
+        "line": 1052,
+        "text": "# TODO: \u5b9e\u73b0\u7b7e\u540d\u9a8c\u8bc1\u903b\u8f91"
+      },
+      {
+        "file": "docs/CHANNEL_ADAPTER_SPECIFICATION_V1.md",
+        "line": 1060,
+        "text": "# TODO: \u5b9e\u73b0\u4e8b\u4ef6\u89e3\u6790\u903b\u8f91"
+      },
+      {
+        "file": "docs/CHANNEL_ADAPTER_SPECIFICATION_V1.md",
+        "line": 1068,
+        "text": "# TODO: \u5b9e\u73b0\u6d88\u606f\u53d1\u9001\u903b\u8f91"
+      },
+      {
+        "file": "docs/CHANNEL_ADAPTER_SPECIFICATION_V1.md",
+        "line": 1113,
+        "text": "# TODO: \u6dfb\u52a0\u6d4b\u8bd5\u6570\u636e"
+      },
+      {
+        "file": "docs/WEBUI_DEMO_IMPLEMENTATION.md",
+        "line": 345,
+        "text": "**Implementation Status**: \ud83d\udea7 TODO"
+      },
+      {
+        "file": "docs/WEBUI_DEMO_IMPLEMENTATION.md",
+        "line": 373,
+        "text": "**Implementation Status**: \ud83d\udea7 TODO"
+      },
+      {
+        "file": "docs/WEBUI_DEMO_IMPLEMENTATION.md",
+        "line": 401,
+        "text": "**Implementation Status**: \ud83d\udea7 TODO"
+      },
+      {
+        "file": "docs/WEBUI_DEMO_IMPLEMENTATION.md",
+        "line": 429,
+        "text": "**Implementation Status**: \ud83d\udea7 TODO"
+      },
+      {
+        "file": "docs/WEBUI_DEMO_IMPLEMENTATION.md",
+        "line": 457,
+        "text": "**Implementation Status**: \ud83d\udea7 TODO"
+      },
+      {
+        "file": "docs/GATE_SYSTEM.md",
+        "line": 202,
+        "text": "\"octopusos/new/feature.py\",  # TODO PR-X: Migrate to registry_db"
+      },
+      {
+        "file": "docs/RELEASE_ACCEPTANCE_REPORT_v2.1.md",
+        "line": 140,
+        "text": "- \u6a21\u677f\u5305\u542b TODO \u63d0\u793a\u3001\u53c2\u6570\u8bf4\u660e\u3001\u9a8c\u6536\u6807\u51c6"
+      },
+      {
+        "file": "docs/RELEASE_WORKFLOW.md",
+        "line": 171,
+        "text": "# \u7f16\u8f91\u751f\u6210\u7684\u6587\u4ef6\uff0c\u586b\u5199[TODO]\u90e8\u5206"
+      },
+      {
+        "file": "docs/RELEASE_WORKFLOW.md",
+        "line": 387,
+        "text": "- [ ] \u7f16\u8f91Release Notes\u586b\u5199[TODO]\u90e8\u5206"
+      },
+      {
+        "file": "docs/RELEASE_WORKFLOW.md",
+        "line": 737,
+        "text": "vim RELEASE_NOTES.md  # \u7f16\u8f91\u586b\u5199[TODO]\u90e8\u5206"
+      },
+      {
+        "file": "docs/FRONTDESK_CHAT.md",
+        "line": 4,
+        "text": "Frontdesk Chat is a global, always-available control console independent of Session Chat. It provides lightweight coordination queries (overview, status, todo, blockers) and a minimal evidence-ready audit trail."
+      },
+      {
+        "file": "docs/FRONTDESK_CHAT.md",
+        "line": 40,
+        "text": "\"intent\": \"TODO\","
+      },
+      {
+        "file": "docs/PR-1_IMPLEMENTATION_SUMMARY.md",
+        "line": 132,
+        "text": "**PR-2/PR-3 TODO**:"
+      },
+      {
+        "file": "docs/PR-1_IMPLEMENTATION_SUMMARY.md",
+        "line": 151,
+        "text": "**PR-3 TODO**:"
+      },
+      {
+        "file": "docs/PR-1_IMPLEMENTATION_SUMMARY.md",
+        "line": 168,
+        "text": "**PR-3 TODO**:"
+      },
+      {
+        "file": "docs/SPRINT1_FAILURE_ANALYSIS.md",
+        "line": 212,
+        "text": "# TODO: Implement state validation"
+      },
+      {
+        "file": "docs/TASK_B3_SUMMARY.md",
+        "line": 199,
+        "text": "1. **Authorization**: TODO - Add auth check to reset endpoint"
+      },
+      {
+        "file": "docs/TASK_B3_SUMMARY.md",
+        "line": 200,
+        "text": "2. **Rate Limiting**: TODO - Prevent reset spam"
+      },
+      {
+        "file": "docs/CAPABILITY_STATUS.md",
+        "line": 346,
+        "text": "1. \u2705 **\u65e0 placeholder\u6b8b\u7559**: \u4ee3\u7801\u4e2d\u65e0 `mock`, `TODO`, `FIXME` \u6ce8\u91ca"
+      },
+      {
+        "file": "docs/CAPABILITY_STATUS.md",
+        "line": 374,
+        "text": "# \u626b\u63cf\u6240\u6709 TODO"
+      },
+      {
+        "file": "docs/CAPABILITY_STATUS.md",
+        "line": 375,
+        "text": "grep -r \"TODO\" octopusos/ --include=\"*.py\" | grep -v \"test_\" | wc -l"
+      },
+      {
+        "file": "docs/demo/E2E_IMPLEMENTATION_STATUS.md",
+        "line": 273,
+        "text": "**\u9009\u9879 C: \u6682\u505c\uff0c\u5148\u5b8c\u6210\u5176\u4ed6 TODO**"
+      },
+      {
+        "file": "docs/adr/ADR-012-memory-capability-contract.md",
+        "line": 1136,
+        "text": "# TODO: Implement notification system"
+      },
+      {
+        "file": "docs/adr/ADR-EXT-001-ENFORCEMENT.md",
+        "line": 61,
+        "text": "- **TODO**: Add auth middleware or decorators when auth system is available"
+      },
+      {
+        "file": "docs/coordinator/V092_IMPLEMENTATION_COMPLETE.md",
+        "line": 6,
+        "text": "**\u5b8c\u6210\u5ea6**: 10/10 TODO (100%)"
+      },
+      {
+        "file": "docs/coordinator/V092_IMPLEMENTATION_COMPLETE.md",
+        "line": 25,
+        "text": "- 6/10 TODO \u5b8c\u6210\uff0860%\uff09"
+      },
+      {
+        "file": "docs/coordinator/V092_IMPLEMENTATION_COMPLETE.md",
+        "line": 32,
+        "text": "- 4/10 TODO \u5b8c\u6210\uff0840%\uff09"
+      },
+      {
+        "file": "docs/coordinator/V092_IMPLEMENTATION_COMPLETE.md",
+        "line": 38,
+        "text": "- **10/10 TODO \u5b8c\u6210\uff08100%\uff09**"
+      },
+      {
+        "file": "docs/coordinator/V092_IMPLEMENTATION_COMPLETE.md",
+        "line": 276,
+        "text": "| **\u603b\u8ba1** | T0-T2 | \u5b8c\u6574\u4ea4\u4ed8\uff0810/10 TODO\uff09 | - |"
+      },
+      {
+        "file": "docs/coordinator/V092_IMPLEMENTATION_COMPLETE.md",
+        "line": 423,
+        "text": "- \u2705 10/10 TODO \u5b8c\u6210\uff08100%\uff09"
+      },
+      {
+        "file": "docs/page-align/ChatPage/diff.patch",
+        "line": 96,
+        "text": "-        // TODO: When message history API is available, load messages here"
+      },
+      {
+        "file": "docs/page-align/ChatPage/03_diff_matrix.md",
+        "line": 172,
+        "text": "3. Providers/Models\uff08\u4f7f\u7528\u9759\u6001\u6570\u636e\uff0cTODO API\uff09"
+      },
+      {
+        "file": "docs/page-align/ChatPage/02_v2_inventory.md",
+        "line": 111,
+        "text": "- **\u9759\u6001\u6570\u636e** (TODO: \u66ff\u6362\u4e3aAPI):"
+      },
+      {
+        "file": "docs/page-align/ChatPage/02_v2_inventory.md",
+        "line": 249,
+        "text": "- **TODO**: \u52a0\u8f7d\u5386\u53f2\u6d88\u606f"
+      },
+      {
+        "file": "docs/page-align/ChatPage/02_v2_inventory.md",
+        "line": 252,
+        "text": "// TODO: When message history API is available, load messages here"
+      },
+      {
+        "file": "docs/page-align/ChatPage/02_v2_inventory.md",
+        "line": 322,
+        "text": "- **TODO**: \u66ff\u6362\u4e3a\u771f\u5b9e\u8bca\u65adAPI"
+      },
+      {
+        "file": "docs/page-align/ChatPage/02_v2_inventory.md",
+        "line": 336,
+        "text": "- **\u64cd\u4f5c**: \"Advanced Settings\" \u6309\u94ae (TODO)"
+      },
+      {
+        "file": "docs/archive/ORGANIZATION_SUMMARY.md",
+        "line": 49,
+        "text": "- todo.md"
+      },
+      {
+        "file": "docs/archive/TASK_13_QUICK_REFERENCE.md",
+        "line": 171,
+        "text": "Edit `handlers.py` and replace TODO comments with actual logic"
+      },
+      {
+        "file": "docs/archive/TASK_13_COMPLETION_REPORT.md",
+        "line": 276,
+        "text": "2. **Handler Implementation**: Generated handlers are placeholder code with TODO comments."
+      },
+      {
+        "file": "docs/archive/PR_WEBUI_BRAINOS_1_IMPLEMENTATION_REPORT.md",
+        "line": 50,
+        "text": "- calculate_coverage() - \u8ba1\u7b97\u8ba4\u77e5\u8986\u76d6\u7387\uff08TODO\uff09"
+      },
+      {
+        "file": "docs/archive/PR_WEBUI_BRAINOS_1_IMPLEMENTATION_REPORT.md",
+        "line": 51,
+        "text": "- find_blind_spots() - \u67e5\u627e\u77e5\u8bc6\u76f2\u533a\uff08TODO\uff09"
+      },
+      {
+        "file": "docs/archive/PR_WEBUI_BRAINOS_1_IMPLEMENTATION_REPORT.md",
+        "line": 591,
+        "text": "2. \u6216\u76f4\u63a5\u4ece\u5bfc\u822a\u680f\u8bbf\u95ee\uff08TODO: \u6dfb\u52a0\u5bfc\u822a\u9879\uff09"
+      },
+      {
+        "file": "docs/archive/PR_WEBUI_BRAINOS_1_IMPLEMENTATION_REPORT.md",
+        "line": 717,
+        "text": "\"git_coverage\": True,  # TODO: Check if git extractor ran"
+      },
+      {
+        "file": "docs/archive/PR_WEBUI_BRAINOS_1_IMPLEMENTATION_REPORT.md",
+        "line": 718,
+        "text": "\"doc_coverage\": True,  # TODO: Check if doc extractor ran"
+      },
+      {
+        "file": "docs/archive/PR_WEBUI_BRAINOS_1_IMPLEMENTATION_REPORT.md",
+        "line": 719,
+        "text": "\"code_coverage\": True, # TODO: Check if code extractor ran"
+      },
+      {
+        "file": "docs/archive/PR_WEBUI_BRAINOS_1_IMPLEMENTATION_REPORT.md",
+        "line": 759,
+        "text": "# TODO: Implement"
+      },
+      {
+        "file": "docs/archive/PR_WEBUI_BRAINOS_1_IMPLEMENTATION_REPORT.md",
+        "line": 762,
+        "text": "# TODO: Implement"
+      },
+      {
+        "file": "docs/archive/P2_TASK6_CODE_REVIEW_REPORT.md",
+        "line": 685,
+        "text": "// For now, just log them (TODO: Add visual indicators)"
+      },
+      {
+        "file": "docs/archive/P2_TASK6_CODE_REVIEW_REPORT.md",
+        "line": 695,
+        "text": "- \u274c **\u524d\u7aef\u7f3a\u5c11\u89c6\u89c9\u7f3a\u53e3\u6307\u793a\u5668**\uff08\u6807\u8bb0\u4e3a TODO\uff09"
+      },
+      {
+        "file": "docs/archive/P2_TASK6_CODE_REVIEW_REPORT.md",
+        "line": 725,
+        "text": "// For now, just log them (TODO: Add visual indicators)"
+      },
+      {
+        "file": "docs/archive/TEMPLATE_WIZARD_ACCEPTANCE_REPORT.md",
+        "line": 212,
+        "text": "# TODO: Implement your capability logic here"
+      },
+      {
+        "file": "docs/archive/TASK_25_IMPLEMENTATION_SUMMARY.md",
+        "line": 344,
+        "text": "1. **Context Resolution:** Currently returns original text (pronoun replacement TODO)"
+      },
+      {
+        "file": "docs/archive/TASK_13_SUMMARY.txt",
+        "line": 168,
+        "text": "2. Handler placeholders (TODO comments) - P3"
+      },
+      {
+        "file": "docs/archive/TASK_13_TESTING_GUIDE.md",
+        "line": 242,
+        "text": "2. Handler implementations are placeholders (TODO comments)"
+      },
+      {
+        "file": "docs/archive/webui-legacy/webui/middleware/demo_mode.py",
+        "line": 85,
+        "text": "# TODO: Implement demo data interception logic"
+      }
+    ],
+    "truncated": true
+  },
+  "dependency_risk": {
+    "mode": "static_heuristics",
+    "findings": [
+      {
+        "ecosystem": "npm",
+        "package": "playwright",
+        "version": "^1.58.2",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "click>=8.1.7",
+        "version": "click>=8.1.7",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "openai>=1.58.1",
+        "version": "openai>=1.58.1",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "jinja2>=3.1.5",
+        "version": "jinja2>=3.1.5",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "jsonschema>=4.23.0",
+        "version": "jsonschema>=4.23.0",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "rich>=13.9.4",
+        "version": "rich>=13.9.4",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "croniter>=1.4.1",
+        "version": "croniter>=1.4.1",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "networkx>=3.1",
+        "version": "networkx>=3.1",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "pyyaml>=6.0",
+        "version": "pyyaml>=6.0",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "anthropic>=0.18.0",
+        "version": "anthropic>=0.18.0",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "docker>=6.1.0",
+        "version": "docker>=6.1.0",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "gitpython>=3.1.46",
+        "version": "gitpython>=3.1.46",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "fastapi>=0.109.0",
+        "version": "fastapi>=0.109.0",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "uvicorn[standard]>=0.27.0",
+        "version": "uvicorn[standard]>=0.27.0",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "websockets>=12.0",
+        "version": "websockets>=12.0",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "psutil>=5.9.0",
+        "version": "psutil>=5.9.0",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "requests>=2.31.0",
+        "version": "requests>=2.31.0",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "httpx>=0.27.0",
+        "version": "httpx>=0.27.0",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "sentry-sdk[fastapi]>=2.50.0",
+        "version": "sentry-sdk[fastapi]>=2.50.0",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "cryptography>=42.0.0",
+        "version": "cryptography>=42.0.0",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "python-ulid>=2.2.0",
+        "version": "python-ulid>=2.2.0",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "slowapi>=0.1.9",
+        "version": "slowapi>=0.1.9",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "python-multipart>=0.0.9",
+        "version": "python-multipart>=0.0.9",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "itsdangerous>=2.1.0",
+        "version": "itsdangerous>=2.1.0",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "duckduckgo-search>=6.3.11",
+        "version": "duckduckgo-search>=6.3.11",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "beautifulsoup4>=4.12.0",
+        "version": "beautifulsoup4>=4.12.0",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "lxml>=5.0.0",
+        "version": "lxml>=5.0.0",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "numpy>=1.24.0",
+        "version": "numpy>=1.24.0",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "PyNaCl>=1.5.0",
+        "version": "PyNaCl>=1.5.0",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "grpcio>=1.60.0",
+        "version": "grpcio>=1.60.0",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "grpcio-tools>=1.60.0",
+        "version": "grpcio-tools>=1.60.0",
+        "risk": "unpinned"
+      },
+      {
+        "ecosystem": "python",
+        "package": "tiktoken>=0.9.0",
+        "version": "tiktoken>=0.9.0",
+        "risk": "unpinned"
+      }
+    ],
+    "note": "v1: fast static heuristics only (no network CVE lookup). Run audits in System Console for deeper checks."
+  },
+  "git": {
+    "available": true,
+    "hotspots": [
+      {
+        "file": "agentos/webui/static/js/main.js",
+        "touches": 43
+      },
+      {
+        "file": "pyproject.toml",
+        "touches": 41
+      },
+      {
+        "file": "README.md",
+        "touches": 39
+      },
+      {
+        "file": "agentos/webui/app.py",
+        "touches": 37
+      },
+      {
+        "file": "agentos/webui/templates/index.html",
+        "touches": 37
+      },
+      {
+        "file": "agentos/core/executor/executor_engine.py",
+        "touches": 27
+      },
+      {
+        "file": ".gitignore",
+        "touches": 26
+      },
+      {
+        "file": "agentos/webui/static/css/components.css",
+        "touches": 26
+      },
+      {
+        "file": "agentos/cli/main.py",
+        "touches": 25
+      },
+      {
+        "file": "agentos/core/task/manager.py",
+        "touches": 19
+      },
+      {
+        "file": "agentos/webui/static/js/views/ProvidersView.js",
+        "touches": 19
+      },
+      {
+        "file": "agentos/webui/static/js/views/TasksView.js",
+        "touches": 18
+      }
+    ]
+  },
+  "secret_risk": {
+    "count": 0,
+    "findings": [],
+    "truncated": true
+  },
+  "result_preview": "141 TODO/FIXME \u00b7 0 secret risks \u00b7 12 hotspots"
+}
